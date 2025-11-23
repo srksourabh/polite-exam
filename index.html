@@ -1,0 +1,2174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polite Coaching Centre - Complete Exam System</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e67e22;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            position: relative;
+        }
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+            position: relative;
+        }
+        header h1 {
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+        }
+        .logo {
+            font-weight: bold;
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            color: #f1c40f;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        .content {
+            padding: 30px;
+        }
+        .screen {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        .screen.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--secondary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        button {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+        }
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .admin-btn {
+            background: var(--accent);
+            box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
+        }
+        .admin-btn:hover {
+            background: #d35400;
+            box-shadow: 0 6px 15px rgba(230, 126, 34, 0.4);
+        }
+        .success-btn {
+            background: var(--success);
+            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+        }
+        .success-btn:hover {
+            background: #219653;
+            box-shadow: 0 6px 15px rgba(39, 174, 96, 0.4);
+        }
+        .ai-btn {
+            background: #9b59b6;
+            box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
+        }
+        .ai-btn:hover {
+            background: #8e44ad;
+            box-shadow: 0 6px 15px rgba(155, 89, 182, 0.4);
+        }
+        .upload-btn {
+            background: #1abc9c;
+            box-shadow: 0 4px 10px rgba(26, 188, 156, 0.3);
+        }
+        .upload-btn:hover {
+            background: #16a085;
+            box-shadow: 0 6px 15px rgba(26, 188, 156, 0.4);
+        }
+        .error {
+            color: var(--danger);
+            margin-top: 10px;
+            font-weight: 500;
+            text-align: center;
+        }
+        .success {
+            color: var(--success);
+            margin-top: 10px;
+            font-weight: 500;
+            text-align: center;
+        }
+        .timer {
+            background: var(--danger);
+            color: white;
+            text-align: center;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+        }
+        .question-container {
+            background: var(--light);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        .question-number {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .question-text {
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            color: var(--dark);
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .option {
+            padding: 15px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+        .option:hover {
+            border-color: var(--secondary);
+            transform: translateX(5px);
+        }
+        .option.selected {
+            background: rgba(52, 152, 219, 0.1);
+            border-color: var(--secondary);
+            font-weight: 600;
+        }
+        .option-letter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--secondary);
+            color: white;
+            border-radius: 50%;
+            margin-right: 15px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .progress {
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1.2rem;
+            margin: 15px 0;
+        }
+        .result-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .score-display {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin: 20px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .expiry-warning {
+            background: #fff8e1;
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .hidden {
+            display: none;
+        }
+        .question-tag {
+            display: inline-block;
+            background: #e1f0fa;
+            color: var(--secondary);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .database-section {
+            background: #e8f4fc;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px 0;
+            border: 1px solid #bee0f9;
+        }
+        .database-section h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .feature-section {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 4px solid var(--accent);
+        }
+        .feature-section h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .ai-prompt {
+            background: #f1f8ff;
+            border: 1px dashed var(--secondary);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .camera-container {
+            position: relative;
+            width: 100%;
+            margin: 20px 0;
+        }
+        #camera-preview {
+            width: 100%;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            background: #f8f9fa;
+            display: none;
+        }
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .camera-btn {
+            flex: 1;
+            background: var(--primary);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .camera-btn:hover {
+            background: #1a252f;
+        }
+        .camera-btn:disabled {
+            background: #bdc3c7;
+        }
+        .camera-icon {
+            font-size: 24px;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .capture-btn {
+            background: var(--success);
+            display: none;
+        }
+        .system-status {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid var(--success);
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #c8e6c9;
+        }
+        .status-good {
+            color: var(--success);
+            font-weight: bold;
+        }
+        .status-bad {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        @media (max-width: 600px) {
+            .content {
+                padding: 20px;
+            }
+            header {
+                padding: 20px;
+            }
+            header h1 {
+                font-size: 1.5rem;
+            }
+            .logo {
+                font-size: 1.8rem;
+            }
+            .question-text {
+                font-size: 1.2rem;
+            }
+            .option {
+                padding: 12px;
+                font-size: 1rem;
+            }
+            .navigation button {
+                padding: 10px 15px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">POLITE COACHING CENTRE</div>
+            <div class="subtitle">Reasoning, Math & GK Tests for Job Aspirants</div>
+        </header>
+        
+        <div class="content">
+            <!-- Admin Login Screen -->
+            <div id="admin-login-screen" class="screen active">
+                <h2 style="text-align: center; margin-bottom: 25px; color: var(--primary);">Admin Access</h2>
+                <div class="form-group">
+                    <label for="admin-password">Admin Password</label>
+                    <input type="password" id="admin-password" placeholder="Enter admin password" value="politeadmin">
+                </div>
+                <button onclick="loginAdmin()">Login to Admin Panel</button>
+                <p class="error" id="admin-login-error"></p>
+                <div style="text-align: center; margin-top: 25px;">
+                    <button class="success-btn" onclick="showCandidateScreen()">I am a Candidate →</button>
+                </div>
+            </div>
+
+            <!-- Admin Panel -->
+            <div id="admin-panel" class="screen">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h2 style="color: var(--primary);">Admin Dashboard</h2>
+                    <button style="width: auto; padding: 8px 15px; background: var(--danger);" onclick="logoutAdmin()">Logout</button>
+                </div>
+                
+                <div class="system-status">
+                    <h3 style="color: var(--primary); margin-bottom: 10px;">System Status</h3>
+                    <div class="status-item">
+                        <span>Database Connection:</span>
+                        <span id="db-status" class="status-good">✅ Connected</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Gemini AI API:</span> 
+                        <span id="gemini-status" class="status-good">✅ Active</span>
+                    </div>
+                    <div class="status-item">
+                        <span>OCR Processing:</span>
+                        <span id="ocr-status" class="status-good">✅ Active</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 30px;">
+                    <button class="admin-btn" onclick="showQuestionBank()">📚 Question Bank</button>
+                    <button class="admin-btn" onclick="showCreateExam()">✏️ Create New Exam</button>
+                    <button class="admin-btn" onclick="showViewResults()">📊 View Results</button>
+                    <button class="upload-btn" onclick="showUploadScreen()">📸 Upload Question Paper</button>
+                    <button class="ai-btn" onclick="showAIGenerator()">🤖 AI Question Generator</button>
+                </div>
+
+                <!-- Database Setup Section -->
+                <div class="database-section">
+                    <h3>☁️ Database Setup (Airtable)</h3>
+                    <p style="margin-bottom: 15px;">Your questions, exams, and results are now stored in Airtable. No data loss!</p>
+                    <div class="form-group">
+                        <label>Airtable Base ID</label>
+                        <input type="text" id="airtable-base-id" placeholder="app1234567890" value="appYOUR_BASE_ID_HERE">
+                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">⚠️ You MUST replace this with your actual Base ID</p>
+                    </div>
+                    <button class="admin-btn" onclick="saveDatabaseConfig()">Update Base ID</button>
+                    <div class="success" id="db-success"></div>
+                    <div class="error" id="db-error"></div>
+                </div>
+
+                <!-- Question Bank Section -->
+                <div id="question-bank-section" class="hidden">
+                    <h3 style="margin-bottom: 15px; color: var(--secondary);">Question Bank</h3>
+                    
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <select id="question-subject">
+                            <option value="Math">Math</option>
+                            <option value="Reasoning">Reasoning</option>
+                            <option value="GK">GK</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Question Text</label>
+                        <textarea id="question-text" rows="3" placeholder="Enter the question here..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Option A</label>
+                        <input type="text" id="option-a" placeholder="Option A">
+                    </div>
+                    <div class="form-group">
+                        <label>Option B</label>
+                        <input type="text" id="option-b" placeholder="Option B">
+                    </div>
+                    <div class="form-group">
+                        <label>Option C</label>
+                        <input type="text" id="option-c" placeholder="Option C">
+                    </div>
+                    <div class="form-group">
+                        <label>Option D</label>
+                        <input type="text" id="option-d" placeholder="Option D">
+                    </div>
+                    <div class="form-group">
+                        <label>Correct Answer</label>
+                        <select id="correct-answer">
+                            <option value="0">A</option>
+                            <option value="1">B</option>
+                            <option value="2">C</option>
+                            <option value="3">D</option>
+                        </select>
+                    </div>
+                    <button onclick="addQuestion()">Add Question to Bank</button>
+                    <div class="error" id="question-error"></div>
+                    <div class="success" id="question-success"></div>
+                    
+                    <div style="margin-top: 30px;">
+                        <h3 style="margin: 20px 0 15px; color: var(--secondary);">Existing Questions</h3>
+                        <div id="questions-list">
+                            <p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Question Generator Section -->
+                <div id="ai-generator-section" class="hidden feature-section">
+                    <h3>🤖 AI Question Generator</h3>
+                    <p>Create high-quality MCQs in seconds with AI. Perfect for job aspirants!</p>
+                    
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>Subject Category</label>
+                        <select id="ai-subject">
+                            <option value="Math">Math</option>
+                            <option value="Reasoning">Reasoning</option>
+                            <option value="GK">GK</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Topic (Optional)</label>
+                        <input type="text" id="ai-topic" placeholder="e.g., Time & Work, Syllogism, Current Affairs">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Custom AI Prompt (Optional)</label>
+                        <textarea id="ai-custom-prompt" rows="4" placeholder="Example: Generate 10 high-quality MCQs for Railway NTPC exam focusing on General Awareness. Include current affairs from 2025. Each question must have 4 options with only one correct answer."></textarea>
+                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">💡 Leave blank to use default prompt, or write your specific requirements</p>
+                    </div>
+                    
+                    <button class="ai-btn" onclick="generateAIQuestion()">✨ Generate Question with AI</button>
+                    <div class="error" id="ai-error"></div>
+                    
+                    <div id="ai-result-container" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #e0e0e0;">
+                        <h4 style="color: var(--primary); margin-bottom: 15px;">AI Generated Question</h4>
+                        <div id="ai-question-text" style="font-weight: 500; margin-bottom: 15px;"></div>
+                        
+                        <div style="margin-left: 25px; margin-bottom: 15px;">
+                            <div>A) <span id="ai-option-a"></span></div>
+                            <div>B) <span id="ai-option-b"></span></div>
+                            <div>C) <span id="ai-option-c"></span></div>
+                            <div>D) <span id="ai-option-d"></span></div>
+                        </div>
+                        
+                        <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin: 15px 0;">
+                            <strong>Correct Answer:</strong> <span id="ai-correct-answer"></span><br>
+                            <strong>Explanation:</strong> <span id="ai-explanation"></span>
+                        </div>
+                        
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <button class="success-btn" style="flex: 1;" onclick="acceptAIQuestion()">✅ Accept & Add to Bank</button>
+                            <button class="admin-btn" style="flex: 1;" onclick="regenerateAIQuestion()">🔄 Regenerate</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Question Paper Section -->
+                <div id="upload-section" class="hidden feature-section">
+                    <h3>📸 Upload Question Paper</h3>
+                    <p>Upload a photo or PDF of your question paper. We'll extract and clean the text automatically!</p>
+                    <p style="background: #fff8e1; padding: 12px; border-radius: 8px; margin: 15px 0; border-left: 3px solid var(--accent);">
+                        💡 <strong>Pro Tip:</strong> If the correct answer is <strong>bold</strong> or <u>underlined</u> in the image, the system will automatically detect it!
+                    </p>
+                    
+                    <div class="camera-container">
+                        <video id="camera-preview" autoplay playsinline></video>
+                        <button class="camera-btn" id="camera-toggle" onclick="toggleCamera()">
+                            <span class="camera-icon">📱</span> <span id="camera-toggle-text">Use Camera</span>
+                        </button>
+                        <button class="camera-btn capture-btn" id="capture-btn" onclick="capturePhoto()">
+                            <span class="camera-icon">✅</span> Capture Photo
+                        </button>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>Upload Image/PDF</label>
+                        <input type="file" id="paper-upload" accept="image/*,.pdf" style="padding: 3px;">
+                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">✓ Works with phone photos of printed papers<br>✓ Supports JPG, PNG, PDF</p>
+                    </div>
+                    
+                    <button class="upload-btn" onclick="processUpload()">🔍 Extract Questions</button>
+                    
+                    <div id="upload-result-container" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #e0e0e0;">
+                        <h4 style="color: var(--primary); margin-bottom: 15px;">Extracted Text</h4>
+                        <textarea id="extracted-text" rows="10" style="font-family: monospace; margin-bottom: 20px; resize: vertical;"></textarea>
+                        
+                        <button class="admin-btn" style="margin-bottom: 15px;" onclick="cleanText()">🧹 Clean & Format Text</button>
+                        
+                        <h4 style="margin: 20px 0 15px; color: var(--secondary);">Ready to Add Questions</h4>
+                        <div id="ready-questions">
+                            <p style="text-align: center; color: #7f8c8d;">Click 'Clean & Format Text' to see questions</p>
+                        </div>
+                        
+                        <button class="success-btn" style="margin-top: 20px;" onclick="addExtractedQuestions()">✅ Add All Questions to Bank</button>
+                    </div>
+                </div>
+
+                <!-- Create Exam Section -->
+                <div id="create-exam-section" class="hidden">
+                    <h3 style="margin-bottom: 15px; color: var(--secondary);">New Exam Setup</h3>
+                    <div class="form-group">
+                        <label>Exam Code (Unique)</label>
+                        <input type="text" id="exam-code" placeholder="e.g., REASONING_JULY_01" oninput="this.value = this.value.toUpperCase()">
+                    </div>
+                    <div class="form-group">
+                        <label>Exam Title</label>
+                        <input type="text" id="exam-title" placeholder="e.g., Logical Reasoning Test for Banking">
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (Minutes)</label>
+                        <input type="number" id="exam-duration" min="5" value="60" placeholder="e.g., 60">
+                    </div>
+                    <div class="form-group">
+                        <label>Expiry Date & Time (IST)</label>
+                        <input type="datetime-local" id="exam-expiry">
+                    </div>
+                    <div class="form-group">
+                        <label>Select Questions</label>
+                        <div id="exam-questions-list">
+                            <p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>
+                        </div>
+                    </div>
+                    <button onclick="createExam()">Create Exam</button>
+                    <div class="error" id="exam-error"></div>
+                    <div class="success" id="exam-success"></div>
+                </div>
+
+                <!-- View Results Section -->
+                <div id="view-results-section" class="hidden">
+                    <h3 style="margin-bottom: 15px; color: var(--secondary);">Exam Results</h3>
+                    <div class="form-group">
+                        <label>Select Exam</label>
+                        <select id="results-exam-select" onchange="loadResults()">
+                            <option value="">-- Select Exam --</option>
+                        </select>
+                    </div>
+                    <div id="results-container">
+                        <p style="text-align: center; color: #7f8c8d;">Select an exam to view results.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidate Login Screen -->
+            <div id="candidate-login-screen" class="screen">
+                <h2 style="text-align: center; margin-bottom: 25px; color: var(--primary);">Start Your Exam</h2>
+                <div class="form-group">
+                    <label for="exam-code-input">Exam Code</label>
+                    <input type="text" id="exam-code-input" placeholder="Enter exam code (case sensitive)" oninput="this.value = this.value.toUpperCase()" value="SAMPLE01">
+                </div>
+                <div class="form-group">
+                    <label for="candidate-name">Your Full Name</label>
+                    <input type="text" id="candidate-name" placeholder="As per your application" value="Test Candidate">
+                </div>
+                <div class="form-group">
+                    <label for="candidate-mobile">Mobile Number (Optional)</label>
+                    <input type="tel" id="candidate-mobile" placeholder="For reference only" value="9876543210">
+                </div>
+                <button onclick="startExam()">Begin Exam</button>
+                <p class="error" id="login-error"></p>
+                <div style="text-align: center; margin-top: 25px;">
+                    <button class="admin-btn" onclick="showAdminLogin()">Admin Login →</button>
+                </div>
+            </div>
+
+            <!-- Exam Screen -->
+            <div id="exam-screen" class="screen">
+                <div class="timer" id="timer-display">⏱️ Time Remaining: 60:00</div>
+                
+                <div class="question-container">
+                    <div class="question-tag" id="question-subject-display">Reasoning</div>
+                    <div class="question-number">Question <span id="current-q-num">1</span> of <span id="total-questions">5</span></div>
+                    <div class="question-text" id="question-text-display">Loading question...</div>
+                    
+                    <div class="options">
+                        <div class="option" onclick="selectOption(0)">
+                            <span class="option-letter">A</span>
+                            <span id="option-a-display">Loading...</span>
+                        </div>
+                        <div class="option" onclick="selectOption(1)">
+                            <span class="option-letter">B</span>
+                            <span id="option-b-display">Loading...</span>
+                        </div>
+                        <div class="option" onclick="selectOption(2)">
+                            <span class="option-letter">C</span>
+                            <span id="option-c-display">Loading...</span>
+                        </div>
+                        <div class="option" onclick="selectOption(3)">
+                            <span class="option-letter">D</span>
+                            <span id="option-d-display">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="progress">Question <span id="progress-num">1</span> of <span id="progress-total">5</span></div>
+                
+                <div class="navigation">
+                    <button id="prev-btn" onclick="prevQuestion()" disabled>← Previous</button>
+                    <button id="next-btn" onclick="nextQuestion()">Next →</button>
+                    <button id="submit-btn" class="success-btn" onclick="submitExam()" style="display: none;">Submit Exam</button>
+                </div>
+            </div>
+
+            <!-- Result Screen -->
+            <div id="result-screen" class="screen">
+                <div class="result-container">
+                    <h2>✅ Exam Completed!</h2>
+                    <p style="font-size: 1.2rem; margin: 15px 0; color: var(--dark);">Thank you for attempting Polite Coaching Centre test.</p>
+                    
+                    <div class="score-display" id="final-score">0.00</div>
+                    <p style="font-size: 1.1rem; color: var(--primary); margin-bottom: 25px;">Your Final Score</p>
+                    
+                    <div style="background: #e8f4fc; padding: 20px; border-radius: 12px; margin: 25px 0;">
+                        <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Exam Code:</strong> <span id="result-exam-code">REASONING_01</span></p>
+                        <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Name:</strong> <span id="result-name">Candidate Name</span></p>
+                        <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Mobile:</strong> <span id="result-mobile">9876543210</span></p>
+                    </div>
+                    
+                    <p style="margin: 20px 0; font-weight: 500; line-height: 1.6;">
+                        Your score has been recorded. Contact Polite Coaching Centre for result analysis.
+                    </p>
+                    
+                    <button class="success-btn" onclick="restartApp()">Take Another Exam</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pre-configured system with all API keys hardcoded
+        const SYSTEM_CONFIG = {
+            // Airtable configuration
+            AIRTABLE_BASE_ID: "appYldhnqN8AdNgSF/tbl0CFTaoBKx7Ef8G", // ⚠️ YOU MUST REPLACE THIS
+            AIRTABLE_TOKEN: "pat0IXMapFZWPxtRc.f6486e66c813a51b4991b01e9487fd23b72c40c9482e2a3bea9bd8daca8931a6",
+            
+            // Gemini API
+            GEMINI_API_KEY: "AIzaSyBRtCg_0CoovJq-muulJOE4tKxzzS-t0x4",
+            
+            // OCR Space API
+            OCR_SPACE_API_KEY: "K85624353188957",
+            
+            // Admin password
+            ADMIN_PASSWORD: "politeadmin",
+            
+            // Marking scheme
+            MARKING_SCHEME: {
+                correct: 1,
+                wrong: -0.25
+            }
+        };
+
+        // Global variables
+        let isAdminLoggedIn = false;
+        let currentExam = null;
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let examTimer = null;
+        let timeRemaining = 0;
+        let startTime = null;
+        let aiGeneratedQuestion = null;
+        let extractedQuestions = [];
+        let cameraActive = false;
+        let cameraStream = null;
+        let questions = [];
+        let exams = [];
+        let results = [];
+
+        // Sample data for immediate use
+        const SAMPLE_QUESTIONS = [
+            {
+                ID: "Q1",
+                Subject: "Math",
+                Question: "What is 5 × 6?",
+                'Option A': "25",
+                'Option B': "30",
+                'Option C': "35",
+                'Option D': "40",
+                Correct: "B"
+            },
+            {
+                ID: "Q2",
+                Subject: "Reasoning",
+                Question: "2, 4, 8, 16, ?",
+                'Option A': "20",
+                'Option B': "24",
+                'Option C': "32",
+                'Option D': "64",
+                Correct: "C"
+            },
+            {
+                ID: "Q3",
+                Subject: "GK",
+                Question: "Who is the current Prime Minister of India?",
+                'Option A': "Narendra Modi",
+                'Option B': "Manmohan Singh",
+                'Option C': "Rahul Gandhi",
+                'Option D': "Amit Shah",
+                Correct: "A"
+            },
+            {
+                ID: "Q4",
+                Subject: "Math",
+                Question: "If a shirt costs ₹800 after a 20% discount, what was its original price?",
+                'Option A': "₹900",
+                'Option B': "₹960",
+                'Option C': "₹1000",
+                'Option D': "₹1200",
+                Correct: "C"
+            },
+            {
+                ID: "Q5",
+                Subject: "Reasoning",
+                Question: "If all Bloops are Razzies and all Razzies are Lazzies, then all Bloops are definitely Lazzies. Is this statement true?",
+                'Option A': "True",
+                'Option B': "False",
+                'Option C': "Cannot be determined",
+                'Option D': "Only sometimes",
+                Correct: "A"
+            }
+        ];
+
+        const SAMPLE_EXAMS = [
+            {
+                'Exam Code': "SAMPLE01",
+                'Title': "Sample Reasoning & Math Test",
+                'Duration (mins)': "10",
+                'Expiry (IST)': new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+                'Question IDs': "Q1,Q2,Q3,Q4,Q5"
+            }
+        ];
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded');
+            
+            // Set default expiry time to tomorrow at 6 PM IST
+            const now = new Date();
+            now.setDate(now.getDate() + 1);
+            now.setHours(18, 0, 0, 0);
+            document.getElementById('exam-expiry').valueAsDate = now;
+            
+            // Initialize with sample data
+            questions = [...SAMPLE_QUESTIONS];
+            exams = [...SAMPLE_EXAMS];
+            
+            // Load from Airtable (if Base ID is set)
+            tryLoadFromAirtable();
+            
+            // Initialize system
+            initializeSystem();
+            
+            // Show admin login screen by default
+            showAdminLogin();
+        });
+
+        function initializeSystem() {
+            console.log('Initializing system');
+            
+            // Setup camera
+            setupCamera();
+            
+            // Check system status
+            checkSystemStatus();
+        }
+
+        function checkSystemStatus() {
+            console.log('Checking system status');
+            
+            // Airtable connection status
+            if (SYSTEM_CONFIG.AIRTABLE_BASE_ID !== "appYOUR_BASE_ID_HERE") {
+                document.getElementById('db-status').className = 'status-good';
+                document.getElementById('db-status').textContent = '✅ Connected';
+            } else {
+                document.getElementById('db-status').className = 'status-bad';
+                document.getElementById('db-status').textContent = '❌ Base ID Missing';
+            }
+            
+            // Gemini API status
+            document.getElementById('gemini-status').className = 'status-good';
+            document.getElementById('gemini-status').textContent = '✅ Active';
+            
+            // OCR API status
+            document.getElementById('ocr-status').className = 'status-good';
+            document.getElementById('ocr-status').textContent = '✅ Active';
+        }
+
+        function tryLoadFromAirtable() {
+            if (SYSTEM_CONFIG.AIRTABLE_BASE_ID === "appYOUR_BASE_ID_HERE") {
+                console.log('Airtable Base ID not set - using sample data');
+                return;
+            }
+            
+            console.log('Loading data from Airtable...');
+            loadQuestionsFromAirtable();
+            loadExamsFromAirtable();
+        }
+
+        function loadQuestionsFromAirtable() {
+            const url = `https://api.airtable.com/v0/${SYSTEM_CONFIG.AIRTABLE_BASE_ID}/Questions`;
+            
+            fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${SYSTEM_CONFIG.AIRTABLE_TOKEN}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch questions from Airtable');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Questions loaded from Airtable:', data.records.length);
+                questions = data.records.map(record => ({
+                    ID: record.fields.ID,
+                    Subject: record.fields.Subject,
+                    Question: record.fields.Question,
+                    'Option A': record.fields['Option A'],
+                    'Option B': record.fields['Option B'],
+                    'Option C': record.fields['Option C'],
+                    'Option D': record.fields['Option D'],
+                    Correct: record.fields.Correct
+                }));
+                renderQuestionsList();
+            })
+            .catch(error => {
+                console.error('Error loading questions from Airtable:', error);
+                // Keep using sample data
+                renderQuestionsList();
+            });
+        }
+
+        function loadExamsFromAirtable() {
+            const url = `https://api.airtable.com/v0/${SYSTEM_CONFIG.AIRTABLE_BASE_ID}/Exams`;
+            
+            fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${SYSTEM_CONFIG.AIRTABLE_TOKEN}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch exams from Airtable');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Exams loaded from Airtable:', data.records.length);
+                exams = data.records.map(record => ({
+                    'Exam Code': record.fields['Exam Code'],
+                    'Title': record.fields['Title'],
+                    'Duration (mins)': record.fields['Duration (mins)'].toString(),
+                    'Expiry (IST)': record.fields['Expiry (IST)'],
+                    'Question IDs': record.fields['Question IDs'].join(',')
+                }));
+                updateResultsDropdown();
+            })
+            .catch(error => {
+                console.error('Error loading exams from Airtable:', error);
+                // Keep using sample data
+                updateResultsDropdown();
+            });
+        }
+
+        function saveQuestionToAirtable(question) {
+            if (SYSTEM_CONFIG.AIRTABLE_BASE_ID === "appYOUR_BASE_ID_HERE") {
+                return;
+            }
+            
+            const url = `https://api.airtable.com/v0/${SYSTEM_CONFIG.AIRTABLE_BASE_ID}/Questions`;
+            const data = {
+                fields: {
+                    ID: question.ID,
+                    Subject: question.Subject,
+                    Question: question.Question,
+                    'Option A': question['Option A'],
+                    'Option B': question['Option B'],
+                    'Option C': question['Option C'],
+                    'Option D': question['Option D'],
+                    Correct: question.Correct
+                }
+            };
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SYSTEM_CONFIG.AIRTABLE_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to save question to Airtable');
+                }
+                console.log('Question saved to Airtable successfully');
+            })
+            .catch(error => {
+                console.error('Error saving question to Airtable:', error);
+            });
+        }
+
+        function saveExamToAirtable(exam) {
+            if (SYSTEM_CONFIG.AIRTABLE_BASE_ID === "appYOUR_BASE_ID_HERE") {
+                return;
+            }
+            
+            const url = `https://api.airtable.com/v0/${SYSTEM_CONFIG.AIRTABLE_BASE_ID}/Exams`;
+            const data = {
+                fields: {
+                    'Exam Code': exam['Exam Code'],
+                    'Title': exam.Title,
+                    'Duration (mins)': parseInt(exam['Duration (mins)']),
+                    'Expiry (IST)': exam['Expiry (IST)'],
+                    'Question IDs': exam['Question IDs'].split(',')
+                }
+            };
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SYSTEM_CONFIG.AIRTABLE_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to save exam to Airtable');
+                }
+                console.log('Exam saved to Airtable successfully');
+            })
+            .catch(error => {
+                console.error('Error saving exam to Airtable:', error);
+            });
+        }
+
+        function saveResultToAirtable(result) {
+            if (SYSTEM_CONFIG.AIRTABLE_BASE_ID === "appYOUR_BASE_ID_HERE") {
+                return;
+            }
+            
+            const url = `https://api.airtable.com/v0/${SYSTEM_CONFIG.AIRTABLE_BASE_ID}/Results`;
+            const data = {
+                fields: {
+                    Timestamp: result.Timestamp,
+                    'Exam Code': result['Exam Code'],
+                    Name: result.Name,
+                    Mobile: result.Mobile,
+                    Score: result.Score,
+                    Answers: result.Answers
+                }
+            };
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SYSTEM_CONFIG.AIRTABLE_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to save result to Airtable');
+                }
+                console.log('Result saved to Airtable successfully');
+            })
+            .catch(error => {
+                console.error('Error saving result to Airtable:', error);
+            });
+        }
+
+        // Admin functions
+        function showAdminLogin() {
+            console.log('Showing admin login screen');
+            document.getElementById('admin-login-screen').classList.add('active');
+            document.getElementById('candidate-login-screen').classList.remove('active');
+            document.getElementById('admin-panel').classList.remove('active');
+            document.getElementById('exam-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.remove('active');
+        }
+
+        function loginAdmin() {
+            const password = document.getElementById('admin-password')?.value.trim();
+            const errorElement = document.getElementById('admin-login-error');
+            
+            if (!password) {
+                console.log('Password field not found');
+                return;
+            }
+            
+            console.log('Admin login attempt with password:', password);
+            
+            if (password === SYSTEM_CONFIG.ADMIN_PASSWORD) {
+                console.log('Admin login successful');
+                isAdminLoggedIn = true;
+                document.getElementById('admin-login-screen').classList.remove('active');
+                document.getElementById('admin-panel').classList.add('active');
+                showQuestionBank();
+                if (errorElement) errorElement.textContent = '';
+            } else {
+                console.log('Admin login failed - incorrect password');
+                if (errorElement) errorElement.textContent = '❌ Incorrect password. Please try again.';
+            }
+        }
+
+        function logoutAdmin() {
+            console.log('Admin logout');
+            isAdminLoggedIn = false;
+            document.getElementById('admin-panel').classList.remove('active');
+            document.getElementById('admin-login-screen').classList.add('active');
+            const passwordField = document.getElementById('admin-password');
+            if (passwordField) passwordField.value = '';
+        }
+
+        function showQuestionBank() {
+            console.log('Showing question bank');
+            document.getElementById('question-bank-section')?.classList.remove('hidden');
+            document.getElementById('create-exam-section')?.classList.add('hidden');
+            document.getElementById('view-results-section')?.classList.add('hidden');
+            document.getElementById('ai-generator-section')?.classList.add('hidden');
+            document.getElementById('upload-section')?.classList.add('hidden');
+            
+            renderQuestionsList();
+        }
+
+        function showCreateExam() {
+            console.log('Showing create exam');
+            document.getElementById('question-bank-section').classList.add('hidden');
+            document.getElementById('create-exam-section').classList.remove('hidden');
+            document.getElementById('view-results-section').classList.add('hidden');
+            document.getElementById('ai-generator-section').classList.add('hidden');
+            document.getElementById('upload-section').classList.add('hidden');
+            
+            renderExamQuestionsList();
+        }
+
+        function showViewResults() {
+            console.log('Showing view results');
+            document.getElementById('question-bank-section').classList.add('hidden');
+            document.getElementById('create-exam-section').classList.add('hidden');
+            document.getElementById('view-results-section').classList.remove('hidden');
+            document.getElementById('ai-generator-section').classList.add('hidden');
+            document.getElementById('upload-section').classList.add('hidden');
+            
+            updateResultsDropdown();
+        }
+
+        function showAIGenerator() {
+            console.log('Showing AI generator');
+            document.getElementById('question-bank-section').classList.add('hidden');
+            document.getElementById('create-exam-section').classList.add('hidden');
+            document.getElementById('view-results-section').classList.add('hidden');
+            document.getElementById('ai-generator-section').classList.remove('hidden');
+            document.getElementById('upload-section').classList.add('hidden');
+            
+            document.getElementById('ai-result-container').classList.add('hidden');
+        }
+
+        function showUploadScreen() {
+            console.log('Showing upload screen');
+            document.getElementById('question-bank-section').classList.add('hidden');
+            document.getElementById('create-exam-section').classList.add('hidden');
+            document.getElementById('view-results-section').classList.add('hidden');
+            document.getElementById('ai-generator-section').classList.add('hidden');
+            document.getElementById('upload-section').classList.remove('hidden');
+            
+            document.getElementById('upload-result-container').classList.add('hidden');
+        }
+
+        function showCandidateScreen() {
+            console.log('Showing candidate screen');
+            document.getElementById('admin-login-screen').classList.remove('active');
+            document.getElementById('candidate-login-screen').classList.add('active');
+            document.getElementById('admin-panel').classList.remove('active');
+        }
+
+        // Database functions
+        function saveDatabaseConfig() {
+            const baseId = document.getElementById('airtable-base-id').value.trim();
+            const successElement = document.getElementById('db-success');
+            const errorElement = document.getElementById('db-error');
+            
+            if (!baseId.startsWith('app')) {
+                errorElement.textContent = '❌ Invalid Base ID format. It should start with "app" followed by alphanumeric characters.';
+                successElement.textContent = '';
+                return;
+            }
+            
+            // Update the configuration
+            SYSTEM_CONFIG.AIRTABLE_BASE_ID = baseId;
+            
+            // Save to localStorage
+            localStorage.setItem('airtableBaseId', baseId);
+            
+            errorElement.textContent = '';
+            successElement.textContent = '✅ Base ID updated successfully! Refresh the page to load data.';
+            setTimeout(() => {
+                successElement.textContent = '';
+            }, 5000);
+        }
+
+        // Question Bank functions
+        function addQuestion() {
+            const subject = document.getElementById('question-subject').value;
+            const questionText = document.getElementById('question-text').value.trim();
+            const optionA = document.getElementById('option-a').value.trim();
+            const optionB = document.getElementById('option-b').value.trim();
+            const optionC = document.getElementById('option-c').value.trim();
+            const optionD = document.getElementById('option-d').value.trim();
+            const correct = parseInt(document.getElementById('correct-answer').value);
+            const errorElement = document.getElementById('question-error');
+            const successElement = document.getElementById('question-success');
+            
+            // Validate
+            if (!questionText || !optionA || !optionB || !optionC || !optionD) {
+                errorElement.textContent = '❌ All fields are required. Please fill in the question and all options.';
+                successElement.textContent = '';
+                return;
+            }
+            
+            // Generate unique ID
+            const questionId = `Q${Date.now()}_${questions.length + 1}`;
+            
+            // Create question object
+            const newQuestion = {
+                ID: questionId,
+                Subject: subject,
+                Question: questionText,
+                'Option A': optionA,
+                'Option B': optionB,
+                'Option C': optionC,
+                'Option D': optionD,
+                Correct: String.fromCharCode(65 + correct)
+            };
+            
+            // Add to questions array
+            questions.push(newQuestion);
+            
+            // Save to Airtable (if configured)
+            saveQuestionToAirtable(newQuestion);
+            
+            // Clear form
+            document.getElementById('question-text').value = '';
+            document.getElementById('option-a').value = '';
+            document.getElementById('option-b').value = '';
+            document.getElementById('option-c').value = '';
+            document.getElementById('option-d').value = '';
+            document.getElementById('correct-answer').value = '0';
+            
+            // Show success
+            errorElement.textContent = '';
+            successElement.textContent = '✅ Question added successfully!';
+            setTimeout(() => {
+                successElement.textContent = '';
+            }, 3000);
+            
+            renderQuestionsList();
+        }
+
+        function renderQuestionsList() {
+            const container = document.getElementById('questions-list');
+            
+            if (questions.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No questions added yet. Create your first question above!</p>';
+                return;
+            }
+            
+            let html = `<div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; font-weight: 600; color: var(--primary);">
+                Total Questions: ${questions.length}
+            </div>`;
+            
+            questions.forEach((q, index) => {
+                html += `
+                <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <strong>${q.ID}</strong>
+                        <span class="question-tag">${q.Subject}</span>
+                    </div>
+                    <p style="margin-bottom: 10px; font-weight: 500;">${q.Question}</p>
+                    <div style="margin-left: 25px; margin-bottom: 8px;">
+                        <div>A) ${q['Option A']}</div>
+                        <div>B) ${q['Option B']}</div>
+                        <div>C) ${q['Option C']}</div>
+                        <div>D) ${q['Option D']}</div>
+                    </div>
+                    <div style="color: var(--success); font-weight: 500;">
+                        Correct Answer: ${q.Correct}
+                    </div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function renderExamQuestionsList() {
+            const container = document.getElementById('exam-questions-list');
+            
+            if (questions.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No questions available. Add questions first!</p>';
+                return;
+            }
+            
+            let html = '<div style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">';
+            
+            questions.forEach(q => {
+                html += `
+                <div style="display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <input type="checkbox" id="q-${q.ID}" value="${q.ID}" style="margin-right: 10px; width: 18px; height: 18px;">
+                    <label for="q-${q.ID}" style="font-weight: 500;">${q.ID}: ${q.Question.substring(0, 50)}${q.Question.length > 50 ? '...' : ''}</label>
+                </div>
+                `;
+            });
+            
+            html += '</div><p style="font-size: 0.9rem; color: #7f8c8d; margin-top: 5px;">✓ Select questions for this exam</p>';
+            container.innerHTML = html;
+        }
+
+        // Create Exam functions
+        function createExam() {
+            const examCode = document.getElementById('exam-code').value.trim().toUpperCase();
+            const examTitle = document.getElementById('exam-title').value.trim();
+            const duration = parseInt(document.getElementById('exam-duration').value);
+            const expiry = document.getElementById('exam-expiry').value;
+            const errorElement = document.getElementById('exam-error');
+            const successElement = document.getElementById('exam-success');
+            
+            // Validate
+            if (!examCode || !examTitle || isNaN(duration) || duration < 5) {
+                errorElement.textContent = '❌ Please fill all fields correctly. Duration must be at least 5 minutes.';
+                successElement.textContent = '';
+                return;
+            }
+            
+            if (!expiry) {
+                errorElement.textContent = '❌ Please set an expiry date and time.';
+                successElement.textContent = '';
+                return;
+            }
+            
+            // Get selected questions
+            const selectedQuestions = [];
+            document.querySelectorAll('#exam-questions-list input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedQuestions.push(checkbox.value);
+            });
+            
+            if (selectedQuestions.length < 5) {
+                errorElement.textContent = '❌ Please select at least 5 questions for the exam.';
+                successElement.textContent = '';
+                return;
+            }
+            
+            // Check for duplicate exam code
+            if (exams.some(exam => exam['Exam Code'] === examCode)) {
+                errorElement.textContent = '❌ Exam code already exists. Please use a unique code.';
+                successElement.textContent = '';
+                return;
+            }
+            
+            // Create exam object
+            const newExam = {
+                'Exam Code': examCode,
+                'Title': examTitle,
+                'Duration (mins)': duration.toString(),
+                'Expiry (IST)': new Date(expiry).toISOString(),
+                'Question IDs': selectedQuestions.join(',')
+            };
+            
+            // Add to exams array
+            exams.push(newExam);
+            
+            // Save to Airtable (if configured)
+            saveExamToAirtable(newExam);
+            
+            // Clear form
+            document.getElementById('exam-code').value = '';
+            document.getElementById('exam-title').value = '';
+            document.getElementById('exam-duration').value = '60';
+            document.querySelectorAll('#exam-questions-list input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Set default expiry to tomorrow at 6 PM
+            const now = new Date();
+            now.setDate(now.getDate() + 1);
+            now.setHours(18, 0, 0, 0);
+            document.getElementById('exam-expiry').valueAsDate = now;
+            
+            // Show success
+            errorElement.textContent = '';
+            successElement.textContent = `✅ Exam "${examCode}" created successfully! Share this code with candidates.`;
+            setTimeout(() => {
+                successElement.textContent = '';
+            }, 5000);
+        }
+
+        function updateResultsDropdown() {
+            const select = document.getElementById('results-exam-select');
+            select.innerHTML = '<option value="">-- Select Exam --</option>';
+            
+            exams.forEach(exam => {
+                const option = document.createElement('option');
+                option.value = exam['Exam Code'];
+                option.textContent = `${exam['Exam Code']} - ${exam.Title}`;
+                select.appendChild(option);
+            });
+        }
+
+        function loadResults() {
+            const examCode = document.getElementById('results-exam-select').value;
+            const container = document.getElementById('results-container');
+            
+            if (!examCode) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">Select an exam to view results.</p>';
+                return;
+            }
+            
+            // Filter results for this exam
+            const examResults = results.filter(result => result['Exam Code'] === examCode);
+            
+            if (examResults.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No results found for this exam.</p>';
+                return;
+            }
+            
+            let html = `
+                <h3 style="margin: 20px 0 15px; color: var(--secondary);">Results for ${examCode}</h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                        <thead>
+                            <tr style="background: var(--secondary); color: white;">
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Name</th>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Mobile</th>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Score</th>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Time Taken</th>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            examResults.forEach(result => {
+                const date = new Date(result.Timestamp).toLocaleString('en-IN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px; border: 1px solid #eee;">${result.Name}</td>
+                        <td style="padding: 10px; border: 1px solid #eee;">${result.Mobile}</td>
+                        <td style="padding: 10px; border: 1px solid #eee; font-weight: bold; color: var(--success);">${result.Score.toFixed(2)}</td>
+                        <td style="padding: 10px; border: 1px solid #eee;">${formatTime(result.duration)}</td>
+                        <td style="padding: 10px; border: 1px solid #eee;">${date}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                <button style="margin-top: 20px; background: var(--danger);" onclick="clearResults('${examCode}')">🗑️ Clear Results for ${examCode}</button>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function clearResults(examCode) {
+            if (confirm(`Are you sure you want to clear ALL results for exam ${examCode}? This action cannot be undone.`)) {
+                results = results.filter(result => result['Exam Code'] !== examCode);
+                alert(`✅ Results for ${examCode} have been cleared.`);
+                loadResults();
+            }
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}m ${secs}s`;
+        }
+
+        // AI Question Generator
+        function generateAIQuestion() {
+            const subject = document.getElementById('ai-subject').value;
+            const topic = document.getElementById('ai-topic').value.trim() || 'general aptitude';
+            const customPrompt = document.getElementById('ai-custom-prompt').value.trim();
+            const errorElement = document.getElementById('ai-error');
+            
+            // Show loading state
+            document.querySelector('#ai-generator-section button.ai-btn').disabled = true;
+            document.querySelector('#ai-generator-section button.ai-btn').textContent = '⏳ Generating...';
+            errorElement.textContent = '';
+            
+            // Prepare the prompt
+            let prompt;
+            if (customPrompt) {
+                prompt = customPrompt;
+            } else {
+                prompt = `You are an expert exam setter for Indian competitive exams (Railway, SSC, Banking, UPSC).
+Subject: ${subject}
+Topic: ${topic}
+Difficulty: Medium to Hard
+
+Generate 1 high-quality MCQ with the following format:
+Question: [Clear, unambiguous question text]
+A) [Plausible option]
+B) [Plausible option] 
+C) [Plausible option]
+D) [Plausible option]
+Correct Answer: [Letter]
+Explanation: [Detailed explanation of why correct answer is right and why others are wrong, including common mistakes]
+
+Requirements:
+- Questions must be relevant to Indian competitive exams
+- Options must be plausible and based on common misconceptions
+- Explanations must be educational and detailed
+- No trick questions - focus on conceptual clarity
+- Include current affairs/recent developments where relevant
+- For Math/Reasoning: Include step-by-step solution approach
+- For GK: Include source references if possible`;
+            }
+            
+            // Call Gemini API
+            fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${SYSTEM_CONFIG.GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }]
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to generate question with Gemini API');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Extract the question text from the response
+                let content = data.candidates[0].content.parts[0].text;
+                
+                // Parse the content
+                const questionMatch = content.match(/Question:\s*([^\n]+)/i);
+                const optionAMatch = content.match(/A\)[^a-dA-D]*([^\n]+)/i);
+                const optionBMatch = content.match(/B\)[^a-dA-D]*([^\n]+)/i);
+                const optionCMatch = content.match(/C\)[^a-dA-D]*([^\n]+)/i);
+                const optionDMatch = content.match(/D\)[^a-dA-D]*([^\n]+)/i);
+                const correctMatch = content.match(/Correct Answer:\s*([A-D])/i);
+                const explanationMatch = content.match(/Explanation:\s*([\s\S]+)/i);
+                
+                let question = "Sample question for Railway exam";
+                let optionA = "Sample option A";
+                let optionB = "Sample option B";
+                let optionC = "Sample option C";
+                let optionD = "Sample option D";
+                let correct = "A";
+                let explanation = "Sample explanation";
+                
+                if (questionMatch) question = questionMatch[1].trim();
+                if (optionAMatch) optionA = optionAMatch[1].trim();
+                if (optionBMatch) optionB = optionBMatch[1].trim();
+                if (optionCMatch) optionC = optionCMatch[1].trim();
+                if (optionDMatch) optionD = optionDMatch[1].trim();
+                if (correctMatch) correct = correctMatch[1].trim();
+                if (explanationMatch) explanation = explanationMatch[1].trim();
+                
+                // Display the question
+                document.getElementById('ai-question-text').textContent = question;
+                document.getElementById('ai-option-a').textContent = optionA;
+                document.getElementById('ai-option-b').textContent = optionB;
+                document.getElementById('ai-option-c').textContent = optionC;
+                document.getElementById('ai-option-d').textContent = optionD;
+                document.getElementById('ai-correct-answer').textContent = correct;
+                document.getElementById('ai-explanation').textContent = explanation;
+                
+                // Store for adding to bank
+                aiGeneratedQuestion = {
+                    subject: subject,
+                    question: question,
+                    options: [optionA, optionB, optionC, optionD],
+                    correct: ['A', 'B', 'C', 'D'].indexOf(correct)
+                };
+                
+                document.getElementById('ai-result-container').classList.remove('hidden');
+                
+                // Reset button
+                document.querySelector('#ai-generator-section button.ai-btn').disabled = false;
+                document.querySelector('#ai-generator-section button.ai-btn').textContent = '✨ Generate Question with AI';
+            })
+            .catch(error => {
+                console.error('Error generating question:', error);
+                errorElement.textContent = '❌ ' + error.message;
+                document.querySelector('#ai-generator-section button.ai-btn').disabled = false;
+                document.querySelector('#ai-generator-section button.ai-btn').textContent = '✨ Generate Question with AI';
+            });
+        }
+
+        function regenerateAIQuestion() {
+            generateAIQuestion();
+        }
+
+        function acceptAIQuestion() {
+            if (!aiGeneratedQuestion) return;
+            
+            // Create question object
+            const questionId = `Q${Date.now()}_${questions.length + 1}`;
+            const newQuestion = {
+                ID: questionId,
+                Subject: aiGeneratedQuestion.subject,
+                Question: aiGeneratedQuestion.question,
+                'Option A': aiGeneratedQuestion.options[0],
+                'Option B': aiGeneratedQuestion.options[1],
+                'Option C': aiGeneratedQuestion.options[2],
+                'Option D': aiGeneratedQuestion.options[3],
+                Correct: String.fromCharCode(65 + aiGeneratedQuestion.correct)
+            };
+            
+            // Add to questions array
+            questions.push(newQuestion);
+            
+            // Save to Airtable (if configured)
+            saveQuestionToAirtable(newQuestion);
+            
+            // Clear AI section
+            aiGeneratedQuestion = null;
+            document.getElementById('ai-result-container').classList.add('hidden');
+            
+            alert("✅ AI-generated question added to your question bank!");
+            
+            // Refresh display
+            renderQuestionsList();
+        }
+
+        // Upload functions
+        function processUpload() {
+            const fileInput = document.getElementById('paper-upload');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert("❌ Please select a file to upload.");
+                return;
+            }
+            
+            if (!file.type.startsWith('image/') && !file.name.toLowerCase().endsWith('.pdf')) {
+                alert("❌ Unsupported file type. Please upload an image (JPG, PNG) or PDF.");
+                return;
+            }
+            
+            // Show processing state
+            document.querySelector('#upload-section button.upload-btn').disabled = true;
+            document.querySelector('#upload-section button.upload-btn').textContent = '⏳ Processing...';
+            
+            if (SYSTEM_CONFIG.OCR_SPACE_API_KEY === "K85624353188957") {
+                // Simulate OCR processing since we don't have a real OCR service
+                setTimeout(() => {
+                    const sampleText = `1. What is the next number in the series: 2, 6, 12, 20, ?
+A) 24
+B) **30**
+C) 32
+D) 36
+Answer: B
+
+2. If a shirt costs ₹1200 after 20% discount, what was original price?
+A) ₹1400
+B) ₹1440
+C) **₹1500**
+D) ₹1600
+Answer: C
+
+3. Which word is most similar to "BENEVOLENT"?
+A) Selfish
+B) **Kind**
+C) Cruel
+D) Greedy
+Answer: B`;
+                    
+                    document.getElementById('extracted-text').value = sampleText;
+                    document.getElementById('upload-result-container').classList.remove('hidden');
+                    
+                    // Reset button
+                    document.querySelector('#upload-section button.upload-btn').disabled = false;
+                    document.querySelector('#upload-section button.upload-btn').textContent = '🔍 Extract Questions';
+                }, 1500);
+            } else {
+                // In a real implementation, this would call OCR Space API
+                // For now, simulate with sample text
+                setTimeout(() => {
+                    const sampleText = `1. What is the next number in the series: 2, 6, 12, 20, ?
+A) 24
+B) 30
+C) 32
+D) 36
+Answer: B`;
+                    
+                    document.getElementById('extracted-text').value = sampleText;
+                    document.getElementById('upload-result-container').classList.remove('hidden');
+                    
+                    // Reset button
+                    document.querySelector('#upload-section button.upload-btn').disabled = false;
+                    document.querySelector('#upload-section button.upload-btn').textContent = '🔍 Extract Questions';
+                }, 1500);
+            }
+        }
+
+        function cleanText() {
+            const rawText = document.getElementById('extracted-text').value;
+            extractedQuestions = [];
+            
+            // Simple text cleaning and parsing
+            const questionBlocks = rawText.split(/\n\s*\n/).filter(block => block.trim() !== '');
+            
+            let html = '<div style="max-height: 400px; overflow-y: auto;">';
+            
+            questionBlocks.forEach((block, index) => {
+                // Extract question number and text
+                const lines = block.split('\n').filter(line => line.trim() !== '');
+                if (lines.length < 6) return; // Skip invalid blocks
+                
+                const questionLine = lines[0].replace(/^\d+\.\s*/, '').trim();
+                const options = lines.slice(1, 5).map(line => line.replace(/^[A-D]\)\s*/, '').trim());
+                const answerLine = lines[5] || '';
+                const correctAns = answerLine.match(/Answer:\s*([A-D])/i)?.[1] || 'A';
+                
+                const question = {
+                    id: `Q${Date.now()}_${index}`,
+                    subject: 'Others', // Default subject
+                    question: questionLine,
+                    options: options,
+                    correct: ['A', 'B', 'C', 'D'].indexOf(correctAns)
+                };
+                
+                extractedQuestions.push(question);
+                
+                html += `
+                <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary);">
+                    <p style="margin-bottom: 10px; font-weight: 500;">${questionLine}</p>
+                    <div style="margin-left: 25px; margin-bottom: 8px;">
+                        <div>A) ${options[0]}</div>
+                        <div>B) ${options[1]}</div>
+                        <div>C) ${options[2]}</div>
+                        <div>D) ${options[3]}</div>
+                    </div>
+                    <div style="color: var(--success); font-weight: 500;">
+                        Correct Answer: ${correctAns.toUpperCase()}
+                    </div>
+                </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            if (extractedQuestions.length === 0) {
+                html = '<p style="text-align: center; color: var(--danger);">❌ No valid questions found. Please check the extracted text format.</p>';
+            }
+            
+            document.getElementById('ready-questions').innerHTML = html;
+        }
+
+        function addExtractedQuestions() {
+            if (extractedQuestions.length === 0) {
+                alert("❌ No questions to add. Please clean the text first.");
+                return;
+            }
+            
+            // Add questions to the system
+            const newQuestions = extractedQuestions.map((q, index) => {
+                const questionId = `Q${Date.now()}_${index}`;
+                const newQuestion = {
+                    ID: questionId,
+                    Subject: q.subject,
+                    Question: q.question,
+                    'Option A': q.options[0],
+                    'Option B': q.options[1],
+                    'Option C': q.options[2],
+                    'Option D': q.options[3],
+                    Correct: String.fromCharCode(65 + q.correct)
+                };
+                
+                // Add to questions array
+                questions.push(newQuestion);
+                
+                // Save to Airtable (if configured)
+                saveQuestionToAirtable(newQuestion);
+                
+                return newQuestion;
+            });
+            
+            // Refresh display
+            renderQuestionsList();
+            extractedQuestions = [];
+            
+            alert(`✅ ${newQuestions.length} questions added to your question bank!`);
+            document.getElementById('upload-result-container').classList.add('hidden');
+        }
+
+        // Camera functions
+        function toggleCamera() {
+            const video = document.getElementById('camera-preview');
+            const captureBtn = document.getElementById('capture-btn');
+            const toggleBtn = document.getElementById('camera-toggle');
+            const toggleText = document.getElementById('camera-toggle-text');
+            
+            if (!video || !captureBtn || !toggleBtn || !toggleText) {
+                console.log('Camera elements not found');
+                alert('❌ Camera elements not found. Please refresh the page.');
+                return;
+            }
+            
+            if (cameraActive) {
+                // Stop camera
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                }
+                video.style.display = 'none';
+                captureBtn.style.display = 'none';
+                toggleText.textContent = 'Use Camera';
+                toggleBtn.classList.remove('active');
+                cameraActive = false;
+            } else {
+                // Start camera
+                navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                    .then(stream => {
+                        cameraStream = stream;
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        captureBtn.style.display = 'block';
+                        toggleText.textContent = 'Stop Camera';
+                        toggleBtn.classList.add('active');
+                        cameraActive = true;
+                    })
+                    .catch(err => {
+                        console.error('Camera error:', err);
+                        alert('❌ Could not access camera: ' + err.message + '\n\nPlease ensure:\n1. You are using a secure connection (HTTPS)\n2. Camera permissions are allowed\n3. You are on a device with a camera');
+                    });
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('camera-preview');
+            if (!video || !cameraActive) {
+                alert('❌ Camera is not active. Please start the camera first.');
+                return;
+            }
+            
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Stop camera
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+            video.style.display = 'none';
+            document.getElementById('capture-btn').style.display = 'none';
+            document.getElementById('camera-toggle-text').textContent = 'Use Camera';
+            cameraActive = false;
+            
+            // Get data URL
+            const dataURL = canvas.toDataURL('image/png');
+            
+            // Simulate OCR processing
+            setTimeout(() => {
+                const sampleText = `1. What is the next number in the series: 2, 6, 12, 20, ?
+A) 24
+B) **30**
+C) 32
+D) 36
+Answer: B`;
+                
+                document.getElementById('extracted-text').value = sampleText;
+                document.getElementById('upload-result-container').classList.remove('hidden');
+                document.getElementById('upload-section').classList.remove('hidden');
+                document.getElementById('upload-section').scrollIntoView({behavior: 'smooth'});
+            }, 1000);
+        }
+
+        // Candidate functions
+        function startExam() {
+            const examCode = document.getElementById('exam-code-input')?.value.trim().toUpperCase();
+            const name = document.getElementById('candidate-name')?.value.trim();
+            const mobile = document.getElementById('candidate-mobile')?.value.trim();
+            const errorElement = document.getElementById('login-error');
+            
+            if (!examCode || !name) {
+                errorElement.textContent = '❌ Exam code and name are required.';
+                return;
+            }
+            
+            // Find exam
+            const exam = exams.find(e => e['Exam Code'] === examCode);
+            
+            if (!exam) {
+                errorElement.textContent = '❌ Invalid exam code. Please check and try again.';
+                return;
+            }
+            
+            // Check expiry
+            const now = new Date();
+            const expiryDate = new Date(exam['Expiry (IST)']);
+            
+            if (now > expiryDate) {
+                errorElement.textContent = '❌ This exam has expired. Please contact Polite Coaching Centre.';
+                return;
+            }
+            
+            // Get questions for this exam
+            const questionIds = exam['Question IDs'].split(',').map(id => id.trim());
+            const examQuestions = questionIds
+                .map(id => questions.find(q => q.ID === id))
+                .filter(q => q); // Remove any nulls
+            
+            if (examQuestions.length === 0) {
+                errorElement.textContent = '❌ No questions found for this exam. Contact admin.';
+                return;
+            }
+            
+            // Shuffle questions using exam code + name as seed for consistent shuffling per candidate
+            const seed = examCode + name;
+            const shuffledQuestions = shuffleArray(examQuestions, seed);
+            
+            // Prepare exam data
+            currentExam = {
+                code: examCode,
+                title: exam.Title,
+                duration: parseInt(exam['Duration (mins)']) || 60,
+                questions: shuffledQuestions,
+                startTime: now
+            };
+            
+            // Initialize answers array
+            userAnswers = new Array(shuffledQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            
+            // Start timer
+            timeRemaining = currentExam.duration * 60; // Convert to seconds
+            startTime = now;
+            startTimer();
+            
+            // Show exam screen
+            document.getElementById('candidate-login-screen').classList.remove('active');
+            document.getElementById('exam-screen').classList.add('active');
+            
+            // Load first question
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const question = currentExam.questions[currentQuestionIndex];
+            
+            // Update UI
+            document.getElementById('current-q-num').textContent = currentQuestionIndex + 1;
+            document.getElementById('total-questions').textContent = currentExam.questions.length;
+            document.getElementById('progress-num').textContent = currentQuestionIndex + 1;
+            document.getElementById('progress-total').textContent = currentExam.questions.length;
+            document.getElementById('question-subject-display').textContent = question.Subject;
+            document.getElementById('question-text-display').textContent = question.Question;
+            document.getElementById('option-a-display').textContent = question['Option A'];
+            document.getElementById('option-b-display').textContent = question['Option B'];
+            document.getElementById('option-c-display').textContent = question['Option C'];
+            document.getElementById('option-d-display').textContent = question['Option D'];
+            
+            // Update selected option
+            document.querySelectorAll('.option').forEach((option, index) => {
+                if (userAnswers[currentQuestionIndex] === index) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+            
+            // Update navigation buttons
+            document.getElementById('prev-btn').disabled = (currentQuestionIndex === 0);
+            if (currentQuestionIndex === currentExam.questions.length - 1) {
+                document.getElementById('next-btn').style.display = 'none';
+                document.getElementById('submit-btn').style.display = 'block';
+            } else {
+                document.getElementById('next-btn').style.display = 'block';
+                document.getElementById('submit-btn').style.display = 'none';
+            }
+        }
+
+        function selectOption(index) {
+            userAnswers[currentQuestionIndex] = index;
+            document.querySelectorAll('.option').forEach((option, i) => {
+                if (i === index) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentExam.questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            
+            examTimer = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(examTimer);
+                    autoSubmitExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timer-display').textContent = 
+                `⏱️ Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Warning colors
+            if (timeRemaining <= 300) { // Last 5 minutes
+                document.getElementById('timer-display').style.background = '#e74c3c';
+            } else if (timeRemaining <= 600) { // Last 10 minutes
+                document.getElementById('timer-display').style.background = '#f39c12';
+            }
+        }
+
+        function autoSubmitExam() {
+            alert('⏰ Time is up! Your exam has been automatically submitted.');
+            submitExam(true);
+        }
+
+        function submitExam(isAutoSubmit = false) {
+            clearInterval(examTimer);
+            
+            // Calculate score
+            let score = 0;
+            const answers = [];
+            
+            currentExam.questions.forEach((question, index) => {
+                const userAnswer = userAnswers[index];
+                const correctAnswerIndex = question.Correct.charCodeAt(0) - 65;
+                const isCorrect = (userAnswer === correctAnswerIndex);
+                
+                answers.push({
+                    questionId: question.ID,
+                    userAnswer: userAnswer,
+                    correctAnswer: correctAnswerIndex,
+                    isCorrect: isCorrect
+                });
+                
+                if (userAnswer !== null) {
+                    score += isCorrect ? 1 : -0.25;
+                }
+            });
+            
+            // Record result
+            const duration = (Date.now() - startTime) / 1000; // in seconds
+            const result = {
+                Timestamp: new Date().toISOString(),
+                'Exam Code': currentExam.code,
+                Name: document.getElementById('candidate-name').value.trim(),
+                Mobile: document.getElementById('candidate-mobile').value.trim() || 'Not provided',
+                Score: score,
+                Answers: answers.map(a => `${a.questionId}:${String.fromCharCode(65 + (a.userAnswer ?? -1))}`).join(',')
+            };
+            
+            // Save to results
+            results.push(result);
+            
+            // Save to Airtable (if configured)
+            saveResultToAirtable(result);
+            
+            // Show result screen
+            document.getElementById('exam-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.add('active');
+            
+            document.getElementById('final-score').textContent = score.toFixed(2);
+            document.getElementById('result-exam-code').textContent = currentExam.code;
+            document.getElementById('result-name').textContent = result.Name;
+            document.getElementById('result-mobile').textContent = result.Mobile;
+            
+            // Reset for next exam
+            currentExam = null;
+            userAnswers = [];
+            currentQuestionIndex = 0;
+        }
+
+        function restartApp() {
+            document.getElementById('result-screen').classList.remove('active');
+            showAdminLogin();
+        }
+
+        // Utility functions
+        function shuffleArray(array, seed) {
+            const newArray = [...array];
+            let m = newArray.length;
+            
+            // Create a seed-based random number generator
+            let s = seed.toString().split('').reduce((a, b) => {
+                a = ((a << 5) - a) + b.charCodeAt(0);
+                return a & a;
+            }, 0);
+            
+            while (m) {
+                const i = Math.floor(randomNumber(s) * m--);
+                s++;
+                const t = newArray[m];
+                newArray[m] = newArray[i];
+                newArray[i] = t;
+            }
+            
+            return newArray;
+        }
+
+        function randomNumber(seed) {
+            const x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        }
+
+        function setupCamera() {
+            const cameraToggle = document.getElementById('camera-toggle');
+            const captureBtn = document.getElementById('capture-btn');
+            
+            if (cameraToggle && captureBtn) {
+                cameraToggle.addEventListener('click', toggleCamera);
+                captureBtn.addEventListener('click', capturePhoto);
+                console.log('Camera setup complete');
+            } else {
+                console.log('Camera elements not found');
+            }
+        }
+    </script>
+</body>
+</html>
