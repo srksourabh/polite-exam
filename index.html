@@ -1,1 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Polite Coaching Login Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            background: #f0f2f5;
+        }
+        .login-container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            width: 350px; 
+            text-align: center;
+        }
+        .logo { 
+            font-size: 24px; 
+            font-weight: bold; 
+            color: #2c3e50; 
+            margin-bottom: 20px;
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            box-sizing: border-box;
+        }
+        button { 
+            background: #3498db; 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            width: 100%; 
+            border-radius: 5px; 
+            font-size: 16px; 
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        button:hover { 
+            background: #2980b9; 
+        }
+        #message { 
+            margin-top: 15px; 
+            padding: 10px; 
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">POLITE COACHING CENTRE</div>
+        <h2>Admin Login</h2>
+        <input type="password" id="password" placeholder="Enter admin password" value="politeadmin">
+        <button onclick="login()">Login to Admin Panel</button>
+        <div id="message"></div>
+    </div>
 
+    <script>
+        function login() {
+            // Get the password value directly
+            const passwordInput = document.getElementById('password');
+            const password = passwordInput ? passwordInput.value : '';
+            const messageDiv = document.getElementById('message');
+            
+            // Log to console for debugging
+            console.log('Login attempt with password:', password);
+            
+            // Check password
+            if (password === 'politeadmin') {
+                // Success
+                messageDiv.className = 'success';
+                messageDiv.textContent = '✅ Login successful!';
+                console.log('Login successful!');
+                
+                // Wait 1 second then redirect to admin panel
+                setTimeout(function() {
+                    // Create admin panel content
+                    document.body.innerHTML = `
+                        <div class="login-container">
+                            <div class="logo">POLITE COACHING CENTRE</div>
+                            <h2>Admin Dashboard</h2>
+                            <p style="color: #27ae60;">✅ You are now logged in as admin!</p>
+                            <button onclick="location.reload()">Logout</button>
+                        </div>
+                        <style>
+                            body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f2f5; }
+                            .login-container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+                            .logo { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 20px; }
+                            button { background: #e74c3c; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 15px; }
+                            button:hover { background: #c0392b; }
+                        </style>
+                    `;
+                }, 1000);
+            } else {
+                // Error
+                messageDiv.className = 'error';
+                messageDiv.textContent = '❌ Incorrect password. Please try again.';
+                console.log('Login failed: Incorrect password');
+            }
+        }
+        
+        // Also allow Enter key to submit
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+    </script>
+</body>
+</html>
