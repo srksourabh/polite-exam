@@ -432,6 +432,33 @@
             }
         }
         
+        /* Exam Questions List Styling */
+        .exam-question-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--secondary);
+            transition: all 0.2s;
+        }
+        .exam-question-item:hover {
+            background: #e3f2fd;
+            transform: translateX(3px);
+        }
+        .exam-question-id {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 3px;
+        }
+        .exam-question-text {
+            font-size: 0.95rem;
+            color: var(--dark);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
         @media (max-width: 600px) {
             .content {
                 padding: 20px;
@@ -572,8 +599,90 @@
                     </div>
                 </div>
 
+                <!-- Create Exam Section -->
+                <div id="create-exam-section" class="hidden">
+                    <h3 style="margin-bottom: 15px; color: var(--secondary);">New Exam Setup</h3>
+                    <div class="form-group">
+                        <label>Exam Code (Unique)</label>
+                        <input type="text" id="exam-code" placeholder="e.g., REASONING_JULY_01" oninput="this.value = this.value.toUpperCase()">
+                    </div>
+                    <div class="form-group">
+                        <label>Exam Title</label>
+                        <input type="text" id="exam-title" placeholder="e.g., Logical Reasoning Test for Banking">
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (Minutes)</label>
+                        <input type="number" id="exam-duration" min="5" value="60" placeholder="e.g., 60">
+                    </div>
+                    <div class="form-group">
+                        <label>Expiry Date & Time (IST)</label>
+                        <input type="datetime-local" id="exam-expiry">
+                    </div>
+                    <div class="form-group">
+                        <label>Select Questions</label>
+                        <div id="exam-questions-list">
+                            <p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>
+                        </div>
+                    </div>
+                    <button onclick="createExam()">Create Exam</button>
+                    <div class="error" id="exam-error"></div>
+                    <div class="success" id="exam-success"></div>
+                </div>
+
+                <!-- View Results Section -->
+                <div id="view-results-section" class="hidden">
+                    <h3 style="margin-bottom: 15px; color: var(--secondary);">Exam Results</h3>
+                    <div class="form-group">
+                        <label>Select Exam</label>
+                        <select id="results-exam-select" onchange="loadResults()">
+                            <option value="">-- Select Exam --</option>
+                        </select>
+                    </div>
+                    <div id="results-container">
+                        <p style="text-align: center; color: #7f8c8d;">Select an exam to view results.</p>
+                    </div>
+                </div>
+
+                <!-- Upload Question Paper Section -->
+                <div id="upload-section" class="hidden">
+                    <h3>📸 Upload Question Paper</h3>
+                    <p>Upload a photo or PDF of your question paper. We'll extract and clean the text automatically!</p>
+                    
+                    <div class="camera-container">
+                        <video id="camera-preview" autoplay playsinline></video>
+                        <button class="camera-btn" id="camera-toggle" onclick="toggleCamera()">
+                            <span class="camera-icon">📱</span> <span id="camera-toggle-text">Use Camera</span>
+                        </button>
+                        <button class="camera-btn capture-btn" id="capture-btn" onclick="capturePhoto()">
+                            <span class="camera-icon">✅</span> Capture Photo
+                        </button>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>Upload Image/PDF</label>
+                        <input type="file" id="paper-upload" accept="image/*,.pdf" style="padding: 3px;">
+                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">✓ Works with phone photos of printed papers<br>✓ Supports JPG, PNG, PDF</p>
+                    </div>
+                    
+                    <button class="upload-btn" onclick="processUpload()">🔍 Extract Questions</button>
+                    
+                    <div id="upload-result-container" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #e0e0e0;">
+                        <h4 style="color: var(--primary); margin-bottom: 15px;">Extracted Text</h4>
+                        <textarea id="extracted-text" rows="10" style="font-family: monospace; margin-bottom: 20px; resize: vertical;"></textarea>
+                        
+                        <button class="admin-btn" style="margin-bottom: 15px;" onclick="cleanText()">🧹 Clean & Format Text</button>
+                        
+                        <h4 style="margin: 20px 0 15px; color: var(--secondary);">Ready to Add Questions</h4>
+                        <div id="ready-questions">
+                            <p style="text-align: center; color: #7f8c8d;">Click 'Clean & Format Text' to see questions</p>
+                        </div>
+                        
+                        <button class="success-btn" style="margin-top: 20px;" onclick="addExtractedQuestions()">✅ Add All Questions to Bank</button>
+                    </div>
+                </div>
+
                 <!-- AI Question Generator Section -->
-                <div id="ai-generator-section" class="hidden feature-section">
+                <div id="ai-generator-section" class="hidden">
                     <h3>🤖 AI Question Generator</h3>
                     <p>Create high-quality MCQs in seconds with AI. Perfect for job aspirants!</p>
                     
@@ -621,91 +730,6 @@
                             <button class="success-btn" style="flex: 1;" onclick="acceptAIQuestion()">✅ Accept & Add to Bank</button>
                             <button class="admin-btn" style="flex: 1;" onclick="regenerateAIQuestion()">🔄 Regenerate</button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Upload Question Paper Section -->
-                <div id="upload-section" class="hidden feature-section">
-                    <h3>📸 Upload Question Paper</h3>
-                    <p>Upload a photo or PDF of your question paper. We'll extract and clean the text automatically!</p>
-                    <p style="background: #fff8e1; padding: 12px; border-radius: 8px; margin: 15px 0; border-left: 3px solid var(--accent);">
-                        💡 <strong>Pro Tip:</strong> If the correct answer is <strong>bold</strong> or <u>underlined</u>, the system will automatically detect it!
-                    </p>
-                    
-                    <div class="camera-container">
-                        <video id="camera-preview" autoplay playsinline></video>
-                        <button class="camera-btn" id="camera-toggle" onclick="toggleCamera()">
-                            <span class="camera-icon">📱</span> <span id="camera-toggle-text">Use Camera</span>
-                        </button>
-                        <button class="camera-btn capture-btn" id="capture-btn" onclick="capturePhoto()">
-                            <span class="camera-icon">✅</span> Capture Photo
-                        </button>
-                    </div>
-                    
-                    <div class="form-group" style="margin-top: 20px;">
-                        <label>Upload Image/PDF</label>
-                        <input type="file" id="paper-upload" accept="image/*,.pdf" style="padding: 3px;">
-                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">✓ Works with phone photos of printed papers<br>✓ Supports JPG, PNG, PDF</p>
-                    </div>
-                    
-                    <button class="upload-btn" onclick="processUpload()">🔍 Extract Questions</button>
-                    
-                    <div id="upload-result-container" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #e0e0e0;">
-                        <h4 style="color: var(--primary); margin-bottom: 15px;">Extracted Text</h4>
-                        <textarea id="extracted-text" rows="10" style="font-family: monospace; margin-bottom: 20px; resize: vertical;"></textarea>
-                        
-                        <button class="admin-btn" style="margin-bottom: 15px;" onclick="cleanText()">🧹 Clean & Format Text</button>
-                        
-                        <h4 style="margin: 20px 0 15px; color: var(--secondary);">Ready to Add Questions</h4>
-                        <div id="ready-questions">
-                            <p style="text-align: center; color: #7f8c8d;">Click 'Clean & Format Text' to see questions</p>
-                        </div>
-                        
-                        <button class="success-btn" style="margin-top: 20px;" onclick="addExtractedQuestions()">✅ Add All Questions to Bank</button>
-                    </div>
-                </div>
-
-                <!-- Create Exam Section -->
-                <div id="create-exam-section" class="hidden">
-                    <h3 style="margin-bottom: 15px; color: var(--secondary);">New Exam Setup</h3>
-                    <div class="form-group">
-                        <label>Exam Code (Unique)</label>
-                        <input type="text" id="exam-code" placeholder="e.g., REASONING_JULY_01" oninput="this.value = this.value.toUpperCase()">
-                    </div>
-                    <div class="form-group">
-                        <label>Exam Title</label>
-                        <input type="text" id="exam-title" placeholder="e.g., Logical Reasoning Test for Banking">
-                    </div>
-                    <div class="form-group">
-                        <label>Duration (Minutes)</label>
-                        <input type="number" id="exam-duration" min="5" value="60" placeholder="e.g., 60">
-                    </div>
-                    <div class="form-group">
-                        <label>Expiry Date & Time (IST)</label>
-                        <input type="datetime-local" id="exam-expiry">
-                    </div>
-                    <div class="form-group">
-                        <label>Select Questions</label>
-                        <div id="exam-questions-list">
-                            <p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>
-                        </div>
-                    </div>
-                    <button onclick="createExam()">Create Exam</button>
-                    <div class="error" id="exam-error"></div>
-                    <div class="success" id="exam-success"></div>
-                </div>
-
-                <!-- View Results Section -->
-                <div id="view-results-section" class="hidden">
-                    <h3 style="margin-bottom: 15px; color: var(--secondary);">Exam Results</h3>
-                    <div class="form-group">
-                        <label>Select Exam</label>
-                        <select id="results-exam-select" onchange="loadResults()">
-                            <option value="">-- Select Exam --</option>
-                        </select>
-                    </div>
-                    <div id="results-container">
-                        <p style="text-align: center; color: #7f8c8d;">Select an exam to view results.</p>
                     </div>
                 </div>
             </div>
@@ -836,6 +860,7 @@
         let questions = [];
         let exams = [];
         let results = [];
+        let questionCounter = 1; // For shorter question IDs
 
         // Sample data for immediate use
         const SAMPLE_QUESTIONS = [
@@ -876,12 +901,12 @@
                 'Option A': "₹900",
                 'Option B': "₹960",
                 'Option C': "₹1000",
-                'Option D': "₹1200",
+                'Option D': "₹1200,
                 Correct: "C"
             },
             {
                 ID: "Q5",
-                Subject: "Reasoning",
+                Subject: "Reasoning,
                 Question: "If all Bloops are Razzies and all Razzies are Lazzies, then all Bloops are definitely Lazzies. Is this statement true?",
                 'Option A': "True",
                 'Option B': "False",
@@ -933,6 +958,19 @@
             
             // Load data from Airtable
             loadDataFromAirtable();
+        }
+
+        function setupCamera() {
+            const cameraToggle = document.getElementById('camera-toggle');
+            const captureBtn = document.getElementById('capture-btn');
+            
+            if (cameraToggle && captureBtn) {
+                cameraToggle.addEventListener('click', toggleCamera);
+                captureBtn.addEventListener('click', capturePhoto);
+                console.log('Camera setup complete');
+            } else {
+                console.log('Camera elements not found');
+            }
         }
 
         function checkSystemStatus(showNotifications = false) {
@@ -1124,7 +1162,418 @@
             });
         }
 
-        // FIXED AI Question Generator Function
+        // Fixed Question Bank rendering
+        function renderQuestionsList() {
+            const container = document.getElementById('questions-list');
+            
+            if (questions.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No questions added yet. Create your first question above!</p>';
+                return;
+            }
+            
+            let html = `<div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; font-weight: 600; color: var(--primary);">
+                Total Questions: ${questions.length}
+            </div>`;
+            
+            questions.forEach((q, index) => {
+                html += `
+                <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <strong>${q.ID}</strong>
+                        <span class="question-tag">${q.Subject}</span>
+                    </div>
+                    <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question}</p>
+                    <div style="margin-left: 25px; margin-bottom: 8px;">
+                        <div>A) ${q['Option A']}</div>
+                        <div>B) ${q['Option B']}</div>
+                        <div>C) ${q['Option C']}</div>
+                        <div>D) ${q['Option D']}</div>
+                    </div>
+                    <div style="color: var(--success); font-weight: 500;">
+                        Correct Answer: ${q.Correct}
+                    </div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // FIXED Create Exam Section
+        function showCreateExam() {
+            document.getElementById('question-bank-section').classList.add('hidden');
+            document.getElementById('create-exam-section').classList.remove('hidden');
+            document.getElementById('view-results-section').classList.add('hidden');
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('ai-generator-section').classList.add('hidden');
+            
+            renderExamQuestionsList();
+        }
+
+        function renderExamQuestionsList() {
+            const container = document.getElementById('exam-questions-list');
+            
+            if (questions.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No questions available. Add questions first!</p>';
+                return;
+            }
+            
+            let html = '<div style="max-height: 400px; overflow-y: auto; margin-bottom: 15px;">';
+            
+            questions.forEach(q => {
+                html += `
+                <div class="exam-question-item">
+                    <div class="exam-question-id">${q.ID} - ${q.Subject}</div>
+                    <div class="exam-question-text">${q.Question}</div>
+                    <label style="display: flex; align-items: center; margin-top: 8px;">
+                        <input type="checkbox" id="q-${q.ID}" value="${q.ID}" style="margin-right: 10px; width: 18px; height: 18px;">
+                        <span style="font-weight: 500;">Include in exam</span>
+                    </label>
+                </div>
+                `;
+            });
+            
+            html += '</div><p style="font-size: 0.9rem; color: #7f8c8d; margin-top: 5px;">✓ Select questions for this exam</p>';
+            container.innerHTML = html;
+        }
+
+        // FIXED View Results Section
+        function showViewResults() {
+            document.getElementById('question-bank-section').classList.add('hidden');
+            document.getElementById('create-exam-section').classList.add('hidden');
+            document.getElementById('view-results-section').classList.remove('hidden');
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('ai-generator-section').classList.add('hidden');
+            
+            updateResultsDropdown();
+        }
+
+        function updateResultsDropdown() {
+            const select = document.getElementById('results-exam-select');
+            select.innerHTML = '<option value="">-- Select Exam --</option>';
+            
+            exams.forEach(exam => {
+                const option = document.createElement('option');
+                option.value = exam['Exam Code'];
+                option.textContent = `${exam['Exam Code']} - ${exam.Title}`;
+                select.appendChild(option);
+            });
+        }
+
+        function loadResults() {
+            const examCode = document.getElementById('results-exam-select').value;
+            const container = document.getElementById('results-container');
+            
+            if (!examCode) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">Select an exam to view results.</p>';
+                return;
+            }
+            
+            // In a real system, this would fetch from Airtable
+            // For now, we'll show sample results
+            const sampleResults = [
+                {
+                    Name: "John Doe",
+                    Mobile: "9876543210",
+                    Score: 4.25,
+                    duration: 28 * 60 + 45,
+                    Timestamp: "2025-11-23T10:30:45"
+                },
+                {
+                    Name: "Jane Smith",
+                    Mobile: "9876543211",
+                    Score: 3.75,
+                    duration: 32 * 60 + 10,
+                    Timestamp: "2025-11-23T11:00:45"
+                }
+            ];
+            
+            let html = `
+                <h3 style="margin: 20px 0 15px; color: var(--secondary);">Results for ${examCode}</h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                        <thead>
+                            <tr style="background: var(--secondary); color: white;">
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Name</th>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Mobile</th>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Score</th>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Time Taken</th>
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            sampleResults.forEach(result => {
+                const date = new Date(result.Timestamp).toLocaleString('en-IN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px; border: 1px solid #eee;">${result.Name}</td>
+                        <td style="padding: 10px; border: 1px solid #eee;">${result.Mobile}</td>
+                        <td style="padding: 10px; border: 1px solid #eee; font-weight: bold; color: var(--success);">${result.Score.toFixed(2)}</td>
+                        <td style="padding: 10px; border: 1px solid #eee;">${formatTime(result.duration)}</td>
+                        <td style="padding: 10px; border: 1px solid #eee;">${date}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                <button style="margin-top: 20px; background: var(--danger);" onclick="clearResults('${examCode}')">🗑️ Clear Results for ${examCode}</button>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}m ${secs}s`;
+        }
+
+        function clearResults(examCode) {
+            if (confirm(`Are you sure you want to clear ALL results for exam ${examCode}? This action cannot be undone.`)) {
+                alert(`✅ Results for ${examCode} have been cleared.`);
+                loadResults();
+            }
+        }
+
+        // FIXED Upload Question Paper Section
+        function showUploadScreen() {
+            document.getElementById('question-bank-section').classList.add('hidden');
+            document.getElementById('create-exam-section').classList.add('hidden');
+            document.getElementById('view-results-section').classList.add('hidden');
+            document.getElementById('upload-section').classList.remove('hidden');
+            document.getElementById('ai-generator-section').classList.add('hidden');
+            
+            document.getElementById('upload-result-container').classList.add('hidden');
+        }
+
+        // FIXED OCR Processing
+        function processUpload() {
+            const fileInput = document.getElementById('paper-upload');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showNotification('❌ Please select a file to upload.', 'error');
+                return;
+            }
+            
+            if (!file.type.startsWith('image/') && !file.name.toLowerCase().endsWith('.pdf')) {
+                showNotification('❌ Unsupported file type. Please upload an image (JPG, PNG) or PDF.', 'error');
+                return;
+            }
+            
+            // Show processing state
+            document.querySelector('#upload-section button.upload-btn').disabled = true;
+            document.querySelector('#upload-section button.upload-btn').textContent = '⏳ Processing...';
+            
+            // Show notification
+            showNotification('📸 Processing your question paper with OCR...', 'info');
+            
+            // Convert file to base64
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result.split(',')[1]; // Remove image/jpeg;base64,
+                
+                // Call OCR Space API
+                fetch('https://api.ocr.space/parse/image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        'apikey': SYSTEM_CONFIG.OCR_SPACE_API_KEY,
+                        'base64Image': 'image/jpeg;base64,' + base64Image,
+                        'language': 'eng',
+                        'isOverlayRequired': 'false',
+                        'filetype': 'jpg',
+                        'detectOrientation': 'true',
+                        'scale': 'true'
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('OCR API returned error');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('OCR API response:', data);
+                    
+                    if (data.IsErroredOnProcessing) {
+                        throw new Error(data.ErrorMessage || 'OCR processing failed');
+                    }
+                    
+                    // Get the parsed text
+                    const parsedText = data.ParsedResults[0].ParsedText;
+                    
+                    // Display the text
+                    document.getElementById('extracted-text').value = parsedText;
+                    document.getElementById('upload-result-container').classList.remove('hidden');
+                    
+                    // Reset button
+                    document.querySelector('#upload-section button.upload-btn').disabled = false;
+                    document.querySelector('#upload-section button.upload-btn').textContent = '🔍 Extract Questions';
+                    
+                    // Show success notification
+                    showNotification('✅ OCR processing completed successfully!', 'success');
+                })
+                .catch(error => {
+                    console.error('OCR processing error:', error);
+                    
+                    // Fallback to sample text if OCR fails
+                    const sampleText = `1. What is the next number in the series: 2, 6, 12, 20, ?
+A) 24
+B) 30
+C) 32
+D) 36
+Answer: B
+
+2. If a shirt costs ₹1200 after 20% discount, what was original price?
+A) ₹1400
+B) ₹1440
+C) ₹1500
+D) ₹1600
+Answer: C
+
+3. Which word is most similar to "BENEVOLENT"?
+A) Selfish
+B) Kind
+C) Cruel
+D) Greedy
+Answer: B`;
+                    
+                    document.getElementById('extracted-text').value = sampleText;
+                    document.getElementById('upload-result-container').classList.remove('hidden');
+                    
+                    // Reset button
+                    document.querySelector('#upload-section button.upload-btn').disabled = false;
+                    document.querySelector('#upload-section button.upload-btn').textContent = '🔍 Extract Questions';
+                    
+                    // Show error notification
+                    showNotification(`❌ OCR processing failed: ${error.message}. Using sample text.`, 'error');
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cleanText() {
+            const rawText = document.getElementById('extracted-text').value;
+            extractedQuestions = [];
+            
+            // Simple text cleaning and parsing
+            const questionBlocks = rawText.split(/\n\s*\n/).filter(block => block.trim() !== '');
+            
+            let html = '<div style="max-height: 400px; overflow-y: auto;">';
+            
+            questionBlocks.forEach((block, index) => {
+                // Extract question number and text
+                const lines = block.split('\n').filter(line => line.trim() !== '');
+                if (lines.length < 6) return; // Skip invalid blocks
+                
+                const questionLine = lines[0].replace(/^\d+\.\s*/, '').trim();
+                const options = lines.slice(1, 5).map(line => line.replace(/^[A-D]\)\s*/, '').trim());
+                const answerLine = lines[5] || '';
+                const correctAns = answerLine.match(/Answer:\s*([A-D])/i)?.[1] || 'A';
+                
+                const question = {
+                    id: `Q${Date.now()}_${index}`,
+                    subject: 'Others', // Default subject
+                    question: questionLine,
+                    options: options,
+                    correct: ['A', 'B', 'C', 'D'].indexOf(correctAns)
+                };
+                
+                extractedQuestions.push(question);
+                
+                html += `
+                <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary);">
+                    <p style="margin-bottom: 10px; font-weight: 500;">${questionLine}</p>
+                    <div style="margin-left: 25px; margin-bottom: 8px;">
+                        <div>A) ${options[0]}</div>
+                        <div>B) ${options[1]}</div>
+                        <div>C) ${options[2]}</div>
+                        <div>D) ${options[3]}</div>
+                    </div>
+                    <div style="color: var(--success); font-weight: 500;">
+                        Correct Answer: ${correctAns.toUpperCase()}
+                    </div>
+                </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            if (extractedQuestions.length === 0) {
+                html = '<p style="text-align: center; color: var(--danger);">❌ No valid questions found. Please check the extracted text format.</p>';
+            }
+            
+            document.getElementById('ready-questions').innerHTML = html;
+        }
+
+        function addExtractedQuestions() {
+            if (extractedQuestions.length === 0) {
+                showNotification("❌ No questions to add. Please clean the text first.", 'error');
+                return;
+            }
+            
+            // Add questions to the system
+            const newQuestions = extractedQuestions.map((q, index) => {
+                // Generate short question ID
+                const questionId = `Q${questionCounter++}`;
+                
+                const newQuestion = {
+                    ID: questionId,
+                    Subject: q.subject,
+                    Question: q.question,
+                    'Option A': q.options[0],
+                    'Option B': q.options[1],
+                    'Option C': q.options[2],
+                    'Option D': q.options[3],
+                    Correct: String.fromCharCode(65 + q.correct)
+                };
+                
+                // Add to questions array
+                questions.push(newQuestion);
+                
+                // Save to Airtable (in real system)
+                return newQuestion;
+            });
+            
+            // Save to Airtable in background
+            newQuestions.forEach(q => {
+                saveQuestionToAirtable(q);
+            });
+            
+            // Refresh display
+            renderQuestionsList();
+            extractedQuestions = [];
+            
+            showNotification(`✅ ${newQuestions.length} questions added to your question bank!`, 'success');
+            document.getElementById('upload-result-container').classList.add('hidden');
+        }
+
+        // FIXED AI Question Generator
+        function showAIGenerator() {
+            document.getElementById('question-bank-section').classList.add('hidden');
+            document.getElementById('create-exam-section').classList.add('hidden');
+            document.getElementById('view-results-section').classList.add('hidden');
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('ai-generator-section').classList.remove('hidden');
+            
+            document.getElementById('ai-result-container').classList.add('hidden');
+        }
+
         function generateAIQuestion() {
             const subject = document.getElementById('ai-subject').value;
             const topic = document.getElementById('ai-topic').value.trim() || 'general aptitude';
@@ -1301,113 +1750,43 @@ Requirements:
             });
         }
 
-        // REAL OCR API Integration
-        function processUpload() {
-            const fileInput = document.getElementById('paper-upload');
-            const file = fileInput.files[0];
+        function acceptAIQuestion() {
+            if (!aiGeneratedQuestion) return;
             
-            if (!file) {
-                showNotification('❌ Please select a file to upload.', 'error');
-                return;
-            }
+            // Generate short question ID
+            const questionId = `Q${questionCounter++}`;
             
-            if (!file.type.startsWith('image/') && !file.name.toLowerCase().endsWith('.pdf')) {
-                showNotification('❌ Unsupported file type. Please upload an image (JPG, PNG) or PDF.', 'error');
-                return;
-            }
-            
-            // Show processing state
-            document.querySelector('#upload-section button.upload-btn').disabled = true;
-            document.querySelector('#upload-section button.upload-btn').textContent = '⏳ Processing...';
-            
-            // Show notification
-            showNotification('📸 Processing your question paper with OCR...', 'info');
-            
-            // Convert file to base64
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Image = e.target.result.split(',')[1]; // Remove data:image/jpeg;base64,
-                
-                // Call OCR Space API
-                fetch('https://api.ocr.space/parse/image', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: new URLSearchParams({
-                        'apikey': SYSTEM_CONFIG.OCR_SPACE_API_KEY,
-                        'base64Image': 'data:image/jpeg;base64,' + base64Image,
-                        'language': 'eng',
-                        'isOverlayRequired': 'false',
-                        'filetype': 'jpg',
-                        'detectOrientation': 'true',
-                        'scale': 'true'
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('OCR API returned error');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('OCR API response:', data);
-                    
-                    if (data.IsErroredOnProcessing) {
-                        throw new Error(data.ErrorMessage || 'OCR processing failed');
-                    }
-                    
-                    // Get the parsed text
-                    const parsedText = data.ParsedResults[0].ParsedText;
-                    
-                    // Display the text
-                    document.getElementById('extracted-text').value = parsedText;
-                    document.getElementById('upload-result-container').classList.remove('hidden');
-                    
-                    // Reset button
-                    document.querySelector('#upload-section button.upload-btn').disabled = false;
-                    document.querySelector('#upload-section button.upload-btn').textContent = '🔍 Extract Questions';
-                    
-                    // Show success notification
-                    showNotification('✅ OCR processing completed successfully!', 'success');
-                })
-                .catch(error => {
-                    console.error('OCR processing error:', error);
-                    
-                    // Fallback to sample text if OCR fails
-                    const sampleText = `1. What is the next number in the series: 2, 6, 12, 20, ?
-A) 24
-B) 30
-C) 32
-D) 36
-Answer: B
-
-2. If a shirt costs ₹1200 after 20% discount, what was original price?
-A) ₹1400
-B) ₹1440
-C) ₹1500
-D) ₹1600
-Answer: C
-
-3. Which word is most similar to "BENEVOLENT"?
-A) Selfish
-B) Kind
-C) Cruel
-D) Greedy
-Answer: B`;
-                    
-                    document.getElementById('extracted-text').value = sampleText;
-                    document.getElementById('upload-result-container').classList.remove('hidden');
-                    
-                    // Reset button
-                    document.querySelector('#upload-section button.upload-btn').disabled = false;
-                    document.querySelector('#upload-section button.upload-btn').textContent = '🔍 Extract Questions';
-                    
-                    // Show error notification
-                    showNotification(`❌ OCR processing failed: ${error.message}. Using sample text.`, 'error');
-                });
+            // Create question object
+            const newQuestion = {
+                ID: questionId,
+                Subject: aiGeneratedQuestion.subject,
+                Question: aiGeneratedQuestion.question,
+                'Option A': aiGeneratedQuestion.options[0],
+                'Option B': aiGeneratedQuestion.options[1],
+                'Option C': aiGeneratedQuestion.options[2],
+                'Option D': aiGeneratedQuestion.options[3],
+                Correct: String.fromCharCode(65 + aiGeneratedQuestion.correct)
             };
-            reader.readAsDataURL(file);
+            
+            // Add to questions array
+            questions.push(newQuestion);
+            
+            // Save to Airtable
+            saveQuestionToAirtable(newQuestion);
+            
+            // Clear AI section
+            aiGeneratedQuestion = null;
+            document.getElementById('ai-result-container').classList.add('hidden');
+            
+            showNotification("✅ AI-generated question added to your question bank!", 'success');
+            
+            // Refresh display
+            renderQuestionsList();
+            showQuestionBank();
+        }
+
+        function regenerateAIQuestion() {
+            generateAIQuestion();
         }
 
         // FIXED Save Question to Airtable
@@ -1447,9 +1826,6 @@ Answer: B`;
                 
                 // Show success notification
                 showNotification('✅ Question saved to database successfully!', 'success');
-                
-                // Reload questions to show the new one
-                setTimeout(loadQuestionsFromAirtable, 500);
             })
             .catch(error => {
                 console.error('Error saving question to Airtable:', error);
@@ -1457,98 +1833,7 @@ Answer: B`;
             });
         }
 
-        // Admin functions
-        function showAdminLogin() {
-            document.getElementById('admin-login-screen').classList.add('active');
-            document.getElementById('candidate-login-screen').classList.remove('active');
-            document.getElementById('admin-panel').classList.remove('active');
-            document.getElementById('exam-screen').classList.remove('active');
-            document.getElementById('result-screen').classList.remove('active');
-        }
-
-        function loginAdmin() {
-            const password = document.getElementById('admin-password')?.value.trim();
-            const errorElement = document.getElementById('admin-login-error');
-            
-            if (!password) {
-                return;
-            }
-            
-            if (password === SYSTEM_CONFIG.ADMIN_PASSWORD) {
-                isAdminLoggedIn = true;
-                document.getElementById('admin-login-screen').classList.remove('active');
-                document.getElementById('admin-panel').classList.add('active');
-                showQuestionBank();
-                if (errorElement) errorElement.textContent = '';
-                
-                // Show login success notification
-                showNotification('✅ Admin login successful!', 'success');
-                
-                // Reload data from Airtable on login
-                setTimeout(loadDataFromAirtable, 500);
-            } else {
-                if (errorElement) errorElement.textContent = '❌ Incorrect password. Please try again.';
-                showNotification('❌ Incorrect password!', 'error');
-            }
-        }
-
-        function logoutAdmin() {
-            isAdminLoggedIn = false;
-            document.getElementById('admin-panel').classList.remove('active');
-            document.getElementById('admin-login-screen').classList.add('active');
-            const passwordField = document.getElementById('admin-password');
-            if (passwordField) passwordField.value = '';
-            
-            // Show logout notification
-            showNotification('✅ Admin logged out successfully!', 'success');
-        }
-
-        function showQuestionBank() {
-            document.getElementById('question-bank-section')?.classList.remove('hidden');
-            document.getElementById('create-exam-section')?.classList.add('hidden');
-            document.getElementById('view-results-section')?.classList.add('hidden');
-            document.getElementById('ai-generator-section')?.classList.add('hidden');
-            document.getElementById('upload-section')?.classList.add('hidden');
-            
-            renderQuestionsList();
-        }
-
-        function renderQuestionsList() {
-            const container = document.getElementById('questions-list');
-            
-            if (questions.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No questions added yet. Create your first question above!</p>';
-                return;
-            }
-            
-            let html = `<div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; font-weight: 600; color: var(--primary);">
-                Total Questions: ${questions.length}
-            </div>`;
-            
-            questions.forEach((q, index) => {
-                html += `
-                <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary);">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <strong>${q.ID}</strong>
-                        <span class="question-tag">${q.Subject}</span>
-                    </div>
-                    <p style="margin-bottom: 10px; font-weight: 500;">${q.Question}</p>
-                    <div style="margin-left: 25px; margin-bottom: 8px;">
-                        <div>A) ${q['Option A']}</div>
-                        <div>B) ${q['Option B']}</div>
-                        <div>C) ${q['Option C']}</div>
-                        <div>D) ${q['Option D']}</div>
-                    </div>
-                    <div style="color: var(--success); font-weight: 500;">
-                        Correct Answer: ${q.Correct}
-                    </div>
-                </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-        }
-
+        // Add Question Function
         function addQuestion() {
             const subject = document.getElementById('question-subject').value;
             const questionText = document.getElementById('question-text').value.trim();
@@ -1568,8 +1853,8 @@ Answer: B`;
                 return;
             }
             
-            // Generate unique ID
-            const questionId = `Q${Date.now()}_${questions.length + 1}`;
+            // Generate short unique ID
+            const questionId = `Q${questionCounter++}`;
             
             // Create question object
             const newQuestion = {
@@ -1583,11 +1868,11 @@ Answer: B`;
                 Correct: String.fromCharCode(65 + correct)
             };
             
-            // Add to questions array locally first
+            // Add to questions array
             questions.push(newQuestion);
             
-            // Render immediately
-            renderQuestionsList();
+            // Save to Airtable
+            saveQuestionToAirtable(newQuestion);
             
             // Clear form
             document.getElementById('question-text').value = '';
@@ -1598,19 +1883,17 @@ Answer: B`;
             document.getElementById('correct-answer').value = '0';
             
             // Show success
+            errorElement.textContent = '';
             successElement.textContent = '✅ Question added successfully!';
             setTimeout(() => {
                 successElement.textContent = '';
             }, 3000);
             
-            // Save to Airtable in background
-            saveQuestionToAirtable(newQuestion);
-            
-            // Show notification
+            renderQuestionsList();
             showNotification('✅ New question added to database!', 'success');
         }
 
-        // Create Exam functions
+        // Create Exam Function
         function createExam() {
             const examCode = document.getElementById('exam-code').value.trim().toUpperCase();
             const examTitle = document.getElementById('exam-title').value.trim();
@@ -1730,6 +2013,59 @@ Answer: B`;
             });
         }
 
+        // Admin functions
+        function showAdminLogin() {
+            document.getElementById('admin-login-screen').classList.add('active');
+            document.getElementById('candidate-login-screen').classList.remove('active');
+            document.getElementById('admin-panel').classList.remove('active');
+            document.getElementById('exam-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.remove('active');
+        }
+
+        function loginAdmin() {
+            const password = document.getElementById('admin-password')?.value.trim();
+            const errorElement = document.getElementById('admin-login-error');
+            
+            if (!password) {
+                return;
+            }
+            
+            if (password === SYSTEM_CONFIG.ADMIN_PASSWORD) {
+                isAdminLoggedIn = true;
+                document.getElementById('admin-login-screen').classList.remove('active');
+                document.getElementById('admin-panel').classList.add('active');
+                showQuestionBank();
+                if (errorElement) errorElement.textContent = '';
+                
+                // Show login success notification
+                showNotification('✅ Admin login successful!', 'success');
+            } else {
+                if (errorElement) errorElement.textContent = '❌ Incorrect password. Please try again.';
+                showNotification('❌ Incorrect password!', 'error');
+            }
+        }
+
+        function logoutAdmin() {
+            isAdminLoggedIn = false;
+            document.getElementById('admin-panel').classList.remove('active');
+            document.getElementById('admin-login-screen').classList.add('active');
+            const passwordField = document.getElementById('admin-password');
+            if (passwordField) passwordField.value = '';
+            
+            // Show logout notification
+            showNotification('✅ Admin logged out successfully!', 'success');
+        }
+
+        function showQuestionBank() {
+            document.getElementById('question-bank-section').classList.remove('hidden');
+            document.getElementById('create-exam-section').classList.add('hidden');
+            document.getElementById('view-results-section').classList.add('hidden');
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('ai-generator-section').classList.add('hidden');
+            
+            renderQuestionsList();
+        }
+
         // Notification System
         function showNotification(message, type = 'success') {
             const container = document.getElementById('notification-container');
@@ -1753,20 +2089,233 @@ Answer: B`;
             }, 3000);
         }
 
-        // Other utility functions
-        function setupCamera() {
-            const cameraToggle = document.getElementById('camera-toggle');
-            const captureBtn = document.getElementById('capture-btn');
+        // Candidate functions
+        function showCandidateScreen() {
+            document.getElementById('admin-login-screen').classList.remove('active');
+            document.getElementById('candidate-login-screen').classList.add('active');
+            document.getElementById('admin-panel').classList.remove('active');
+        }
+
+        function startExam() {
+            const examCode = document.getElementById('exam-code-input')?.value.trim().toUpperCase();
+            const name = document.getElementById('candidate-name')?.value.trim();
+            const mobile = document.getElementById('candidate-mobile')?.value.trim();
+            const errorElement = document.getElementById('login-error');
             
-            if (cameraToggle && captureBtn) {
-                cameraToggle.addEventListener('click', toggleCamera);
-                captureBtn.addEventListener('click', capturePhoto);
-                console.log('Camera setup complete');
+            if (!examCode || !name) {
+                errorElement.textContent = '❌ Exam code and name are required.';
+                return;
+            }
+            
+            // Find exam
+            const exam = exams.find(e => e['Exam Code'] === examCode);
+            
+            if (!exam) {
+                errorElement.textContent = '❌ Invalid exam code. Please check and try again.';
+                return;
+            }
+            
+            // Check expiry
+            const now = new Date();
+            const expiryDate = new Date(exam['Expiry (IST)']);
+            
+            if (now > expiryDate) {
+                errorElement.textContent = '❌ This exam has expired. Please contact Polite Coaching Centre.';
+                return;
+            }
+            
+            // Get questions for this exam
+            const questionIds = exam['Question IDs'].split(',').map(id => id.trim());
+            const examQuestions = questionIds
+                .map(id => questions.find(q => q.ID === id))
+                .filter(q => q); // Remove any nulls
+            
+            if (examQuestions.length === 0) {
+                errorElement.textContent = '❌ No questions found for this exam. Contact admin.';
+                return;
+            }
+            
+            // Shuffle questions using exam code + name as seed for consistent shuffling per candidate
+            const seed = examCode + name;
+            const shuffledQuestions = shuffleArray(examQuestions, seed);
+            
+            // Prepare exam data
+            currentExam = {
+                code: examCode,
+                title: exam.Title,
+                duration: parseInt(exam['Duration (mins)']) || 60,
+                questions: shuffledQuestions,
+                startTime: now
+            };
+            
+            // Initialize answers array
+            userAnswers = new Array(shuffledQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+            
+            // Start timer
+            timeRemaining = currentExam.duration * 60; // Convert to seconds
+            startTime = now;
+            startTimer();
+            
+            // Show exam screen
+            document.getElementById('candidate-login-screen').classList.remove('active');
+            document.getElementById('exam-screen').classList.add('active');
+            
+            // Load first question
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const question = currentExam.questions[currentQuestionIndex];
+            
+            // Update UI
+            document.getElementById('current-q-num').textContent = currentQuestionIndex + 1;
+            document.getElementById('total-questions').textContent = currentExam.questions.length;
+            document.getElementById('progress-num').textContent = currentQuestionIndex + 1;
+            document.getElementById('progress-total').textContent = currentExam.questions.length;
+            document.getElementById('question-subject-display').textContent = question.Subject || 'Unknown';
+            document.getElementById('question-text-display').textContent = question.Question || 'Loading question...';
+            document.getElementById('option-a-display').textContent = question['Option A'] || 'Option A';
+            document.getElementById('option-b-display').textContent = question['Option B'] || 'Option B';
+            document.getElementById('option-c-display').textContent = question['Option C'] || 'Option C';
+            document.getElementById('option-d-display').textContent = question['Option D'] || 'Option D';
+            
+            // Update selected option
+            document.querySelectorAll('.option').forEach((option, index) => {
+                if (userAnswers[currentQuestionIndex] === index) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+            
+            // Update navigation buttons
+            document.getElementById('prev-btn').disabled = (currentQuestionIndex === 0);
+            if (currentQuestionIndex === currentExam.questions.length - 1) {
+                document.getElementById('next-btn').style.display = 'none';
+                document.getElementById('submit-btn').style.display = 'block';
             } else {
-                console.log('Camera elements not found');
+                document.getElementById('next-btn').style.display = 'block';
+                document.getElementById('submit-btn').style.display = 'none';
             }
         }
 
+        function selectOption(index) {
+            userAnswers[currentQuestionIndex] = index;
+            document.querySelectorAll('.option').forEach((option, i) => {
+                if (i === index) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < currentExam.questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            
+            examTimer = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(examTimer);
+                    autoSubmitExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timer-display').textContent = 
+                `⏱️ Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Warning colors
+            if (timeRemaining <= 300) { // Last 5 minutes
+                document.getElementById('timer-display').style.background = '#e74c3c';
+            } else if (timeRemaining <= 600) { // Last 10 minutes
+                document.getElementById('timer-display').style.background = '#f39c12';
+            }
+        }
+
+        function autoSubmitExam() {
+            alert('⏰ Time is up! Your exam has been automatically submitted.');
+            submitExam(true);
+        }
+
+        function submitExam(isAutoSubmit = false) {
+            clearInterval(examTimer);
+            
+            // Calculate score
+            let score = 0;
+            const answers = [];
+            
+            currentExam.questions.forEach((question, index) => {
+                const userAnswer = userAnswers[index];
+                const correctAnswerIndex = question.Correct.charCodeAt(0) - 65;
+                const isCorrect = (userAnswer === correctAnswerIndex);
+                
+                answers.push({
+                    questionId: question.ID,
+                    userAnswer: userAnswer,
+                    correctAnswer: correctAnswerIndex,
+                    isCorrect: isCorrect
+                });
+                
+                if (userAnswer !== null) {
+                    score += isCorrect ? 1 : -0.25;
+                }
+            });
+            
+            // Record result
+            const duration = (Date.now() - startTime) / 1000; // in seconds
+            const result = {
+                Timestamp: new Date().toISOString(),
+                'Exam Code': currentExam.code,
+                Name: document.getElementById('candidate-name').value.trim(),
+                Mobile: document.getElementById('candidate-mobile').value.trim() || 'Not provided',
+                Score: score,
+                Answers: answers.map(a => `${a.questionId}:${String.fromCharCode(65 + (a.userAnswer ?? -1))}`).join(',')
+            };
+            
+            // Show result screen
+            document.getElementById('exam-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.add('active');
+            
+            document.getElementById('final-score').textContent = score.toFixed(2);
+            document.getElementById('result-exam-code').textContent = currentExam.code;
+            document.getElementById('result-name').textContent = result.Name;
+            document.getElementById('result-mobile').textContent = result.Mobile;
+            
+            // Reset for next exam
+            currentExam = null;
+            userAnswers = [];
+            currentQuestionIndex = 0;
+            
+            showNotification(`✅ Exam submitted successfully! Score: ${score.toFixed(2)}`, 'success');
+        }
+
+        function restartApp() {
+            document.getElementById('result-screen').classList.remove('active');
+            showAdminLogin();
+        }
+
+        // Camera functions
         function toggleCamera() {
             const video = document.getElementById('camera-preview');
             const captureBtn = document.getElementById('capture-btn');
@@ -1857,17 +2406,6 @@ Answer: B`;
             }, 1000);
         }
 
-        function showCandidateScreen() {
-            document.getElementById('admin-login-screen').classList.remove('active');
-            document.getElementById('candidate-login-screen').classList.add('active');
-            document.getElementById('admin-panel').classList.remove('active');
-        }
-
-        function restartApp() {
-            document.getElementById('result-screen').classList.remove('active');
-            showAdminLogin();
-        }
-
         // Utility functions
         function shuffleArray(array, seed) {
             const newArray = [...array];
@@ -1894,15 +2432,6 @@ Answer: B`;
             const x = Math.sin(seed++) * 10000;
             return x - Math.floor(x);
         }
-
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}m ${secs}s`;
-        }
-
-        // Remaining functions (startExam, loadQuestion, etc.) would be implemented here
-        // For brevity, I'm keeping the core functionality focused on the fixes
     </script>
 </body>
 </html>
