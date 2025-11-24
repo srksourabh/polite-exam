@@ -2694,7 +2694,7 @@
                         'Exam': [currentExam.examId],  // Linked record field (must be an array)
                         'Name': candidateName,
                         'Mobile': candidateMobile,
-                        'Score': score.toFixed(2),
+                        'Score': parseFloat(score.toFixed(2)),
                         'Answers': JSON.stringify(detailedAnswers),
                         'Submitted At': new Date().toISOString()
                     };
