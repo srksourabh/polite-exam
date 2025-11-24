@@ -210,33 +210,95 @@ async function getExamResults(examCode) {
     }
 }
 
-// Check database connection
-async function checkDatabaseConnection() {
+// Check all system services status
+async function checkSystemStatus() {
     try {
         const response = await fetch(`${API_URL}/health`);
         const data = await response.json();
         
-        const dbStatusItem = document.getElementById('db-status-item');
-        const dbStatusText = document.getElementById('db-status-text');
-        
-        if (data.success) {
-            if (dbStatusItem) dbStatusItem.classList.remove('status-bad');
-            if (dbStatusText) dbStatusText.textContent = '✅ Connected';
-            console.log('✅ Database connection healthy');
+        if (data.status === 'ok' && data.services) {
+            // Update Airtable status
+            const dbStatusItem = document.getElementById('db-status-item');
+            const dbStatusText = document.getElementById('db-status-text');
+            if (data.services.airtable.status === 'connected') {
+                if (dbStatusItem) dbStatusItem.classList.remove('status-bad');
+                if (dbStatusText) dbStatusText.textContent = '✅ Connected';
+            } else {
+                if (dbStatusItem) dbStatusItem.classList.add('status-bad');
+                if (dbStatusText) dbStatusText.textContent = '❌ Error';
+            }
+            
+            // Update Gemini AI status
+            const geminiStatusItem = document.getElementById('gemini-status-item');
+            const geminiStatusText = document.getElementById('gemini-status-text');
+            if (data.services.gemini.status === 'connected') {
+                if (geminiStatusItem) geminiStatusItem.classList.remove('status-bad');
+                if (geminiStatusText) geminiStatusText.textContent = '✅ Active';
+            } else {
+                if (geminiStatusItem) geminiStatusItem.classList.add('status-bad');
+                if (geminiStatusText) geminiStatusText.textContent = '⚠️ Not Configured';
+            }
+            
+            // Update OCR status
+            const ocrStatusItem = document.getElementById('ocr-status-item');
+            const ocrStatusText = document.getElementById('ocr-status-text');
+            if (data.services.ocr.status === 'connected') {
+                if (ocrStatusItem) ocrStatusItem.classList.remove('status-bad');
+                if (ocrStatusText) ocrStatusText.textContent = '✅ Ready';
+            } else {
+                if (ocrStatusItem) ocrStatusItem.classList.add('status-bad');
+                if (ocrStatusText) ocrStatusText.textContent = '⚠️ Not Configured';
+            }
+            
+            console.log('✅ System status updated:', data.services);
             return true;
         } else {
-            if (dbStatusItem) dbStatusItem.classList.add('status-bad');
-            if (dbStatusText) dbStatusText.textContent = '❌ Error';
-            console.error('❌ Database connection failed');
-            return false;
+            throw new Error('Failed to get system status');
         }
     } catch (error) {
         const dbStatusItem = document.getElementById('db-status-item');
         const dbStatusText = document.getElementById('db-status-text');
+        const geminiStatusItem = document.getElementById('gemini-status-item');
+        const geminiStatusText = document.getElementById('gemini-status-text');
+        const ocrStatusItem = document.getElementById('ocr-status-item');
+        const ocrStatusText = document.getElementById('ocr-status-text');
         
         if (dbStatusItem) dbStatusItem.classList.add('status-bad');
         if (dbStatusText) dbStatusText.textContent = '❌ Offline';
+        if (geminiStatusItem) geminiStatusItem.classList.add('status-bad');
+        if (geminiStatusText) geminiStatusText.textContent = '❌ Offline';
+        if (ocrStatusItem) ocrStatusItem.classList.add('status-bad');
+        if (ocrStatusText) ocrStatusText.textContent = '❌ Offline';
+        
         console.error('❌ Cannot reach backend server:', error);
+        return false;
+    }
+}
+
+// Legacy function name for compatibility
+async function checkDatabaseConnection() {
+    return await checkSystemStatus();
+}
+
+// Delete question from database
+async function deleteQuestionFromDatabase(questionId) {
+    try {
+        const response = await fetch(`${API_URL}/questions/${questionId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log(`✅ Question ${questionId} deleted successfully`);
+            showNotification('✅ Question deleted successfully!', 'success');
+            return true;
+        } else {
+            throw new Error(data.error || 'Failed to delete question');
+        }
+    } catch (error) {
+        console.error('❌ Error deleting question:', error);
+        showNotification('❌ Failed to delete question', 'error');
         return false;
     }
 }
@@ -261,5 +323,7 @@ window.PoliteCCAPI = {
     submitResultToDatabase,
     getExamResults,
     checkDatabaseConnection,
+    checkSystemStatus,
+    deleteQuestionFromDatabase,
     showNotification
 };

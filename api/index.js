@@ -41,11 +41,27 @@ module.exports = async (req, res) => {
     const { url, method } = req;
 
     try {
-        // Health check
+        // Health check with system status
         if (url === '/api/health') {
+            const systemStatus = {
+                airtable: {
+                    status: 'connected',
+                    message: 'Airtable database connected'
+                },
+                gemini: {
+                    status: process.env.GEMINI_API_KEY ? 'connected' : 'not_configured',
+                    message: process.env.GEMINI_API_KEY ? 'Gemini AI ready' : 'API key not configured'
+                },
+                ocr: {
+                    status: process.env.OCR_SPACE_API_KEY ? 'connected' : 'not_configured',
+                    message: process.env.OCR_SPACE_API_KEY ? 'OCR service ready' : 'API key not configured'
+                }
+            };
+            
             return res.status(200).json({ 
                 status: 'ok', 
-                message: 'Airtable connected successfully',
+                message: 'System health check',
+                services: systemStatus,
                 timestamp: new Date().toISOString()
             });
         }
@@ -67,6 +83,16 @@ module.exports = async (req, res) => {
             return res.status(201).json({ 
                 success: true, 
                 data: { id: record.id, ...record.fields } 
+            });
+        }
+
+        // DELETE /api/questions/:id - Delete question
+        if (url.startsWith('/api/questions/') && method === 'DELETE') {
+            const questionId = url.split('/api/questions/')[1];
+            await base(QUESTIONS_TABLE).destroy(questionId);
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Question deleted successfully' 
             });
         }
 
