@@ -68,13 +68,26 @@ async function loadExams() {
 // Add question to database
 async function addQuestionToDatabase(questionData) {
     try {
+        // First, get all existing questions to determine the next ID
+        const existingQuestions = await loadQuestions();
+        let maxNum = 0;
+        existingQuestions.forEach(q => {
+            if (q.ID && q.ID.startsWith('q')) {
+                const num = parseInt(q.ID.substring(1));
+                if (!isNaN(num) && num > maxNum) {
+                    maxNum = num;
+                }
+            }
+        });
+        const nextId = 'q' + (maxNum + 1);
+
         const response = await fetch(`${API_URL}/questions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                ID: `Q${Date.now()}`,
+                ID: nextId,
                 Subject: questionData.subject,
                 Question: questionData.question,
                 OptionA: questionData.optionA,
@@ -99,6 +112,44 @@ async function addQuestionToDatabase(questionData) {
         }
     } catch (error) {
         console.error('❌ Error adding question:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return false;
+    }
+}
+
+// Update question in database
+async function updateQuestionInDatabase(questionId, questionData) {
+    try {
+        const response = await fetch(`${API_URL}/questions/${questionId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                Subject: questionData.subject,
+                Question: questionData.question,
+                OptionA: questionData.optionA,
+                OptionB: questionData.optionB,
+                OptionC: questionData.optionC,
+                OptionD: questionData.optionD,
+                Correct: questionData.correct
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Question updated in database');
+            showNotification('✅ Question updated successfully!', 'success');
+
+            // Reload questions
+            await loadQuestions();
+            return true;
+        } else {
+            throw new Error(data.error || 'Failed to update question');
+        }
+    } catch (error) {
+        console.error('❌ Error updating question:', error);
         showNotification(`❌ ${error.message}`, 'error');
         return false;
     }
