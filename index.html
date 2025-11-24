@@ -521,22 +521,24 @@
 
                 <!-- Question Bank Section -->
                 <div id="question-bank-section" class="hidden">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="margin: 0; color: var(--secondary);">Question Bank</h3>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button id="select-all-questions-btn" style="background: #3498db; color: white; padding: 10px 20px; font-size: 0.95rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                    <h3 style="margin: 0 0 15px 0; color: var(--secondary);">Question Bank</h3>
+
+                    <!-- Action Buttons Row -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button id="select-all-questions-btn" style="background: #3498db; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
                                 ☑️ Select All
                             </button>
-                            <button id="deselect-all-questions-btn" style="background: #95a5a6; color: white; padding: 10px 20px; font-size: 0.95rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                            <button id="deselect-all-questions-btn" style="background: #95a5a6; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
                                 ☐ Deselect All
                             </button>
-                            <button id="export-questions-btn" style="background: #27ae60; color: white; padding: 10px 20px; font-size: 0.95rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
-                                📥 Export Selected to CSV
-                            </button>
-                            <button id="toggle-add-question-btn" style="background: var(--success); padding: 10px 20px; font-size: 0.95rem;">
-                                ➕ Add New Question
+                            <button id="export-questions-btn" style="background: #27ae60; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                                📥 Export CSV
                             </button>
                         </div>
+                        <button id="toggle-add-question-btn" style="background: var(--success); padding: 8px 16px; font-size: 0.9rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                            ➕ Add New Question
+                        </button>
                     </div>
 
                     <!-- Add Question Form (Initially Hidden) -->
@@ -795,8 +797,11 @@
 
             <!-- Exam Screen -->
             <div id="exam-screen" class="screen">
-                <div class="timer" id="timer-display">⏱️ Time Remaining: 10:00</div>
-                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="timer" id="timer-display">⏱️ Time Remaining: 10:00</div>
+                    <button style="background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 0.85rem;" id="candidate-logout-btn">Logout</button>
+                </div>
+
                 <div class="question-container">
                     <div class="question-tag" id="question-subject-display">Reasoning</div>
                     <div class="question-number">Question <span id="current-q-num">1</span> of <span id="total-questions">5</span></div>
@@ -974,6 +979,23 @@
             document.getElementById('admin-panel').classList.remove('active');
             document.getElementById('admin-login-screen').classList.add('active');
             document.getElementById('admin-password').value = '';
+        });
+
+        // Candidate logout function
+        document.getElementById('candidate-logout-btn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to logout? Your current progress will be lost.')) {
+                // Stop timer
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+                // Reset to candidate login screen
+                document.getElementById('exam-screen').classList.remove('active');
+                document.getElementById('candidate-login-screen').classList.add('active');
+                // Clear form fields
+                document.getElementById('exam-code-input').value = '';
+                document.getElementById('candidate-name').value = '';
+                document.getElementById('candidate-mobile').value = '';
+            }
         });
 
         // Show question bank
