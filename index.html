@@ -519,6 +519,15 @@
                     <button class="ai-btn" id="ai-btn">🤖 AI Question Generator</button>
                 </div>
 
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 30px;">
+                    <h3 style="margin-top: 0; color: #856404;">🛠️ Database Management</h3>
+                    <p style="color: #856404; margin-bottom: 15px;">Use these tools to manage your exam database. Warning: Cleanup will delete all exams and results!</p>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="danger-btn" id="cleanup-exams-btn" style="background: #dc3545;">🗑️ Clean Up All Exams</button>
+                        <button class="success-btn" id="create-samples-btn">✨ Create Sample Exams</button>
+                    </div>
+                </div>
+
                 <!-- Question Bank Section -->
                 <div id="question-bank-section" class="hidden">
                     <h3 style="margin: 0 0 15px 0; color: var(--secondary);">Question Bank</h3>
@@ -841,21 +850,24 @@
                 <div class="result-container">
                     <h2>✅ Exam Completed!</h2>
                     <p style="font-size: 1.2rem; margin: 15px 0; color: var(--dark);">Thank you for attempting Polite Coaching Centre test.</p>
-                    
+
                     <div class="score-display" id="final-score">0.00</div>
                     <p style="font-size: 1.1rem; color: var(--primary); margin-bottom: 25px;">Your Final Score</p>
-                    
+
                     <div style="background: #e8f4fc; padding: 20px; border-radius: 12px; margin: 25px 0;">
                         <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Exam Code:</strong> <span id="result-exam-code">REASONING_01</span></p>
                         <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Name:</strong> <span id="result-name">Candidate Name</span></p>
                         <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Mobile:</strong> <span id="result-mobile">9876543210</span></p>
                     </div>
-                    
+
                     <p style="margin: 20px 0; font-weight: 500; line-height: 1.6;">
-                        Your score has been recorded. Contact Polite Coaching Centre for result analysis.
+                        Your score has been recorded successfully.
                     </p>
-                    
-                    <button class="success-btn" id="restart-btn">Take Another Exam</button>
+
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <button class="primary-btn" id="view-my-answers-btn">📊 View Detailed Results</button>
+                        <button class="success-btn" id="restart-btn">Take Another Exam</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -875,6 +887,7 @@
         let startTime = null;
         let aiGeneratedQuestion = null;
         let extractedQuestions = [];
+        let candidateDetailedAnswers = null; // Store candidate's detailed results for viewing
 
         // Sample data
         questions = [
@@ -2315,6 +2328,60 @@
             document.getElementById('ai-generator-section').classList.remove('hidden');
         });
 
+        // Clean up all exams
+        document.getElementById('cleanup-exams-btn').addEventListener('click', async function() {
+            if (!confirm('⚠️ WARNING: This will delete ALL exams and results from the database!\n\nAre you sure you want to continue?')) {
+                return;
+            }
+
+            if (!confirm('⚠️ FINAL CONFIRMATION: This action cannot be undone!\n\nDelete all exams and results?')) {
+                return;
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = '⏳ Cleaning...';
+
+            try {
+                if (window.PoliteCCAPI && window.PoliteCCAPI.cleanupAllExams) {
+                    await window.PoliteCCAPI.cleanupAllExams();
+                } else {
+                    alert('API not available. Please refresh the page.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to cleanup exams: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🗑️ Clean Up All Exams';
+            }
+        });
+
+        // Create sample exams
+        document.getElementById('create-samples-btn').addEventListener('click', async function() {
+            if (!confirm('Create sample exams?\n\nThis will create:\n- 20 sample questions (Math, GK, Reasoning, English)\n- 5 sample exams for testing\n\nContinue?')) {
+                return;
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = '⏳ Creating...';
+
+            try {
+                if (window.PoliteCCAPI && window.PoliteCCAPI.createSampleExams) {
+                    await window.PoliteCCAPI.createSampleExams();
+                } else {
+                    alert('API not available. Please refresh the page.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to create sample exams: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '✨ Create Sample Exams';
+            }
+        });
+
         // Generate AI question with real Gemini API
         document.getElementById('generate-ai-btn').addEventListener('click', async function() {
             const subject = document.getElementById('ai-subject').value;
@@ -2615,16 +2682,87 @@
             submitExam();
         });
 
+        // View candidate's own detailed results
+        document.getElementById('view-my-answers-btn').addEventListener('click', function() {
+            if (!candidateDetailedAnswers) {
+                window.PoliteCCAPI.showNotification('❌ No results available to display', 'error');
+                return;
+            }
+            showCandidateDetailedResults();
+        });
+
+        // Function to show candidate's detailed results
+        function showCandidateDetailedResults() {
+            const modal = document.getElementById('detailed-result-modal');
+            const content = document.getElementById('detailed-result-content');
+
+            const data = candidateDetailedAnswers;
+
+            // Build detailed view
+            let html = `
+                <h3 style="color: var(--secondary); margin-bottom: 20px;">Your Detailed Results</h3>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; flex-wrap: wrap; gap: 15px;">
+                    <div><strong>Name:</strong> ${data.candidateName}</div>
+                    <div><strong>Exam:</strong> ${data.examCode}</div>
+                    <div><strong>Score:</strong> <span style="color: ${data.score >= 0 ? '#27ae60' : '#e74c3c'}; font-weight: 700; font-size: 1.2rem;">${data.score}</span></div>
+                </div>
+                <div style="max-height: 500px; overflow-y: auto;">
+            `;
+
+            data.answers.forEach((answer, index) => {
+                const isCorrect = answer.isCorrect;
+                const userAnswered = answer.userAnswer !== 'Not Answered';
+
+                html += `
+                    <div style="background: ${isCorrect ? '#e8f5e9' : (userAnswered ? '#ffebee' : '#f5f5f5')}; border-left: 4px solid ${isCorrect ? '#27ae60' : (userAnswered ? '#e74c3c' : '#95a5a6')}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                        <div style="font-weight: 600; margin-bottom: 8px; color: var(--secondary);">Question ${index + 1} (${answer.questionId} - ${answer.subject})</div>
+                        <div style="margin-bottom: 12px; font-size: 1.05rem;">${answer.question}</div>
+
+                        <div style="margin-bottom: 12px;">
+                            <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'A' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                <strong>A:</strong> ${answer.optionA} ${answer.userAnswer === 'A' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'A' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                            </div>
+                            <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'B' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                <strong>B:</strong> ${answer.optionB} ${answer.userAnswer === 'B' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'B' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                            </div>
+                            <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'C' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                <strong>C:</strong> ${answer.optionC} ${answer.userAnswer === 'C' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'C' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                            </div>
+                            <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'D' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                <strong>D:</strong> ${answer.optionD} ${answer.userAnswer === 'D' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'D' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                            </div>
+                        </div>
+
+                        <div style="font-weight: 600; font-size: 1.1rem;">
+                            ${isCorrect ? '✅ Correct (+1 point)' : (userAnswered ? '❌ Incorrect (-0.25 points)' : '⚪ Not Answered (0 points)')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            content.innerHTML = html;
+            modal.style.display = 'block';
+
+            // Close modal handler
+            document.getElementById('close-detailed-modal').onclick = function() {
+                modal.style.display = 'none';
+            };
+        }
+
         // Restart app
         document.getElementById('restart-btn').addEventListener('click', function() {
             document.getElementById('result-screen').classList.remove('active');
             document.getElementById('admin-login-screen').classList.add('active');
-            
+
+            // Reset candidate detailed answers
+            candidateDetailedAnswers = null;
+
             const notification = document.createElement('div');
             notification.className = 'notification success';
             notification.innerHTML = '✅ Ready for next exam!';
             document.getElementById('notification-container').appendChild(notification);
-            
+
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
@@ -2688,7 +2826,12 @@
                 // Store detailed answer info
                 detailedAnswers.push({
                     questionId: question.ID,
+                    subject: question.Subject,
                     question: question.Question,
+                    optionA: question['Option A'],
+                    optionB: question['Option B'],
+                    optionC: question['Option C'],
+                    optionD: question['Option D'],
                     userAnswer: userAnswer !== null ? ['A', 'B', 'C', 'D'][userAnswer] : 'Not Answered',
                     correctAnswer: question.Correct,
                     isCorrect: isCorrect,
@@ -2727,6 +2870,16 @@
                     }
                 }
             }
+
+            // Store detailed answers for candidate viewing
+            candidateDetailedAnswers = {
+                candidateName: candidateName,
+                candidateMobile: candidateMobile,
+                examCode: currentExam.code,
+                examTitle: currentExam.title,
+                score: parseFloat(score.toFixed(2)),
+                answers: detailedAnswers
+            };
 
             // Show result screen
             document.getElementById('exam-screen').classList.remove('active');
