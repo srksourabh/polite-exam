@@ -523,9 +523,15 @@
                 <div id="question-bank-section" class="hidden">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="margin: 0; color: var(--secondary);">Question Bank</h3>
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button id="select-all-questions-btn" style="background: #3498db; color: white; padding: 10px 20px; font-size: 0.95rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                                ☑️ Select All
+                            </button>
+                            <button id="deselect-all-questions-btn" style="background: #95a5a6; color: white; padding: 10px 20px; font-size: 0.95rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                                ☐ Deselect All
+                            </button>
                             <button id="export-questions-btn" style="background: #27ae60; color: white; padding: 10px 20px; font-size: 0.95rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
-                                📥 Export to CSV
+                                📥 Export Selected to CSV
                             </button>
                             <button id="toggle-add-question-btn" style="background: var(--success); padding: 10px 20px; font-size: 0.95rem;">
                                 ➕ Add New Question
@@ -1045,7 +1051,12 @@
             } else {
                 questions.forEach((q, index) => {
                     html += `
-                    <div class="question-item" data-question-id="${q.id || ''}" data-index="${index}" style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary); position: relative; padding-right: 60px;">
+                    <div class="question-item" data-question-id="${q.id || ''}" data-index="${index}" style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary); position: relative; padding-right: 60px; padding-left: 50px;">
+                        <!-- Checkbox for selection -->
+                        <div style="position: absolute; top: 15px; left: 15px;">
+                            <input type="checkbox" class="question-select-checkbox" data-index="${index}" style="width: 20px; height: 20px; cursor: pointer;" checked>
+                        </div>
+
                         <!-- Action buttons in top right -->
                         <div style="position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 5px;">
                             <button class="delete-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Delete Question" style="background: var(--danger); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
@@ -1139,21 +1150,53 @@
             });
         });
 
+        // Select All questions
+        document.getElementById('select-all-questions-btn').addEventListener('click', function() {
+            document.querySelectorAll('.question-select-checkbox').forEach(cb => {
+                cb.checked = true;
+            });
+            window.PoliteCCAPI.showNotification('✅ All questions selected', 'success');
+        });
+
+        // Deselect All questions
+        document.getElementById('deselect-all-questions-btn').addEventListener('click', function() {
+            document.querySelectorAll('.question-select-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            window.PoliteCCAPI.showNotification('✅ All questions deselected', 'info');
+        });
+
         // Export questions to CSV
         document.getElementById('export-questions-btn').addEventListener('click', function() {
             exportQuestionsToCSV();
         });
 
-        // Function to export questions to CSV
+        // Function to export questions to CSV (only selected ones)
         function exportQuestionsToCSV() {
             if (!questions || questions.length === 0) {
                 window.PoliteCCAPI.showNotification('No questions to export', 'error');
                 return;
             }
 
+            // Get selected question indices
+            const selectedIndices = [];
+            document.querySelectorAll('.question-select-checkbox').forEach(cb => {
+                if (cb.checked) {
+                    selectedIndices.push(parseInt(cb.getAttribute('data-index')));
+                }
+            });
+
+            if (selectedIndices.length === 0) {
+                window.PoliteCCAPI.showNotification('⚠️ Please select at least one question to export', 'error');
+                return;
+            }
+
+            // Filter questions to only selected ones
+            const selectedQuestions = questions.filter((q, index) => selectedIndices.includes(index));
+
             // Prepare CSV content with all question details
             const headers = ['ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer'];
-            const rows = questions.map(q => {
+            const rows = selectedQuestions.map(q => {
                 return [
                     q.ID || '',
                     q.Subject || '',
@@ -1191,7 +1234,7 @@
             link.click();
             document.body.removeChild(link);
 
-            window.PoliteCCAPI.showNotification(`✅ Exported ${questions.length} questions successfully!`, 'success');
+            window.PoliteCCAPI.showNotification(`✅ Exported ${selectedQuestions.length} questions successfully!`, 'success');
         }
 
         // Toggle Add Question Form
@@ -2645,10 +2688,10 @@
 
                 if (duplicate) {
                     window.PoliteCCAPI.showNotification('⚠️ You have already submitted this exam!', 'error');
+                    return; // Prevent submission
                 } else {
                     const resultData = {
                         'Exam': [currentExam.examId],  // Linked record field (must be an array)
-                        'Exam Code': currentExam.code,  // For backward compatibility
                         'Name': candidateName,
                         'Mobile': candidateMobile,
                         'Score': score.toFixed(2),
@@ -2656,7 +2699,11 @@
                         'Submitted At': new Date().toISOString()
                     };
 
-                    await window.PoliteCCAPI.submitResultToDatabase(resultData);
+                    const submitted = await window.PoliteCCAPI.submitResultToDatabase(resultData);
+                    if (!submitted) {
+                        window.PoliteCCAPI.showNotification('❌ Failed to submit exam. Please try again.', 'error');
+                        return; // Don't show result screen if submission failed
+                    }
                 }
             }
 
