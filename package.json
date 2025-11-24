@@ -1,0 +1,24 @@
+{
+  "name": "polite-coaching-centre",
+  "version": "1.0.0",
+  "description": "Exam system for Polite Coaching Centre with Airtable integration",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "exam",
+    "coaching",
+    "airtable",
+    "education"
+  ],
+  "author": "Ultimate Digital Solutions",
+  "license": "ISC",
+  "engines": {
+    "node": ">=14.x"
+  },
+  "dependencies": {
+    "airtable": "^0.12.2"
+  }
+}
