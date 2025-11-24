@@ -72,14 +72,19 @@ async function addQuestionToDatabase(questionData) {
         const existingQuestions = await loadQuestions();
         let maxNum = 0;
         existingQuestions.forEach(q => {
-            if (q.ID && q.ID.startsWith('q')) {
-                const num = parseInt(q.ID.substring(1));
-                if (!isNaN(num) && num > maxNum) {
-                    maxNum = num;
+            if (q.ID) {
+                // Support both old format (q1, q2) and new format (Q0001, Q0002)
+                const match = q.ID.match(/^[qQ](\d+)$/);
+                if (match) {
+                    const num = parseInt(match[1]);
+                    if (!isNaN(num) && num > maxNum) {
+                        maxNum = num;
+                    }
                 }
             }
         });
-        const nextId = 'q' + (maxNum + 1);
+        // Generate new ID in Q0001 format (4 digits with leading zeros)
+        const nextId = 'Q' + String(maxNum + 1).padStart(4, '0');
 
         const response = await fetch(`${API_URL}/questions`, {
             method: 'POST',
@@ -326,9 +331,9 @@ async function deleteQuestionFromDatabase(questionId) {
         const response = await fetch(`${API_URL}/questions/${questionId}`, {
             method: 'DELETE'
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             console.log(`✅ Question ${questionId} deleted successfully`);
             showNotification('✅ Question deleted successfully!', 'success');
@@ -339,6 +344,34 @@ async function deleteQuestionFromDatabase(questionId) {
     } catch (error) {
         console.error('❌ Error deleting question:', error);
         showNotification('❌ Failed to delete question', 'error');
+        return false;
+    }
+}
+
+// Migrate all questions to new ID format (Q0001, Q0002, etc.)
+async function migrateQuestionsToNewFormat() {
+    try {
+        showNotification('🔄 Starting migration to new question format...', 'info');
+
+        const response = await fetch(`${API_URL}/questions/migrate`, {
+            method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`✅ Successfully migrated ${data.count} questions`);
+            showNotification(`✅ ${data.message}`, 'success');
+
+            // Reload questions to see the new IDs
+            await loadQuestions();
+            return true;
+        } else {
+            throw new Error(data.error || 'Failed to migrate questions');
+        }
+    } catch (error) {
+        console.error('❌ Error migrating questions:', error);
+        showNotification(`❌ Migration failed: ${error.message}`, 'error');
         return false;
     }
 }
@@ -365,5 +398,6 @@ window.PoliteCCAPI = {
     checkDatabaseConnection,
     checkSystemStatus,
     deleteQuestionFromDatabase,
+    migrateQuestionsToNewFormat,
     showNotification
 };

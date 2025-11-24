@@ -107,6 +107,61 @@ module.exports = async (req, res) => {
             });
         }
 
+        // POST /api/questions/migrate - Migrate all questions to new ID format (Q0001, Q0002, etc.)
+        if (url === '/api/questions/migrate' && method === 'POST') {
+            try {
+                // Get all questions
+                const records = await base(QUESTIONS_TABLE).select().all();
+
+                // Sort by current ID to maintain order
+                const sortedRecords = records.sort((a, b) => {
+                    const idA = a.fields.ID || '';
+                    const idB = b.fields.ID || '';
+
+                    // Extract numbers from IDs
+                    const matchA = idA.match(/^[qQ](\d+)$/);
+                    const matchB = idB.match(/^[qQ](\d+)$/);
+                    const numA = matchA ? parseInt(matchA[1]) : 0;
+                    const numB = matchB ? parseInt(matchB[1]) : 0;
+
+                    return numA - numB;
+                });
+
+                // Update each question with new format
+                const updates = [];
+                for (let i = 0; i < sortedRecords.length; i++) {
+                    const record = sortedRecords[i];
+                    const newId = 'Q' + String(i + 1).padStart(4, '0');
+
+                    updates.push({
+                        id: record.id,
+                        fields: {
+                            ID: newId
+                        }
+                    });
+                }
+
+                // Batch update (Airtable allows up to 10 records per batch)
+                const batchSize = 10;
+                for (let i = 0; i < updates.length; i += batchSize) {
+                    const batch = updates.slice(i, i + batchSize);
+                    await base(QUESTIONS_TABLE).update(batch);
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: `Successfully migrated ${updates.length} questions to new format`,
+                    count: updates.length
+                });
+            } catch (error) {
+                console.error('Migration error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        }
+
         // GET /api/exams - List all exams
         if (url === '/api/exams' && method === 'GET') {
             const records = await base(EXAMS_TABLE).select().all();
