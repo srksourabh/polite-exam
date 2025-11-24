@@ -524,6 +524,9 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="margin: 0; color: var(--secondary);">Question Bank</h3>
                         <div style="display: flex; gap: 10px;">
+                            <button id="export-questions-btn" style="background: #27ae60; color: white; padding: 10px 20px; font-size: 0.95rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                                📥 Export to CSV
+                            </button>
                             <button id="toggle-add-question-btn" style="background: var(--success); padding: 10px 20px; font-size: 0.95rem;">
                                 ➕ Add New Question
                             </button>
@@ -1136,6 +1139,61 @@
             });
         });
 
+        // Export questions to CSV
+        document.getElementById('export-questions-btn').addEventListener('click', function() {
+            exportQuestionsToCSV();
+        });
+
+        // Function to export questions to CSV
+        function exportQuestionsToCSV() {
+            if (!questions || questions.length === 0) {
+                window.PoliteCCAPI.showNotification('No questions to export', 'error');
+                return;
+            }
+
+            // Prepare CSV content with all question details
+            const headers = ['ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer'];
+            const rows = questions.map(q => {
+                return [
+                    q.ID || '',
+                    q.Subject || '',
+                    q.Question || '',
+                    q['Option A'] || '',
+                    q['Option B'] || '',
+                    q['Option C'] || '',
+                    q['Option D'] || '',
+                    q.Correct || ''
+                ];
+            });
+
+            // Build CSV string
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                // Escape commas, quotes, and newlines in data
+                const escapedRow = row.map(cell => {
+                    const cellStr = String(cell);
+                    if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                        return '"' + cellStr.replace(/"/g, '""') + '"';
+                    }
+                    return cellStr;
+                });
+                csvContent += escapedRow.join(',') + '\n';
+            });
+
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Question_Bank_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            window.PoliteCCAPI.showNotification(`✅ Exported ${questions.length} questions successfully!`, 'success');
+        }
+
         // Toggle Add Question Form
         document.getElementById('toggle-add-question-btn').addEventListener('click', function() {
             const form = document.getElementById('add-question-form');
@@ -1599,7 +1657,12 @@
             // Display results in a table
             let html = `
                 <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                    <h4 style="margin-bottom: 15px; color: var(--secondary);">Results for: ${examCode}</h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 style="margin: 0; color: var(--secondary);">Results for: ${examCode}</h4>
+                        <button id="export-results-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                            📥 Export to CSV
+                        </button>
+                    </div>
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
@@ -1619,13 +1682,13 @@
                 const scoreColor = score >= 0 ? '#27ae60' : '#e74c3c';
 
                 html += `
-                    <tr style="background: ${index % 2 === 0 ? '#f8f9fa' : 'white'}; cursor: pointer; transition: background 0.2s;" onmouseenter="this.style.background='#e3f2fd'" onmouseleave="this.style.background='${index % 2 === 0 ? '#f8f9fa' : 'white'}'">
+                    <tr class="result-row" data-result-index="${index}" style="background: ${index % 2 === 0 ? '#f8f9fa' : 'white'}; cursor: pointer; transition: background 0.2s;" onmouseenter="this.style.background='#e3f2fd'" onmouseleave="this.style.background='${index % 2 === 0 ? '#f8f9fa' : 'white'}'">
                         <td style="padding: 12px; border: 1px solid #ddd;">${index + 1}</td>
                         <td style="padding: 12px; border: 1px solid #ddd; font-weight: 600;">${result.Name || result.name}</td>
                         <td style="padding: 12px; border: 1px solid #ddd;">${result.Mobile || result.mobile}</td>
                         <td style="padding: 12px; border: 1px solid #ddd;"><span style="color: ${scoreColor}; font-weight: 700; font-size: 1.1rem;">${parseFloat(score).toFixed(2)}</span></td>
                         <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
-                            <button class="view-detailed-btn" data-result-index="${index}" style="background: var(--primary); color: white; border: none; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-weight: 600;">View Details</button>
+                            <button class="view-detailed-btn" data-result-index="${index}" style="background: var(--primary); color: white; border: none; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-weight: 600;" onclick="event.stopPropagation();">View Details</button>
                         </td>
                     </tr>
                 `;
@@ -1653,7 +1716,70 @@
                     showDetailedResult(results[resultIndex], examCode);
                 });
             });
+
+            // Add event listeners for clickable rows
+            document.querySelectorAll('.result-row').forEach(row => {
+                row.addEventListener('click', function() {
+                    const resultIndex = parseInt(this.getAttribute('data-result-index'));
+                    showDetailedResult(results[resultIndex], examCode);
+                });
+            });
+
+            // Add event listener for export button
+            const exportBtn = document.getElementById('export-results-btn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', function() {
+                    exportResultsToCSV(results, examCode);
+                });
+            }
         });
+
+        // Function to export results to CSV
+        function exportResultsToCSV(results, examCode) {
+            if (!results || results.length === 0) {
+                window.PoliteCCAPI.showNotification('No results to export', 'error');
+                return;
+            }
+
+            // Prepare CSV content
+            const headers = ['#', 'Name', 'Mobile', 'Score', 'Submitted At'];
+            const rows = results.map((result, index) => {
+                return [
+                    index + 1,
+                    result.Name || result.name || '',
+                    result.Mobile || result.mobile || '',
+                    parseFloat(result.Score || result.score || 0).toFixed(2),
+                    result['Submitted At'] || result.submittedAt || ''
+                ];
+            });
+
+            // Build CSV string
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                // Escape commas and quotes in data
+                const escapedRow = row.map(cell => {
+                    const cellStr = String(cell);
+                    if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                        return '"' + cellStr.replace(/"/g, '""') + '"';
+                    }
+                    return cellStr;
+                });
+                csvContent += escapedRow.join(',') + '\n';
+            });
+
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Results_${examCode}_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            window.PoliteCCAPI.showNotification('✅ Results exported successfully!', 'success');
+        }
 
         // Function to show detailed result
         async function showDetailedResult(result, examCode) {
@@ -2265,10 +2391,10 @@
         });
 
         // Start exam
-        document.getElementById('start-exam-btn').addEventListener('click', function() {
+        document.getElementById('start-exam-btn').addEventListener('click', async function() {
             const examCode = document.getElementById('exam-code-input').value.trim().toUpperCase();
             const name = document.getElementById('candidate-name').value.trim();
-            
+
             if (!examCode || !name) {
                 const loginError = document.getElementById('login-error');
                 if (loginError) {
@@ -2279,7 +2405,18 @@
                 }
                 return;
             }
-            
+
+            // Load exams and questions from API if not already loaded
+            if (exams.length === 0 && window.PoliteCCAPI && window.PoliteCCAPI.loadExams) {
+                const loginError = document.getElementById('login-error');
+                if (loginError) loginError.textContent = '🔄 Loading exam data...';
+
+                exams = await window.PoliteCCAPI.loadExams() || [];
+                questions = await window.PoliteCCAPI.loadQuestions() || [];
+
+                if (loginError) loginError.textContent = '';
+            }
+
             // Find exam
             const exam = exams.find(e => e['Exam Code'] === examCode);
 
@@ -2338,6 +2475,7 @@
             // Prepare exam data
             currentExam = {
                 code: examCode,
+                examId: exam.id,  // Store the Airtable record ID for linking
                 title: exam.Title,
                 duration: parseInt(exam['Duration (mins)']) || 60,
                 questions: examQuestions,
@@ -2499,16 +2637,27 @@
 
             // Save result to database if API is available
             if (window.PoliteCCAPI && window.PoliteCCAPI.submitResultToDatabase) {
-                const resultData = {
-                    'Exam Code': currentExam.code,
-                    'Name': candidateName,
-                    'Mobile': candidateMobile,
-                    'Score': score.toFixed(2),
-                    'Answers': JSON.stringify(detailedAnswers),
-                    'Submitted At': new Date().toISOString()
-                };
+                // Check for duplicate submission (same name + mobile for this exam)
+                const existingResults = await window.PoliteCCAPI.getExamResults(currentExam.code) || [];
+                const duplicate = existingResults.find(r =>
+                    (r.Name === candidateName && r.Mobile === candidateMobile)
+                );
 
-                await window.PoliteCCAPI.submitResultToDatabase(resultData);
+                if (duplicate) {
+                    window.PoliteCCAPI.showNotification('⚠️ You have already submitted this exam!', 'error');
+                } else {
+                    const resultData = {
+                        'Exam': [currentExam.examId],  // Linked record field (must be an array)
+                        'Exam Code': currentExam.code,  // For backward compatibility
+                        'Name': candidateName,
+                        'Mobile': candidateMobile,
+                        'Score': score.toFixed(2),
+                        'Answers': JSON.stringify(detailedAnswers),
+                        'Submitted At': new Date().toISOString()
+                    };
+
+                    await window.PoliteCCAPI.submitResultToDatabase(resultData);
+                }
             }
 
             // Show result screen
