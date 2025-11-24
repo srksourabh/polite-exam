@@ -251,17 +251,200 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true, data: results });
         }
 
+        // POST /api/gemini/extract-questions - Extract questions from image using Gemini Vision
+        if (url === '/api/gemini/extract-questions' && method === 'POST') {
+            try {
+                const { imageData } = req.body;
+
+                if (!process.env.GEMINI_API_KEY) {
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Gemini API key not configured'
+                    });
+                }
+
+                if (!imageData) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Image data is required'
+                    });
+                }
+
+                // Call Gemini Vision API
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    {
+                                        text: `You are an expert question extraction system. Extract ALL questions from this image with their options and identify the correct answer.
+
+IMPORTANT INSTRUCTIONS:
+1. Extract EVERY question you see in the image
+2. Look for visual cues for correct answers: bold text, underlined text, checkmarks, circles, or any other marking
+3. If you cannot identify the correct answer from visual cues, analyze the content and make your best determination
+4. Return the data in this EXACT JSON format:
+
+{
+  "questions": [
+    {
+      "question": "Full question text here",
+      "optionA": "First option",
+      "optionB": "Second option",
+      "optionC": "Third option",
+      "optionD": "Fourth option",
+      "correct": "A or B or C or D (the letter of correct answer)",
+      "subject": "Math or GK or Reasoning or Others"
+    }
+  ]
+}
+
+Extract ALL questions you can find. Return ONLY valid JSON, no other text.`
+                                    },
+                                    {
+                                        inline_data: {
+                                            mime_type: imageData.mimeType || 'image/jpeg',
+                                            data: imageData.base64.split(',')[1] || imageData.base64
+                                        }
+                                    }
+                                ]
+                            }]
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error?.message || 'Gemini API request failed');
+                }
+
+                // Extract text from Gemini response
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+                // Parse JSON from response
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    throw new Error('No valid JSON found in response');
+                }
+
+                const extractedData = JSON.parse(jsonMatch[0]);
+
+                return res.status(200).json({
+                    success: true,
+                    data: extractedData
+                });
+
+            } catch (error) {
+                console.error('Gemini extraction error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to extract questions'
+                });
+            }
+        }
+
+        // POST /api/gemini/generate-question - Generate a question using Gemini AI
+        if (url === '/api/gemini/generate-question' && method === 'POST') {
+            try {
+                const { subject, difficulty, customPrompt } = req.body;
+
+                if (!process.env.GEMINI_API_KEY) {
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Gemini API key not configured'
+                    });
+                }
+
+                // Build the prompt
+                let prompt = '';
+                if (customPrompt && customPrompt.trim()) {
+                    prompt = `Generate a multiple choice question based on this request: "${customPrompt}"`;
+                } else {
+                    const difficultyText = difficulty || 'medium';
+                    prompt = `Generate a ${difficultyText} difficulty multiple choice question for ${subject || 'General Knowledge'} topic suitable for competitive exams like Railway, Banking, SSC, etc.`;
+                }
+
+                prompt += `\n\nReturn ONLY valid JSON in this EXACT format (no other text):
+{
+  "question": "The complete question text",
+  "optionA": "First option",
+  "optionB": "Second option",
+  "optionC": "Third option",
+  "optionD": "Fourth option",
+  "correct": "A or B or C or D",
+  "explanation": "Brief explanation of the correct answer",
+  "subject": "${subject || 'Others'}",
+  "difficulty": "${difficulty || 'medium'}"
+}
+
+Make sure the question is unique, relevant, and has one clearly correct answer.`;
+
+                // Call Gemini API
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: prompt
+                                }]
+                            }]
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error?.message || 'Gemini API request failed');
+                }
+
+                // Extract text from Gemini response
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+                // Parse JSON from response
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    throw new Error('No valid JSON found in response');
+                }
+
+                const questionData = JSON.parse(jsonMatch[0]);
+
+                return res.status(200).json({
+                    success: true,
+                    data: questionData
+                });
+
+            } catch (error) {
+                console.error('Gemini generation error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to generate question'
+                });
+            }
+        }
+
         // 404 - Route not found
-        return res.status(404).json({ 
-            success: false, 
-            error: 'Route not found' 
+        return res.status(404).json({
+            success: false,
+            error: 'Route not found'
         });
 
     } catch (error) {
         console.error('API Error:', error);
-        return res.status(500).json({ 
-            success: false, 
-            error: error.message || 'Internal server error' 
+        return res.status(500).json({
+            success: false,
+            error: error.message || 'Internal server error'
         });
     }
 };
