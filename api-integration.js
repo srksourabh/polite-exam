@@ -90,10 +90,10 @@ async function addQuestionToDatabase(questionData) {
                 ID: nextId,
                 Subject: questionData.subject,
                 Question: questionData.question,
-                OptionA: questionData.optionA,
-                OptionB: questionData.optionB,
-                OptionC: questionData.optionC,
-                OptionD: questionData.optionD,
+                'Option A': questionData.optionA,
+                'Option B': questionData.optionB,
+                'Option C': questionData.optionC,
+                'Option D': questionData.optionD,
                 Correct: questionData.correct
             })
         });
@@ -128,10 +128,10 @@ async function updateQuestionInDatabase(questionId, questionData) {
             body: JSON.stringify({
                 Subject: questionData.subject,
                 Question: questionData.question,
-                OptionA: questionData.optionA,
-                OptionB: questionData.optionB,
-                OptionC: questionData.optionC,
-                OptionD: questionData.optionD,
+                'Option A': questionData.optionA,
+                'Option B': questionData.optionB,
+                'Option C': questionData.optionC,
+                'Option D': questionData.optionD,
                 Correct: questionData.correct
             })
         });
@@ -163,21 +163,15 @@ async function createExamInDatabase(examData) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                examCode: examData.examCode,
-                title: examData.title,
-                duration: examData.duration,
-                expiry: examData.expiry,
-                questionIds: examData.questionIds
-            })
+            body: JSON.stringify(examData)
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             console.log('✅ Exam created in database');
-            showNotification(`✅ Exam "${examData.examCode}" created successfully!`, 'success');
-            
+            showNotification(`✅ Exam "${examData['Exam Code']}" created successfully!`, 'success');
+
             // Reload exams
             await loadExams();
             return true;
@@ -218,19 +212,14 @@ async function submitResultToDatabase(resultData) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                examCode: resultData.examCode,
-                name: resultData.name,
-                mobile: resultData.mobile,
-                score: resultData.score,
-                answers: resultData.answers
-            })
+            body: JSON.stringify(resultData)
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             console.log('✅ Result submitted to database');
+            showNotification('✅ Result saved successfully!', 'success');
             return true;
         } else {
             throw new Error(data.error || 'Failed to submit result');
