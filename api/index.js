@@ -86,13 +86,24 @@ module.exports = async (req, res) => {
             });
         }
 
+        // PUT /api/questions/:id - Update question
+        if (url.startsWith('/api/questions/') && method === 'PUT') {
+            const questionId = url.split('/api/questions/')[1];
+            const updateData = req.body;
+            const record = await base(QUESTIONS_TABLE).update(questionId, updateData);
+            return res.status(200).json({
+                success: true,
+                data: { id: record.id, ...record.fields }
+            });
+        }
+
         // DELETE /api/questions/:id - Delete question
         if (url.startsWith('/api/questions/') && method === 'DELETE') {
             const questionId = url.split('/api/questions/')[1];
             await base(QUESTIONS_TABLE).destroy(questionId);
-            return res.status(200).json({ 
-                success: true, 
-                message: 'Question deleted successfully' 
+            return res.status(200).json({
+                success: true,
+                message: 'Question deleted successfully'
             });
         }
 
