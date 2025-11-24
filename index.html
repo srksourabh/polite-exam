@@ -913,7 +913,7 @@
                 'Exam Code': "SAMPLE01",
                 'Title': "Sample Reasoning & Math Test",
                 'Duration (mins)': "10",
-                'Expiry (IST)': new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                'Expiry (IST)': new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('.')[0] + 'Z',
                 'Question IDs': "Q1,Q2,Q3,Q4,Q5"
             }
         ];
@@ -1485,12 +1485,20 @@
                 return;
             }
 
+            // Format expiry date for Airtable
+            // Airtable prefers ISO format without milliseconds: YYYY-MM-DDTHH:MM:SS
+            const formattedExpiry = expiryDate.toISOString().split('.')[0] + 'Z';
+
+            console.log('📅 Debug - Expiry Input:', expiryInput);
+            console.log('📅 Debug - Expiry Date:', expiryDate);
+            console.log('📅 Debug - Formatted Expiry:', formattedExpiry);
+
             // Create exam object
             const newExam = {
                 'Exam Code': examCode,
                 'Title': examTitle,
                 'Duration (mins)': duration,
-                'Expiry (IST)': expiryDate.toISOString(),
+                'Expiry (IST)': formattedExpiry,
                 'Question IDs': selectedQuestions.join(',')
             };
 
