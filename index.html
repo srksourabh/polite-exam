@@ -459,6 +459,7 @@
         }
     </style>
     <script src="api-integration.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
 </head>
 <body>
     <div class="container">
@@ -523,9 +524,14 @@
                 <div id="question-bank-section" class="hidden">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="margin: 0; color: var(--secondary);">Question Bank</h3>
-                        <button id="toggle-add-question-btn" style="background: var(--success); padding: 10px 20px; font-size: 0.95rem;">
-                            ➕ Add New Question
-                        </button>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="migrate-questions-btn" style="background: #f39c12; color: white; padding: 10px 20px; font-size: 0.95rem; border: none; cursor: pointer; border-radius: 8px;" title="Migrate all questions to Q0001 format">
+                                🔄 Migrate to New Format
+                            </button>
+                            <button id="toggle-add-question-btn" style="background: var(--success); padding: 10px 20px; font-size: 0.95rem;">
+                                ➕ Add New Question
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Add Question Form (Initially Hidden) -->
@@ -609,8 +615,16 @@
                     <div class="form-group">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
                             <label style="margin: 0; color: white; font-size: 1.1rem; font-weight: 600;">Select Questions for Exam</label>
-                            <div id="selected-count" style="background: white; color: #667eea; padding: 8px 20px; border-radius: 25px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2); min-width: 120px; text-align: center;">
-                                0 Selected
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 8px;">
+                                    <input type="number" id="random-count" min="1" value="5" placeholder="#" style="width: 60px; padding: 5px; border: none; border-radius: 5px; text-align: center; font-weight: 600;">
+                                    <button id="random-select-btn" style="background: #f39c12; color: white; padding: 6px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">
+                                        🎲 Random
+                                    </button>
+                                </div>
+                                <div id="selected-count" style="background: white; color: #667eea; padding: 8px 20px; border-radius: 25px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2); min-width: 120px; text-align: center;">
+                                    0 Selected
+                                </div>
                             </div>
                         </div>
                         <div id="exam-questions-list">
@@ -643,12 +657,19 @@
                     <p>Upload a photo or PDF of your question paper. We'll extract and clean the text automatically!</p>
                     
                     <div class="form-group" style="margin-top: 20px;">
-                        <label>Upload Image/PDF</label>
-                        <input type="file" id="paper-upload" accept="image/*,.pdf" style="padding: 3px;">
-                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">✓ Works with phone photos of printed papers<br>✓ Supports JPG, PNG, PDF</p>
+                        <label>Upload Image/PDF or Take Photo</label>
+                        <input type="file" id="paper-upload" accept="image/*,.pdf" capture="environment" style="padding: 3px;">
+                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">✓ Works with phone photos or file uploads<br>✓ Supports JPG, PNG, PDF<br>✓ Use camera button on mobile to capture directly</p>
                     </div>
-                    
-                    <button class="upload-btn" id="process-upload-btn">🔍 Extract Questions</button>
+
+                    <button class="upload-btn" id="process-upload-btn">🔍 Extract Questions with OCR</button>
+                    <div id="ocr-progress" class="hidden" style="margin-top: 15px; padding: 15px; background: #e3f2fd; border-radius: 8px; text-align: center;">
+                        <p style="color: var(--secondary); font-weight: 600; margin-bottom: 10px;">Processing with OCR...</p>
+                        <div style="background: #ddd; border-radius: 10px; overflow: hidden; height: 20px;">
+                            <div id="ocr-progress-bar" style="background: var(--secondary); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <p id="ocr-status" style="margin-top: 10px; font-size: 0.9rem; color: #666;"></p>
+                    </div>
                     
                     <div id="upload-result-container" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #e0e0e0;">
                         <h4 style="color: var(--primary); margin-bottom: 15px;">Extracted Text</h4>
@@ -660,8 +681,11 @@
                         <div id="ready-questions">
                             <p style="text-align: center; color: #7f8c8d;">Click 'Clean & Format Text' to see questions</p>
                         </div>
-                        
-                        <button class="success-btn" style="margin-top: 20px;" id="add-extracted-btn">✅ Add All Questions to Bank</button>
+
+                        <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                            <button class="success-btn" id="add-extracted-btn">✅ Add All Questions to Bank</button>
+                            <button class="admin-btn" id="add-selected-btn">➕ Add Selected Questions</button>
+                        </div>
                     </div>
                 </div>
 
@@ -941,37 +965,48 @@
             // Find the highest existing question number
             let maxNum = 0;
             questions.forEach(q => {
-                if (q.ID && q.ID.startsWith('q')) {
-                    const num = parseInt(q.ID.substring(1));
-                    if (!isNaN(num) && num > maxNum) {
-                        maxNum = num;
+                if (q.ID) {
+                    // Support both old format (q1, q2) and new format (Q0001, Q0002)
+                    const match = q.ID.match(/^[qQ](\d+)$/);
+                    if (match) {
+                        const num = parseInt(match[1]);
+                        if (!isNaN(num) && num > maxNum) {
+                            maxNum = num;
+                        }
                     }
                 }
             });
             let idCounter = maxNum + 1;
 
             questions.forEach(q => {
-                // Generate unique simple ID if needed (q1, q2, q3, etc.)
+                // Generate unique ID if needed (Q0001, Q0002, etc.)
                 if (!q.ID || seenIds.has(q.ID)) {
-                    q.ID = 'q' + idCounter;
+                    q.ID = 'Q' + String(idCounter).padStart(4, '0');
                     idCounter++;
                 }
-                
+
                 // Check if this question content is duplicate
-                const isDuplicate = uniqueQuestions.some(uq => 
-                    uq.Question === q.Question && 
-                    uq['Option A'] === q['Option A'] && 
+                const isDuplicate = uniqueQuestions.some(uq =>
+                    uq.Question === q.Question &&
+                    uq['Option A'] === q['Option A'] &&
                     uq['Option B'] === q['Option B']
                 );
-                
+
                 if (!isDuplicate) {
                     seenIds.add(q.ID);
                     uniqueQuestions.push(q);
                 }
             });
-            
-            // Update questions array
+
+            // Update questions array and sort (newest first - descending by ID number)
             questions = uniqueQuestions;
+            questions.sort((a, b) => {
+                const matchA = a.ID.match(/^[qQ](\d+)$/);
+                const matchB = b.ID.match(/^[qQ](\d+)$/);
+                const numA = matchA ? parseInt(matchA[1]) : 0;
+                const numB = matchB ? parseInt(matchB[1]) : 0;
+                return numB - numA; // Descending order (newest first)
+            });
             
             // Render questions with Delete buttons
             let html = '';
@@ -1084,6 +1119,24 @@
         // Close Add Question Form
         document.getElementById('close-add-question-btn').addEventListener('click', function() {
             document.getElementById('add-question-form').classList.add('hidden');
+        });
+
+        // Migrate questions to new format
+        document.getElementById('migrate-questions-btn').addEventListener('click', async function() {
+            if (!window.PoliteCCAPI || !window.PoliteCCAPI.migrateQuestionsToNewFormat) {
+                alert('Migration function not available. Please check your connection.');
+                return;
+            }
+
+            // Confirm with user
+            if (confirm('This will rename all existing questions to Q0001, Q0002, etc. format. Continue?')) {
+                const success = await window.PoliteCCAPI.migrateQuestionsToNewFormat();
+
+                if (success) {
+                    // Refresh the question list
+                    document.getElementById('question-bank-btn').click();
+                }
+            }
         });
 
         // Add/Update question to bank
@@ -1299,6 +1352,46 @@
 
                 // Reset counter
                 updateSelectedCount();
+
+                // Random selection button
+                document.getElementById('random-select-btn').addEventListener('click', function() {
+                    const randomCount = parseInt(document.getElementById('random-count').value);
+
+                    if (!randomCount || randomCount < 1) {
+                        alert('Please enter a valid number of questions to select.');
+                        return;
+                    }
+
+                    if (randomCount > questions.length) {
+                        alert(`You can only select up to ${questions.length} questions from the bank.`);
+                        return;
+                    }
+
+                    // Uncheck all first
+                    document.querySelectorAll('.question-checkbox').forEach(cb => {
+                        cb.checked = false;
+                    });
+
+                    // Get all checkboxes
+                    const allCheckboxes = Array.from(document.querySelectorAll('.question-checkbox'));
+
+                    // Shuffle and select random questions
+                    const shuffled = allCheckboxes.sort(() => Math.random() - 0.5);
+                    const selectedCheckboxes = shuffled.slice(0, randomCount);
+
+                    // Check the randomly selected checkboxes
+                    selectedCheckboxes.forEach(cb => {
+                        cb.checked = true;
+                    });
+
+                    // Update counter
+                    updateSelectedCount();
+
+                    // Show notification
+                    if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                        window.PoliteCCAPI.showNotification(`🎲 Randomly selected ${randomCount} questions!`, 'success');
+                    }
+                });
             }
         });
 
@@ -1338,7 +1431,7 @@
             const newExam = {
                 'Exam Code': examCode,
                 'Title': examTitle,
-                'Duration (mins)': duration.toString(),
+                'Duration (mins)': duration,
                 'Expiry (IST)': new Date().toISOString(),
                 'Question IDs': selectedQuestions.join(',')
             };
@@ -1586,78 +1679,71 @@
             document.getElementById('ai-generator-section').classList.add('hidden');
         });
 
-        // Process upload
-        document.getElementById('process-upload-btn').addEventListener('click', function() {
+        // Process upload with real OCR
+        document.getElementById('process-upload-btn').addEventListener('click', async function() {
             const fileInput = document.getElementById('paper-upload');
-            
+
             if (!fileInput || !fileInput.files[0]) {
-                const notification = document.createElement('div');
-                notification.className = 'notification error';
-                notification.innerHTML = '❌ Please select a file to upload.';
-                document.getElementById('notification-container').appendChild(notification);
-                
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 3000);
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('❌ Please select a file to upload.', 'error');
+                }
                 return;
             }
-            
-            // Show processing notification
-            const notification = document.createElement('div');
-            notification.className = 'notification info';
-            notification.innerHTML = '📸 Processing your question paper...';
-            document.getElementById('notification-container').appendChild(notification);
-            
-            // Simulate OCR processing
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-                
-                const sampleText = `1. What is the next number in the series: 2, 6, 12, 20, ?
-A) 24
-B) 30
-C) 32
-D) 36
-Answer: B
 
-2. If a shirt costs ₹1200 after 20% discount, what was original price?
-A) ₹1400
-B) ₹1440
-C) ₹1500
-D) ₹1600
-Answer: C
+            const file = fileInput.files[0];
+            const ocrProgress = document.getElementById('ocr-progress');
+            const ocrProgressBar = document.getElementById('ocr-progress-bar');
+            const ocrStatus = document.getElementById('ocr-status');
 
-3. Which word is most similar to "BENEVOLENT"?
-A) Selfish
-B) Kind
-C) Cruel
-D) Greedy
-Answer: B`;
-                
+            // Show progress
+            ocrProgress.classList.remove('hidden');
+            ocrProgressBar.style.width = '0%';
+            ocrStatus.textContent = 'Initializing OCR...';
+
+            try {
+                // Use Tesseract.js for OCR
+                const result = await Tesseract.recognize(
+                    file,
+                    'eng',
+                    {
+                        logger: m => {
+                            // Update progress
+                            if (m.status === 'recognizing text') {
+                                const progress = Math.round(m.progress * 100);
+                                ocrProgressBar.style.width = progress + '%';
+                                ocrStatus.textContent = `Recognizing text: ${progress}%`;
+                            } else {
+                                ocrStatus.textContent = m.status;
+                            }
+                        }
+                    }
+                );
+
+                // Hide progress
+                ocrProgress.classList.add('hidden');
+
+                // Set extracted text
                 const extractedText = document.getElementById('extracted-text');
                 if (extractedText) {
-                    extractedText.value = sampleText;
+                    extractedText.value = result.data.text;
                 }
-                
+
                 const uploadResultContainer = document.getElementById('upload-result-container');
                 if (uploadResultContainer) {
                     uploadResultContainer.classList.remove('hidden');
                 }
-                
-                const successNotification = document.createElement('div');
-                successNotification.className = 'notification success';
-                successNotification.innerHTML = '✅ OCR processing completed successfully!';
-                document.getElementById('notification-container').appendChild(successNotification);
-                
-                setTimeout(() => {
-                    if (successNotification.parentNode) {
-                        successNotification.parentNode.removeChild(successNotification);
-                    }
-                }, 3000);
-            }, 1000);
+
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('✅ OCR processing completed successfully!', 'success');
+                }
+            } catch (error) {
+                console.error('OCR Error:', error);
+                ocrProgress.classList.add('hidden');
+
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification(`❌ OCR failed: ${error.message}`, 'error');
+                }
+            }
         });
 
         // Clean text
@@ -1692,7 +1778,7 @@ Answer: B`;
                 extractedQuestions.push(question);
             });
             
-            // Display questions
+            // Display questions with checkboxes for selection
             const readyQuestions = document.getElementById('ready-questions');
             if (readyQuestions) {
                 if (extractedQuestions.length === 0) {
@@ -1701,22 +1787,35 @@ Answer: B`;
                     let html = '<div style="max-height: 400px; overflow-y: auto;">';
                     extractedQuestions.forEach((q, index) => {
                         html += `
-                        <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary);">
-                            <p style="margin-bottom: 10px; font-weight: 500;">${q.question}</p>
-                            <div style="margin-left: 25px; margin-bottom: 8px;">
-                                <div>A) ${q.options[0]}</div>
-                                <div>B) ${q.options[1]}</div>
-                                <div>C) ${q.options[2]}</div>
-                                <div>D) ${q.options[3]}</div>
+                        <label class="extracted-question-item" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary); cursor: pointer; transition: all 0.2s;">
+                            <input type="checkbox" class="extracted-question-checkbox" value="${index}" checked style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+                            <div style="flex: 1;">
+                                <p style="margin-bottom: 10px; font-weight: 500;">${q.question}</p>
+                                <div style="margin-left: 25px; margin-bottom: 8px;">
+                                    <div>A) ${q.options[0]}</div>
+                                    <div>B) ${q.options[1]}</div>
+                                    <div>C) ${q.options[2]}</div>
+                                    <div>D) ${q.options[3]}</div>
+                                </div>
+                                <div style="color: var(--success); font-weight: 500;">
+                                    Correct Answer: ${String.fromCharCode(65 + q.correct)}
+                                </div>
                             </div>
-                            <div style="color: var(--success); font-weight: 500;">
-                                Correct Answer: ${String.fromCharCode(65 + q.correct)}
-                            </div>
-                        </div>
+                        </label>
                         `;
                     });
                     html += '</div>';
                     readyQuestions.innerHTML = html;
+
+                    // Add hover effects
+                    document.querySelectorAll('.extracted-question-item').forEach(item => {
+                        item.addEventListener('mouseenter', function() {
+                            this.style.background = '#e8f4fd';
+                        });
+                        item.addEventListener('mouseleave', function() {
+                            this.style.background = '#f8f9fa';
+                        });
+                    });
                 }
             }
             
@@ -1732,86 +1831,95 @@ Answer: B`;
             }, 3000);
         });
 
-        // Add extracted questions
-        document.getElementById('add-extracted-btn').addEventListener('click', function() {
+        // Add all extracted questions to database
+        document.getElementById('add-extracted-btn').addEventListener('click', async function() {
             if (extractedQuestions.length === 0) {
-                const notification = document.createElement('div');
-                notification.className = 'notification error';
-                notification.innerHTML = "❌ No questions to add.";
-                document.getElementById('notification-container').appendChild(notification);
-                
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 3000);
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('❌ No questions to add.', 'error');
+                }
                 return;
             }
-            
-            // Add questions to questions array
-            extractedQuestions.forEach(q => {
-                const questionId = `Q${questionCounter++}`;
-                questions.push({
-                    ID: questionId,
-                    Subject: q.subject,
-                    Question: q.question,
-                    'Option A': q.options[0],
-                    'Option B': q.options[1],
-                    'Option C': q.options[2],
-                    'Option D': q.options[3],
-                    Correct: String.fromCharCode(65 + q.correct)
+
+            // Add questions to database
+            let successCount = 0;
+            for (const q of extractedQuestions) {
+                const success = await window.PoliteCCAPI.addQuestionToDatabase({
+                    subject: q.subject,
+                    question: q.question,
+                    optionA: q.options[0],
+                    optionB: q.options[1],
+                    optionC: q.options[2],
+                    optionD: q.options[3],
+                    correct: String.fromCharCode(65 + q.correct)
                 });
-            });
-            
-            // Refresh question bank
-            document.getElementById('question-bank-section').classList.remove('hidden');
-            document.getElementById('create-exam-section').classList.add('hidden');
-            document.getElementById('view-results-section').classList.add('hidden');
-            document.getElementById('upload-section').classList.add('hidden');
-            document.getElementById('ai-generator-section').classList.add('hidden');
-            
-            const questionsList = document.getElementById('questions-list');
-            let html = '';
-            
-            questions.forEach(q => {
-                html += `
-                <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary);">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <strong>${q.ID}</strong>
-                        <span class="question-tag">${q.Subject}</span>
-                    </div>
-                    <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question}</p>
-                    <div style="margin-left: 25px; margin-bottom: 8px;">
-                        <div>A) ${q['Option A']}</div>
-                        <div>B) ${q['Option B']}</div>
-                        <div>C) ${q['Option C']}</div>
-                        <div>D) ${q['Option D']}</div>
-                    </div>
-                    <div style="color: var(--success); font-weight: 500;">
-                        Correct Answer: ${q.Correct}
-                    </div>
-                </div>
-                `;
-            });
-            
-            questionsList.innerHTML = html;
-            
-            // Hide upload result
+
+                if (success) successCount++;
+            }
+
+            // Hide upload result and show question bank
             const uploadResultContainer = document.getElementById('upload-result-container');
             if (uploadResultContainer) {
                 uploadResultContainer.classList.add('hidden');
             }
-            
-            const notification = document.createElement('div');
-            notification.className = 'notification success';
-            notification.innerHTML = `✅ ${extractedQuestions.length} questions added to bank!`;
-            document.getElementById('notification-container').appendChild(notification);
-            
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
+
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification(`✅ ${successCount} questions added to bank!`, 'success');
+            }
+
+            // Refresh question bank
+            document.getElementById('question-bank-btn').click();
+        });
+
+        // Add selected extracted questions to database
+        document.getElementById('add-selected-btn').addEventListener('click', async function() {
+            if (extractedQuestions.length === 0) {
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('❌ No questions to add.', 'error');
                 }
-            }, 3000);
+                return;
+            }
+
+            // Get selected checkboxes
+            const selectedCheckboxes = document.querySelectorAll('.extracted-question-checkbox:checked');
+
+            if (selectedCheckboxes.length === 0) {
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('❌ No questions selected. Please select at least one question.', 'error');
+                }
+                return;
+            }
+
+            // Add selected questions to database
+            let successCount = 0;
+            for (const checkbox of selectedCheckboxes) {
+                const index = parseInt(checkbox.value);
+                const q = extractedQuestions[index];
+
+                const success = await window.PoliteCCAPI.addQuestionToDatabase({
+                    subject: q.subject,
+                    question: q.question,
+                    optionA: q.options[0],
+                    optionB: q.options[1],
+                    optionC: q.options[2],
+                    optionD: q.options[3],
+                    correct: String.fromCharCode(65 + q.correct)
+                });
+
+                if (success) successCount++;
+            }
+
+            // Hide upload result and show question bank
+            const uploadResultContainer = document.getElementById('upload-result-container');
+            if (uploadResultContainer) {
+                uploadResultContainer.classList.add('hidden');
+            }
+
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification(`✅ ${successCount} selected questions added to bank!`, 'success');
+            }
+
+            // Refresh question bank
+            document.getElementById('question-bank-btn').click();
         });
 
         // Show AI generator
