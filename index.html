@@ -1665,7 +1665,7 @@
                 return;
             }
 
-            const questionIds = (exam['Question IDs'] || exam.questionIds || '').split(',');
+            const questionIds = (exam['Question IDs'] || exam['Questions'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || '').split(',');
             const examQuestions = questionIds.map(id => questions.find(q => q.ID === id.trim())).filter(q => q);
 
             // Parse user answers
@@ -2304,7 +2304,7 @@
             }
             
             // Get questions for this exam
-            const questionIds = exam['Question IDs'].split(',');
+            const questionIds = (exam['Question IDs'] || exam['Questions'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || '').split(',');
             const examQuestions = questionIds
                 .map(id => questions.find(q => q.ID === id))
                 .filter(q => q);

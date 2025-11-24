@@ -177,24 +177,58 @@ module.exports = async (req, res) => {
             try {
                 const examData = req.body;
 
-                // Map frontend field names to Airtable field names
-                // Airtable might expect different field naming
-                const mappedData = {
-                    'Exam Code': examData['Exam Code'],
-                    'Title': examData['Title'],
-                    'Duration (mins)': examData['Duration (mins)'],
-                    'Expiry (IST)': examData['Expiry (IST)'],
-                    // Try both possible field names for question IDs
-                    'Question IDs': examData['Question IDs'] || examData['questionIds']
-                };
+                // Get question IDs value
+                const questionIdsValue = examData['Question IDs'] || examData['questionIds'] || examData['Questions'];
 
-                console.log('Creating exam with data:', JSON.stringify(mappedData, null, 2));
+                // Try different possible field name variations for Question IDs
+                // Airtable might use: "Question IDs", "Questions", "QuestionIDs", etc.
+                const fieldVariations = [
+                    'Question IDs',
+                    'Questions',
+                    'QuestionIDs',
+                    'questionIds',
+                    'question_ids'
+                ];
 
-                const record = await base(EXAMS_TABLE).create(mappedData);
-                return res.status(201).json({
-                    success: true,
-                    data: { id: record.id, ...record.fields }
-                });
+                let lastError = null;
+
+                // Try each field name variation
+                for (const fieldName of fieldVariations) {
+                    try {
+                        const mappedData = {
+                            'Exam Code': examData['Exam Code'],
+                            'Title': examData['Title'],
+                            'Duration (mins)': examData['Duration (mins)'],
+                            'Expiry (IST)': examData['Expiry (IST)'],
+                            [fieldName]: questionIdsValue
+                        };
+
+                        console.log(`Attempting to create exam with field name: "${fieldName}"`);
+                        console.log('Data:', JSON.stringify(mappedData, null, 2));
+
+                        const record = await base(EXAMS_TABLE).create(mappedData);
+
+                        console.log(`✅ Success! Correct field name is: "${fieldName}"`);
+
+                        return res.status(201).json({
+                            success: true,
+                            data: { id: record.id, ...record.fields }
+                        });
+                    } catch (err) {
+                        lastError = err;
+                        console.log(`❌ Failed with field name "${fieldName}":`, err.message);
+
+                        // If this is not a field name error, throw immediately
+                        if (!err.message.includes('Unknown field') && !err.message.includes('unknown field')) {
+                            throw err;
+                        }
+                        // Otherwise, continue to next variation
+                    }
+                }
+
+                // If all variations failed, throw the last error
+                throw new Error(`Failed to create exam. Tried field names: ${fieldVariations.join(', ')}. Last error: ${lastError.message}`);
+
             } catch (error) {
                 console.error('Error creating exam:', error);
                 return res.status(500).json({
