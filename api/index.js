@@ -272,7 +272,7 @@ module.exports = async (req, res) => {
 
                 // Call Gemini Vision API
                 const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+                    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
                     {
                         method: 'POST',
                         headers: {
@@ -387,7 +387,7 @@ Make sure the question is unique, relevant, and has one clearly correct answer.`
 
                 // Call Gemini API
                 const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+                    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
                     {
                         method: 'POST',
                         headers: {
