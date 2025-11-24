@@ -1418,11 +1418,51 @@
             const examCode = document.getElementById('exam-code').value.trim().toUpperCase();
             const examTitle = document.getElementById('exam-title').value.trim();
             const duration = parseInt(document.getElementById('exam-duration').value);
+            const expiryInput = document.getElementById('exam-expiry').value;
 
             if (!examCode || !examTitle || isNaN(duration) || duration < 5) {
                 const examError = document.getElementById('exam-error');
                 if (examError) {
                     examError.textContent = '❌ Please fill all fields correctly!';
+                    setTimeout(() => {
+                        examError.textContent = '';
+                    }, 3000);
+                }
+                return;
+            }
+
+            // Validate expiry date
+            if (!expiryInput) {
+                const examError = document.getElementById('exam-error');
+                if (examError) {
+                    examError.textContent = '❌ Please select an expiry date and time!';
+                    setTimeout(() => {
+                        examError.textContent = '';
+                    }, 3000);
+                }
+                return;
+            }
+
+            // Convert datetime-local value to ISO format
+            // datetime-local gives us "YYYY-MM-DDTHH:MM", we need to convert it to ISO
+            const expiryDate = new Date(expiryInput);
+
+            // Check if the expiry date is valid and in the future
+            if (isNaN(expiryDate.getTime())) {
+                const examError = document.getElementById('exam-error');
+                if (examError) {
+                    examError.textContent = '❌ Invalid expiry date!';
+                    setTimeout(() => {
+                        examError.textContent = '';
+                    }, 3000);
+                }
+                return;
+            }
+
+            if (expiryDate.getTime() <= Date.now()) {
+                const examError = document.getElementById('exam-error');
+                if (examError) {
+                    examError.textContent = '❌ Expiry date must be in the future!';
                     setTimeout(() => {
                         examError.textContent = '';
                     }, 3000);
@@ -1450,7 +1490,7 @@
                 'Exam Code': examCode,
                 'Title': examTitle,
                 'Duration (mins)': duration,
-                'Expiry (IST)': new Date().toISOString(),
+                'Expiry (IST)': expiryDate.toISOString(),
                 'Question IDs': selectedQuestions.join(',')
             };
 
@@ -1472,6 +1512,7 @@
                     document.getElementById('exam-code').value = '';
                     document.getElementById('exam-title').value = '';
                     document.getElementById('exam-duration').value = '';
+                    document.getElementById('exam-expiry').value = '';
 
                     // Uncheck all checkboxes
                     document.querySelectorAll('.question-checkbox').forEach(cb => cb.checked = false);
