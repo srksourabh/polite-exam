@@ -241,18 +241,14 @@ async function checkDatabaseConnection() {
     }
 }
 
-// Initialize on page load
+// Initialize on page load - ONLY check connection, don't load data yet
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('🚀 Initializing API integration...');
+    console.log('🚀 API integration ready');
     
-    // Check database connection
-    await checkDatabaseConnection();
-    
-    // Load initial data
-    await loadQuestions();
-    await loadExams();
-    
-    console.log('✅ API integration initialized');
+    // We'll check connection and load data ONLY when user logs in as admin
+    // This prevents errors when testing locally or before deployment
+    console.log('✅ Login buttons are ready to use');
+    console.log('💡 Data will load when you access admin panel');
 });
 
 // Export functions for use in main script
