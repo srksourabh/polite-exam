@@ -270,9 +270,9 @@ module.exports = async (req, res) => {
                     });
                 }
 
-                // Call Gemini Vision API
+                // Call Gemini Vision API with latest model
                 const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
                     {
                         method: 'POST',
                         headers: {
@@ -385,9 +385,9 @@ Extract ALL questions you can find. Return ONLY valid JSON, no other text.`
 
 Make sure the question is unique, relevant, and has one clearly correct answer.`;
 
-                // Call Gemini API
+                // Call Gemini API with latest model
                 const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
                     {
                         method: 'POST',
                         headers: {

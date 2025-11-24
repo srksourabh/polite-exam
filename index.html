@@ -524,9 +524,6 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="margin: 0; color: var(--secondary);">Question Bank</h3>
                         <div style="display: flex; gap: 10px;">
-                            <button id="migrate-questions-btn" style="background: #f39c12; color: white; padding: 10px 20px; font-size: 0.95rem; border: none; cursor: pointer; border-radius: 8px;" title="Migrate all questions to Q0001 format">
-                                🔄 Migrate to New Format
-                            </button>
                             <button id="toggle-add-question-btn" style="background: var(--success); padding: 10px 20px; font-size: 0.95rem;">
                                 ➕ Add New Question
                             </button>
@@ -608,8 +605,8 @@
                         <input type="number" id="exam-duration" min="5" value="10" placeholder="e.g., 60">
                     </div>
                     <div class="form-group">
-                        <label>Expiry Date & Time (IST)</label>
-                        <input type="datetime-local" id="exam-expiry">
+                        <label>Expiry Date (IST)</label>
+                        <input type="date" id="exam-expiry">
                     </div>
                     <div class="form-group">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
@@ -1139,24 +1136,6 @@
             document.getElementById('add-question-form').classList.add('hidden');
         });
 
-        // Migrate questions to new format
-        document.getElementById('migrate-questions-btn').addEventListener('click', async function() {
-            if (!window.PoliteCCAPI || !window.PoliteCCAPI.migrateQuestionsToNewFormat) {
-                alert('Migration function not available. Please check your connection.');
-                return;
-            }
-
-            // Confirm with user
-            if (confirm('This will rename all existing questions to Q0001, Q0002, etc. format. Continue?')) {
-                const success = await window.PoliteCCAPI.migrateQuestionsToNewFormat();
-
-                if (success) {
-                    // Refresh the question list
-                    document.getElementById('question-bank-btn').click();
-                }
-            }
-        });
-
         // Add/Update question to bank
         document.getElementById('add-question-btn').addEventListener('click', async function() {
             const subject = document.getElementById('question-subject').value;
@@ -1435,7 +1414,7 @@
             if (!expiryInput) {
                 const examError = document.getElementById('exam-error');
                 if (examError) {
-                    examError.textContent = '❌ Please select an expiry date and time!';
+                    examError.textContent = '❌ Please select an expiry date!';
                     setTimeout(() => {
                         examError.textContent = '';
                     }, 3000);
@@ -1443,11 +1422,11 @@
                 return;
             }
 
-            // Convert datetime-local value to ISO format
-            // datetime-local gives us "YYYY-MM-DDTHH:MM", we need to convert it to ISO
-            const expiryDate = new Date(expiryInput);
+            // Convert date value to Date object (set to end of day for comparison)
+            // date input gives us "YYYY-MM-DD"
+            const expiryDate = new Date(expiryInput + 'T23:59:59');
 
-            // Check if the expiry date is valid and in the future
+            // Check if the expiry date is valid
             if (isNaN(expiryDate.getTime())) {
                 const examError = document.getElementById('exam-error');
                 if (examError) {
@@ -1459,10 +1438,14 @@
                 return;
             }
 
-            if (expiryDate.getTime() <= Date.now()) {
+            // Check if expiry date is today or in the future (we don't need to check if it's in the past)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const expiryDateOnly = new Date(expiryInput);
+            if (expiryDateOnly.getTime() < today.getTime()) {
                 const examError = document.getElementById('exam-error');
                 if (examError) {
-                    examError.textContent = '❌ Expiry date must be in the future!';
+                    examError.textContent = '❌ Expiry date must be today or in the future!';
                     setTimeout(() => {
                         examError.textContent = '';
                     }, 3000);
@@ -1485,9 +1468,8 @@
                 return;
             }
 
-            // Format expiry date for Airtable
-            // Airtable prefers ISO format without milliseconds: YYYY-MM-DDTHH:MM:SS
-            const formattedExpiry = expiryDate.toISOString().split('.')[0] + 'Z';
+            // Format expiry date for Airtable (store date only in YYYY-MM-DD format)
+            const formattedExpiry = expiryInput;
 
             console.log('📅 Debug - Expiry Input:', expiryInput);
             console.log('📅 Debug - Expiry Date:', expiryDate);
@@ -2243,7 +2225,7 @@
             
             // Find exam
             const exam = exams.find(e => e['Exam Code'] === examCode);
-            
+
             if (!exam) {
                 const loginError = document.getElementById('login-error');
                 if (loginError) {
@@ -2253,6 +2235,25 @@
                     }, 3000);
                 }
                 return;
+            }
+
+            // Check if exam has expired
+            if (exam['Expiry (IST)']) {
+                const expiryDate = new Date(exam['Expiry (IST)']);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                expiryDate.setHours(0, 0, 0, 0);
+
+                if (expiryDate.getTime() < today.getTime()) {
+                    const loginError = document.getElementById('login-error');
+                    if (loginError) {
+                        loginError.textContent = '❌ This exam has expired! Only admin can view results.';
+                        setTimeout(() => {
+                            loginError.textContent = '';
+                        }, 5000);
+                    }
+                    return;
+                }
             }
             
             // Get questions for this exam
@@ -2510,19 +2511,16 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Set default expiry time to tomorrow at 6 PM IST
+            // Set default expiry date to tomorrow
             const now = new Date();
             now.setDate(now.getDate() + 1);
-            now.setHours(18, 0, 0, 0);
             const expiryInput = document.getElementById('exam-expiry');
             if (expiryInput) {
-                // For datetime-local input, use .value with ISO string format
+                // For date input, use .value with YYYY-MM-DD format
                 const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const day = String(now.getDate()).padStart(2, '0');
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                expiryInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                expiryInput.value = `${year}-${month}-${day}`;
             }
         });
     </script>
