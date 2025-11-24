@@ -1307,7 +1307,7 @@
 
                     html += `
                     <label class="exam-question-item" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;">
-                        <input type="checkbox" class="question-checkbox" value="${q.ID}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+                        <input type="checkbox" class="question-checkbox" value="${q.id}" data-question-id="${q.ID}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
                                 <strong style="font-size: 1rem; color: var(--secondary);">${q.ID}</strong>
@@ -1485,6 +1485,7 @@
             console.log('📅 Debug - Expiry Input:', expiryInput);
             console.log('📅 Debug - Expiry Date:', expiryDate);
             console.log('📅 Debug - Formatted Expiry:', formattedExpiry);
+            console.log('📋 Debug - Selected Questions (Record IDs):', selectedQuestions);
 
             // Create exam object
             const newExam = {
@@ -1492,8 +1493,10 @@
                 'Title': examTitle,
                 'Duration (mins)': duration,
                 'Expiry (IST)': formattedExpiry,
-                'Question IDs': selectedQuestions.join(',')
+                'Question IDs': selectedQuestions
             };
+
+            console.log('📤 Debug - Exam Data Being Sent:', JSON.stringify(newExam, null, 2));
 
             // Save to database if API is available
             if (window.PoliteCCAPI && window.PoliteCCAPI.createExamInDatabase) {
@@ -1665,8 +1668,15 @@
                 return;
             }
 
-            const questionIds = (exam['Question IDs'] || exam['Questions'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || '').split(',');
-            const examQuestions = questionIds.map(id => questions.find(q => q.ID === id.trim())).filter(q => q);
+            // Handle Question IDs - can be an array of record IDs or comma-separated string of question IDs (for backward compatibility)
+            let questionIds = exam['Question IDs'] || exam['Questions'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || '';
+            if (typeof questionIds === 'string') {
+                questionIds = questionIds.split(',').map(id => id.trim());
+            }
+            // Find questions by Airtable record ID (new format) or by Question ID field (old format)
+            const examQuestions = questionIds.map(id =>
+                questions.find(q => q.id === id || q.ID === id)
+            ).filter(q => q);
 
             // Parse user answers
             let userAnswers = [];
@@ -2304,9 +2314,14 @@
             }
             
             // Get questions for this exam
-            const questionIds = (exam['Question IDs'] || exam['Questions'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || '').split(',');
+            // Handle Question IDs - can be an array of record IDs or comma-separated string of question IDs (for backward compatibility)
+            let questionIds = exam['Question IDs'] || exam['Questions'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || '';
+            if (typeof questionIds === 'string') {
+                questionIds = questionIds.split(',').map(id => id.trim());
+            }
+            // Find questions by Airtable record ID (new format) or by Question ID field (old format)
             const examQuestions = questionIds
-                .map(id => questions.find(q => q.ID === id))
+                .map(id => questions.find(q => q.id === id || q.ID === id))
                 .filter(q => q);
             
             if (examQuestions.length === 0) {
