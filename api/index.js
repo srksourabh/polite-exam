@@ -185,7 +185,7 @@ module.exports = async (req, res) => {
                     'Duration (mins)': examData['Duration (mins)'],
                     'Expiry (IST)': examData['Expiry (IST)'],
                     // Try both possible field names for question IDs
-                    'questionIds': examData['Question IDs'] || examData['questionIds']
+                    'Question IDs': examData['Question IDs'] || examData['questionIds']
                 };
 
                 console.log('Creating exam with data:', JSON.stringify(mappedData, null, 2));
