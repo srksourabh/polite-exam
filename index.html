@@ -650,12 +650,23 @@
                 <!-- Upload Question Paper Section -->
                 <div id="upload-section" class="hidden">
                     <h3>📸 Upload Question Paper</h3>
-                    <p>Upload a photo or PDF of your question paper. We'll extract and clean the text automatically!</p>
-                    
-                    <div class="form-group" style="margin-top: 20px;">
-                        <label>Upload Image/PDF or Take Photo</label>
-                        <input type="file" id="paper-upload" accept="image/*,.pdf" capture="environment" style="padding: 3px;">
-                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">✓ Works with phone photos or file uploads<br>✓ Supports JPG, PNG, PDF<br>✓ Use camera button on mobile to capture directly</p>
+                    <p>Capture questions directly with your camera or upload an existing image/PDF!</p>
+
+                    <div style="display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap;">
+                        <button class="upload-btn" id="capture-photo-btn" style="flex: 1; min-width: 200px;">
+                            📷 Capture with Camera
+                        </button>
+                        <button class="admin-btn" id="choose-file-btn" style="flex: 1; min-width: 200px;">
+                            📁 Choose from Files
+                        </button>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 10px;">
+                        <input type="file" id="paper-upload" accept="image/*,.pdf" capture="environment" style="display: none;">
+                        <input type="file" id="paper-upload-file" accept="image/*,.pdf" style="display: none;">
+                        <div id="selected-file-info" class="hidden" style="padding: 12px; background: #e8f5e9; border-radius: 8px; margin-top: 10px;">
+                            <strong>Selected:</strong> <span id="file-name"></span>
+                        </div>
                     </div>
 
                     <button class="upload-btn" id="process-upload-btn">🤖 Extract Questions with Gemini AI</button>
@@ -1726,6 +1737,42 @@
             document.getElementById('view-results-section').classList.add('hidden');
             document.getElementById('upload-section').classList.remove('hidden');
             document.getElementById('ai-generator-section').classList.add('hidden');
+        });
+
+        // Capture photo with camera button
+        document.getElementById('capture-photo-btn').addEventListener('click', function() {
+            const cameraInput = document.getElementById('paper-upload');
+            cameraInput.click();
+        });
+
+        // Choose file button
+        document.getElementById('choose-file-btn').addEventListener('click', function() {
+            const fileInput = document.getElementById('paper-upload-file');
+            fileInput.click();
+        });
+
+        // Handle file selection from camera
+        document.getElementById('paper-upload').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const fileName = e.target.files[0].name;
+                document.getElementById('selected-file-info').classList.remove('hidden');
+                document.getElementById('file-name').textContent = fileName;
+            }
+        });
+
+        // Handle file selection from file browser
+        document.getElementById('paper-upload-file').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const fileName = e.target.files[0].name;
+                // Copy the selected file to the main input
+                const mainInput = document.getElementById('paper-upload');
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(e.target.files[0]);
+                mainInput.files = dataTransfer.files;
+
+                document.getElementById('selected-file-info').classList.remove('hidden');
+                document.getElementById('file-name').textContent = fileName;
+            }
         });
 
         // Process upload with Gemini Vision API
