@@ -174,12 +174,34 @@ module.exports = async (req, res) => {
 
         // POST /api/exams - Create new exam
         if (url === '/api/exams' && method === 'POST') {
-            const examData = req.body;
-            const record = await base(EXAMS_TABLE).create(examData);
-            return res.status(201).json({ 
-                success: true, 
-                data: { id: record.id, ...record.fields } 
-            });
+            try {
+                const examData = req.body;
+
+                // Map frontend field names to Airtable field names
+                // Airtable might expect different field naming
+                const mappedData = {
+                    'Exam Code': examData['Exam Code'],
+                    'Title': examData['Title'],
+                    'Duration (mins)': examData['Duration (mins)'],
+                    'Expiry (IST)': examData['Expiry (IST)'],
+                    // Try both possible field names for question IDs
+                    'questionIds': examData['Question IDs'] || examData['questionIds']
+                };
+
+                console.log('Creating exam with data:', JSON.stringify(mappedData, null, 2));
+
+                const record = await base(EXAMS_TABLE).create(mappedData);
+                return res.status(201).json({
+                    success: true,
+                    data: { id: record.id, ...record.fields }
+                });
+            } catch (error) {
+                console.error('Error creating exam:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to create exam'
+                });
+            }
         }
 
         // GET /api/exams/:code - Get exam by code
