@@ -30,9 +30,9 @@ async function loadQuestions() {
     try {
         const response = await fetch(`${API_URL}/questions`);
         const data = await response.json();
-        
+
         if (data.success) {
-            questions = data.questions;
+            questions = data.data || data.questions || [];
             console.log(`✅ Loaded ${questions.length} questions from database`);
             return questions;
         } else {
@@ -50,9 +50,9 @@ async function loadExams() {
     try {
         const response = await fetch(`${API_URL}/exams`);
         const data = await response.json();
-        
+
         if (data.success) {
-            exams = data.exams;
+            exams = data.data || data.exams || [];
             console.log(`✅ Loaded ${exams.length} exams from database`);
             return exams;
         } else {
@@ -145,10 +145,10 @@ async function getExamByCode(examCode) {
     try {
         const response = await fetch(`${API_URL}/exams/${examCode}`);
         const data = await response.json();
-        
+
         if (data.success) {
             console.log(`✅ Loaded exam: ${examCode}`);
-            return data.exam;
+            return data.data || data.exam;
         } else {
             throw new Error(data.error || 'Exam not found');
         }
@@ -196,10 +196,10 @@ async function getExamResults(examCode) {
     try {
         const response = await fetch(`${API_URL}/results/${examCode}`);
         const data = await response.json();
-        
+
         if (data.success) {
             console.log(`✅ Loaded results for: ${examCode}`);
-            return data.results;
+            return data.data || data.results || [];
         } else {
             throw new Error(data.error || 'Failed to load results');
         }
