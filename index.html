@@ -952,13 +952,13 @@
                 questions.forEach((q, index) => {
                     html += `
                     <div class="question-item" data-question-id="${q.id || ''}" data-index="${index}" style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary); position: relative;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <div>
                                 <strong style="font-size: 1.1rem;">${q.ID}</strong>
                                 <span class="question-tag" style="margin-left: 10px;">${q.Subject}</span>
                             </div>
-                            <button class="delete-question-btn" data-question-id="${q.id || ''}" data-index="${index}" style="background: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.9rem;">
-                                🗑️ Delete
+                            <button class="delete-question-btn" data-question-id="${q.id || ''}" data-index="${index}" style="background: var(--danger); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 0.75rem; min-width: auto; white-space: nowrap;">
+                                🗑️
                             </button>
                         </div>
                         <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question}</p>
@@ -1004,6 +1004,102 @@
                     }
                 });
             });
+        });
+
+        // Add question to bank
+        document.getElementById('add-question-btn').addEventListener('click', async function() {
+            const subject = document.getElementById('question-subject').value;
+            const question = document.getElementById('question-text').value.trim();
+            const optionA = document.getElementById('option-a').value.trim();
+            const optionB = document.getElementById('option-b').value.trim();
+            const optionC = document.getElementById('option-c').value.trim();
+            const optionD = document.getElementById('option-d').value.trim();
+            const correct = document.getElementById('correct-answer').value;
+
+            const questionError = document.getElementById('question-error');
+            const questionSuccess = document.getElementById('question-success');
+
+            // Clear previous messages
+            if (questionError) questionError.textContent = '';
+            if (questionSuccess) questionSuccess.textContent = '';
+
+            // Validate inputs
+            if (!question || !optionA || !optionB || !optionC || !optionD) {
+                if (questionError) {
+                    questionError.textContent = '❌ Please fill in all fields!';
+                    setTimeout(() => {
+                        questionError.textContent = '';
+                    }, 3000);
+                }
+                return;
+            }
+
+            // Add to database if API is available
+            if (window.PoliteCCAPI && window.PoliteCCAPI.addQuestionToDatabase) {
+                const correctAnswer = ['A', 'B', 'C', 'D'][parseInt(correct)];
+                const success = await window.PoliteCCAPI.addQuestionToDatabase({
+                    subject: subject,
+                    question: question,
+                    optionA: optionA,
+                    optionB: optionB,
+                    optionC: optionC,
+                    optionD: optionD,
+                    correct: correctAnswer
+                });
+
+                if (success) {
+                    // Clear form
+                    document.getElementById('question-text').value = '';
+                    document.getElementById('option-a').value = '';
+                    document.getElementById('option-b').value = '';
+                    document.getElementById('option-c').value = '';
+                    document.getElementById('option-d').value = '';
+                    document.getElementById('correct-answer').value = '0';
+
+                    if (questionSuccess) {
+                        questionSuccess.textContent = '✅ Question added successfully!';
+                        setTimeout(() => {
+                            questionSuccess.textContent = '';
+                        }, 3000);
+                    }
+
+                    // Refresh question list
+                    document.getElementById('question-bank-btn').click();
+                }
+            } else {
+                // Add to local array if no API
+                const correctAnswer = ['A', 'B', 'C', 'D'][parseInt(correct)];
+                const questionId = `Q${questionCounter++}`;
+
+                questions.push({
+                    ID: questionId,
+                    Subject: subject,
+                    Question: question,
+                    'Option A': optionA,
+                    'Option B': optionB,
+                    'Option C': optionC,
+                    'Option D': optionD,
+                    Correct: correctAnswer
+                });
+
+                // Clear form
+                document.getElementById('question-text').value = '';
+                document.getElementById('option-a').value = '';
+                document.getElementById('option-b').value = '';
+                document.getElementById('option-c').value = '';
+                document.getElementById('option-d').value = '';
+                document.getElementById('correct-answer').value = '0';
+
+                if (questionSuccess) {
+                    questionSuccess.textContent = '✅ Question added successfully!';
+                    setTimeout(() => {
+                        questionSuccess.textContent = '';
+                    }, 3000);
+                }
+
+                // Refresh question list
+                document.getElementById('question-bank-btn').click();
+            }
         });
 
         // Show create exam
