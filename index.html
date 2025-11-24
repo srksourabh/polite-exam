@@ -988,9 +988,9 @@
                 if (timerInterval) {
                     clearInterval(timerInterval);
                 }
-                // Reset to candidate login screen
+                // Reset to home page (admin login screen)
                 document.getElementById('exam-screen').classList.remove('active');
-                document.getElementById('candidate-login-screen').classList.add('active');
+                document.getElementById('admin-login-screen').classList.add('active');
                 // Clear form fields
                 document.getElementById('exam-code-input').value = '';
                 document.getElementById('candidate-name').value = '';
@@ -2717,8 +2717,7 @@
                         'Name': candidateName,
                         'Mobile': candidateMobile,
                         'Score': parseFloat(score.toFixed(2)),
-                        'Answers': JSON.stringify(detailedAnswers),
-                        'Submitted At': new Date().toISOString()
+                        'Answers': JSON.stringify(detailedAnswers)
                     };
 
                     const submitted = await window.PoliteCCAPI.submitResultToDatabase(resultData);
