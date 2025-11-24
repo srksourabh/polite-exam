@@ -376,10 +376,72 @@ async function migrateQuestionsToNewFormat() {
     }
 }
 
+// Clean up all exams and results
+async function cleanupAllExams() {
+    try {
+        showNotification('🔄 Cleaning up all exams and results...', 'info');
+
+        const response = await fetch(`${API_URL}/admin/cleanup-exams`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`✅ Cleaned up: ${data.deleted.exams} exams, ${data.deleted.results} results`);
+            showNotification(`✅ ${data.message}`, 'success');
+
+            // Reload exams to see empty list
+            await loadExams();
+            return true;
+        } else {
+            throw new Error(data.error || 'Failed to cleanup exams');
+        }
+    } catch (error) {
+        console.error('❌ Error cleaning up exams:', error);
+        showNotification(`❌ Cleanup failed: ${error.message}`, 'error');
+        return false;
+    }
+}
+
+// Create sample exams with questions
+async function createSampleExams() {
+    try {
+        showNotification('🔄 Creating sample exams...', 'info');
+
+        const response = await fetch(`${API_URL}/admin/create-sample-exams`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`✅ Created: ${data.data.questionsCreated} questions, ${data.data.examsCreated} exams`);
+
+            // Show detailed info
+            let examsList = data.data.exams.map(e => `${e.code}: ${e.title} (${e.questions} questions)`).join('\n');
+            showNotification(`✅ ${data.message}\n\nExams created:\n${examsList}`, 'success');
+
+            // Reload questions and exams
+            await loadQuestions();
+            await loadExams();
+            return true;
+        } else {
+            throw new Error(data.error || 'Failed to create sample exams');
+        }
+    } catch (error) {
+        console.error('❌ Error creating sample exams:', error);
+        showNotification(`❌ Failed to create sample exams: ${error.message}`, 'error');
+        return false;
+    }
+}
+
 // Initialize on page load - ONLY check connection, don't load data yet
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 API integration ready');
-    
+
     // We'll check connection and load data ONLY when user logs in as admin
     // This prevents errors when testing locally or before deployment
     console.log('✅ Login buttons are ready to use');
@@ -399,5 +461,7 @@ window.PoliteCCAPI = {
     checkSystemStatus,
     deleteQuestionFromDatabase,
     migrateQuestionsToNewFormat,
+    cleanupAllExams,
+    createSampleExams,
     showNotification
 };

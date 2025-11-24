@@ -525,6 +525,164 @@ Make sure the question is unique, relevant, and has one clearly correct answer.`
             }
         }
 
+        // POST /api/admin/cleanup-exams - Delete all exams and results (admin only)
+        if (url === '/api/admin/cleanup-exams' && method === 'POST') {
+            try {
+                // Delete all results first (to avoid orphaned records)
+                const resultRecords = await base(RESULTS_TABLE).select().all();
+                if (resultRecords.length > 0) {
+                    const batchSize = 10;
+                    for (let i = 0; i < resultRecords.length; i += batchSize) {
+                        const batch = resultRecords.slice(i, i + batchSize);
+                        const recordIds = batch.map(r => r.id);
+                        await base(RESULTS_TABLE).destroy(recordIds);
+                    }
+                }
+
+                // Delete all exams
+                const examRecords = await base(EXAMS_TABLE).select().all();
+                if (examRecords.length > 0) {
+                    const batchSize = 10;
+                    for (let i = 0; i < examRecords.length; i += batchSize) {
+                        const batch = examRecords.slice(i, i + batchSize);
+                        const recordIds = batch.map(r => r.id);
+                        await base(EXAMS_TABLE).destroy(recordIds);
+                    }
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: `Deleted ${resultRecords.length} results and ${examRecords.length} exams`,
+                    deleted: {
+                        results: resultRecords.length,
+                        exams: examRecords.length
+                    }
+                });
+            } catch (error) {
+                console.error('Cleanup error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to cleanup exams'
+                });
+            }
+        }
+
+        // POST /api/admin/create-sample-exams - Create sample exams with questions
+        if (url === '/api/admin/create-sample-exams' && method === 'POST') {
+            try {
+                // Sample questions for different subjects
+                const SAMPLE_QUESTIONS = [
+                    // Math Questions
+                    { ID: 'Q0001', Subject: 'Math', Question: 'What is 15 × 8?', 'Option A': '100', 'Option B': '120', 'Option C': '140', 'Option D': '160', Correct: 'B' },
+                    { ID: 'Q0002', Subject: 'Math', Question: 'What is the value of √144?', 'Option A': '10', 'Option B': '11', 'Option C': '12', 'Option D': '13', Correct: 'C' },
+                    { ID: 'Q0003', Subject: 'Math', Question: 'What is 25% of 200?', 'Option A': '25', 'Option B': '50', 'Option C': '75', 'Option D': '100', Correct: 'B' },
+                    { ID: 'Q0004', Subject: 'Math', Question: 'If x + 7 = 15, what is the value of x?', 'Option A': '6', 'Option B': '7', 'Option C': '8', 'Option D': '9', Correct: 'C' },
+                    { ID: 'Q0005', Subject: 'Math', Question: 'What is the area of a rectangle with length 12 cm and width 8 cm?', 'Option A': '20 sq cm', 'Option B': '40 sq cm', 'Option C': '96 sq cm', 'Option D': '120 sq cm', Correct: 'C' },
+
+                    // General Knowledge Questions
+                    { ID: 'Q0006', Subject: 'General Knowledge', Question: 'What is the capital of India?', 'Option A': 'New Delhi', 'Option B': 'Mumbai', 'Option C': 'Kolkata', 'Option D': 'Chennai', Correct: 'A' },
+                    { ID: 'Q0007', Subject: 'General Knowledge', Question: 'Who is known as the Father of the Nation in India?', 'Option A': 'Jawaharlal Nehru', 'Option B': 'Mahatma Gandhi', 'Option C': 'Subhas Chandra Bose', 'Option D': 'Sardar Patel', Correct: 'B' },
+                    { ID: 'Q0008', Subject: 'General Knowledge', Question: 'Which is the largest planet in our solar system?', 'Option A': 'Earth', 'Option B': 'Mars', 'Option C': 'Jupiter', 'Option D': 'Saturn', Correct: 'C' },
+                    { ID: 'Q0009', Subject: 'General Knowledge', Question: 'How many continents are there in the world?', 'Option A': '5', 'Option B': '6', 'Option C': '7', 'Option D': '8', Correct: 'C' },
+                    { ID: 'Q0010', Subject: 'General Knowledge', Question: 'What is the national animal of India?', 'Option A': 'Lion', 'Option B': 'Tiger', 'Option C': 'Elephant', 'Option D': 'Peacock', Correct: 'B' },
+
+                    // Reasoning Questions
+                    { ID: 'Q0011', Subject: 'Reasoning', Question: 'If CAT is coded as 3120, then DOG would be coded as:', 'Option A': '4157', 'Option B': '41507', 'Option C': '4-15-7', 'Option D': '4-15-07', Correct: 'A' },
+                    { ID: 'Q0012', Subject: 'Reasoning', Question: 'Complete the series: 2, 6, 12, 20, 30, ?', 'Option A': '40', 'Option B': '42', 'Option C': '44', 'Option D': '46', Correct: 'B' },
+                    { ID: 'Q0013', Subject: 'Reasoning', Question: 'Which number is the odd one out: 3, 5, 7, 9, 12, 13?', 'Option A': '3', 'Option B': '7', 'Option C': '12', 'Option D': '13', Correct: 'C' },
+                    { ID: 'Q0014', Subject: 'Reasoning', Question: 'If all roses are flowers and all flowers are plants, then:', 'Option A': 'All plants are roses', 'Option B': 'All roses are plants', 'Option C': 'Some plants are flowers', 'Option D': 'No conclusion', Correct: 'B' },
+                    { ID: 'Q0015', Subject: 'Reasoning', Question: 'Find the missing number: 5, 10, 20, 40, ?, 160', 'Option A': '60', 'Option B': '70', 'Option C': '80', 'Option D': '90', Correct: 'C' },
+
+                    // English Questions
+                    { ID: 'Q0016', Subject: 'English', Question: 'Choose the correct synonym of "Abundant":', 'Option A': 'Scarce', 'Option B': 'Plentiful', 'Option C': 'Limited', 'Option D': 'Rare', Correct: 'B' },
+                    { ID: 'Q0017', Subject: 'English', Question: 'Identify the correctly spelled word:', 'Option A': 'Occassion', 'Option B': 'Occasion', 'Option C': 'Ocassion', 'Option D': 'Ocasion', Correct: 'B' },
+                    { ID: 'Q0018', Subject: 'English', Question: 'What is the antonym of "Ancient"?', 'Option A': 'Old', 'Option B': 'Modern', 'Option C': 'Historic', 'Option D': 'Traditional', Correct: 'B' },
+                    { ID: 'Q0019', Subject: 'English', Question: 'Choose the correct sentence:', 'Option A': 'She don\'t like apples', 'Option B': 'She doesn\'t likes apples', 'Option C': 'She doesn\'t like apples', 'Option D': 'She don\'t likes apples', Correct: 'C' },
+                    { ID: 'Q0020', Subject: 'English', Question: 'What is the plural of "Child"?', 'Option A': 'Childs', 'Option B': 'Childes', 'Option C': 'Children', 'Option D': 'Childrens', Correct: 'C' }
+                ];
+
+                // Check if questions already exist
+                const existingQuestions = await base(QUESTIONS_TABLE).select({ maxRecords: 1 }).all();
+                let createdQuestions = [];
+
+                if (existingQuestions.length === 0) {
+                    // Create questions in batches of 10
+                    const batchSize = 10;
+                    for (let i = 0; i < SAMPLE_QUESTIONS.length; i += batchSize) {
+                        const batch = SAMPLE_QUESTIONS.slice(i, i + batchSize);
+                        const records = await base(QUESTIONS_TABLE).create(batch.map(q => ({ fields: q })));
+                        createdQuestions.push(...records);
+                    }
+                }
+
+                // Get question record IDs
+                const questionMap = {};
+                for (const q of SAMPLE_QUESTIONS) {
+                    const records = await base(QUESTIONS_TABLE)
+                        .select({ filterByFormula: `{ID} = '${q.ID}'`, maxRecords: 1 })
+                        .all();
+                    if (records.length > 0) {
+                        questionMap[q.ID] = records[0].id;
+                    }
+                }
+
+                // Create exams
+                const expiryDate = new Date();
+                expiryDate.setDate(expiryDate.getDate() + 7);
+                const expiryIST = expiryDate.toLocaleDateString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+
+                const SAMPLE_EXAMS = [
+                    { 'Exam Code': 'MATH_BASICS_01', Title: 'Basic Mathematics Test', 'Duration (mins)': 15, questionIds: ['Q0001', 'Q0002', 'Q0003', 'Q0004', 'Q0005'] },
+                    { 'Exam Code': 'GK_TEST_01', Title: 'General Knowledge Assessment', 'Duration (mins)': 10, questionIds: ['Q0006', 'Q0007', 'Q0008', 'Q0009', 'Q0010'] },
+                    { 'Exam Code': 'REASONING_01', Title: 'Logical Reasoning Test', 'Duration (mins)': 12, questionIds: ['Q0011', 'Q0012', 'Q0013', 'Q0014', 'Q0015'] },
+                    { 'Exam Code': 'ENGLISH_01', Title: 'English Language Test', 'Duration (mins)': 10, questionIds: ['Q0016', 'Q0017', 'Q0018', 'Q0019', 'Q0020'] },
+                    { 'Exam Code': 'MIXED_TEST_01', Title: 'Mixed Subject Assessment', 'Duration (mins)': 20, questionIds: ['Q0001', 'Q0006', 'Q0011', 'Q0016', 'Q0003', 'Q0008', 'Q0013', 'Q0018', 'Q0005', 'Q0010'] }
+                ];
+
+                const createdExams = [];
+                for (const exam of SAMPLE_EXAMS) {
+                    const questionRecordIds = exam.questionIds.map(qId => questionMap[qId]).filter(id => id);
+
+                    const examData = {
+                        'Exam Code': exam['Exam Code'],
+                        'Title': exam.Title,
+                        'Duration (mins)': exam['Duration (mins)'],
+                        'Expiry (IST)': expiryIST,
+                        'Question IDs': questionRecordIds
+                    };
+
+                    const record = await base(EXAMS_TABLE).create(examData);
+                    createdExams.push(record);
+                }
+
+                return res.status(201).json({
+                    success: true,
+                    message: 'Sample exams created successfully',
+                    data: {
+                        questionsCreated: createdQuestions.length,
+                        examsCreated: createdExams.length,
+                        exams: SAMPLE_EXAMS.map(e => ({
+                            code: e['Exam Code'],
+                            title: e.Title,
+                            questions: e.questionIds.length
+                        }))
+                    }
+                });
+
+            } catch (error) {
+                console.error('Sample creation error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to create sample exams'
+                });
+            }
+        }
+
         // 404 - Route not found
         return res.status(404).json({
             success: false,
