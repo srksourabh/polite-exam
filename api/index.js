@@ -4,7 +4,7 @@ const Airtable = require('airtable');
 // Airtable now uses Personal Access Tokens instead of API Keys
 // The token should start with "pat" (e.g., patXXXXXXXXXXXXXX)
 const base = new Airtable({ 
-    apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN || process.env.AIRTABLE_API_KEY 
+    apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
 }).base(process.env.AIRTABLE_BASE_ID);
 
 // Tables
