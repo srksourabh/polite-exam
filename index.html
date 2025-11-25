@@ -519,14 +519,6 @@
                     <button class="ai-btn" id="ai-btn">🤖 AI Question Generator</button>
                 </div>
 
-                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 30px;">
-                    <h3 style="margin-top: 0; color: #856404;">🛠️ Database Management</h3>
-                    <p style="color: #856404; margin-bottom: 15px;">Use these tools to manage your exam database. Warning: Cleanup will delete all exams and results!</p>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                        <button class="danger-btn" id="cleanup-exams-btn" style="background: #dc3545;">🗑️ Clean Up All Exams</button>
-                        <button class="success-btn" id="create-samples-btn">✨ Create Sample Exams</button>
-                    </div>
-                </div>
 
                 <!-- Question Bank Section -->
                 <div id="question-bank-section" class="hidden">
@@ -794,8 +786,8 @@
                     <input type="text" id="candidate-name" placeholder="As per your application">
                 </div>
                 <div class="form-group">
-                    <label for="candidate-mobile">Mobile Number (Optional)</label>
-                    <input type="tel" id="candidate-mobile" placeholder="For reference only">
+                    <label for="candidate-mobile">Mobile Number *</label>
+                    <input type="tel" id="candidate-mobile" placeholder="Enter your 10-digit mobile number" required>
                 </div>
                 <button id="start-exam-btn">Begin Exam</button>
                 <p class="error" id="login-error"></p>
@@ -2328,60 +2320,6 @@
             document.getElementById('ai-generator-section').classList.remove('hidden');
         });
 
-        // Clean up all exams
-        document.getElementById('cleanup-exams-btn').addEventListener('click', async function() {
-            if (!confirm('⚠️ WARNING: This will delete ALL exams and results from the database!\n\nAre you sure you want to continue?')) {
-                return;
-            }
-
-            if (!confirm('⚠️ FINAL CONFIRMATION: This action cannot be undone!\n\nDelete all exams and results?')) {
-                return;
-            }
-
-            const btn = this;
-            btn.disabled = true;
-            btn.textContent = '⏳ Cleaning...';
-
-            try {
-                if (window.PoliteCCAPI && window.PoliteCCAPI.cleanupAllExams) {
-                    await window.PoliteCCAPI.cleanupAllExams();
-                } else {
-                    alert('API not available. Please refresh the page.');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to cleanup exams: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '🗑️ Clean Up All Exams';
-            }
-        });
-
-        // Create sample exams
-        document.getElementById('create-samples-btn').addEventListener('click', async function() {
-            if (!confirm('Create sample exams?\n\nThis will create:\n- 20 sample questions (Math, GK, Reasoning, English)\n- 5 sample exams for testing\n\nContinue?')) {
-                return;
-            }
-
-            const btn = this;
-            btn.disabled = true;
-            btn.textContent = '⏳ Creating...';
-
-            try {
-                if (window.PoliteCCAPI && window.PoliteCCAPI.createSampleExams) {
-                    await window.PoliteCCAPI.createSampleExams();
-                } else {
-                    alert('API not available. Please refresh the page.');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to create sample exams: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '✨ Create Sample Exams';
-            }
-        });
-
         // Generate AI question with real Gemini API
         document.getElementById('generate-ai-btn').addEventListener('click', async function() {
             const subject = document.getElementById('ai-subject').value;
@@ -2526,11 +2464,24 @@
         document.getElementById('start-exam-btn').addEventListener('click', async function() {
             const examCode = document.getElementById('exam-code-input').value.trim().toUpperCase();
             const name = document.getElementById('candidate-name').value.trim();
+            const mobile = document.getElementById('candidate-mobile').value.trim();
 
-            if (!examCode || !name) {
+            if (!examCode || !name || !mobile) {
                 const loginError = document.getElementById('login-error');
                 if (loginError) {
-                    loginError.textContent = '❌ Exam code and name are required!';
+                    loginError.textContent = '❌ Exam code, name, and mobile number are required!';
+                    setTimeout(() => {
+                        loginError.textContent = '';
+                    }, 3000);
+                }
+                return;
+            }
+
+            // Validate mobile number (should be 10 digits)
+            if (!/^\d{10}$/.test(mobile)) {
+                const loginError = document.getElementById('login-error');
+                if (loginError) {
+                    loginError.textContent = '❌ Please enter a valid 10-digit mobile number!';
                     setTimeout(() => {
                         loginError.textContent = '';
                     }, 3000);
@@ -2839,9 +2790,9 @@
                 });
             });
 
-            // Get candidate info
-            const candidateName = document.getElementById('candidate-name').value.trim() || 'Candidate';
-            const candidateMobile = document.getElementById('candidate-mobile').value.trim() || 'Not provided';
+            // Get candidate info (both are now mandatory)
+            const candidateName = document.getElementById('candidate-name').value.trim();
+            const candidateMobile = document.getElementById('candidate-mobile').value.trim();
 
             // Save result to database if API is available
             if (window.PoliteCCAPI && window.PoliteCCAPI.submitResultToDatabase) {
@@ -2857,6 +2808,7 @@
                 } else {
                     const resultData = {
                         'Exam': [currentExam.examId],  // Linked record field (must be an array)
+                        'Exam Code': currentExam.code,  // Add exam code for filtering
                         'Name': candidateName,
                         'Mobile': candidateMobile,
                         'Score': parseFloat(score.toFixed(2)),

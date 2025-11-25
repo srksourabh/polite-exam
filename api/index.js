@@ -18,6 +18,7 @@ const base = new Airtable({
 const QUESTIONS_TABLE = 'Questions';
 const EXAMS_TABLE = 'Exams';
 const RESULTS_TABLE = 'Results';
+const CANDIDATES_TABLE = 'Candidates';
 
 // CORS headers
 const corsHeaders = {
@@ -265,10 +266,37 @@ module.exports = async (req, res) => {
         // POST /api/results - Create new result
         if (url === '/api/results' && method === 'POST') {
             const resultData = req.body;
+
+            // Auto-create candidate record if it doesn't exist (requirement #9)
+            if (resultData.Name && resultData.Mobile) {
+                try {
+                    // Check if candidate already exists
+                    const existingCandidates = await base(CANDIDATES_TABLE)
+                        .select({
+                            filterByFormula: `AND({Name} = '${resultData.Name}', {Mobile} = '${resultData.Mobile}')`
+                        })
+                        .all();
+
+                    // Create candidate if doesn't exist
+                    if (existingCandidates.length === 0) {
+                        await base(CANDIDATES_TABLE).create({
+                            'Name': resultData.Name,
+                            'Mobile': resultData.Mobile,
+                            'First Exam Date': new Date().toISOString()
+                        });
+                        console.log(`✅ Created new candidate: ${resultData.Name} (${resultData.Mobile})`);
+                    }
+                } catch (candidateError) {
+                    console.error('Warning: Could not create candidate record:', candidateError);
+                    // Continue anyway - don't fail result submission if candidate creation fails
+                }
+            }
+
+            // Create the result record
             const record = await base(RESULTS_TABLE).create(resultData);
-            return res.status(201).json({ 
-                success: true, 
-                data: { id: record.id, ...record.fields } 
+            return res.status(201).json({
+                success: true,
+                data: { id: record.id, ...record.fields }
             });
         }
 
@@ -521,48 +549,6 @@ Make sure the question is unique, relevant, and has one clearly correct answer.`
                 return res.status(500).json({
                     success: false,
                     error: error.message || 'Failed to generate question'
-                });
-            }
-        }
-
-        // POST /api/admin/cleanup-exams - Delete all exams and results (admin only)
-        if (url === '/api/admin/cleanup-exams' && method === 'POST') {
-            try {
-                // Delete all results first (to avoid orphaned records)
-                const resultRecords = await base(RESULTS_TABLE).select().all();
-                if (resultRecords.length > 0) {
-                    const batchSize = 10;
-                    for (let i = 0; i < resultRecords.length; i += batchSize) {
-                        const batch = resultRecords.slice(i, i + batchSize);
-                        const recordIds = batch.map(r => r.id);
-                        await base(RESULTS_TABLE).destroy(recordIds);
-                    }
-                }
-
-                // Delete all exams
-                const examRecords = await base(EXAMS_TABLE).select().all();
-                if (examRecords.length > 0) {
-                    const batchSize = 10;
-                    for (let i = 0; i < examRecords.length; i += batchSize) {
-                        const batch = examRecords.slice(i, i + batchSize);
-                        const recordIds = batch.map(r => r.id);
-                        await base(EXAMS_TABLE).destroy(recordIds);
-                    }
-                }
-
-                return res.status(200).json({
-                    success: true,
-                    message: `Deleted ${resultRecords.length} results and ${examRecords.length} exams`,
-                    deleted: {
-                        results: resultRecords.length,
-                        exams: examRecords.length
-                    }
-                });
-            } catch (error) {
-                console.error('Cleanup error:', error);
-                return res.status(500).json({
-                    success: false,
-                    error: error.message || 'Failed to cleanup exams'
                 });
             }
         }
