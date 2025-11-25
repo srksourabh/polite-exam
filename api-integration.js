@@ -419,6 +419,151 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('💡 Data will load when you access admin panel');
 });
 
+// Candidate signup
+async function candidateSignup(signupData) {
+    try {
+        const response = await fetch(`${API_URL}/auth/candidate/signup`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(signupData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Account created successfully');
+            showNotification('✅ Account created! Please login.', 'success');
+            return data.data;
+        } else {
+            throw new Error(data.error || 'Failed to create account');
+        }
+    } catch (error) {
+        console.error('❌ Error creating account:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return null;
+    }
+}
+
+// Candidate login
+async function candidateLogin(email, password) {
+    try {
+        const response = await fetch(`${API_URL}/auth/candidate/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Login successful');
+            showNotification('✅ Welcome back!', 'success');
+            return data.data;
+        } else {
+            throw new Error(data.error || 'Failed to login');
+        }
+    } catch (error) {
+        console.error('❌ Error logging in:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return null;
+    }
+}
+
+// Admin login
+async function adminLogin(username, password) {
+    try {
+        const response = await fetch(`${API_URL}/auth/admin/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Admin login successful');
+            showNotification('✅ Welcome Admin!', 'success');
+            return data.data;
+        } else {
+            throw new Error(data.error || 'Failed to login');
+        }
+    } catch (error) {
+        console.error('❌ Error logging in:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return null;
+    }
+}
+
+// Get candidate profile
+async function getCandidateProfile(email) {
+    try {
+        const response = await fetch(`${API_URL}/candidates/profile/${encodeURIComponent(email)}`);
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Profile loaded');
+            return data.data;
+        } else {
+            throw new Error(data.error || 'Failed to load profile');
+        }
+    } catch (error) {
+        console.error('❌ Error loading profile:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return null;
+    }
+}
+
+// Get candidate exam history
+async function getCandidateExamHistory(email) {
+    try {
+        const response = await fetch(`${API_URL}/candidates/exams/${encodeURIComponent(email)}`);
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`✅ Loaded ${data.data.examsGiven} exam records`);
+            return data.data;
+        } else {
+            throw new Error(data.error || 'Failed to load exam history');
+        }
+    } catch (error) {
+        console.error('❌ Error loading exam history:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return null;
+    }
+}
+
+// Reset password
+async function resetPassword(email) {
+    try {
+        const response = await fetch(`${API_URL}/auth/reset-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Password reset successful');
+            return data.data;
+        } else {
+            throw new Error(data.error || 'Failed to reset password');
+        }
+    } catch (error) {
+        console.error('❌ Error resetting password:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return null;
+    }
+}
+
 // Export functions for use in main script
 window.PoliteCCAPI = {
     loadQuestions,
@@ -433,5 +578,11 @@ window.PoliteCCAPI = {
     deleteQuestionFromDatabase,
     migrateQuestionsToNewFormat,
     createSampleExams,
-    showNotification
+    showNotification,
+    candidateSignup,
+    candidateLogin,
+    adminLogin,
+    getCandidateProfile,
+    getCandidateExamHistory,
+    resetPassword
 };

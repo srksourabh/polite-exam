@@ -263,6 +263,296 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true, data: exam });
         }
 
+        // POST /api/auth/candidate/signup - Create candidate account
+        if (url === '/api/auth/candidate/signup' && method === 'POST') {
+            try {
+                const { name, email, mobile, password } = req.body;
+
+                if (!name || !email || !mobile || !password) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'All fields are required'
+                    });
+                }
+
+                // Check if candidate already exists
+                const existingCandidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `OR({Email} = '${email}', {Mobile} = '${mobile}')`
+                    })
+                    .all();
+
+                if (existingCandidates.length > 0) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Candidate with this email or mobile already exists'
+                    });
+                }
+
+                // Create candidate record (password stored as-is for simplicity)
+                // Note: In production, you should hash passwords using bcrypt
+                const record = await base(CANDIDATES_TABLE).create({
+                    'Name': name,
+                    'Email': email,
+                    'Mobile': mobile,
+                    'Password': password,
+                    'First Exam Date': new Date().toISOString()
+                });
+
+                return res.status(201).json({
+                    success: true,
+                    message: 'Account created successfully',
+                    data: {
+                        id: record.id,
+                        name: record.fields.Name,
+                        email: record.fields.Email,
+                        mobile: record.fields.Mobile
+                    }
+                });
+            } catch (error) {
+                console.error('Signup error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to create account'
+                });
+            }
+        }
+
+        // POST /api/auth/candidate/login - Candidate login
+        if (url === '/api/auth/candidate/login' && method === 'POST') {
+            try {
+                const { email, password } = req.body;
+
+                if (!email || !password) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Email and password are required'
+                    });
+                }
+
+                // Find candidate by email
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${email}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Invalid email or password'
+                    });
+                }
+
+                const candidate = candidates[0];
+
+                // Check password (simple comparison - in production use bcrypt)
+                if (candidate.fields.Password !== password) {
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Invalid email or password'
+                    });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Login successful',
+                    data: {
+                        id: candidate.id,
+                        name: candidate.fields.Name,
+                        email: candidate.fields.Email,
+                        mobile: candidate.fields.Mobile
+                    }
+                });
+            } catch (error) {
+                console.error('Login error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to login'
+                });
+            }
+        }
+
+        // POST /api/auth/admin/login - Admin login (hard-coded)
+        if (url === '/api/auth/admin/login' && method === 'POST') {
+            try {
+                const { username, password } = req.body;
+
+                if (username === 'admin' && password === 'politeadmin') {
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Admin login successful',
+                        data: {
+                            username: 'admin',
+                            role: 'admin'
+                        }
+                    });
+                } else {
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Invalid admin credentials'
+                    });
+                }
+            } catch (error) {
+                console.error('Admin login error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to login'
+                });
+            }
+        }
+
+        // POST /api/auth/reset-password - Reset candidate password
+        if (url === '/api/auth/reset-password' && method === 'POST') {
+            try {
+                const { email } = req.body;
+
+                if (!email) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Email is required'
+                    });
+                }
+
+                // Find candidate by email
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${email}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'No account found with this email address'
+                    });
+                }
+
+                const candidate = candidates[0];
+
+                // Generate a temporary password (8 characters: letters and numbers)
+                const tempPassword = Math.random().toString(36).slice(-8).toUpperCase();
+
+                // Update the password in Airtable
+                await base(CANDIDATES_TABLE).update(candidate.id, {
+                    'Password': tempPassword
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Password reset successful',
+                    data: {
+                        email: email,
+                        tempPassword: tempPassword
+                    }
+                });
+            } catch (error) {
+                console.error('Password reset error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to reset password'
+                });
+            }
+        }
+
+        // GET /api/candidates/profile/:email - Get candidate profile
+        if (url.startsWith('/api/candidates/profile/') && method === 'GET') {
+            try {
+                const email = decodeURIComponent(url.split('/api/candidates/profile/')[1]);
+
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${email}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Candidate not found'
+                    });
+                }
+
+                const candidate = candidates[0];
+
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        id: candidate.id,
+                        name: candidate.fields.Name,
+                        email: candidate.fields.Email,
+                        mobile: candidate.fields.Mobile,
+                        firstExamDate: candidate.fields['First Exam Date']
+                    }
+                });
+            } catch (error) {
+                console.error('Get profile error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to get profile'
+                });
+            }
+        }
+
+        // GET /api/candidates/exams/:email - Get candidate's exam history
+        if (url.startsWith('/api/candidates/exams/') && method === 'GET') {
+            try {
+                const email = decodeURIComponent(url.split('/api/candidates/exams/')[1]);
+
+                // Get candidate
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${email}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Candidate not found'
+                    });
+                }
+
+                const candidate = candidates[0];
+                const candidateName = candidate.fields.Name;
+                const candidateMobile = candidate.fields.Mobile;
+
+                // Get all results for this candidate (by name and mobile)
+                const results = await base(RESULTS_TABLE)
+                    .select({
+                        filterByFormula: `AND({Name} = '${candidateName}', {Mobile} = '${candidateMobile}')`
+                    })
+                    .all();
+
+                const examHistory = results.map(record => ({
+                    id: record.id,
+                    examCode: record.fields['Exam Code'] || 'N/A',
+                    score: record.fields.Score,
+                    answers: record.fields.Answers,
+                    date: record.fields['Created'] || record.fields['Date'] || new Date().toISOString()
+                }));
+
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        candidate: {
+                            name: candidateName,
+                            email: email,
+                            mobile: candidateMobile
+                        },
+                        examsGiven: examHistory.length,
+                        examHistory: examHistory
+                    }
+                });
+            } catch (error) {
+                console.error('Get exam history error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to get exam history'
+                });
+            }
+        }
+
         // POST /api/results - Create new result
         if (url === '/api/results' && method === 'POST') {
             const resultData = req.body;
