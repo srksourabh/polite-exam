@@ -1332,75 +1332,75 @@
 
             // Navigation: Hero Landing <-> Signup
             document.getElementById('signup-btn').addEventListener('click', function() {
-            document.getElementById('hero-landing').classList.remove('active');
-            document.getElementById('candidate-signup-screen').classList.add('active');
-        });
+                document.getElementById('hero-landing').classList.remove('active');
+                document.getElementById('candidate-signup-screen').classList.add('active');
+            });
 
-        document.getElementById('back-to-hero-from-signup').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('candidate-signup-screen').classList.remove('active');
-            document.getElementById('hero-landing').classList.add('active');
-        });
+            document.getElementById('back-to-hero-from-signup').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('candidate-signup-screen').classList.remove('active');
+                document.getElementById('hero-landing').classList.add('active');
+            });
 
-        // Navigation: Hero Landing <-> Signin
-        document.getElementById('signin-btn').addEventListener('click', function() {
-            document.getElementById('hero-landing').classList.remove('active');
-            document.getElementById('candidate-signin-screen').classList.add('active');
-        });
+            // Navigation: Hero Landing <-> Signin
+            document.getElementById('signin-btn').addEventListener('click', function() {
+                document.getElementById('hero-landing').classList.remove('active');
+                document.getElementById('candidate-signin-screen').classList.add('active');
+            });
 
-        document.getElementById('back-to-hero-from-signin').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('candidate-signin-screen').classList.remove('active');
-            document.getElementById('hero-landing').classList.add('active');
-        });
+            document.getElementById('back-to-hero-from-signin').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('candidate-signin-screen').classList.remove('active');
+                document.getElementById('hero-landing').classList.add('active');
+            });
 
-        // Navigation: Signup <-> Signin
-        document.getElementById('goto-signin-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('candidate-signup-screen').classList.remove('active');
-            document.getElementById('candidate-signin-screen').classList.add('active');
-        });
+            // Navigation: Signup <-> Signin
+            document.getElementById('goto-signin-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('candidate-signup-screen').classList.remove('active');
+                document.getElementById('candidate-signin-screen').classList.add('active');
+            });
 
-        document.getElementById('goto-signup-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('candidate-signin-screen').classList.remove('active');
-            document.getElementById('candidate-signup-screen').classList.add('active');
-        });
+            document.getElementById('goto-signup-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('candidate-signin-screen').classList.remove('active');
+                document.getElementById('candidate-signup-screen').classList.add('active');
+            });
 
-        // Navigation: Signin <-> Forgot Password
-        document.getElementById('forgot-password-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('candidate-signin-screen').classList.remove('active');
-            document.getElementById('forgot-password-screen').classList.add('active');
-            // Reset the form
-            document.getElementById('forgot-email').value = '';
-            document.getElementById('reset-result').style.display = 'none';
-        });
+            // Navigation: Signin <-> Forgot Password
+            document.getElementById('forgot-password-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('candidate-signin-screen').classList.remove('active');
+                document.getElementById('forgot-password-screen').classList.add('active');
+                // Reset the form
+                document.getElementById('forgot-email').value = '';
+                document.getElementById('reset-result').style.display = 'none';
+            });
 
-        document.getElementById('back-to-signin-from-forgot').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('forgot-password-screen').classList.remove('active');
-            document.getElementById('candidate-signin-screen').classList.add('active');
-        });
+            document.getElementById('back-to-signin-from-forgot').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('forgot-password-screen').classList.remove('active');
+                document.getElementById('candidate-signin-screen').classList.add('active');
+            });
 
-        document.getElementById('goto-signin-after-reset').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('forgot-password-screen').classList.remove('active');
-            document.getElementById('candidate-signin-screen').classList.add('active');
-        });
+            document.getElementById('goto-signin-after-reset').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('forgot-password-screen').classList.remove('active');
+                document.getElementById('candidate-signin-screen').classList.add('active');
+            });
 
-        // Navigation: Hero Landing <-> Admin Login
-        document.getElementById('admin-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('hero-landing').classList.remove('active');
-            document.getElementById('admin-login-screen').classList.add('active');
-        });
+            // Navigation: Hero Landing <-> Admin Login
+            document.getElementById('admin-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('hero-landing').classList.remove('active');
+                document.getElementById('admin-login-screen').classList.add('active');
+            });
 
-        document.getElementById('back-to-hero-from-admin').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('admin-login-screen').classList.remove('active');
-            document.getElementById('hero-landing').classList.add('active');
-        });
+            document.getElementById('back-to-hero-from-admin').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('admin-login-screen').classList.remove('active');
+                document.getElementById('hero-landing').classList.add('active');
+            });
 
         // Candidate Signup
         document.getElementById('signup-submit-btn').addEventListener('click', async function() {
@@ -1832,42 +1832,49 @@
                 // Add edit button event listeners
                 document.querySelectorAll('.edit-question-btn').forEach(btn => {
                     btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        const index = parseInt(this.getAttribute('data-index'));
-                        const question = questions[index];
+                        try {
+                            e.stopPropagation();
+                            const index = parseInt(this.getAttribute('data-index'));
+                            const question = questions[index];
 
-                        // Show the add question form
-                        document.getElementById('add-question-form').classList.remove('hidden');
+                            // Show the add question form
+                            document.getElementById('add-question-form').classList.remove('hidden');
 
-                        // Populate form with existing question data
-                        document.getElementById('question-subject').value = question.Subject;
-                        document.getElementById('question-text').value = question.Question;
-                        document.getElementById('option-a').value = question['Option A'];
-                        document.getElementById('option-b').value = question['Option B'];
-                        document.getElementById('option-c').value = question['Option C'];
-                        document.getElementById('option-d').value = question['Option D'];
+                            // Populate form with existing question data
+                            document.getElementById('question-subject').value = question.Subject;
+                            document.getElementById('question-text').value = question.Question;
+                            document.getElementById('option-a').value = question['Option A'];
+                            document.getElementById('option-b').value = question['Option B'];
+                            document.getElementById('option-c').value = question['Option C'];
+                            document.getElementById('option-d').value = question['Option D'];
 
-                        // Set correct answer
-                        const correctIndex = question.Correct.charCodeAt(0) - 65; // A=0, B=1, C=2, D=3
-                        document.getElementById('correct-answer').value = correctIndex;
+                            // Set correct answer
+                            const correctIndex = question.Correct.charCodeAt(0) - 65; // A=0, B=1, C=2, D=3
+                            document.getElementById('correct-answer').value = correctIndex;
 
-                        // Change button text to "Update Question"
-                        const addBtn = document.getElementById('add-question-btn');
-                        addBtn.textContent = 'Update Question';
-                        addBtn.setAttribute('data-edit-index', index);
-                        addBtn.setAttribute('data-edit-id', question.id || '');
-                        addBtn.setAttribute('data-edit-mode', 'true');
+                            // Change button text to "Update Question"
+                            const addBtn = document.getElementById('add-question-btn');
+                            addBtn.textContent = 'Update Question';
+                            addBtn.setAttribute('data-edit-index', index);
+                            addBtn.setAttribute('data-edit-id', question.id || '');
+                            addBtn.setAttribute('data-edit-mode', 'true');
 
-                        // Scroll to form
-                        document.getElementById('add-question-form').scrollIntoView({ behavior: 'smooth' });
+                            // Scroll to form
+                            document.getElementById('add-question-form').scrollIntoView({ behavior: 'smooth' });
+                        } catch (error) {
+                            console.error('❌ Event handler error:', error);
+                            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                                window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
+                            }
+                        }
+                    });
+                });
             } catch (error) {
                 console.error('❌ Event handler error:', error);
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                     window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
                 }
             }
-                });
-            });
         });
 
         // Select All questions
