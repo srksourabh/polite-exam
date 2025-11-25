@@ -555,11 +555,8 @@ module.exports = async (req, res) => {
         if (url === '/api/results' && method === 'POST') {
             const resultData = req.body;
 
-            // Remove 'Exam Code' field - Results table uses linked 'Exam' field instead
-            // The 'Exam Code' is not a valid field in the Airtable Results table
-            if (resultData['Exam Code']) {
-                delete resultData['Exam Code'];
-            }
+            // Keep the 'Exam Code' field for reference when displaying exam history
+            // This allows us to show the exam code to candidates in their dashboard
 
             // Clean up the Exam field - remove null/undefined values from the array
             // or remove the field entirely if it's invalid
