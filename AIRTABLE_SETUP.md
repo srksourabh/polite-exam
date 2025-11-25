@@ -42,7 +42,7 @@ Your Airtable base needs the following tables with specific field configurations
 | Email | Email | Candidate's email (used as username) |
 | Mobile | Phone number | 10-digit mobile number |
 | Password | Single line text | Password (plain text for simplicity) |
-| First Exam Date | Date | Date when candidate first signed up |
+| First Exam Date | Date | **OPTIONAL** - Can be used to track when candidate joined |
 
 ## Setup Instructions
 
@@ -53,11 +53,11 @@ Your Airtable base needs the following tables with specific field configurations
 3. Name it exactly: **"Candidates"** (case-sensitive)
 4. Add the following fields:
 
-   - **Name**: Single line text
-   - **Email**: Email field
-   - **Mobile**: Phone number
-   - **Password**: Single line text
-   - **First Exam Date**: Date field
+   - **Name**: Single line text (Required)
+   - **Email**: Email field (Required)
+   - **Mobile**: Phone number (Required)
+   - **Password**: Single line text (Required)
+   - **First Exam Date**: Date field (Optional - you can skip this field)
 
 ### Step 2: Verify Permissions
 
@@ -102,9 +102,9 @@ This will check if all required tables and fields exist.
 
 After creating the Candidates table, you can add a test record:
 
-| Name | Email | Mobile | Password | First Exam Date |
-|------|-------|--------|----------|-----------------|
-| Test User | test@example.com | 1234567890 | password123 | 2025-01-01 |
+| Name | Email | Mobile | Password |
+|------|-------|--------|----------|
+| Test User | test@example.com | 1234567890 | password123 |
 
 Then try logging in with:
 - Email: test@example.com

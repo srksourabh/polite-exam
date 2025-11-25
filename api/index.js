@@ -295,8 +295,7 @@ module.exports = async (req, res) => {
                     'Name': name,
                     'Email': email,
                     'Mobile': mobile,
-                    'Password': password,
-                    'First Exam Date': new Date().toISOString()
+                    'Password': password
                 });
 
                 return res.status(201).json({
@@ -571,8 +570,7 @@ module.exports = async (req, res) => {
                     if (existingCandidates.length === 0) {
                         await base(CANDIDATES_TABLE).create({
                             'Name': resultData.Name,
-                            'Mobile': resultData.Mobile,
-                            'First Exam Date': new Date().toISOString()
+                            'Mobile': resultData.Mobile
                         });
                         console.log(`✅ Created new candidate: ${resultData.Name} (${resultData.Mobile})`);
                     }
