@@ -376,35 +376,6 @@ async function migrateQuestionsToNewFormat() {
     }
 }
 
-// Clean up all exams and results
-async function cleanupAllExams() {
-    try {
-        showNotification('🔄 Cleaning up all exams and results...', 'info');
-
-        const response = await fetch(`${API_URL}/admin/cleanup-exams`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            console.log(`✅ Cleaned up: ${data.deleted.exams} exams, ${data.deleted.results} results`);
-            showNotification(`✅ ${data.message}`, 'success');
-
-            // Reload exams to see empty list
-            await loadExams();
-            return true;
-        } else {
-            throw new Error(data.error || 'Failed to cleanup exams');
-        }
-    } catch (error) {
-        console.error('❌ Error cleaning up exams:', error);
-        showNotification(`❌ Cleanup failed: ${error.message}`, 'error');
-        return false;
-    }
-}
-
 // Create sample exams with questions
 async function createSampleExams() {
     try {
@@ -461,7 +432,6 @@ window.PoliteCCAPI = {
     checkSystemStatus,
     deleteQuestionFromDatabase,
     migrateQuestionsToNewFormat,
-    cleanupAllExams,
     createSampleExams,
     showNotification
 };
