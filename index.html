@@ -3103,7 +3103,7 @@
 
         // Start exam
         document.getElementById('start-exam-btn').addEventListener('click', async function() {
-            const examCode = document.getElementById('exam-code-input').value.trim().toUpperCase();
+            const examCode = document.getElementById('exam-code-input').value.trim();
             const name = document.getElementById('candidate-name').value.trim();
             const mobile = document.getElementById('candidate-mobile').value.trim();
 
@@ -3141,8 +3141,8 @@
                 if (loginError) loginError.textContent = '';
             }
 
-            // Find exam
-            const exam = exams.find(e => e['Exam Code'] === examCode);
+            // Find exam (case-insensitive comparison)
+            const exam = exams.find(e => (e['Exam Code'] || '').toUpperCase() === examCode.toUpperCase());
 
             if (!exam) {
                 const loginError = document.getElementById('login-error');
@@ -3198,7 +3198,7 @@
             
             // Prepare exam data
             currentExam = {
-                code: examCode,
+                code: exam['Exam Code'],  // Use actual exam code from database
                 examId: exam.id,  // Store the Airtable record ID for linking
                 title: exam.Title,
                 duration: parseInt(exam['Duration (mins)']) || 60,
