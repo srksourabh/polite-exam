@@ -3125,16 +3125,34 @@
                             ocrProgress.classList.add('hidden');
                         }, 500);
 
-                        // Store extracted questions
-                        extractedQuestions = data.data.questions.map((q, index) => ({
-                            id: `Q${Date.now()}_${index}`,
+                        // Store extracted questions in format for review system
+                        const questionsForReview = data.data.questions.map((q, index) => ({
                             subject: q.subject || 'Others',
                             question: q.question,
-                            options: [q.optionA, q.optionB, q.optionC, q.optionD],
-                            correct: ['A', 'B', 'C', 'D'].indexOf(q.correct.toUpperCase())
+                            optionA: q.optionA,
+                            optionB: q.optionB,
+                            optionC: q.optionC,
+                            optionD: q.optionD,
+                            correct: q.correct.toUpperCase(),
+                            explanation: q.explanation || ''
                         }));
 
-                        // Display extracted questions directly
+                        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                            window.PoliteCCAPI.showNotification(`✅ Extracted ${questionsForReview.length} questions. Opening review screen...`, 'success');
+                        }
+
+                        // Hide progress
+                        setTimeout(() => {
+                            ocrProgress.classList.add('hidden');
+                            // Launch OCR Review System
+                            if (typeof initializeOCRReview === 'function') {
+                                initializeOCRReview(questionsForReview);
+                            }
+                        }, 500);
+
+                        return; // Exit early, review system handles the rest
+
+                        // Display extracted questions directly (OLD CODE - now bypassed)
                         const readyQuestions = document.getElementById('ready-questions');
                         if (readyQuestions) {
                             if (extractedQuestions.length === 0) {
@@ -3221,6 +3239,366 @@
                 }
             }
         });
+
+        // ===================================================================
+        // OCR REVIEW SYSTEM - Complete JavaScript Logic
+        // ===================================================================
+
+        // OCR Review State Management
+        let ocrExtractedQuestions = []; // Stores questions extracted from OCR
+        let currentOCRReviewIndex = 0;
+
+        // Initialize OCR Review System
+        function initializeOCRReview(questions) {
+            if (!requireAdminSession()) return;
+
+            ocrExtractedQuestions = questions.map((q, index) => ({
+                id: `Q${String(index + 1).padStart(4, '0')}`,
+                subject: q.subject || '',
+                question: q.question || '',
+                optionA: q.optionA || '',
+                optionB: q.optionB || '',
+                optionC: q.optionC || '',
+                optionD: q.optionD || '',
+                correct: q.correct || '',
+                explanation: q.explanation || '',
+                validated: false,
+                originalIndex: index
+            }));
+
+            currentOCRReviewIndex = 0;
+
+            // Hide upload section, show review section
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('ocr-review-section').classList.remove('hidden');
+
+            updateOCRReviewStats();
+            loadOCRReviewQuestion(currentOCRReviewIndex);
+        }
+
+        // Update Statistics Display
+        function updateOCRReviewStats() {
+            const total = ocrExtractedQuestions.length;
+            const validated = ocrExtractedQuestions.filter(q => q.validated).length;
+            const pending = total - validated;
+
+            document.getElementById('review-total-questions').textContent = total;
+            document.getElementById('review-validated-count').textContent = validated;
+            document.getElementById('review-pending-count').textContent = pending;
+        }
+
+        // Load Question into Review Form
+        function loadOCRReviewQuestion(index) {
+            if (index < 0 || index >= ocrExtractedQuestions.length) return;
+
+            const question = ocrExtractedQuestions[index];
+            currentOCRReviewIndex = index;
+
+            document.getElementById('review-question-id').value = question.id;
+            document.getElementById('review-subject').value = question.subject;
+            document.getElementById('review-question-text').value = question.question;
+            document.getElementById('review-option-a').value = question.optionA;
+            document.getElementById('review-option-b').value = question.optionB;
+            document.getElementById('review-option-c').value = question.optionC;
+            document.getElementById('review-option-d').value = question.optionD;
+            document.getElementById('review-correct-answer').value = question.correct;
+            document.getElementById('review-explanation').value = question.explanation || '';
+            document.getElementById('review-mark-validated').checked = question.validated;
+
+            // Update counter
+            document.getElementById('review-question-counter').textContent =
+                `Question ${index + 1} of ${ocrExtractedQuestions.length}`;
+
+            // Update button states
+            document.getElementById('review-prev-btn').disabled = (index === 0);
+            document.getElementById('review-next-btn').disabled = (index === ocrExtractedQuestions.length - 1);
+        }
+
+        // Save Current Question Changes
+        function saveCurrentOCRReviewQuestion() {
+            const question = ocrExtractedQuestions[currentOCRReviewIndex];
+
+            // Validate required fields
+            const subject = document.getElementById('review-subject').value;
+            const questionText = document.getElementById('review-question-text').value;
+            const optionA = document.getElementById('review-option-a').value;
+            const optionB = document.getElementById('review-option-b').value;
+            const optionC = document.getElementById('review-option-c').value;
+            const optionD = document.getElementById('review-option-d').value;
+            const correct = document.getElementById('review-correct-answer').value;
+
+            if (!subject || !questionText || !optionA || !optionB || !optionC || !optionD || !correct) {
+                window.PoliteCCAPI.showNotification('⚠️ Please fill all required fields', 'error');
+                return false;
+            }
+
+            // Update question object
+            question.subject = subject;
+            question.question = questionText;
+            question.optionA = optionA;
+            question.optionB = optionB;
+            question.optionC = optionC;
+            question.optionD = optionD;
+            question.correct = correct;
+            question.explanation = document.getElementById('review-explanation').value;
+            question.validated = document.getElementById('review-mark-validated').checked;
+
+            window.PoliteCCAPI.showNotification('✅ Changes saved', 'success');
+            updateOCRReviewStats();
+            return true;
+        }
+
+        // Navigation Handlers
+        document.getElementById('review-prev-btn').addEventListener('click', function() {
+            if (saveCurrentOCRReviewQuestion()) {
+                loadOCRReviewQuestion(currentOCRReviewIndex - 1);
+            }
+        });
+
+        document.getElementById('review-next-btn').addEventListener('click', function() {
+            if (saveCurrentOCRReviewQuestion()) {
+                loadOCRReviewQuestion(currentOCRReviewIndex + 1);
+            }
+        });
+
+        document.getElementById('review-save-current-btn').addEventListener('click', function() {
+            saveCurrentOCRReviewQuestion();
+        });
+
+        document.getElementById('review-skip-question-btn').addEventListener('click', function() {
+            if (currentOCRReviewIndex < ocrExtractedQuestions.length - 1) {
+                loadOCRReviewQuestion(currentOCRReviewIndex + 1);
+            }
+        });
+
+        document.getElementById('review-delete-question-btn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete this question?')) {
+                ocrExtractedQuestions.splice(currentOCRReviewIndex, 1);
+
+                if (ocrExtractedQuestions.length === 0) {
+                    window.PoliteCCAPI.showNotification('⚠️ All questions deleted', 'error');
+                    document.getElementById('ocr-review-section').classList.add('hidden');
+                    document.getElementById('upload-section').classList.remove('hidden');
+                    return;
+                }
+
+                if (currentOCRReviewIndex >= ocrExtractedQuestions.length) {
+                    currentOCRReviewIndex = ocrExtractedQuestions.length - 1;
+                }
+
+                updateOCRReviewStats();
+                loadOCRReviewQuestion(currentOCRReviewIndex);
+                window.PoliteCCAPI.showNotification('🗑️ Question deleted', 'success');
+            }
+        });
+
+        // Bulk Edit Mode
+        document.getElementById('ocr-bulk-edit-btn').addEventListener('click', function() {
+            saveCurrentOCRReviewQuestion();
+
+            document.getElementById('individual-review-mode').classList.add('hidden');
+            document.getElementById('bulk-edit-mode').classList.remove('hidden');
+
+            renderBulkEditTable();
+        });
+
+        document.getElementById('bulk-cancel-btn').addEventListener('click', function() {
+            document.getElementById('bulk-edit-mode').classList.add('hidden');
+            document.getElementById('individual-review-mode').classList.remove('hidden');
+        });
+
+        function renderBulkEditTable() {
+            const tbody = document.getElementById('bulk-edit-tbody');
+            tbody.innerHTML = '';
+
+            ocrExtractedQuestions.forEach((q, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${q.id}</td>
+                    <td>
+                        <select class="bulk-subject" data-index="${index}">
+                            <option value="Math" ${q.subject === 'Math' ? 'selected' : ''}>Math</option>
+                            <option value="Reasoning" ${q.subject === 'Reasoning' ? 'selected' : ''}>Reasoning</option>
+                            <option value="GK" ${q.subject === 'GK' ? 'selected' : ''}>GK</option>
+                            <option value="English" ${q.subject === 'English' ? 'selected' : ''}>English</option>
+                            <option value="Science" ${q.subject === 'Science' ? 'selected' : ''}>Science</option>
+                            <option value="Others" ${q.subject === 'Others' ? 'selected' : ''}>Others</option>
+                        </select>
+                    </td>
+                    <td><textarea class="bulk-question" data-index="${index}">${q.question}</textarea></td>
+                    <td><input type="text" class="bulk-option-a" data-index="${index}" value="${q.optionA}"></td>
+                    <td><input type="text" class="bulk-option-b" data-index="${index}" value="${q.optionB}"></td>
+                    <td><input type="text" class="bulk-option-c" data-index="${index}" value="${q.optionC}"></td>
+                    <td><input type="text" class="bulk-option-d" data-index="${index}" value="${q.optionD}"></td>
+                    <td>
+                        <select class="bulk-correct" data-index="${index}">
+                            <option value="A" ${q.correct === 'A' ? 'selected' : ''}>A</option>
+                            <option value="B" ${q.correct === 'B' ? 'selected' : ''}>B</option>
+                            <option value="C" ${q.correct === 'C' ? 'selected' : ''}>C</option>
+                            <option value="D" ${q.correct === 'D' ? 'selected' : ''}>D</option>
+                        </select>
+                    </td>
+                    <td>
+                        <span class="status-badge ${q.validated ? 'status-success' : 'status-pending'}">
+                            ${q.validated ? '✓ Validated' : '⏳ Pending'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn-icon btn-danger" onclick="deleteBulkOCRQuestion(${index})" style="font-size: 1.2rem;">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        window.deleteBulkOCRQuestion = function(index) {
+            if (confirm('Delete this question?')) {
+                ocrExtractedQuestions.splice(index, 1);
+                updateOCRReviewStats();
+                renderBulkEditTable();
+                window.PoliteCCAPI.showNotification('🗑️ Question deleted', 'success');
+            }
+        };
+
+        document.getElementById('bulk-save-all-btn').addEventListener('click', function() {
+            // Save all changes from bulk edit table
+            document.querySelectorAll('.bulk-subject').forEach(el => {
+                const index = parseInt(el.dataset.index);
+                if (ocrExtractedQuestions[index]) {
+                    ocrExtractedQuestions[index].subject = el.value;
+                }
+            });
+
+            document.querySelectorAll('.bulk-question').forEach(el => {
+                const index = parseInt(el.dataset.index);
+                if (ocrExtractedQuestions[index]) {
+                    ocrExtractedQuestions[index].question = el.value;
+                }
+            });
+
+            document.querySelectorAll('.bulk-option-a').forEach(el => {
+                const index = parseInt(el.dataset.index);
+                if (ocrExtractedQuestions[index]) {
+                    ocrExtractedQuestions[index].optionA = el.value;
+                }
+            });
+
+            document.querySelectorAll('.bulk-option-b').forEach(el => {
+                const index = parseInt(el.dataset.index);
+                if (ocrExtractedQuestions[index]) {
+                    ocrExtractedQuestions[index].optionB = el.value;
+                }
+            });
+
+            document.querySelectorAll('.bulk-option-c').forEach(el => {
+                const index = parseInt(el.dataset.index);
+                if (ocrExtractedQuestions[index]) {
+                    ocrExtractedQuestions[index].optionC = el.value;
+                }
+            });
+
+            document.querySelectorAll('.bulk-option-d').forEach(el => {
+                const index = parseInt(el.dataset.index);
+                if (ocrExtractedQuestions[index]) {
+                    ocrExtractedQuestions[index].optionD = el.value;
+                }
+            });
+
+            document.querySelectorAll('.bulk-correct').forEach(el => {
+                const index = parseInt(el.dataset.index);
+                if (ocrExtractedQuestions[index]) {
+                    ocrExtractedQuestions[index].correct = el.value;
+                }
+            });
+
+            window.PoliteCCAPI.showNotification('✅ All changes saved', 'success');
+        });
+
+        document.getElementById('bulk-validate-all-btn').addEventListener('click', function() {
+            ocrExtractedQuestions.forEach(q => q.validated = true);
+            updateOCRReviewStats();
+            renderBulkEditTable();
+            window.PoliteCCAPI.showNotification('✅ All questions validated', 'success');
+        });
+
+        // Finish Review and Add to Database
+        document.getElementById('review-finish-btn').addEventListener('click', async function() {
+            saveCurrentOCRReviewQuestion();
+
+            const unvalidated = ocrExtractedQuestions.filter(q => !q.validated).length;
+            if (unvalidated > 0) {
+                if (!confirm(`${unvalidated} questions are not validated. Continue anyway?`)) {
+                    return;
+                }
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = '⏳ Adding questions to database...';
+
+            try {
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const question of ocrExtractedQuestions) {
+                    try {
+                        await window.PoliteCCAPI.addQuestion({
+                            ID: question.id,
+                            Subject: question.subject,
+                            Question: question.question,
+                            'Option A': question.optionA,
+                            'Option B': question.optionB,
+                            'Option C': question.optionC,
+                            'Option D': question.optionD,
+                            Correct: question.correct
+                        });
+                        successCount++;
+                    } catch (error) {
+                        console.error('Failed to add question:', question.id, error);
+                        failCount++;
+                    }
+                }
+
+                window.PoliteCCAPI.showNotification(
+                    `✅ Added ${successCount} questions successfully${failCount > 0 ? ` (${failCount} failed)` : ''}`,
+                    'success'
+                );
+
+                // Clear and go back
+                ocrExtractedQuestions = [];
+                document.getElementById('ocr-review-section').classList.add('hidden');
+                document.getElementById('question-bank-section').classList.remove('hidden');
+
+                // Refresh question bank
+                document.getElementById('question-bank-btn').click();
+
+            } catch (error) {
+                window.PoliteCCAPI.showNotification('❌ Error: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '✅ Finish Review & Add to Question Bank';
+            }
+        });
+
+        document.getElementById('review-cancel-btn').addEventListener('click', function() {
+            if (confirm('Discard all extracted questions? This cannot be undone.')) {
+                ocrExtractedQuestions = [];
+                document.getElementById('ocr-review-section').classList.add('hidden');
+                document.getElementById('upload-section').classList.remove('hidden');
+                window.PoliteCCAPI.showNotification('❌ Review cancelled', 'error');
+            }
+        });
+
+        document.getElementById('ocr-review-back-btn').addEventListener('click', function() {
+            if (confirm('Go back to upload? Unsaved changes will be lost.')) {
+                document.getElementById('ocr-review-section').classList.add('hidden');
+                document.getElementById('upload-section').classList.remove('hidden');
+            }
+        });
+
+        // ===================================================================
+        // END OF OCR REVIEW SYSTEM
+        // ===================================================================
 
         // Clean text
         document.getElementById('clean-text-btn').addEventListener('click', function() {
