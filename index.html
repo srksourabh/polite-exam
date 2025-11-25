@@ -2857,6 +2857,7 @@
                 } else {
                     const resultData = {
                         'Exam': [currentExam.examId],  // Linked record field (must be an array)
+                        'Exam Code': currentExam.code,  // Add exam code for filtering
                         'Name': candidateName,
                         'Mobile': candidateMobile,
                         'Score': parseFloat(score.toFixed(2)),
