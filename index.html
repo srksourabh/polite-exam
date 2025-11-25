@@ -2337,9 +2337,14 @@
             document.getElementById('upload-section').classList.add('hidden');
             document.getElementById('ai-generator-section').classList.add('hidden');
 
-            // Load exams into dropdown
+            // Load exams and questions into dropdown (both needed for detailed view)
             if (window.PoliteCCAPI && window.PoliteCCAPI.loadExams) {
                 exams = await window.PoliteCCAPI.loadExams() || exams;
+            }
+
+            // Load questions for detailed result view
+            if (window.PoliteCCAPI && window.PoliteCCAPI.loadQuestions) {
+                questions = await window.PoliteCCAPI.loadQuestions() || questions;
             }
 
             const examSelect = document.getElementById('results-exam-select');
@@ -2508,11 +2513,21 @@
             const modal = document.getElementById('detailed-result-modal');
             const content = document.getElementById('detailed-result-content');
 
+            // Show loading state
+            content.innerHTML = '<p style="text-align: center; padding: 40px; color: #7f8c8d;"><span style="font-size: 2rem;">⏳</span><br>Loading detailed results...</p>';
+            modal.style.display = 'block';
+
             // Get exam questions
             const exam = exams.find(e => (e['Exam Code'] || e.examCode) === examCode);
             if (!exam) {
-                content.innerHTML = '<p>Error: Exam not found</p>';
-                modal.style.display = 'block';
+                content.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
+                        <h3 style="color: var(--danger); margin-bottom: 15px;">Exam Not Found</h3>
+                        <p style="color: #7f8c8d; margin-bottom: 20px;">Unable to load exam data for: <strong>${examCode}</strong></p>
+                        <p style="color: #7f8c8d; font-size: 0.9rem;">The exam may have been deleted or the data is not available.</p>
+                    </div>
+                `;
                 return;
             }
 
@@ -2531,7 +2546,26 @@
             try {
                 userAnswers = typeof result.Answers === 'string' ? JSON.parse(result.Answers) : result.Answers || [];
             } catch (e) {
+                console.error('Error parsing answers:', e);
                 userAnswers = result.answers || [];
+            }
+
+            // Check if we have answer data
+            if (!userAnswers || userAnswers.length === 0) {
+                content.innerHTML = `
+                    <h3 style="color: var(--secondary); margin-bottom: 20px;">Detailed Result: ${result.Name || result.name}</h3>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <div><strong>Exam:</strong> ${examCode}</div>
+                        <div><strong>Mobile:</strong> ${result.Mobile || result.mobile}</div>
+                        <div><strong>Score:</strong> <span style="color: ${(result.Score || result.score) >= 0 ? '#27ae60' : '#e74c3c'}; font-weight: 700; font-size: 1.2rem;">${parseFloat(result.Score || result.score || 0).toFixed(2)}</span></div>
+                    </div>
+                    <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                        <div style="font-size: 2rem; margin-bottom: 15px;">⚠️</div>
+                        <h4 style="color: #856404; margin-bottom: 10px;">No Answer Data Available</h4>
+                        <p style="color: #856404;">This result does not contain detailed answer information.</p>
+                    </div>
+                `;
+                return;
             }
 
             // Build detailed view
@@ -2584,7 +2618,18 @@
                 });
             } else {
                 // Legacy format: array of answer indices
-                examQuestions.forEach((q, index) => {
+                // Check if we have questions data
+                if (examQuestions.length === 0) {
+                    html += `
+                        <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                            <div style="font-size: 2rem; margin-bottom: 15px;">⚠️</div>
+                            <h4 style="color: #856404; margin-bottom: 10px;">Question Data Not Available</h4>
+                            <p style="color: #856404;">Unable to load question details for this exam.</p>
+                            <p style="color: #856404; font-size: 0.9rem; margin-top: 10px;">The candidate answered ${userAnswers.length} questions and scored ${parseFloat(result.Score || result.score || 0).toFixed(2)} points.</p>
+                        </div>
+                    `;
+                } else {
+                    examQuestions.forEach((q, index) => {
                     const userAnswerIndex = userAnswers[index];
                     const userAnswerLetter = userAnswerIndex !== null && userAnswerIndex !== undefined ? String.fromCharCode(65 + userAnswerIndex) : 'Not Answered';
                     const correctAnswerLetter = q.Correct;
@@ -2615,7 +2660,8 @@
                             </div>
                         </div>
                     `;
-                });
+                    });
+                }
             }
 
             html += '</div>';
