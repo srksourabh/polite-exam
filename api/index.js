@@ -402,6 +402,59 @@ module.exports = async (req, res) => {
             }
         }
 
+        // POST /api/auth/reset-password - Reset candidate password
+        if (url === '/api/auth/reset-password' && method === 'POST') {
+            try {
+                const { email } = req.body;
+
+                if (!email) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Email is required'
+                    });
+                }
+
+                // Find candidate by email
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${email}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'No account found with this email address'
+                    });
+                }
+
+                const candidate = candidates[0];
+
+                // Generate a temporary password (8 characters: letters and numbers)
+                const tempPassword = Math.random().toString(36).slice(-8).toUpperCase();
+
+                // Update the password in Airtable
+                await base(CANDIDATES_TABLE).update(candidate.id, {
+                    'Password': tempPassword
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Password reset successful',
+                    data: {
+                        email: email,
+                        tempPassword: tempPassword
+                    }
+                });
+            } catch (error) {
+                console.error('Password reset error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to reset password'
+                });
+            }
+        }
+
         // GET /api/candidates/profile/:email - Get candidate profile
         if (url.startsWith('/api/candidates/profile/') && method === 'GET') {
             try {

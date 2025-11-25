@@ -757,7 +757,35 @@
                     </div>
                     <button id="signin-submit-btn">Sign In</button>
                     <div class="form-link">
+                        <a id="forgot-password-link">Forgot Password?</a>
+                    </div>
+                    <div class="form-link">
                         Don't have an account? <a id="goto-signup-link">Create Account</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forgot Password Screen -->
+            <div id="forgot-password-screen" class="screen">
+                <a href="#" id="back-to-signin-from-forgot" class="back-link">← Back to Sign In</a>
+                <div class="auth-form">
+                    <h2 class="form-title">Reset Your Password</h2>
+                    <p style="text-align: center; color: #666; margin-bottom: 25px;">
+                        Enter your email address and we'll generate a new temporary password for you.
+                    </p>
+                    <div class="form-group">
+                        <label for="forgot-email">Email Address *</label>
+                        <input type="email" id="forgot-email" placeholder="your@email.com" required>
+                    </div>
+                    <button id="reset-password-btn" class="success-btn">Reset Password</button>
+                    <div id="reset-result" style="display: none; margin-top: 20px; padding: 20px; background: #e8f5e9; border-radius: 10px; border-left: 4px solid #27ae60;">
+                        <p style="font-weight: 600; color: #27ae60; margin-bottom: 10px;">✅ Password Reset Successful!</p>
+                        <p style="color: #666; margin-bottom: 10px;">Your new temporary password is:</p>
+                        <div style="background: white; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 1.2rem; font-weight: 700; color: #2c3e50; text-align: center; letter-spacing: 2px;" id="new-temp-password"></div>
+                        <p style="color: #666; margin-top: 15px; font-size: 0.9rem;">
+                            Please save this password and use it to sign in. We recommend changing it after logging in.
+                        </p>
+                        <button id="goto-signin-after-reset" style="margin-top: 15px; background: var(--success);">Go to Sign In</button>
                     </div>
                 </div>
             </div>
@@ -1340,6 +1368,28 @@
             document.getElementById('candidate-signup-screen').classList.add('active');
         });
 
+        // Navigation: Signin <-> Forgot Password
+        document.getElementById('forgot-password-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('candidate-signin-screen').classList.remove('active');
+            document.getElementById('forgot-password-screen').classList.add('active');
+            // Reset the form
+            document.getElementById('forgot-email').value = '';
+            document.getElementById('reset-result').style.display = 'none';
+        });
+
+        document.getElementById('back-to-signin-from-forgot').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('forgot-password-screen').classList.remove('active');
+            document.getElementById('candidate-signin-screen').classList.add('active');
+        });
+
+        document.getElementById('goto-signin-after-reset').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('forgot-password-screen').classList.remove('active');
+            document.getElementById('candidate-signin-screen').classList.add('active');
+        });
+
         // Navigation: Hero Landing <-> Admin Login
         document.getElementById('admin-link').addEventListener('click', function(e) {
             e.preventDefault();
@@ -1421,6 +1471,46 @@
 
                 // Show dashboard
                 showCandidateDashboard(result);
+            }
+        });
+
+        // Password Reset
+        document.getElementById('reset-password-btn').addEventListener('click', async function() {
+            const email = document.getElementById('forgot-email').value.trim();
+
+            if (!email) {
+                window.PoliteCCAPI.showNotification('Please enter your email address', 'error');
+                return;
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                window.PoliteCCAPI.showNotification('Please enter a valid email address', 'error');
+                return;
+            }
+
+            // Disable button while processing
+            const btn = document.getElementById('reset-password-btn');
+            btn.disabled = true;
+            btn.textContent = 'Resetting...';
+
+            const result = await window.PoliteCCAPI.resetPassword(email);
+
+            // Re-enable button
+            btn.disabled = false;
+            btn.textContent = 'Reset Password';
+
+            if (result) {
+                // Show the temporary password
+                document.getElementById('new-temp-password').textContent = result.tempPassword;
+                document.getElementById('reset-result').style.display = 'block';
+
+                // Hide the form elements
+                document.getElementById('forgot-email').style.display = 'none';
+                btn.style.display = 'none';
+
+                window.PoliteCCAPI.showNotification('✅ Password reset successful!', 'success');
             }
         });
 

@@ -538,6 +538,32 @@ async function getCandidateExamHistory(email) {
     }
 }
 
+// Reset password
+async function resetPassword(email) {
+    try {
+        const response = await fetch(`${API_URL}/auth/reset-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Password reset successful');
+            return data.data;
+        } else {
+            throw new Error(data.error || 'Failed to reset password');
+        }
+    } catch (error) {
+        console.error('❌ Error resetting password:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return null;
+    }
+}
+
 // Export functions for use in main script
 window.PoliteCCAPI = {
     loadQuestions,
@@ -557,5 +583,6 @@ window.PoliteCCAPI = {
     candidateLogin,
     adminLogin,
     getCandidateProfile,
-    getCandidateExamHistory
+    getCandidateExamHistory,
+    resetPassword
 };
