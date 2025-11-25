@@ -843,6 +843,169 @@ Make sure the question is unique, relevant, and has one clearly correct answer.`
             }
         }
 
+        // GET /api/admin/verify-tables - Verify all required tables exist
+        if (url === '/api/admin/verify-tables' && method === 'GET') {
+            try {
+                const tableStatus = {
+                    questions: { exists: false, error: null },
+                    exams: { exists: false, error: null },
+                    results: { exists: false, error: null },
+                    candidates: { exists: false, error: null }
+                };
+
+                // Check Questions table
+                try {
+                    await base(QUESTIONS_TABLE).select({ maxRecords: 1 }).firstPage();
+                    tableStatus.questions.exists = true;
+                } catch (error) {
+                    tableStatus.questions.error = error.message;
+                }
+
+                // Check Exams table
+                try {
+                    await base(EXAMS_TABLE).select({ maxRecords: 1 }).firstPage();
+                    tableStatus.exams.exists = true;
+                } catch (error) {
+                    tableStatus.exams.error = error.message;
+                }
+
+                // Check Results table
+                try {
+                    await base(RESULTS_TABLE).select({ maxRecords: 1 }).firstPage();
+                    tableStatus.results.exists = true;
+                } catch (error) {
+                    tableStatus.results.error = error.message;
+                }
+
+                // Check Candidates table
+                try {
+                    await base(CANDIDATES_TABLE).select({ maxRecords: 1 }).firstPage();
+                    tableStatus.candidates.exists = true;
+                } catch (error) {
+                    tableStatus.candidates.error = error.message;
+                }
+
+                const allTablesExist = Object.values(tableStatus).every(table => table.exists);
+
+                return res.status(200).json({
+                    success: allTablesExist,
+                    message: allTablesExist ? 'All tables exist and are accessible' : 'Some tables are missing or inaccessible',
+                    tables: tableStatus
+                });
+            } catch (error) {
+                console.error('Table verification error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to verify tables'
+                });
+            }
+        }
+
+        // GET /api/exams/active - Get only active (non-expired) exams
+        if (url === '/api/exams/active' && method === 'GET') {
+            try {
+                const records = await base(EXAMS_TABLE).select().all();
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                // Filter active exams (not expired)
+                const activeExams = records.filter(record => {
+                    const expiryDate = record.fields['Expiry (IST)'];
+                    if (!expiryDate) return true; // No expiry = always active
+
+                    const expiry = new Date(expiryDate);
+                    expiry.setHours(0, 0, 0, 0);
+                    return expiry.getTime() >= today.getTime();
+                });
+
+                const exams = activeExams.map(record => ({
+                    id: record.id,
+                    ...record.fields
+                }));
+
+                return res.status(200).json({
+                    success: true,
+                    data: exams,
+                    count: exams.length
+                });
+            } catch (error) {
+                console.error('Error loading active exams:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to load active exams'
+                });
+            }
+        }
+
+        // GET /api/candidates/:email/attempted-exams - Get list of exam codes the candidate has attempted
+        if (url.match(/^\/api\/candidates\/[^\/]+\/attempted-exams$/) && method === 'GET') {
+            try {
+                const email = decodeURIComponent(url.split('/api/candidates/')[1].split('/attempted-exams')[0]);
+
+                // Get candidate
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${email}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Candidate not found'
+                    });
+                }
+
+                const candidate = candidates[0];
+                const candidateName = candidate.fields.Name;
+                const candidateMobile = candidate.fields.Mobile;
+
+                // Get all results for this candidate
+                const results = await base(RESULTS_TABLE)
+                    .select({
+                        filterByFormula: `AND({Name} = '${candidateName}', {Mobile} = '${candidateMobile}')`
+                    })
+                    .all();
+
+                // Get unique exam codes from linked Exam records
+                const attemptedExamIds = new Set();
+                const attemptedExamCodes = new Set();
+
+                for (const result of results) {
+                    // Get exam ID from linked record
+                    const examLinks = result.fields['Exam'];
+                    if (examLinks && examLinks.length > 0) {
+                        attemptedExamIds.add(examLinks[0]);
+                    }
+                }
+
+                // Fetch exam codes for these IDs
+                for (const examId of attemptedExamIds) {
+                    try {
+                        const examRecord = await base(EXAMS_TABLE).find(examId);
+                        if (examRecord.fields['Exam Code']) {
+                            attemptedExamCodes.add(examRecord.fields['Exam Code']);
+                        }
+                    } catch (err) {
+                        console.error('Error fetching exam:', err);
+                    }
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        attemptedExams: Array.from(attemptedExamCodes)
+                    }
+                });
+            } catch (error) {
+                console.error('Error getting attempted exams:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to get attempted exams'
+                });
+            }
+        }
+
         // POST /api/admin/create-sample-exams - Create sample exams with questions
         if (url === '/api/admin/create-sample-exams' && method === 'POST') {
             try {

@@ -685,6 +685,65 @@
             margin-bottom: 20px;
             opacity: 0.5;
         }
+        .available-exam-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+        .available-exam-card:hover:not(.attempted) {
+            border-color: var(--secondary);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.2);
+            transform: translateY(-3px);
+        }
+        .available-exam-card.attempted {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f5f5f5;
+        }
+        .exam-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .exam-badge.active {
+            background: #e8f5e9;
+            color: #27ae60;
+        }
+        .exam-badge.attempted {
+            background: #fff3e0;
+            color: #e67e22;
+        }
+        .exam-card-code {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        .exam-card-title {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .exam-card-details {
+            display: flex;
+            gap: 20px;
+            font-size: 0.95rem;
+            color: #888;
+        }
+        .exam-card-detail {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
     </style>
     <script src="api-integration.js"></script>
 </head>
@@ -819,6 +878,21 @@
                         <div class="empty-state-icon">📝</div>
                         <p>No exams taken yet. Start your first exam!</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Available Exams Selection Screen -->
+            <div id="available-exams-screen" class="screen">
+                <a href="#" id="back-to-dashboard" class="back-link">← Back to Dashboard</a>
+                <h2 style="text-align: center; color: var(--primary); margin-bottom: 30px;">Select an Exam</h2>
+
+                <div id="available-exams-list" style="max-width: 700px; margin: 0 auto;">
+                    <!-- Will be populated with available exams -->
+                </div>
+
+                <div id="no-exams-available" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📝</div>
+                    <p>No active exams available at the moment.</p>
                 </div>
             </div>
 
@@ -1559,16 +1633,120 @@
             }
         }
 
-        // Candidate Dashboard - Take Exam
-        document.getElementById('take-exam-dashboard-btn').addEventListener('click', function() {
+        // Candidate Dashboard - Take Exam (show available exams)
+        document.getElementById('take-exam-dashboard-btn').addEventListener('click', async function() {
+            const session = getSession();
+            if (!session || session.userType !== 'candidate') {
+                window.PoliteCCAPI.showNotification('Please log in first', 'error');
+                return;
+            }
+
+            // Show loading
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Loading exams...';
+
+            try {
+                // Load active exams and attempted exams
+                const activeExams = await window.PoliteCCAPI.loadActiveExams();
+                const attemptedExams = await window.PoliteCCAPI.getAttemptedExams(session.userData.email);
+
+                // Display exams
+                await showAvailableExams(activeExams, attemptedExams);
+
+                // Navigate to exam selection screen
+                document.getElementById('candidate-dashboard').classList.remove('active');
+                document.getElementById('available-exams-screen').classList.add('active');
+            } catch (error) {
+                window.PoliteCCAPI.showNotification('Failed to load exams', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Take a New Exam';
+            }
+        });
+
+        // Show available exams
+        async function showAvailableExams(activeExams, attemptedExams) {
+            const container = document.getElementById('available-exams-list');
+            const noExamsDiv = document.getElementById('no-exams-available');
+
+            if (!activeExams || activeExams.length === 0) {
+                container.innerHTML = '';
+                noExamsDiv.style.display = 'block';
+                return;
+            }
+
+            noExamsDiv.style.display = 'none';
+            let html = '';
+
+            activeExams.forEach(exam => {
+                const examCode = exam['Exam Code'];
+                const isAttempted = attemptedExams.includes(examCode);
+                const duration = exam['Duration (mins)'] || 'N/A';
+                const expiry = exam['Expiry (IST)'] ? new Date(exam['Expiry (IST)']).toLocaleDateString('en-IN') : 'No expiry';
+
+                html += `
+                    <div class="available-exam-card ${isAttempted ? 'attempted' : ''}"
+                         data-exam-code="${examCode}"
+                         data-attempted="${isAttempted}">
+                        <span class="exam-badge ${isAttempted ? 'attempted' : 'active'}">
+                            ${isAttempted ? '✓ Attempted' : '● Active'}
+                        </span>
+                        <div class="exam-card-code">${examCode}</div>
+                        <div class="exam-card-title">${exam.Title || 'Untitled Exam'}</div>
+                        <div class="exam-card-details">
+                            <div class="exam-card-detail">
+                                <span>⏱️</span>
+                                <span>${duration} mins</span>
+                            </div>
+                            <div class="exam-card-detail">
+                                <span>📅</span>
+                                <span>Valid till ${expiry}</span>
+                            </div>
+                        </div>
+                        ${isAttempted ? '<div style="margin-top: 15px; color: #e67e22; font-weight: 600;">⚠️ You have already attempted this exam</div>' : ''}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Add click handlers
+            document.querySelectorAll('.available-exam-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const examCode = this.dataset.examCode;
+                    const isAttempted = this.dataset.attempted === 'true';
+
+                    if (isAttempted) {
+                        window.PoliteCCAPI.showNotification('You have already attempted this exam', 'error');
+                        return;
+                    }
+
+                    // Navigate to candidate login screen with exam code
+                    const session = getSession();
+                    if (session && session.userType === 'candidate') {
+                        document.getElementById('exam-code-input').value = examCode;
+                        document.getElementById('candidate-name').value = session.userData.name;
+                        document.getElementById('candidate-mobile').value = session.userData.mobile;
+                    }
+
+                    document.getElementById('available-exams-screen').classList.remove('active');
+                    document.getElementById('candidate-login-screen').classList.add('active');
+                });
+            });
+        }
+
+        // Back to dashboard from exam selection
+        document.getElementById('back-to-dashboard').addEventListener('click', function(e) {
+            e.preventDefault();
             const session = getSession();
             if (session && session.userType === 'candidate') {
-                // Pre-fill candidate info
-                document.getElementById('candidate-name').value = session.userData.name;
-                document.getElementById('candidate-mobile').value = session.userData.mobile;
+                document.getElementById('available-exams-screen').classList.remove('active');
+                document.getElementById('candidate-dashboard').classList.add('active');
+            } else {
+                document.getElementById('available-exams-screen').classList.remove('active');
+                document.getElementById('hero-landing').classList.add('active');
             }
-            document.getElementById('candidate-dashboard').classList.remove('active');
-            document.getElementById('candidate-login-screen').classList.add('active');
         });
 
         // Hero - Start Exam (for non-logged-in users)

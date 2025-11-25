@@ -564,6 +564,62 @@ async function resetPassword(email) {
     }
 }
 
+// Verify database tables
+async function verifyTables() {
+    try {
+        const response = await fetch(`${API_URL}/admin/verify-tables`);
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ All database tables verified');
+            return data.tables;
+        } else {
+            console.error('❌ Some tables are missing:', data.tables);
+            return data.tables;
+        }
+    } catch (error) {
+        console.error('❌ Error verifying tables:', error);
+        return null;
+    }
+}
+
+// Load active exams only
+async function loadActiveExams() {
+    try {
+        const response = await fetch(`${API_URL}/exams/active`);
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`✅ Loaded ${data.count} active exams`);
+            return data.data;
+        } else {
+            throw new Error(data.error || 'Failed to load active exams');
+        }
+    } catch (error) {
+        console.error('❌ Error loading active exams:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return [];
+    }
+}
+
+// Get attempted exams for a candidate
+async function getAttemptedExams(email) {
+    try {
+        const response = await fetch(`${API_URL}/candidates/${encodeURIComponent(email)}/attempted-exams`);
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`✅ Candidate has attempted ${data.data.attemptedExams.length} exams`);
+            return data.data.attemptedExams;
+        } else {
+            throw new Error(data.error || 'Failed to get attempted exams');
+        }
+    } catch (error) {
+        console.error('❌ Error getting attempted exams:', error);
+        return [];
+    }
+}
+
 // Export functions for use in main script
 window.PoliteCCAPI = {
     loadQuestions,
@@ -584,5 +640,8 @@ window.PoliteCCAPI = {
     adminLogin,
     getCandidateProfile,
     getCandidateExamHistory,
-    resetPassword
+    resetPassword,
+    verifyTables,
+    loadActiveExams,
+    getAttemptedExams
 };
