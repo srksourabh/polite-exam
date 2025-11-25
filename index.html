@@ -3448,12 +3448,17 @@
                     return; // Prevent submission
                 } else {
                     const resultData = {
-                        'Exam': [currentExam.examId],  // Linked record field (must be an array)
                         'Name': candidateName,
                         'Mobile': candidateMobile,
                         'Score': parseFloat(score.toFixed(2)),
-                        'Answers': JSON.stringify(detailedAnswers)
+                        'Answers': JSON.stringify(detailedAnswers),
+                        'Exam Code': currentExam.code  // Always include exam code for reference
                     };
+
+                    // Only add Exam linked record field if examId is valid
+                    if (currentExam.examId) {
+                        resultData['Exam'] = [currentExam.examId];
+                    }
 
                     const submitted = await window.PoliteCCAPI.submitResultToDatabase(resultData);
                     if (!submitted) {

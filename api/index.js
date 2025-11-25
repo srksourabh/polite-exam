@@ -557,6 +557,22 @@ module.exports = async (req, res) => {
         if (url === '/api/results' && method === 'POST') {
             const resultData = req.body;
 
+            // Clean up the Exam field - remove null/undefined values from the array
+            // or remove the field entirely if it's invalid
+            if (resultData.Exam) {
+                if (Array.isArray(resultData.Exam)) {
+                    // Filter out null, undefined, and empty string values
+                    resultData.Exam = resultData.Exam.filter(id => id != null && id !== '');
+                    // If array is empty after filtering, remove the field entirely
+                    if (resultData.Exam.length === 0) {
+                        delete resultData.Exam;
+                    }
+                } else if (resultData.Exam == null || resultData.Exam === '') {
+                    // If Exam is a single null/empty value, remove it
+                    delete resultData.Exam;
+                }
+            }
+
             // Auto-create candidate record if it doesn't exist (requirement #9)
             if (resultData.Name && resultData.Mobile) {
                 try {
