@@ -2545,38 +2545,78 @@
                 <div style="max-height: 500px; overflow-y: auto;">
             `;
 
-            examQuestions.forEach((q, index) => {
-                const userAnswerIndex = userAnswers[index];
-                const userAnswerLetter = userAnswerIndex !== null && userAnswerIndex !== undefined ? String.fromCharCode(65 + userAnswerIndex) : 'Not Answered';
-                const correctAnswerLetter = q.Correct;
-                const isCorrect = userAnswerLetter === correctAnswerLetter;
-                const userAnswerText = userAnswerIndex !== null && userAnswerIndex !== undefined ? q[`Option ${userAnswerLetter}`] : 'Not Answered';
-                const correctAnswerText = q[`Option ${correctAnswerLetter}`];
+            // Check if userAnswers is in the new detailed format (array of objects)
+            const isDetailedFormat = userAnswers.length > 0 && typeof userAnswers[0] === 'object' && userAnswers[0] !== null;
 
-                html += `
-                    <div style="background: ${isCorrect ? '#e8f5e9' : (userAnswerIndex !== null ? '#ffebee' : '#f5f5f5')}; border-left: 4px solid ${isCorrect ? '#27ae60' : (userAnswerIndex !== null ? '#e74c3c' : '#95a5a6')}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
-                        <div style="font-weight: 600; margin-bottom: 8px; color: var(--secondary);">Question ${index + 1} (${q.ID} - ${q.Subject})</div>
-                        <div style="margin-bottom: 12px; font-size: 1.05rem;">${q.Question}</div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-                            <div>
-                                <strong>Your Answer:</strong>
-                                <span style="color: ${isCorrect ? '#27ae60' : (userAnswerIndex !== null ? '#e74c3c' : '#7f8c8d')}; font-weight: 600;">
-                                    ${userAnswerLetter}${userAnswerIndex !== null && userAnswerIndex !== undefined ? ' - ' + userAnswerText : ''}
-                                </span>
+            if (isDetailedFormat) {
+                // New format: detailed answer objects with userAnswer, correctAnswer, isCorrect, etc.
+                userAnswers.forEach((answer, index) => {
+                    const isCorrect = answer.isCorrect;
+                    const userAnswered = answer.userAnswer !== 'Not Answered';
+                    const userAnswerLetter = answer.userAnswer;
+                    const correctAnswerLetter = answer.correctAnswer;
+
+                    html += `
+                        <div style="background: ${isCorrect ? '#e8f5e9' : (userAnswered ? '#ffebee' : '#f5f5f5')}; border-left: 4px solid ${isCorrect ? '#27ae60' : (userAnswered ? '#e74c3c' : '#95a5a6')}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                            <div style="font-weight: 600; margin-bottom: 8px; color: var(--secondary);">Question ${index + 1} (${answer.questionId} - ${answer.subject})</div>
+                            <div style="margin-bottom: 12px; font-size: 1.05rem;">${answer.question}</div>
+
+                            <div style="margin-bottom: 12px;">
+                                <div style="margin: 5px 0; padding: 8px; background: ${userAnswerLetter === 'A' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>A:</strong> ${answer.optionA} ${userAnswerLetter === 'A' ? '👉 <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
+                                <div style="margin: 5px 0; padding: 8px; background: ${userAnswerLetter === 'B' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>B:</strong> ${answer.optionB} ${userAnswerLetter === 'B' ? '👉 <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
+                                <div style="margin: 5px 0; padding: 8px; background: ${userAnswerLetter === 'C' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>C:</strong> ${answer.optionC} ${userAnswerLetter === 'C' ? '👉 <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
+                                <div style="margin: 5px 0; padding: 8px; background: ${userAnswerLetter === 'D' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>D:</strong> ${answer.optionD} ${userAnswerLetter === 'D' ? '👉 <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
                             </div>
-                            <div>
-                                <strong>Correct Answer:</strong>
-                                <span style="color: #27ae60; font-weight: 600;">
-                                    ${correctAnswerLetter} - ${correctAnswerText}
-                                </span>
+
+                            <div style="font-weight: 600; font-size: 1.1rem;">
+                                ${isCorrect ? '✅ Correct (+1)' : (userAnswered ? '❌ Incorrect (-0.25)' : '⚪ Not Answered (0)')}
                             </div>
                         </div>
-                        <div style="font-weight: 600; font-size: 1.1rem;">
-                            ${isCorrect ? '✅ Correct (+1)' : (userAnswerIndex !== null ? '❌ Incorrect (-0.25)' : '⚪ Not Answered (0)')}
+                    `;
+                });
+            } else {
+                // Legacy format: array of answer indices
+                examQuestions.forEach((q, index) => {
+                    const userAnswerIndex = userAnswers[index];
+                    const userAnswerLetter = userAnswerIndex !== null && userAnswerIndex !== undefined ? String.fromCharCode(65 + userAnswerIndex) : 'Not Answered';
+                    const correctAnswerLetter = q.Correct;
+                    const isCorrect = userAnswerLetter === correctAnswerLetter;
+                    const userAnswerText = userAnswerIndex !== null && userAnswerIndex !== undefined ? q[`Option ${userAnswerLetter}`] : 'Not Answered';
+                    const correctAnswerText = q[`Option ${correctAnswerLetter}`];
+
+                    html += `
+                        <div style="background: ${isCorrect ? '#e8f5e9' : (userAnswerIndex !== null ? '#ffebee' : '#f5f5f5')}; border-left: 4px solid ${isCorrect ? '#27ae60' : (userAnswerIndex !== null ? '#e74c3c' : '#95a5a6')}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                            <div style="font-weight: 600; margin-bottom: 8px; color: var(--secondary);">Question ${index + 1} (${q.ID} - ${q.Subject})</div>
+                            <div style="margin-bottom: 12px; font-size: 1.05rem;">${q.Question}</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                                <div>
+                                    <strong>Your Answer:</strong>
+                                    <span style="color: ${isCorrect ? '#27ae60' : (userAnswerIndex !== null ? '#e74c3c' : '#7f8c8d')}; font-weight: 600;">
+                                        ${userAnswerLetter}${userAnswerIndex !== null && userAnswerIndex !== undefined ? ' - ' + userAnswerText : ''}
+                                    </span>
+                                </div>
+                                <div>
+                                    <strong>Correct Answer:</strong>
+                                    <span style="color: #27ae60; font-weight: 600;">
+                                        ${correctAnswerLetter} - ${correctAnswerText}
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="font-weight: 600; font-size: 1.1rem;">
+                                ${isCorrect ? '✅ Correct (+1)' : (userAnswerIndex !== null ? '❌ Incorrect (-0.25)' : '⚪ Not Answered (0)')}
+                            </div>
                         </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            }
 
             html += '</div>';
             content.innerHTML = html;
@@ -3448,12 +3488,17 @@
                     return; // Prevent submission
                 } else {
                     const resultData = {
-                        'Exam': [currentExam.examId],  // Linked record field (must be an array)
                         'Name': candidateName,
                         'Mobile': candidateMobile,
                         'Score': parseFloat(score.toFixed(2)),
-                        'Answers': JSON.stringify(detailedAnswers)
+                        'Answers': JSON.stringify(detailedAnswers),
+                        'Exam Code': currentExam.code  // Always include exam code for reference
                     };
+
+                    // Only add Exam linked record field if examId is valid
+                    if (currentExam.examId) {
+                        resultData['Exam'] = [currentExam.examId];
+                    }
 
                     const submitted = await window.PoliteCCAPI.submitResultToDatabase(resultData);
                     if (!submitted) {
