@@ -1149,9 +1149,6 @@
                 </div>
                 <button id="start-exam-btn">Begin Exam</button>
                 <p class="error" id="login-error"></p>
-                <div style="text-align: center; margin-top: 25px;">
-                    <button class="admin-btn" id="admin-login-btn">Admin Login →</button>
-                </div>
             </div>
 
             <!-- Exam Screen -->
@@ -1320,19 +1317,21 @@
             localStorage.removeItem('userData');
         }
 
-        // Check if user is already logged in
-        const session = getSession();
-        if (session) {
-            if (session.userType === 'candidate') {
-                showCandidateDashboard(session.userData);
-            } else if (session.userType === 'admin') {
-                document.getElementById('hero-landing').classList.remove('active');
-                document.getElementById('admin-panel').classList.add('active');
+        // Wait for DOM to be ready before attaching event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is already logged in
+            const session = getSession();
+            if (session) {
+                if (session.userType === 'candidate') {
+                    showCandidateDashboard(session.userData);
+                } else if (session.userType === 'admin') {
+                    document.getElementById('hero-landing').classList.remove('active');
+                    document.getElementById('admin-panel').classList.add('active');
+                }
             }
-        }
 
-        // Navigation: Hero Landing <-> Signup
-        document.getElementById('signup-btn').addEventListener('click', function() {
+            // Navigation: Hero Landing <-> Signup
+            document.getElementById('signup-btn').addEventListener('click', function() {
             document.getElementById('hero-landing').classList.remove('active');
             document.getElementById('candidate-signup-screen').classList.add('active');
         });
@@ -3723,9 +3722,7 @@
             }
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set default expiry date to tomorrow
+            // Initialize: Set default expiry date to tomorrow
             const now = new Date();
             now.setDate(now.getDate() + 1);
             const expiryInput = document.getElementById('exam-expiry');
@@ -3736,7 +3733,7 @@
                 const day = String(now.getDate()).padStart(2, '0');
                 expiryInput.value = `${year}-${month}-${day}`;
             }
-        });
+        }); // End of DOMContentLoaded
     </script>
 </body>
 </html>
