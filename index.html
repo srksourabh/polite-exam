@@ -2691,6 +2691,21 @@
                     return;
                 }
 
+                // Fetch results count for all exams in parallel
+                const examResultCounts = {};
+                if (window.PoliteCCAPI && window.PoliteCCAPI.getExamResults) {
+                    const resultsPromises = exams.map(async (exam) => {
+                        const examCode = exam['Exam Code'] || exam.examCode;
+                        try {
+                            const results = await window.PoliteCCAPI.getExamResults(examCode) || [];
+                            examResultCounts[examCode] = results.length;
+                        } catch (e) {
+                            examResultCounts[examCode] = 0;
+                        }
+                    });
+                    await Promise.all(resultsPromises);
+                }
+
                 let examsHTML = '';
                 for (const exam of exams) {
                     const examCode = exam['Exam Code'] || exam.examCode;
@@ -2710,6 +2725,7 @@
 
                     const questionCount = exam['Question IDs'] ? (Array.isArray(exam['Question IDs']) ? exam['Question IDs'].length : exam['Question IDs'].split(',').length) : 0;
                     const duration = exam['Duration'] || exam.duration || 60;
+                    const candidateCount = examResultCounts[examCode] || 0;
 
                     examsHTML += `
                         <div class="exam-result-card" data-exam-code="${examCode}" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 3px 15px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s; border: 2px solid transparent;" onmouseenter="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'; this.style.borderColor='var(--secondary)';" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 15px rgba(0,0,0,0.1)'; this.style.borderColor='transparent';">
@@ -2718,6 +2734,12 @@
                                 ${statusBadge}
                             </div>
                             <div style="font-size: 1rem; color: #333; margin-bottom: 15px; font-weight: 500;">${title}</div>
+                            <div style="display: flex; justify-content: center; margin-bottom: 12px;">
+                                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px 25px; border-radius: 10px; text-align: center; min-width: 100px;">
+                                    <div style="font-size: 1.8rem; font-weight: 700;">${candidateCount}</div>
+                                    <div style="font-size: 0.8rem; opacity: 0.9;">Candidates</div>
+                                </div>
+                            </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; color: #666;">
                                 <div><strong>Expiry:</strong> ${expiryStr}</div>
                                 <div><strong>Duration:</strong> ${duration} min</div>
@@ -3026,11 +3048,18 @@
                 return;
             }
 
-            // Prepare CSV content
-            const headers = ['#', 'Name', 'Mobile', 'Score', 'Submitted At'];
-            const rows = results.map((result, index) => {
+            // Sort by score (highest first) to determine rank
+            const sortedResults = [...results].sort((a, b) =>
+                (parseFloat(b.Score || b.score || 0)) - (parseFloat(a.Score || a.score || 0))
+            );
+
+            // Prepare CSV content with Rank column
+            const headers = ['Rank', 'Name', 'Mobile', 'Score', 'Submitted At'];
+            const rows = sortedResults.map((result, index) => {
+                const rank = index + 1;
+                const rankDisplay = rank <= 3 ? ['1st', '2nd', '3rd'][rank - 1] : `${rank}th`;
                 return [
-                    index + 1,
+                    rankDisplay,
                     result.Name || result.name || '',
                     result.Mobile || result.mobile || '',
                     parseFloat(result.Score || result.score || 0).toFixed(2),
