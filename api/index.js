@@ -522,12 +522,28 @@ module.exports = async (req, res) => {
                     })
                     .all();
 
-                const examHistory = results.map(record => ({
-                    id: record.id,
-                    examCode: record.fields['Exam Code'] || 'N/A',
-                    score: record.fields.Score,
-                    answers: record.fields.Answers,
-                    date: record.fields['Created'] || record.fields['Date'] || new Date().toISOString()
+                // Build exam history with exam codes from linked Exam records
+                const examHistory = await Promise.all(results.map(async (record) => {
+                    let examCode = 'N/A';
+
+                    // Get exam code from linked Exam record
+                    const examLinkedIds = record.fields['Exam'];
+                    if (examLinkedIds && examLinkedIds.length > 0) {
+                        try {
+                            const examRecord = await base(EXAMS_TABLE).find(examLinkedIds[0]);
+                            examCode = examRecord.fields['Exam Code'] || 'N/A';
+                        } catch (examError) {
+                            console.error('Could not fetch linked exam:', examError);
+                        }
+                    }
+
+                    return {
+                        id: record.id,
+                        examCode: examCode,
+                        score: record.fields.Score,
+                        answers: record.fields.Answers,
+                        date: record.fields['Created'] || record.fields['Date'] || new Date().toISOString()
+                    };
                 }));
 
                 return res.status(200).json({
@@ -555,8 +571,11 @@ module.exports = async (req, res) => {
         if (url === '/api/results' && method === 'POST') {
             const resultData = req.body;
 
-            // Keep the 'Exam Code' field for reference when displaying exam history
-            // This allows us to show the exam code to candidates in their dashboard
+            // Remove 'Exam Code' field - Results table uses linked 'Exam' field instead
+            // The exam code can be retrieved from the linked Exam record when displaying history
+            if (resultData['Exam Code']) {
+                delete resultData['Exam Code'];
+            }
 
             // Clean up the Exam field - remove null/undefined values from the array
             // or remove the field entirely if it's invalid
