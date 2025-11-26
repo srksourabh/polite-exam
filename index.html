@@ -2723,8 +2723,10 @@
                         ? '<span style="background: #e74c3c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">EXPIRED</span>'
                         : '<span style="background: #27ae60; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">ACTIVE</span>';
 
-                    const questionCount = exam['Question IDs'] ? (Array.isArray(exam['Question IDs']) ? exam['Question IDs'].length : exam['Question IDs'].split(',').length) : 0;
-                    const duration = exam['Duration'] || exam.duration || 60;
+                    // Handle multiple possible Airtable field names for questions
+                    const questionIds = exam['Question IDs'] || exam['Questions'] || exam['QuestionIDs'] || exam.questionIds || [];
+                    const questionCount = Array.isArray(questionIds) ? questionIds.length : (typeof questionIds === 'string' && questionIds.trim() ? questionIds.split(',').filter(id => id.trim()).length : 0);
+                    const duration = exam['Duration (mins)'] || exam['Duration'] || exam.duration || 60;
                     const candidateCount = examResultCounts[examCode] || 0;
 
                     examsHTML += `
@@ -2779,8 +2781,10 @@
                 const exam = exams.find(e => (e['Exam Code'] || e.examCode) === examCode);
                 const title = exam ? (exam['Title'] || exam.title || 'Untitled') : 'Unknown';
                 const expiryDate = exam && exam['Expiry (IST)'] ? new Date(exam['Expiry (IST)']).toLocaleDateString('en-IN') : 'No Expiry';
-                const duration = exam ? (exam['Duration'] || exam.duration || 60) : 60;
-                const questionCount = exam && exam['Question IDs'] ? (Array.isArray(exam['Question IDs']) ? exam['Question IDs'].length : exam['Question IDs'].split(',').length) : 0;
+                const duration = exam ? (exam['Duration (mins)'] || exam['Duration'] || exam.duration || 60) : 60;
+                // Handle multiple possible Airtable field names for questions
+                const examQuestionIds = exam ? (exam['Question IDs'] || exam['Questions'] || exam['QuestionIDs'] || exam.questionIds || []) : [];
+                const questionCount = Array.isArray(examQuestionIds) ? examQuestionIds.length : (typeof examQuestionIds === 'string' && examQuestionIds.trim() ? examQuestionIds.split(',').filter(id => id.trim()).length : 0);
 
                 document.getElementById('selected-exam-title').textContent = `${examCode} - ${title}`;
                 document.getElementById('selected-exam-info').innerHTML = `
