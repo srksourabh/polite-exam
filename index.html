@@ -1886,19 +1886,8 @@
 
         // Wait for DOM to be ready before attaching event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is already logged in
-            const session = getSession();
-            if (session) {
-                if (session.userType === 'candidate') {
-                    showCandidateDashboard(session.userData);
-                } else if (session.userType === 'admin') {
-                    document.getElementById('hero-landing').classList.remove('active');
-                    document.getElementById('admin-panel').classList.add('active');
-                    updateHeaderNav('admin-panel');
-                }
-            } else {
-                updateHeaderNav('hero-landing');
-            }
+            // Initialize header navigation first
+            updateHeaderNav('hero-landing');
 
             // Header Back Button Handler
             document.getElementById('header-back-btn').addEventListener('click', function() {
@@ -4718,6 +4707,22 @@
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const day = String(now.getDate()).padStart(2, '0');
                 expiryInput.value = `${year}-${month}-${day}`;
+            }
+
+            // Check if user is already logged in (do this AFTER all event handlers are attached)
+            try {
+                const session = getSession();
+                if (session) {
+                    if (session.userType === 'candidate') {
+                        showCandidateDashboard(session.userData);
+                    } else if (session.userType === 'admin') {
+                        document.getElementById('hero-landing').classList.remove('active');
+                        document.getElementById('admin-panel').classList.add('active');
+                        updateHeaderNav('admin-panel');
+                    }
+                }
+            } catch (e) {
+                console.error('Session check error:', e);
             }
         }); // End of DOMContentLoaded
     </script>
