@@ -1589,6 +1589,40 @@
         let aiGeneratedQuestion = null;
         let extractedQuestions = [];
         let candidateDetailedAnswers = null; // Store candidate's detailed results for viewing
+        let currentScreen = 'hero-landing'; // Track current screen for navigation
+
+        // Function to manage header navigation visibility (global scope)
+        function updateHeaderNav(screenId) {
+            const adminLink = document.getElementById('admin-link');
+            const candidateNavButtons = document.getElementById('candidate-nav-buttons');
+            const backBtn = document.getElementById('header-back-btn');
+
+            if (!adminLink || !candidateNavButtons || !backBtn) return; // Guard for early calls
+
+            // Screens where admin link should be hidden and candidate nav shown
+            const candidateScreens = ['candidate-signup-screen', 'candidate-signin-screen', 'candidate-dashboard',
+                                      'candidate-login-screen', 'exam-screen', 'result-screen', 'forgot-password-screen'];
+
+            // Screens where back button should be hidden (root screens)
+            const noBackScreens = ['hero-landing', 'candidate-dashboard'];
+
+            if (candidateScreens.includes(screenId)) {
+                adminLink.classList.add('hidden');
+                candidateNavButtons.classList.add('visible');
+
+                // Hide back button on dashboard (root screen for logged in users)
+                if (noBackScreens.includes(screenId)) {
+                    backBtn.style.display = 'none';
+                } else {
+                    backBtn.style.display = 'block';
+                }
+            } else {
+                adminLink.classList.remove('hidden');
+                candidateNavButtons.classList.remove('visible');
+            }
+
+            currentScreen = screenId;
+        }
 
         // Sample data
         questions = [
@@ -1852,54 +1886,8 @@
 
         // Wait for DOM to be ready before attaching event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is already logged in
-            const session = getSession();
-            if (session) {
-                if (session.userType === 'candidate') {
-                    showCandidateDashboard(session.userData);
-                } else if (session.userType === 'admin') {
-                    document.getElementById('hero-landing').classList.remove('active');
-                    document.getElementById('admin-panel').classList.add('active');
-                    updateHeaderNav('admin-panel');
-                }
-            } else {
-                updateHeaderNav('hero-landing');
-            }
-
-            // Track current screen for navigation
-            let currentScreen = 'hero-landing';
-            let screenHistory = [];
-
-            // Function to manage header navigation visibility
-            function updateHeaderNav(screenId) {
-                const adminLink = document.getElementById('admin-link');
-                const candidateNavButtons = document.getElementById('candidate-nav-buttons');
-                const backBtn = document.getElementById('header-back-btn');
-
-                // Screens where admin link should be hidden and candidate nav shown
-                const candidateScreens = ['candidate-signup-screen', 'candidate-signin-screen', 'candidate-dashboard',
-                                          'candidate-login-screen', 'exam-screen', 'result-screen', 'forgot-password-screen'];
-
-                // Screens where back button should be hidden (root screens)
-                const noBackScreens = ['hero-landing', 'candidate-dashboard'];
-
-                if (candidateScreens.includes(screenId)) {
-                    adminLink.classList.add('hidden');
-                    candidateNavButtons.classList.add('visible');
-
-                    // Hide back button on dashboard (root screen for logged in users)
-                    if (noBackScreens.includes(screenId)) {
-                        backBtn.style.display = 'none';
-                    } else {
-                        backBtn.style.display = 'block';
-                    }
-                } else {
-                    adminLink.classList.remove('hidden');
-                    candidateNavButtons.classList.remove('visible');
-                }
-
-                currentScreen = screenId;
-            }
+            // Initialize header navigation first
+            updateHeaderNav('hero-landing');
 
             // Header Back Button Handler
             document.getElementById('header-back-btn').addEventListener('click', function() {
@@ -2395,7 +2383,10 @@
             clearSession();
             document.getElementById('admin-panel').classList.remove('active');
             document.getElementById('hero-landing').classList.add('active');
-            window.PoliteCCAPI.showNotification('Logged out successfully', 'success');
+            updateHeaderNav('hero-landing');
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('Logged out successfully', 'success');
+            }
         });
 
         // Exam screen logout function (for candidates taking exams)
@@ -4716,6 +4707,22 @@
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const day = String(now.getDate()).padStart(2, '0');
                 expiryInput.value = `${year}-${month}-${day}`;
+            }
+
+            // Check if user is already logged in (do this AFTER all event handlers are attached)
+            try {
+                const session = getSession();
+                if (session) {
+                    if (session.userType === 'candidate') {
+                        showCandidateDashboard(session.userData);
+                    } else if (session.userType === 'admin') {
+                        document.getElementById('hero-landing').classList.remove('active');
+                        document.getElementById('admin-panel').classList.add('active');
+                        updateHeaderNav('admin-panel');
+                    }
+                }
+            } catch (e) {
+                console.error('Session check error:', e);
             }
         }); // End of DOMContentLoaded
     </script>
