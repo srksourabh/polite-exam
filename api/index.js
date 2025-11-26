@@ -571,11 +571,8 @@ module.exports = async (req, res) => {
         if (url === '/api/results' && method === 'POST') {
             const resultData = req.body;
 
-            // Remove 'Exam Code' field - Results table uses linked 'Exam' field instead
-            // The exam code can be retrieved from the linked Exam record when displaying history
-            if (resultData['Exam Code']) {
-                delete resultData['Exam Code'];
-            }
+            // Keep 'Exam Code' field for easy querying of results by exam
+            // The linked 'Exam' field is also kept for proper data relationships
 
             // Clean up the Exam field - remove null/undefined values from the array
             // or remove the field entirely if it's invalid
@@ -629,7 +626,7 @@ module.exports = async (req, res) => {
         if (url.startsWith('/api/results/') && method === 'GET') {
             const examCode = url.split('/api/results/')[1];
 
-            // First get the exam record
+            // First verify the exam exists
             const examRecords = await base(EXAMS_TABLE)
                 .select({
                     filterByFormula: `{Exam Code} = '${examCode}'`
@@ -644,46 +641,43 @@ module.exports = async (req, res) => {
             }
 
             const examId = examRecords[0].id;
-
-            // Try different field name variations for linked records
-            const fieldVariations = [
-                `{Exam}`,  // Direct linked field name
-                `{Exam (from Exam)}`,  // Rollup/lookup field
-                `ARRAYJOIN({Exam})`,  // Array join for linked records
-            ];
-
             let resultRecords = [];
-            let lastError = null;
 
-            // Try filtering by linked record field
-            for (const fieldFormula of fieldVariations) {
-                try {
-                    resultRecords = await base(RESULTS_TABLE)
-                        .select({
-                            filterByFormula: `FIND('${examId}', ${fieldFormula})`
-                        })
-                        .all();
-
-                    // If we got results, break
-                    if (resultRecords.length > 0) {
-                        break;
-                    }
-                } catch (err) {
-                    lastError = err;
-                    console.log(`Failed with formula: FIND('${examId}', ${fieldFormula})`, err.message);
-                }
+            // Primary method: Filter by Exam Code field (most reliable)
+            try {
+                resultRecords = await base(RESULTS_TABLE)
+                    .select({
+                        filterByFormula: `{Exam Code} = '${examCode}'`
+                    })
+                    .all();
+                console.log(`Found ${resultRecords.length} results by Exam Code for: ${examCode}`);
+            } catch (err) {
+                console.log('Failed to filter by Exam Code:', err.message);
             }
 
-            // If linked field filtering didn't work, fall back to filtering by Exam Code
+            // Fallback: If no results found by Exam Code, try linked record field
             if (resultRecords.length === 0) {
-                try {
-                    resultRecords = await base(RESULTS_TABLE)
-                        .select({
-                            filterByFormula: `{Exam Code} = '${examCode}'`
-                        })
-                        .all();
-                } catch (err) {
-                    console.log('Failed to filter by Exam Code:', err.message);
+                const fieldVariations = [
+                    `{Exam}`,  // Direct linked field name
+                    `{Exam (from Exam)}`,  // Rollup/lookup field
+                    `ARRAYJOIN({Exam})`,  // Array join for linked records
+                ];
+
+                for (const fieldFormula of fieldVariations) {
+                    try {
+                        resultRecords = await base(RESULTS_TABLE)
+                            .select({
+                                filterByFormula: `FIND('${examId}', ${fieldFormula})`
+                            })
+                            .all();
+
+                        if (resultRecords.length > 0) {
+                            console.log(`Found ${resultRecords.length} results by linked field for: ${examCode}`);
+                            break;
+                        }
+                    } catch (err) {
+                        console.log(`Failed with formula: FIND('${examId}', ${fieldFormula})`, err.message);
+                    }
                 }
             }
 
