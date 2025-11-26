@@ -1233,8 +1233,10 @@
             <div id="candidate-login-screen" class="screen">
                 <h2 style="text-align: center; margin-bottom: 25px; color: var(--primary);">Start Your Exam</h2>
                 <div class="form-group">
-                    <label for="exam-code-input">Exam Code</label>
-                    <input type="text" id="exam-code-input" placeholder="Enter exam code (case sensitive)">
+                    <label for="exam-code-input">Select Exam</label>
+                    <select id="exam-code-input" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; background: white;">
+                        <option value="">-- Select an Active Exam --</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="candidate-name">Your Full Name</label>
@@ -1707,6 +1709,7 @@
                                 <div class="exam-card-date">${date}</div>
                             </div>
                             <div class="exam-details-container">
+                                <div style="font-weight: 600; color: var(--secondary); margin-bottom: 15px; font-size: 1rem;">📅 Exam Date: ${date}</div>
                                 <div style="font-weight: 600; color: var(--primary); margin-bottom: 10px;">Question Details (Click anywhere on the card to collapse)</div>
                                 ${questionDetailsHTML}
                             </div>
@@ -1729,13 +1732,52 @@
         }
 
         // Candidate Dashboard - Take Exam
-        document.getElementById('take-exam-dashboard-btn').addEventListener('click', function() {
+        document.getElementById('take-exam-dashboard-btn').addEventListener('click', async function() {
             const session = getSession();
             if (session && session.userType === 'candidate') {
                 // Pre-fill candidate info
                 document.getElementById('candidate-name').value = session.userData.name;
                 document.getElementById('candidate-mobile').value = session.userData.mobile;
             }
+
+            // Load active exams into dropdown
+            const examSelect = document.getElementById('exam-code-input');
+            examSelect.innerHTML = '<option value="">-- Loading Exams... --</option>';
+
+            try {
+                // Load exams from API
+                if (window.PoliteCCAPI && window.PoliteCCAPI.loadExams) {
+                    exams = await window.PoliteCCAPI.loadExams() || [];
+                }
+
+                // Filter only active exams (not expired)
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const activeExams = exams.filter(exam => {
+                    if (!exam['Expiry (IST)']) return true; // No expiry means active
+                    const expiryDate = new Date(exam['Expiry (IST)']);
+                    expiryDate.setHours(0, 0, 0, 0);
+                    return expiryDate.getTime() >= today.getTime();
+                });
+
+                // Populate dropdown with active exams only
+                examSelect.innerHTML = '<option value="">-- Select an Active Exam --</option>';
+                activeExams.forEach(exam => {
+                    const option = document.createElement('option');
+                    option.value = exam['Exam Code'];
+                    option.textContent = `${exam['Exam Code']} - ${exam.Title || 'Untitled'}`;
+                    examSelect.appendChild(option);
+                });
+
+                if (activeExams.length === 0) {
+                    examSelect.innerHTML = '<option value="">-- No Active Exams Available --</option>';
+                }
+            } catch (error) {
+                console.error('Error loading exams:', error);
+                examSelect.innerHTML = '<option value="">-- Error Loading Exams --</option>';
+            }
+
             document.getElementById('candidate-dashboard').classList.remove('active');
             document.getElementById('candidate-login-screen').classList.add('active');
         });
@@ -3437,7 +3479,7 @@
                 if (!examCode || !name || !mobile) {
                     const loginError = document.getElementById('login-error');
                     if (loginError) {
-                        loginError.textContent = '❌ Exam code, name, and mobile number are required!';
+                        loginError.textContent = '❌ Please select an exam, enter your name, and mobile number!';
                         setTimeout(() => {
                             loginError.textContent = '';
                         }, 3000);
