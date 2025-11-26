@@ -537,6 +537,44 @@
             border-color: rgba(255,255,255,0.6);
             transform: translateY(-2px);
         }
+        .admin-link.hidden {
+            display: none;
+        }
+        .candidate-nav-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: none;
+            gap: 10px;
+        }
+        .candidate-nav-buttons.visible {
+            display: flex;
+        }
+        .nav-btn {
+            color: white;
+            text-decoration: none;
+            padding: 8px 20px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-radius: 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.6);
+            transform: translateY(-2px);
+        }
+        .nav-btn.logout-btn {
+            background: rgba(231, 76, 60, 0.3);
+            border-color: rgba(231, 76, 60, 0.6);
+        }
+        .nav-btn.logout-btn:hover {
+            background: rgba(231, 76, 60, 0.5);
+        }
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -782,6 +820,163 @@
             background: #e0e0e0;
             color: #666;
         }
+        /* OCR Review Modal Styles */
+        .ocr-review-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            overflow-y: auto;
+        }
+        .ocr-review-content {
+            background: white;
+            margin: 20px auto;
+            max-width: 900px;
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+        }
+        .ocr-review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .ocr-review-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+        .ocr-review-close {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .ocr-question-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--secondary);
+        }
+        .ocr-question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .ocr-question-number {
+            font-weight: 700;
+            color: var(--secondary);
+            font-size: 1.1rem;
+        }
+        .ocr-delete-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .ocr-form-group {
+            margin-bottom: 15px;
+        }
+        .ocr-form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .ocr-form-group input,
+        .ocr-form-group textarea,
+        .ocr-form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+        .ocr-form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .ocr-options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .ocr-option-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ocr-option-group label {
+            min-width: 25px;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+        .ocr-option-group input {
+            flex: 1;
+        }
+        .ocr-correct-answer {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .ocr-correct-answer label {
+            font-weight: 600;
+            color: var(--success);
+        }
+        .ocr-correct-answer select {
+            width: auto;
+            padding: 8px 20px;
+        }
+        .ocr-review-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+        .ocr-review-actions button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .ocr-save-btn {
+            background: var(--success);
+            color: white;
+        }
+        .ocr-cancel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+        @media (max-width: 600px) {
+            .ocr-options-grid {
+                grid-template-columns: 1fr;
+            }
+            .ocr-review-content {
+                margin: 10px;
+                padding: 15px;
+            }
+        }
     </style>
     <script src="api-integration.js"></script>
 </head>
@@ -789,6 +984,10 @@
     <div class="container">
         <header style="position: relative;">
             <a href="#" id="admin-link" class="admin-link">Admin Login</a>
+            <div id="candidate-nav-buttons" class="candidate-nav-buttons">
+                <button id="header-back-btn" class="nav-btn">← Back</button>
+                <button id="header-logout-btn" class="nav-btn logout-btn">Logout</button>
+            </div>
             <div class="logo">POLITE COACHING CENTRE</div>
             <div class="subtitle">Reasoning, Math & GK Tests for Job Aspirants</div>
         </header>
@@ -1360,6 +1559,24 @@
     <!-- Notification Container -->
     <div class="notification-container" id="notification-container"></div>
 
+    <!-- OCR Review Modal -->
+    <div id="ocr-review-modal" class="ocr-review-modal">
+        <div class="ocr-review-content">
+            <div class="ocr-review-header">
+                <h3 class="ocr-review-title">📝 Review Extracted Questions</h3>
+                <button id="ocr-review-close" class="ocr-review-close">✖ Close</button>
+            </div>
+            <p style="color: #666; margin-bottom: 20px;">Review and edit the extracted questions below. You can modify the question text, options, correct answer, and subject category before adding them to the question bank.</p>
+            <div id="ocr-review-questions">
+                <!-- Questions will be dynamically inserted here -->
+            </div>
+            <div class="ocr-review-actions">
+                <button id="ocr-cancel-review" class="ocr-cancel-btn">Cancel</button>
+                <button id="ocr-save-reviewed" class="ocr-save-btn">✅ Save & Continue</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global variables
         let isAdminLoggedIn = false;
@@ -1454,6 +1671,185 @@
             localStorage.removeItem('userData');
         }
 
+        // OCR Review Modal Functions
+        function openOCRReviewModal(questions) {
+            const modal = document.getElementById('ocr-review-modal');
+            const container = document.getElementById('ocr-review-questions');
+
+            let html = '';
+            questions.forEach((q, index) => {
+                const correctLetter = String.fromCharCode(65 + q.correct);
+                html += `
+                    <div class="ocr-question-card" data-index="${index}">
+                        <div class="ocr-question-header">
+                            <span class="ocr-question-number">Question ${index + 1}</span>
+                            <button class="ocr-delete-btn" onclick="deleteOCRQuestion(${index})">🗑️ Delete</button>
+                        </div>
+                        <div class="ocr-form-group">
+                            <label>Subject Category</label>
+                            <select id="ocr-subject-${index}">
+                                <option value="Math" ${q.subject === 'Math' ? 'selected' : ''}>Math</option>
+                                <option value="Reasoning" ${q.subject === 'Reasoning' ? 'selected' : ''}>Reasoning</option>
+                                <option value="GK" ${q.subject === 'GK' ? 'selected' : ''}>GK</option>
+                                <option value="Others" ${q.subject === 'Others' ? 'selected' : ''}>Others</option>
+                            </select>
+                        </div>
+                        <div class="ocr-form-group">
+                            <label>Question Text</label>
+                            <textarea id="ocr-question-${index}" rows="2">${q.question}</textarea>
+                        </div>
+                        <div class="ocr-form-group">
+                            <label>Options</label>
+                            <div class="ocr-options-grid">
+                                <div class="ocr-option-group">
+                                    <label>A:</label>
+                                    <input type="text" id="ocr-optionA-${index}" value="${q.options[0] || ''}">
+                                </div>
+                                <div class="ocr-option-group">
+                                    <label>B:</label>
+                                    <input type="text" id="ocr-optionB-${index}" value="${q.options[1] || ''}">
+                                </div>
+                                <div class="ocr-option-group">
+                                    <label>C:</label>
+                                    <input type="text" id="ocr-optionC-${index}" value="${q.options[2] || ''}">
+                                </div>
+                                <div class="ocr-option-group">
+                                    <label>D:</label>
+                                    <input type="text" id="ocr-optionD-${index}" value="${q.options[3] || ''}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ocr-correct-answer">
+                            <label>✓ Correct Answer:</label>
+                            <select id="ocr-correct-${index}">
+                                <option value="0" ${q.correct === 0 ? 'selected' : ''}>A</option>
+                                <option value="1" ${q.correct === 1 ? 'selected' : ''}>B</option>
+                                <option value="2" ${q.correct === 2 ? 'selected' : ''}>C</option>
+                                <option value="3" ${q.correct === 3 ? 'selected' : ''}>D</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        function deleteOCRQuestion(index) {
+            extractedQuestions.splice(index, 1);
+            if (extractedQuestions.length === 0) {
+                closeOCRReviewModal();
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('❌ All questions deleted. Please upload again.', 'error');
+                }
+            } else {
+                openOCRReviewModal(extractedQuestions);
+            }
+        }
+
+        function closeOCRReviewModal() {
+            document.getElementById('ocr-review-modal').style.display = 'none';
+        }
+
+        function saveOCRReviewedQuestions() {
+            // Collect all edited values from the modal
+            const questionCards = document.querySelectorAll('.ocr-question-card');
+            const updatedQuestions = [];
+
+            questionCards.forEach((card, index) => {
+                const subject = document.getElementById(`ocr-subject-${index}`).value;
+                const question = document.getElementById(`ocr-question-${index}`).value.trim();
+                const optionA = document.getElementById(`ocr-optionA-${index}`).value.trim();
+                const optionB = document.getElementById(`ocr-optionB-${index}`).value.trim();
+                const optionC = document.getElementById(`ocr-optionC-${index}`).value.trim();
+                const optionD = document.getElementById(`ocr-optionD-${index}`).value.trim();
+                const correct = parseInt(document.getElementById(`ocr-correct-${index}`).value);
+
+                if (question) {
+                    updatedQuestions.push({
+                        id: `Q${Date.now()}_${index}`,
+                        subject: subject,
+                        question: question,
+                        options: [optionA, optionB, optionC, optionD],
+                        correct: correct
+                    });
+                }
+            });
+
+            if (updatedQuestions.length === 0) {
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('❌ No valid questions to save.', 'error');
+                }
+                return;
+            }
+
+            // Update the global extractedQuestions array
+            extractedQuestions = updatedQuestions;
+
+            // Close modal and show the questions in ready-questions area
+            closeOCRReviewModal();
+            displayReadyQuestions(extractedQuestions);
+
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification(`✅ ${updatedQuestions.length} questions reviewed and ready to add!`, 'success');
+            }
+        }
+
+        function displayReadyQuestions(questions) {
+            const readyQuestions = document.getElementById('ready-questions');
+            const uploadResultContainer = document.getElementById('upload-result-container');
+
+            if (!readyQuestions) return;
+
+            let html = '<div style="max-height: 400px; overflow-y: auto;">';
+            questions.forEach((q, index) => {
+                html += `
+                    <label class="extracted-question-item" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary); cursor: pointer; transition: all 0.2s;">
+                        <input type="checkbox" class="extracted-question-checkbox" value="${index}" checked style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span class="question-tag">${q.subject}</span>
+                            </div>
+                            <p style="margin-bottom: 10px; font-weight: 500;">${q.question}</p>
+                            <div style="margin-left: 25px; margin-bottom: 8px;">
+                                <div>A) ${q.options[0]}</div>
+                                <div>B) ${q.options[1]}</div>
+                                <div>C) ${q.options[2]}</div>
+                                <div>D) ${q.options[3]}</div>
+                            </div>
+                            <div style="color: var(--success); font-weight: 500;">
+                                ✓ Correct Answer: ${String.fromCharCode(65 + q.correct)}
+                            </div>
+                        </div>
+                    </label>
+                `;
+            });
+            html += '</div>';
+            readyQuestions.innerHTML = html;
+
+            // Add hover effects
+            document.querySelectorAll('.extracted-question-item').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.background = '#e8f4fd';
+                });
+                item.addEventListener('mouseleave', function() {
+                    this.style.background = '#f8f9fa';
+                });
+            });
+
+            // Show the results container
+            if (uploadResultContainer) {
+                uploadResultContainer.classList.remove('hidden');
+            }
+
+            // Hide the raw text area
+            const extractedText = document.getElementById('extracted-text');
+            const cleanTextBtn = document.getElementById('clean-text-btn');
+            if (extractedText) extractedText.style.display = 'none';
+            if (cleanTextBtn) cleanTextBtn.style.display = 'none';
+        }
+
         // Wait for DOM to be ready before attaching event listeners
         document.addEventListener('DOMContentLoaded', function() {
             // Check if user is already logged in
@@ -1464,31 +1860,126 @@
                 } else if (session.userType === 'admin') {
                     document.getElementById('hero-landing').classList.remove('active');
                     document.getElementById('admin-panel').classList.add('active');
+                    updateHeaderNav('admin-panel');
                 }
+            } else {
+                updateHeaderNav('hero-landing');
             }
+
+            // Track current screen for navigation
+            let currentScreen = 'hero-landing';
+            let screenHistory = [];
+
+            // Function to manage header navigation visibility
+            function updateHeaderNav(screenId) {
+                const adminLink = document.getElementById('admin-link');
+                const candidateNavButtons = document.getElementById('candidate-nav-buttons');
+                const backBtn = document.getElementById('header-back-btn');
+
+                // Screens where admin link should be hidden and candidate nav shown
+                const candidateScreens = ['candidate-signup-screen', 'candidate-signin-screen', 'candidate-dashboard',
+                                          'candidate-login-screen', 'exam-screen', 'result-screen', 'forgot-password-screen'];
+
+                // Screens where back button should be hidden (root screens)
+                const noBackScreens = ['hero-landing', 'candidate-dashboard'];
+
+                if (candidateScreens.includes(screenId)) {
+                    adminLink.classList.add('hidden');
+                    candidateNavButtons.classList.add('visible');
+
+                    // Hide back button on dashboard (root screen for logged in users)
+                    if (noBackScreens.includes(screenId)) {
+                        backBtn.style.display = 'none';
+                    } else {
+                        backBtn.style.display = 'block';
+                    }
+                } else {
+                    adminLink.classList.remove('hidden');
+                    candidateNavButtons.classList.remove('visible');
+                }
+
+                currentScreen = screenId;
+            }
+
+            // Header Back Button Handler
+            document.getElementById('header-back-btn').addEventListener('click', function() {
+                const currentScreenId = currentScreen;
+
+                // Define back navigation mapping
+                const backMap = {
+                    'candidate-signup-screen': 'hero-landing',
+                    'candidate-signin-screen': 'hero-landing',
+                    'forgot-password-screen': 'candidate-signin-screen',
+                    'candidate-login-screen': 'candidate-dashboard',
+                    'exam-screen': 'candidate-login-screen',
+                    'result-screen': 'candidate-dashboard'
+                };
+
+                const targetScreen = backMap[currentScreenId] || 'hero-landing';
+
+                // Navigate to target screen
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(targetScreen).classList.add('active');
+                updateHeaderNav(targetScreen);
+            });
+
+            // Header Logout Button Handler
+            document.getElementById('header-logout-btn').addEventListener('click', function() {
+                // Clear any active timers
+                if (examTimer) {
+                    clearInterval(examTimer);
+                    examTimer = null;
+                }
+
+                // Clear session
+                clearSession();
+
+                // Reset state
+                currentExam = null;
+                currentQuestionIndex = 0;
+                userAnswers = [];
+
+                // Navigate to hero landing
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('hero-landing').classList.add('active');
+                updateHeaderNav('hero-landing');
+
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('✅ Logged out successfully', 'success');
+                }
+            });
+
+            // OCR Review Modal Event Handlers
+            document.getElementById('ocr-review-close').addEventListener('click', closeOCRReviewModal);
+            document.getElementById('ocr-cancel-review').addEventListener('click', closeOCRReviewModal);
+            document.getElementById('ocr-save-reviewed').addEventListener('click', saveOCRReviewedQuestions);
 
             // Navigation: Hero Landing <-> Signup
             document.getElementById('signup-btn').addEventListener('click', function() {
                 document.getElementById('hero-landing').classList.remove('active');
                 document.getElementById('candidate-signup-screen').classList.add('active');
+                updateHeaderNav('candidate-signup-screen');
             });
 
             document.getElementById('back-to-hero-from-signup').addEventListener('click', function(e) {
                 e.preventDefault();
                 document.getElementById('candidate-signup-screen').classList.remove('active');
                 document.getElementById('hero-landing').classList.add('active');
+                updateHeaderNav('hero-landing');
             });
 
             // Navigation: Hero Landing <-> Signin
             document.getElementById('signin-btn').addEventListener('click', function() {
                 document.getElementById('hero-landing').classList.remove('active');
                 document.getElementById('candidate-signin-screen').classList.add('active');
+                updateHeaderNav('candidate-signin-screen');
             });
 
             document.getElementById('back-to-hero-from-signin').addEventListener('click', function(e) {
                 e.preventDefault();
                 document.getElementById('candidate-signin-screen').classList.remove('active');
                 document.getElementById('hero-landing').classList.add('active');
+                updateHeaderNav('hero-landing');
             });
 
             // Navigation: Signup <-> Signin
@@ -1496,12 +1987,14 @@
                 e.preventDefault();
                 document.getElementById('candidate-signup-screen').classList.remove('active');
                 document.getElementById('candidate-signin-screen').classList.add('active');
+                updateHeaderNav('candidate-signin-screen');
             });
 
             document.getElementById('goto-signup-link').addEventListener('click', function(e) {
                 e.preventDefault();
                 document.getElementById('candidate-signin-screen').classList.remove('active');
                 document.getElementById('candidate-signup-screen').classList.add('active');
+                updateHeaderNav('candidate-signup-screen');
             });
 
             // Navigation: Signin <-> Forgot Password
@@ -1509,6 +2002,7 @@
                 e.preventDefault();
                 document.getElementById('candidate-signin-screen').classList.remove('active');
                 document.getElementById('forgot-password-screen').classList.add('active');
+                updateHeaderNav('forgot-password-screen');
                 // Reset the form
                 document.getElementById('forgot-email').value = '';
                 document.getElementById('reset-result').style.display = 'none';
@@ -1518,12 +2012,14 @@
                 e.preventDefault();
                 document.getElementById('forgot-password-screen').classList.remove('active');
                 document.getElementById('candidate-signin-screen').classList.add('active');
+                updateHeaderNav('candidate-signin-screen');
             });
 
             document.getElementById('goto-signin-after-reset').addEventListener('click', function(e) {
                 e.preventDefault();
                 document.getElementById('forgot-password-screen').classList.remove('active');
                 document.getElementById('candidate-signin-screen').classList.add('active');
+                updateHeaderNav('candidate-signin-screen');
             });
 
             // Navigation: Hero Landing <-> Admin Login
@@ -1676,6 +2172,7 @@
             document.getElementById('candidate-signin-screen').classList.remove('active');
             document.getElementById('hero-landing').classList.remove('active');
             document.getElementById('candidate-dashboard').classList.add('active');
+            updateHeaderNav('candidate-dashboard');
 
             // Populate dashboard
             document.getElementById('dashboard-name').textContent = userData.name;
@@ -1830,12 +2327,14 @@
 
             document.getElementById('candidate-dashboard').classList.remove('active');
             document.getElementById('candidate-login-screen').classList.add('active');
+            updateHeaderNav('candidate-login-screen');
         });
 
         // Hero - Start Exam (for non-logged-in users)
         document.getElementById('start-exam-hero-btn').addEventListener('click', function() {
             document.getElementById('hero-landing').classList.remove('active');
             document.getElementById('candidate-signin-screen').classList.add('active');
+            updateHeaderNav('candidate-signin-screen');
         });
 
         // Candidate Logout
@@ -1845,6 +2344,7 @@
                 clearSession();
                 document.getElementById('candidate-dashboard').classList.remove('active');
                 document.getElementById('hero-landing').classList.add('active');
+                updateHeaderNav('hero-landing');
                 window.PoliteCCAPI.showNotification('Logged out successfully', 'success');
             }
         });
@@ -3375,63 +3875,18 @@
                             correct: ['A', 'B', 'C', 'D'].indexOf(q.correct.toUpperCase())
                         }));
 
-                        // Display extracted questions directly
-                        const readyQuestions = document.getElementById('ready-questions');
-                        if (readyQuestions) {
-                            if (extractedQuestions.length === 0) {
-                                readyQuestions.innerHTML = '<p style="text-align: center; color: var(--danger);">❌ No valid questions found.</p>';
-                            } else {
-                                let html = '<div style="max-height: 400px; overflow-y: auto;">';
-                                extractedQuestions.forEach((q, index) => {
-                                    html += `
-                                    <label class="extracted-question-item" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary); cursor: pointer; transition: all 0.2s;">
-                                        <input type="checkbox" class="extracted-question-checkbox" value="${index}" checked style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
-                                        <div style="flex: 1;">
-                                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                                <span class="question-tag">${q.subject}</span>
-                                            </div>
-                                            <p style="margin-bottom: 10px; font-weight: 500;">${q.question}</p>
-                                            <div style="margin-left: 25px; margin-bottom: 8px;">
-                                                <div>A) ${q.options[0]}</div>
-                                                <div>B) ${q.options[1]}</div>
-                                                <div>C) ${q.options[2]}</div>
-                                                <div>D) ${q.options[3]}</div>
-                                            </div>
-                                            <div style="color: var(--success); font-weight: 500;">
-                                                ✓ Correct Answer: ${String.fromCharCode(65 + q.correct)}
-                                            </div>
-                                        </div>
-                                    </label>
-                                    `;
-                                });
-                                html += '</div>';
-                                readyQuestions.innerHTML = html;
-
-                                // Add hover effects
-                                document.querySelectorAll('.extracted-question-item').forEach(item => {
-                                    item.addEventListener('mouseenter', function() {
-                                        this.style.background = '#e8f4fd';
-                                    });
-                                    item.addEventListener('mouseleave', function() {
-                                        this.style.background = '#f8f9fa';
-                                    });
-                                });
+                        if (extractedQuestions.length === 0) {
+                            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                                window.PoliteCCAPI.showNotification('❌ No valid questions found.', 'error');
                             }
+                            return;
                         }
 
-                        const uploadResultContainer = document.getElementById('upload-result-container');
-                        if (uploadResultContainer) {
-                            uploadResultContainer.classList.remove('hidden');
-                        }
-
-                        // Hide the raw text area since we're showing questions directly
-                        const extractedText = document.getElementById('extracted-text');
-                        const cleanTextBtn = document.getElementById('clean-text-btn');
-                        if (extractedText) extractedText.style.display = 'none';
-                        if (cleanTextBtn) cleanTextBtn.style.display = 'none';
+                        // Open the review modal with editable forms
+                        openOCRReviewModal(extractedQuestions);
 
                         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                            window.PoliteCCAPI.showNotification(`✅ Extracted ${extractedQuestions.length} questions successfully!`, 'success');
+                            window.PoliteCCAPI.showNotification(`✅ Extracted ${extractedQuestions.length} questions. Please review and edit.`, 'success');
                         }
 
                     } catch (error) {
@@ -3907,6 +4362,7 @@
                 // Show exam screen
                 document.getElementById('candidate-login-screen').classList.remove('active');
                 document.getElementById('exam-screen').classList.add('active');
+                updateHeaderNav('exam-screen');
 
                 loadQuestion();
 
@@ -4044,13 +4500,22 @@
             };
         }
 
-        // Restart app
-        document.getElementById('restart-btn').addEventListener('click', function() {
+        // Restart app - Take Another Exam
+        document.getElementById('restart-btn').addEventListener('click', async function() {
             document.getElementById('result-screen').classList.remove('active');
-            document.getElementById('admin-login-screen').classList.add('active');
 
             // Reset candidate detailed answers
             candidateDetailedAnswers = null;
+
+            // Check if user is logged in and redirect accordingly
+            const session = getSession();
+            if (session && session.userType === 'candidate') {
+                // Refresh dashboard and show it
+                await showCandidateDashboard(session.userData);
+            } else {
+                document.getElementById('hero-landing').classList.add('active');
+                updateHeaderNav('hero-landing');
+            }
 
             const notification = document.createElement('div');
             notification.className = 'notification success';
@@ -4183,6 +4648,7 @@
             // Show result screen
             document.getElementById('exam-screen').classList.remove('active');
             document.getElementById('result-screen').classList.add('active');
+            updateHeaderNav('result-screen');
 
             document.getElementById('final-score').textContent = score.toFixed(2);
             document.getElementById('result-exam-code').textContent = currentExam.code;
