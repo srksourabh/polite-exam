@@ -1589,6 +1589,40 @@
         let aiGeneratedQuestion = null;
         let extractedQuestions = [];
         let candidateDetailedAnswers = null; // Store candidate's detailed results for viewing
+        let currentScreen = 'hero-landing'; // Track current screen for navigation
+
+        // Function to manage header navigation visibility (global scope)
+        function updateHeaderNav(screenId) {
+            const adminLink = document.getElementById('admin-link');
+            const candidateNavButtons = document.getElementById('candidate-nav-buttons');
+            const backBtn = document.getElementById('header-back-btn');
+
+            if (!adminLink || !candidateNavButtons || !backBtn) return; // Guard for early calls
+
+            // Screens where admin link should be hidden and candidate nav shown
+            const candidateScreens = ['candidate-signup-screen', 'candidate-signin-screen', 'candidate-dashboard',
+                                      'candidate-login-screen', 'exam-screen', 'result-screen', 'forgot-password-screen'];
+
+            // Screens where back button should be hidden (root screens)
+            const noBackScreens = ['hero-landing', 'candidate-dashboard'];
+
+            if (candidateScreens.includes(screenId)) {
+                adminLink.classList.add('hidden');
+                candidateNavButtons.classList.add('visible');
+
+                // Hide back button on dashboard (root screen for logged in users)
+                if (noBackScreens.includes(screenId)) {
+                    backBtn.style.display = 'none';
+                } else {
+                    backBtn.style.display = 'block';
+                }
+            } else {
+                adminLink.classList.remove('hidden');
+                candidateNavButtons.classList.remove('visible');
+            }
+
+            currentScreen = screenId;
+        }
 
         // Sample data
         questions = [
@@ -1852,41 +1886,6 @@
 
         // Wait for DOM to be ready before attaching event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Track current screen for navigation
-            let currentScreen = 'hero-landing';
-            let screenHistory = [];
-
-            // Function to manage header navigation visibility
-            function updateHeaderNav(screenId) {
-                const adminLink = document.getElementById('admin-link');
-                const candidateNavButtons = document.getElementById('candidate-nav-buttons');
-                const backBtn = document.getElementById('header-back-btn');
-
-                // Screens where admin link should be hidden and candidate nav shown
-                const candidateScreens = ['candidate-signup-screen', 'candidate-signin-screen', 'candidate-dashboard',
-                                          'candidate-login-screen', 'exam-screen', 'result-screen', 'forgot-password-screen'];
-
-                // Screens where back button should be hidden (root screens)
-                const noBackScreens = ['hero-landing', 'candidate-dashboard'];
-
-                if (candidateScreens.includes(screenId)) {
-                    adminLink.classList.add('hidden');
-                    candidateNavButtons.classList.add('visible');
-
-                    // Hide back button on dashboard (root screen for logged in users)
-                    if (noBackScreens.includes(screenId)) {
-                        backBtn.style.display = 'none';
-                    } else {
-                        backBtn.style.display = 'block';
-                    }
-                } else {
-                    adminLink.classList.remove('hidden');
-                    candidateNavButtons.classList.remove('visible');
-                }
-
-                currentScreen = screenId;
-            }
-
             // Check if user is already logged in
             const session = getSession();
             if (session) {
