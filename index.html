@@ -1852,20 +1852,6 @@
 
         // Wait for DOM to be ready before attaching event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is already logged in
-            const session = getSession();
-            if (session) {
-                if (session.userType === 'candidate') {
-                    showCandidateDashboard(session.userData);
-                } else if (session.userType === 'admin') {
-                    document.getElementById('hero-landing').classList.remove('active');
-                    document.getElementById('admin-panel').classList.add('active');
-                    updateHeaderNav('admin-panel');
-                }
-            } else {
-                updateHeaderNav('hero-landing');
-            }
-
             // Track current screen for navigation
             let currentScreen = 'hero-landing';
             let screenHistory = [];
@@ -1899,6 +1885,20 @@
                 }
 
                 currentScreen = screenId;
+            }
+
+            // Check if user is already logged in
+            const session = getSession();
+            if (session) {
+                if (session.userType === 'candidate') {
+                    showCandidateDashboard(session.userData);
+                } else if (session.userType === 'admin') {
+                    document.getElementById('hero-landing').classList.remove('active');
+                    document.getElementById('admin-panel').classList.add('active');
+                    updateHeaderNav('admin-panel');
+                }
+            } else {
+                updateHeaderNav('hero-landing');
             }
 
             // Header Back Button Handler
