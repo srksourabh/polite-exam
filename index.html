@@ -2395,7 +2395,10 @@
             clearSession();
             document.getElementById('admin-panel').classList.remove('active');
             document.getElementById('hero-landing').classList.add('active');
-            window.PoliteCCAPI.showNotification('Logged out successfully', 'success');
+            updateHeaderNav('hero-landing');
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('Logged out successfully', 'success');
+            }
         });
 
         // Exam screen logout function (for candidates taking exams)
