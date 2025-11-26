@@ -1101,16 +1101,55 @@
 
                 <!-- View Results Section -->
                 <div id="view-results-section" class="hidden">
-                    <h3 style="margin-bottom: 15px; color: var(--secondary);">Exam Results</h3>
-                    <div class="form-group">
-                        <label>Select Exam</label>
-                        <select id="results-exam-select">
-                            <option value="">-- Select Exam --</option>
-                            <option value="SAMPLE01">SAMPLE01 - Sample Exam</option>
-                        </select>
+                    <div id="results-main-view">
+                        <h3 style="margin-bottom: 20px; color: var(--secondary); display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.5rem;">📊</span> Exam Results Dashboard
+                        </h3>
+                        <div id="results-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700;" id="total-exams-count">0</div>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">Total Exams</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700;" id="active-exams-count">0</div>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">Active Exams</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #eb3349, #f45c43); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700;" id="expired-exams-count">0</div>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">Expired Exams</div>
+                            </div>
+                        </div>
+                        <h4 style="margin-bottom: 15px; color: var(--primary);">Click on an exam to view candidates</h4>
+                        <div id="exams-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                            <p style="text-align: center; color: #7f8c8d; grid-column: 1/-1;">Loading exams...</p>
+                        </div>
                     </div>
-                    <div id="results-container">
-                        <p style="text-align: center; color: #7f8c8d;">Select an exam to view results.</p>
+
+                    <div id="results-candidates-view" class="hidden">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                            <button id="back-to-exams-btn" style="background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                <span>←</span> Back to Exams
+                            </button>
+                            <h3 style="color: var(--secondary); margin: 0;" id="selected-exam-title">Exam Results</h3>
+                        </div>
+                        <div id="selected-exam-info" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid var(--secondary);">
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 style="color: var(--primary); margin: 0;">Candidates who took this exam</h4>
+                            <button id="export-results-btn-new" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                📥 Export to CSV
+                            </button>
+                        </div>
+                        <div id="candidates-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+                            <p style="text-align: center; color: #7f8c8d; grid-column: 1/-1;">Loading candidates...</p>
+                        </div>
+                    </div>
+
+                    <div id="results-detail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto;">
+                        <div style="background: white; margin: 30px auto; max-width: 950px; border-radius: 12px; padding: 30px; position: relative; max-height: 90vh; overflow-y: auto;">
+                            <button id="close-detail-modal-btn" style="position: absolute; top: 15px; right: 15px; background: var(--danger); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; z-index: 10;">✖ Close</button>
+                            <div id="results-detail-content"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -1311,7 +1350,6 @@
                     </p>
 
                     <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                        <button class="primary-btn" id="view-my-answers-btn">📊 View Detailed Results</button>
                         <button class="success-btn" id="restart-btn">Take Another Exam</button>
                     </div>
                 </div>
@@ -1677,16 +1715,28 @@
                                     const statusClass = isCorrect ? 'correct' : (userAnswered ? 'incorrect' : 'unanswered');
                                     const resultText = isCorrect ? 'Correct (+1)' : (userAnswered ? 'Incorrect (-0.25)' : 'Not Answered (0)');
                                     const resultBadgeClass = isCorrect ? 'correct' : (userAnswered ? 'incorrect' : 'unanswered');
+                                    const userAnswerLetter = answer.userAnswer;
+                                    const correctAnswerLetter = answer.correctAnswer;
 
                                     questionDetailsHTML += `
                                         <div class="question-detail-item ${statusClass}">
                                             <div class="question-detail-header">Q${qIndex + 1}. ${answer.questionId || ''} - ${answer.subject || ''}</div>
-                                            <div class="question-detail-text">${answer.question || ''}</div>
-                                            <div class="answer-row">
-                                                <span class="answer-item user-answer">Your Answer: <strong>${answer.userAnswer}</strong></span>
-                                                <span class="answer-item correct-answer">Correct: <strong>${answer.correctAnswer}</strong></span>
-                                                <span class="result-badge ${resultBadgeClass}">${resultText}</span>
+                                            <div class="question-detail-text" style="font-size: 1rem; line-height: 1.6; margin-bottom: 12px; color: #333;">${answer.question || ''}</div>
+                                            <div class="question-options" style="margin-bottom: 12px;">
+                                                <div style="padding: 8px 12px; margin: 4px 0; border-radius: 6px; background: ${userAnswerLetter === 'A' ? (isCorrect || correctAnswerLetter === 'A' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'A' ? '#c8e6c9' : '#f5f5f5')};">
+                                                    <strong>A:</strong> ${answer.optionA || ''} ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
+                                                </div>
+                                                <div style="padding: 8px 12px; margin: 4px 0; border-radius: 6px; background: ${userAnswerLetter === 'B' ? (isCorrect || correctAnswerLetter === 'B' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'B' ? '#c8e6c9' : '#f5f5f5')};">
+                                                    <strong>B:</strong> ${answer.optionB || ''} ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
+                                                </div>
+                                                <div style="padding: 8px 12px; margin: 4px 0; border-radius: 6px; background: ${userAnswerLetter === 'C' ? (isCorrect || correctAnswerLetter === 'C' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'C' ? '#c8e6c9' : '#f5f5f5')};">
+                                                    <strong>C:</strong> ${answer.optionC || ''} ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
+                                                </div>
+                                                <div style="padding: 8px 12px; margin: 4px 0; border-radius: 6px; background: ${userAnswerLetter === 'D' ? (isCorrect || correctAnswerLetter === 'D' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'D' ? '#c8e6c9' : '#f5f5f5')};">
+                                                    <strong>D:</strong> ${answer.optionD || ''} ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
+                                                </div>
                                             </div>
+                                            <div class="result-badge ${resultBadgeClass}" style="display: inline-block;">${resultText}</div>
                                         </div>
                                     `;
                                 });
@@ -2582,7 +2632,11 @@
             }
         });
 
-        // Show view results
+        // Global variable to store current results for export
+        let currentExamResults = [];
+        let currentExamCodeForResults = '';
+
+        // Show view results - New redesigned dashboard
         document.getElementById('view-results-btn').addEventListener('click', async function() {
             try {
                 document.getElementById('question-bank-section').classList.add('hidden');
@@ -2591,25 +2645,99 @@
                 document.getElementById('upload-section').classList.add('hidden');
                 document.getElementById('ai-generator-section').classList.add('hidden');
 
-                // Load exams and questions into dropdown (both needed for detailed view)
+                // Show main view, hide candidates view
+                document.getElementById('results-main-view').classList.remove('hidden');
+                document.getElementById('results-candidates-view').classList.add('hidden');
+
+                // Load exams and questions
                 if (window.PoliteCCAPI && window.PoliteCCAPI.loadExams) {
                     exams = await window.PoliteCCAPI.loadExams() || exams;
                 }
 
-                // Load questions for detailed result view
                 if (window.PoliteCCAPI && window.PoliteCCAPI.loadQuestions) {
                     questions = await window.PoliteCCAPI.loadQuestions() || questions;
                 }
 
-                const examSelect = document.getElementById('results-exam-select');
-                examSelect.innerHTML = '<option value="">-- Select Exam --</option>';
+                // Calculate stats
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                let activeCount = 0;
+                let expiredCount = 0;
 
                 exams.forEach(exam => {
-                    const option = document.createElement('option');
-                    option.value = exam['Exam Code'] || exam.examCode;
-                    option.textContent = `${exam['Exam Code'] || exam.examCode} - ${exam['Title'] || exam.title}`;
-                    examSelect.appendChild(option);
+                    const expiryDate = exam['Expiry (IST)'] ? new Date(exam['Expiry (IST)']) : null;
+                    if (expiryDate) {
+                        expiryDate.setHours(0, 0, 0, 0);
+                        if (expiryDate.getTime() >= today.getTime()) {
+                            activeCount++;
+                        } else {
+                            expiredCount++;
+                        }
+                    } else {
+                        activeCount++; // No expiry means active
+                    }
                 });
+
+                document.getElementById('total-exams-count').textContent = exams.length;
+                document.getElementById('active-exams-count').textContent = activeCount;
+                document.getElementById('expired-exams-count').textContent = expiredCount;
+
+                // Display exams in grid
+                const examsContainer = document.getElementById('exams-grid-container');
+
+                if (exams.length === 0) {
+                    examsContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1/-1; padding: 40px;">No exams found. Create an exam first.</p>';
+                    return;
+                }
+
+                let examsHTML = '';
+                for (const exam of exams) {
+                    const examCode = exam['Exam Code'] || exam.examCode;
+                    const title = exam['Title'] || exam.title || 'Untitled';
+                    const expiryDate = exam['Expiry (IST)'] ? new Date(exam['Expiry (IST)']) : null;
+                    const expiryStr = expiryDate ? expiryDate.toLocaleDateString('en-IN') : 'No Expiry';
+
+                    let isExpired = false;
+                    if (expiryDate) {
+                        expiryDate.setHours(0, 0, 0, 0);
+                        isExpired = expiryDate.getTime() < today.getTime();
+                    }
+
+                    const statusBadge = isExpired
+                        ? '<span style="background: #e74c3c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">EXPIRED</span>'
+                        : '<span style="background: #27ae60; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">ACTIVE</span>';
+
+                    const questionCount = exam['Question IDs'] ? (Array.isArray(exam['Question IDs']) ? exam['Question IDs'].length : exam['Question IDs'].split(',').length) : 0;
+                    const duration = exam['Duration'] || exam.duration || 60;
+
+                    examsHTML += `
+                        <div class="exam-result-card" data-exam-code="${examCode}" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 3px 15px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s; border: 2px solid transparent;" onmouseenter="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'; this.style.borderColor='var(--secondary)';" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 15px rgba(0,0,0,0.1)'; this.style.borderColor='transparent';">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div style="font-weight: 700; font-size: 1.1rem; color: var(--secondary);">${examCode}</div>
+                                ${statusBadge}
+                            </div>
+                            <div style="font-size: 1rem; color: #333; margin-bottom: 15px; font-weight: 500;">${title}</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; color: #666;">
+                                <div><strong>Expiry:</strong> ${expiryStr}</div>
+                                <div><strong>Duration:</strong> ${duration} min</div>
+                                <div><strong>Questions:</strong> ${questionCount}</div>
+                                <div style="color: var(--primary); font-weight: 600;">Click to view results →</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                examsContainer.innerHTML = examsHTML;
+
+                // Add click handlers for exam cards
+                document.querySelectorAll('.exam-result-card').forEach(card => {
+                    card.addEventListener('click', function() {
+                        const examCode = this.getAttribute('data-exam-code');
+                        showExamCandidates(examCode);
+                    });
+                });
+
             } catch (error) {
                 console.error('❌ Event handler error:', error);
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
@@ -2618,18 +2746,33 @@
             }
         });
 
-        // Handle exam selection for viewing results
-        document.getElementById('results-exam-select').addEventListener('change', async function() {
+        // Function to show candidates for a selected exam
+        async function showExamCandidates(examCode) {
             try {
-                const examCode = this.value;
-                const resultsContainer = document.getElementById('results-container');
+                // Hide main view, show candidates view
+                document.getElementById('results-main-view').classList.add('hidden');
+                document.getElementById('results-candidates-view').classList.remove('hidden');
 
-                if (!examCode) {
-                    resultsContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">Select an exam to view results.</p>';
-                    return;
-                }
+                // Get exam details
+                const exam = exams.find(e => (e['Exam Code'] || e.examCode) === examCode);
+                const title = exam ? (exam['Title'] || exam.title || 'Untitled') : 'Unknown';
+                const expiryDate = exam && exam['Expiry (IST)'] ? new Date(exam['Expiry (IST)']).toLocaleDateString('en-IN') : 'No Expiry';
+                const duration = exam ? (exam['Duration'] || exam.duration || 60) : 60;
+                const questionCount = exam && exam['Question IDs'] ? (Array.isArray(exam['Question IDs']) ? exam['Question IDs'].length : exam['Question IDs'].split(',').length) : 0;
 
-                resultsContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">Loading results...</p>';
+                document.getElementById('selected-exam-title').textContent = `${examCode} - ${title}`;
+                document.getElementById('selected-exam-info').innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <div><strong>Exam Code:</strong> ${examCode}</div>
+                        <div><strong>Title:</strong> ${title}</div>
+                        <div><strong>Expiry Date:</strong> ${expiryDate}</div>
+                        <div><strong>Duration:</strong> ${duration} minutes</div>
+                        <div><strong>Total Questions:</strong> ${questionCount}</div>
+                    </div>
+                `;
+
+                const candidatesContainer = document.getElementById('candidates-grid-container');
+                candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1/-1; padding: 40px;">Loading candidates...</p>';
 
                 // Get results from API
                 let results = [];
@@ -2637,97 +2780,241 @@
                     results = await window.PoliteCCAPI.getExamResults(examCode) || [];
                 }
 
+                // Store for export
+                currentExamResults = results;
+                currentExamCodeForResults = examCode;
+
                 if (results.length === 0) {
-                    resultsContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No results found for this exam.</p>';
+                    candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1/-1; padding: 40px;">No candidates have taken this exam yet.</p>';
                     return;
                 }
 
-                // Display results in a table
-                let html = `
-                    <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h4 style="margin: 0; color: var(--secondary);">Results for: ${examCode}</h4>
-                            <button id="export-results-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 600;">
-                                📥 Export to CSV
-                            </button>
-                        </div>
-                        <div style="overflow-x: auto;">
-                            <table style="width: 100%; border-collapse: collapse;">
-                                <thead>
-                                    <tr style="background: var(--secondary); color: white;">
-                                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">#</th>
-                                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Name</th>
-                                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Mobile</th>
-                                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Score</th>
-                                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                `;
+                // Sort by score (highest first)
+                results.sort((a, b) => (b.Score || b.score || 0) - (a.Score || a.score || 0));
 
+                let candidatesHTML = '';
                 results.forEach((result, index) => {
-                    const score = result.Score || result.score || 0;
-                    const scoreColor = score >= 0 ? '#27ae60' : '#e74c3c';
+                    const name = result.Name || result.name || 'Unknown';
+                    const score = parseFloat(result.Score || result.score || 0);
+                    const mobile = result.Mobile || result.mobile || 'N/A';
+                    const submittedAt = result['Submitted At'] || result.submittedAt || '';
+                    const dateStr = submittedAt ? new Date(submittedAt).toLocaleDateString('en-IN') : 'N/A';
 
-                    html += `
-                        <tr class="result-row" data-result-index="${index}" style="background: ${index % 2 === 0 ? '#f8f9fa' : 'white'}; cursor: pointer; transition: background 0.2s;" onmouseenter="this.style.background='#e3f2fd'" onmouseleave="this.style.background='${index % 2 === 0 ? '#f8f9fa' : 'white'}'">
-                            <td style="padding: 12px; border: 1px solid #ddd;">${index + 1}</td>
-                            <td style="padding: 12px; border: 1px solid #ddd; font-weight: 600;">${result.Name || result.name}</td>
-                            <td style="padding: 12px; border: 1px solid #ddd;">${result.Mobile || result.mobile}</td>
-                            <td style="padding: 12px; border: 1px solid #ddd;"><span style="color: ${scoreColor}; font-weight: 700; font-size: 1.1rem;">${parseFloat(score).toFixed(2)}</span></td>
-                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
-                                <button class="view-detailed-btn" data-result-index="${index}" style="background: var(--primary); color: white; border: none; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-weight: 600;" onclick="event.stopPropagation();">View Details</button>
-                            </td>
-                        </tr>
+                    const scoreColor = score >= 0 ? '#27ae60' : '#e74c3c';
+                    const rankBadge = index < 3 ? ['🥇', '🥈', '🥉'][index] : `#${index + 1}`;
+
+                    candidatesHTML += `
+                        <div class="candidate-result-card" data-result-index="${index}" style="background: white; border-radius: 12px; padding: 18px; box-shadow: 0 3px 12px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s; border: 2px solid transparent;" onmouseenter="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.12)'; this.style.borderColor='var(--primary)';" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 12px rgba(0,0,0,0.08)'; this.style.borderColor='transparent';">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div style="font-weight: 700; font-size: 1.1rem; color: #333;">${name}</div>
+                                <div style="font-size: 1.2rem;">${rankBadge}</div>
+                            </div>
+                            <div style="display: flex; justify-content: center; margin-bottom: 12px;">
+                                <div style="background: linear-gradient(135deg, ${scoreColor}, ${score >= 0 ? '#2ecc71' : '#c0392b'}); color: white; padding: 12px 25px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 1.8rem; font-weight: 700;">${score.toFixed(2)}</div>
+                                    <div style="font-size: 0.8rem; opacity: 0.9;">Score</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666; display: grid; gap: 5px;">
+                                <div><strong>Exam Code:</strong> ${examCode}</div>
+                                <div><strong>Date:</strong> ${dateStr}</div>
+                            </div>
+                            <div style="margin-top: 12px; text-align: center; color: var(--primary); font-size: 0.85rem; font-weight: 600;">
+                                Click to view detailed results →
+                            </div>
+                        </div>
                     `;
                 });
 
-                html += `
-                                </tbody>
-                            </table>
-                        </div>
+                candidatesContainer.innerHTML = candidatesHTML;
+
+                // Add click handlers for candidate cards
+                document.querySelectorAll('.candidate-result-card').forEach(card => {
+                    card.addEventListener('click', function() {
+                        const resultIndex = parseInt(this.getAttribute('data-result-index'));
+                        showCandidateDetailedResults(results[resultIndex], examCode);
+                    });
+                });
+
+            } catch (error) {
+                console.error('❌ Error loading candidates:', error);
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('❌ Failed to load candidates: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Function to show detailed results for a candidate with full questions and options
+        function showCandidateDetailedResults(result, examCode) {
+            const modal = document.getElementById('results-detail-modal');
+            const content = document.getElementById('results-detail-content');
+
+            const name = result.Name || result.name || 'Unknown';
+            const score = parseFloat(result.Score || result.score || 0);
+            const mobile = result.Mobile || result.mobile || 'N/A';
+            const submittedAt = result['Submitted At'] || result.submittedAt || '';
+            const dateStr = submittedAt ? new Date(submittedAt).toLocaleString('en-IN') : 'N/A';
+
+            // Parse user answers
+            let userAnswers = [];
+            try {
+                userAnswers = typeof result.Answers === 'string' ? JSON.parse(result.Answers) : result.Answers || [];
+            } catch (e) {
+                console.error('Error parsing answers:', e);
+                userAnswers = result.answers || [];
+            }
+
+            // Build header
+            let html = `
+                <h3 style="color: var(--secondary); margin-bottom: 20px; font-size: 1.4rem;">Detailed Result: ${name}</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 12px;">
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Exam Code</div>
+                        <div style="font-weight: 700; color: var(--secondary);">${examCode}</div>
                     </div>
-                    <div id="detailed-result-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto;">
-                        <div style="background: white; margin: 50px auto; max-width: 900px; border-radius: 10px; padding: 30px; position: relative;">
-                            <button id="close-detailed-modal" style="position: absolute; top: 15px; right: 15px; background: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: 600;">✖ Close</button>
-                            <div id="detailed-result-content"></div>
-                        </div>
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Mobile</div>
+                        <div style="font-weight: 700; color: #333;">${mobile}</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Final Score</div>
+                        <div style="font-weight: 700; font-size: 1.3rem; color: ${score >= 0 ? '#27ae60' : '#e74c3c'};">${score.toFixed(2)}</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Submitted On</div>
+                        <div style="font-weight: 700; color: #333; font-size: 0.9rem;">${dateStr}</div>
+                    </div>
+                </div>
+            `;
+
+            // Check if we have answer data
+            if (!userAnswers || userAnswers.length === 0) {
+                html += `
+                    <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 12px; border-left: 4px solid #ffc107;">
+                        <div style="font-size: 2.5rem; margin-bottom: 15px;">⚠️</div>
+                        <h4 style="color: #856404; margin-bottom: 10px;">No Answer Data Available</h4>
+                        <p style="color: #856404;">This result does not contain detailed answer information.</p>
                     </div>
                 `;
+                content.innerHTML = html;
+                modal.style.display = 'block';
+                return;
+            }
 
-                resultsContainer.innerHTML = html;
+            // Calculate statistics
+            const isDetailedFormat = userAnswers.length > 0 && typeof userAnswers[0] === 'object' && userAnswers[0] !== null;
+            let correctCount = 0, incorrectCount = 0, unansweredCount = 0;
 
-                // Add event listeners for detailed view buttons
-                document.querySelectorAll('.view-detailed-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const resultIndex = parseInt(this.getAttribute('data-result-index'));
-                        showDetailedResult(results[resultIndex], examCode);
-                    });
+            if (isDetailedFormat) {
+                userAnswers.forEach(answer => {
+                    if (answer.isCorrect) correctCount++;
+                    else if (answer.userAnswer !== 'Not Answered') incorrectCount++;
+                    else unansweredCount++;
                 });
+            }
 
-                // Add event listeners for clickable rows
-                document.querySelectorAll('.result-row').forEach(row => {
-                    row.addEventListener('click', function() {
-                        const resultIndex = parseInt(this.getAttribute('data-result-index'));
-                        showDetailedResult(results[resultIndex], examCode);
-                    });
+            html += `
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px;">
+                    <div style="text-align: center; padding: 15px; background: #e8f5e9; border-radius: 10px; border-left: 4px solid #27ae60;">
+                        <div style="font-size: 1.8rem; font-weight: 700; color: #27ae60;">${correctCount}</div>
+                        <div style="font-size: 0.85rem; color: #388e3c;">Correct</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: #ffebee; border-radius: 10px; border-left: 4px solid #e74c3c;">
+                        <div style="font-size: 1.8rem; font-weight: 700; color: #e74c3c;">${incorrectCount}</div>
+                        <div style="font-size: 0.85rem; color: #c62828;">Incorrect</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: #f5f5f5; border-radius: 10px; border-left: 4px solid #95a5a6;">
+                        <div style="font-size: 1.8rem; font-weight: 700; color: #666;">${unansweredCount}</div>
+                        <div style="font-size: 0.85rem; color: #666;">Unanswered</div>
+                    </div>
+                </div>
+                <h4 style="color: var(--primary); margin-bottom: 15px; font-size: 1.1rem;">Question-wise Breakdown</h4>
+                <div style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
+            `;
+
+            // Display questions with full details and all options
+            if (isDetailedFormat) {
+                userAnswers.forEach((answer, index) => {
+                    const isCorrect = answer.isCorrect;
+                    const userAnswered = answer.userAnswer !== 'Not Answered';
+                    const userAnswerLetter = answer.userAnswer;
+                    const correctAnswerLetter = answer.correctAnswer;
+
+                    const bgColor = isCorrect ? '#e8f5e9' : (userAnswered ? '#ffebee' : '#f5f5f5');
+                    const borderColor = isCorrect ? '#27ae60' : (userAnswered ? '#e74c3c' : '#95a5a6');
+
+                    html += `
+                        <div style="background: ${bgColor}; border-left: 5px solid ${borderColor}; padding: 20px; margin-bottom: 15px; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div style="font-weight: 700; color: var(--secondary); font-size: 1rem;">
+                                    Q${index + 1}. ${answer.questionId || ''} <span style="background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">${answer.subject || ''}</span>
+                                </div>
+                                <div style="font-weight: 600; font-size: 0.9rem; padding: 5px 12px; border-radius: 6px; background: ${isCorrect ? '#c8e6c9' : (userAnswered ? '#ffcdd2' : '#e0e0e0')}; color: ${isCorrect ? '#388e3c' : (userAnswered ? '#c62828' : '#666')};">
+                                    ${isCorrect ? '+1' : (userAnswered ? '-0.25' : '0')}
+                                </div>
+                            </div>
+                            <div style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 15px; color: #333; background: white; padding: 15px; border-radius: 8px;">
+                                ${answer.question || 'Question not available'}
+                            </div>
+                            <div style="display: grid; gap: 8px;">
+                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'A' ? (correctAnswerLetter === 'A' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'A' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'A' ? '#27ae60' : (userAnswerLetter === 'A' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong style="color: #1976d2;">A:</strong> ${answer.optionA || ''}
+                                    ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
+                                    ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                                </div>
+                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'B' ? (correctAnswerLetter === 'B' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'B' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'B' ? '#27ae60' : (userAnswerLetter === 'B' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong style="color: #1976d2;">B:</strong> ${answer.optionB || ''}
+                                    ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
+                                    ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                                </div>
+                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'C' ? (correctAnswerLetter === 'C' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'C' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'C' ? '#27ae60' : (userAnswerLetter === 'C' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong style="color: #1976d2;">C:</strong> ${answer.optionC || ''}
+                                    ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
+                                    ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                                </div>
+                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'D' ? (correctAnswerLetter === 'D' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'D' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'D' ? '#27ae60' : (userAnswerLetter === 'D' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong style="color: #1976d2;">D:</strong> ${answer.optionD || ''}
+                                    ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
+                                    ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                                </div>
+                            </div>
+                            <div style="margin-top: 12px; font-weight: 600; font-size: 1rem; text-align: right;">
+                                ${isCorrect ? '✅ Correct Answer' : (userAnswered ? '❌ Incorrect Answer' : '⚪ Not Answered')}
+                            </div>
+                        </div>
+                    `;
                 });
+            } else {
+                html += `
+                    <div style="text-align: center; padding: 30px; background: #fff3cd; border-radius: 12px;">
+                        <p style="color: #856404;">Legacy answer format detected. Full question details are not available.</p>
+                    </div>
+                `;
+            }
 
-                // Add event listener for export button
-                const exportBtn = document.getElementById('export-results-btn');
-                if (exportBtn) {
-                    exportBtn.addEventListener('click', function() {
-                        exportResultsToCSV(results, examCode);
-                    });
-                }
-            } catch (error) {
-                console.error('❌ Error loading results:', error);
+            html += '</div>';
+            content.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        // Back to exams button handler
+        document.getElementById('back-to-exams-btn').addEventListener('click', function() {
+            document.getElementById('results-main-view').classList.remove('hidden');
+            document.getElementById('results-candidates-view').classList.add('hidden');
+        });
+
+        // Close detail modal handler
+        document.getElementById('close-detail-modal-btn').addEventListener('click', function() {
+            document.getElementById('results-detail-modal').style.display = 'none';
+        });
+
+        // Export results button handler (new)
+        document.getElementById('export-results-btn-new').addEventListener('click', function() {
+            if (currentExamResults.length > 0) {
+                exportResultsToCSV(currentExamResults, currentExamCodeForResults);
+            } else {
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                    window.PoliteCCAPI.showNotification('❌ Failed to load results: ' + error.message, 'error');
-                }
-                const resultsContainer = document.getElementById('results-container');
-                if (resultsContainer) {
-                    resultsContainer.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 20px;">Error loading results. Please try again.</p>';
+                    window.PoliteCCAPI.showNotification('No results to export', 'error');
                 }
             }
         });
