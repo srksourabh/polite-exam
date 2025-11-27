@@ -531,8 +531,36 @@ module.exports = async (req, res) => {
                 const candidate = candidates[0];
 
                 // Hash the provided password and compare with stored hash
+                // Support both hashed (new) and plaintext (legacy) passwords during migration
                 const hashedPassword = hashPassword(password);
-                if (candidate.fields.Password !== hashedPassword) {
+                const storedPassword = candidate.fields.Password;
+
+                // Check if stored password is hashed (64 char hex) or plaintext
+                const isHashedPassword = /^[a-f0-9]{64}$/i.test(storedPassword);
+
+                let passwordMatch = false;
+                if (isHashedPassword) {
+                    // Compare with hashed password
+                    passwordMatch = storedPassword === hashedPassword;
+                } else {
+                    // Legacy: compare with plaintext password
+                    passwordMatch = storedPassword === password;
+
+                    // Optionally migrate to hashed password on successful login
+                    if (passwordMatch) {
+                        try {
+                            await base(CANDIDATES_TABLE).update(candidate.id, {
+                                'Password': hashedPassword
+                            });
+                            console.log(`Migrated password for ${email} to hashed format`);
+                        } catch (migrationError) {
+                            console.error('Password migration failed:', migrationError);
+                            // Continue anyway - login still succeeds
+                        }
+                    }
+                }
+
+                if (!passwordMatch) {
                     return res.status(401).json({
                         success: false,
                         error: 'Invalid email or password'
@@ -822,42 +850,64 @@ module.exports = async (req, res) => {
         if (url === '/api/results' && method === 'POST') {
             const resultData = req.body;
 
+            // Define valid fields for the Results table in Airtable
+            // This prevents errors from unknown field names
+            const validResultFields = [
+                'Name', 'Mobile', 'Score', 'Answers', 'Exam', 'Exam Code',
+                'Total Questions', 'Correct Answers', 'Wrong Answers', 'Percentage',
+                'Time Taken', 'Date', 'Status'
+            ];
+
+            // Filter out unknown fields to prevent Airtable errors
+            const cleanedResultData = {};
+            for (const key of Object.keys(resultData)) {
+                if (validResultFields.includes(key)) {
+                    cleanedResultData[key] = resultData[key];
+                } else {
+                    console.log(`Ignoring unknown field in result submission: ${key}`);
+                }
+            }
+
             // Keep 'Exam Code' field for easy querying of results by exam
             // The linked 'Exam' field is also kept for proper data relationships
 
             // Clean up the Exam field - remove null/undefined values from the array
             // or remove the field entirely if it's invalid
-            if (resultData.Exam) {
-                if (Array.isArray(resultData.Exam)) {
+            if (cleanedResultData.Exam) {
+                if (Array.isArray(cleanedResultData.Exam)) {
                     // Filter out null, undefined, and empty string values
-                    resultData.Exam = resultData.Exam.filter(id => id != null && id !== '');
+                    cleanedResultData.Exam = cleanedResultData.Exam.filter(id => id != null && id !== '');
                     // If array is empty after filtering, remove the field entirely
-                    if (resultData.Exam.length === 0) {
-                        delete resultData.Exam;
+                    if (cleanedResultData.Exam.length === 0) {
+                        delete cleanedResultData.Exam;
                     }
-                } else if (resultData.Exam == null || resultData.Exam === '') {
+                } else if (cleanedResultData.Exam == null || cleanedResultData.Exam === '') {
                     // If Exam is a single null/empty value, remove it
-                    delete resultData.Exam;
+                    delete cleanedResultData.Exam;
                 }
             }
 
             // Auto-create candidate record if it doesn't exist (requirement #9)
-            if (resultData.Name && resultData.Mobile) {
+            if (cleanedResultData.Name && cleanedResultData.Mobile) {
                 try {
+                    // Sanitize inputs for formula
+                    const sanitizedName = sanitizeForFormula(cleanedResultData.Name);
+                    const sanitizedMobile = sanitizeForFormula(cleanedResultData.Mobile);
+
                     // Check if candidate already exists
                     const existingCandidates = await base(CANDIDATES_TABLE)
                         .select({
-                            filterByFormula: `AND({Name} = '${resultData.Name}', {Mobile} = '${resultData.Mobile}')`
+                            filterByFormula: `AND({Name} = '${sanitizedName}', {Mobile} = '${sanitizedMobile}')`
                         })
                         .all();
 
                     // Create candidate if doesn't exist
                     if (existingCandidates.length === 0) {
                         await base(CANDIDATES_TABLE).create({
-                            'Name': resultData.Name,
-                            'Mobile': resultData.Mobile
+                            'Name': cleanedResultData.Name,
+                            'Mobile': cleanedResultData.Mobile
                         });
-                        console.log(`✅ Created new candidate: ${resultData.Name} (${resultData.Mobile})`);
+                        console.log(`✅ Created new candidate: ${cleanedResultData.Name} (${cleanedResultData.Mobile})`);
                     }
                 } catch (candidateError) {
                     console.error('Warning: Could not create candidate record:', candidateError);
@@ -865,8 +915,8 @@ module.exports = async (req, res) => {
                 }
             }
 
-            // Create the result record
-            const record = await base(RESULTS_TABLE).create(resultData);
+            // Create the result record using cleaned data
+            const record = await base(RESULTS_TABLE).create(cleanedResultData);
             return res.status(201).json({
                 success: true,
                 data: { id: record.id, ...record.fields }
