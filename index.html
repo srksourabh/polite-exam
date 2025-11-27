@@ -1517,7 +1517,7 @@
                     </div>
                     <div class="form-group">
                         <label>Expiry Date (IST)</label>
-                        <input type="text" id="exam-expiry" placeholder="dd-mm-yyyy" readonly>
+                        <input type="text" id="exam-expiry" placeholder="Select or enter date (dd-mm-yyyy)">
                     </div>
                     <div class="form-group">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
@@ -3474,15 +3474,29 @@
                     return;
                 }
 
-                // Convert date value to Date object (set to end of day for comparison)
-                // date input gives us "YYYY-MM-DD"
-                const expiryDate = new Date(expiryInput + 'T23:59:59');
+                // Parse date from dd-mm-yyyy format
+                let expiryDate;
+                let formattedExpiryForBackend;
+
+                // Check if date is in dd-mm-yyyy format
+                const ddmmyyyyMatch = expiryInput.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+                if (ddmmyyyyMatch) {
+                    const day = parseInt(ddmmyyyyMatch[1], 10);
+                    const month = parseInt(ddmmyyyyMatch[2], 10) - 1; // JS months are 0-indexed
+                    const year = parseInt(ddmmyyyyMatch[3], 10);
+                    expiryDate = new Date(year, month, day, 23, 59, 59);
+                    formattedExpiryForBackend = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                } else {
+                    // Try YYYY-MM-DD format as fallback
+                    expiryDate = new Date(expiryInput + 'T23:59:59');
+                    formattedExpiryForBackend = expiryInput;
+                }
 
                 // Check if the expiry date is valid
                 if (isNaN(expiryDate.getTime())) {
                     const examError = document.getElementById('exam-error');
                     if (examError) {
-                        examError.textContent = '❌ Invalid expiry date!';
+                        examError.textContent = '❌ Invalid expiry date! Use format: dd-mm-yyyy';
                         setTimeout(() => {
                             examError.textContent = '';
                         }, 3000);
@@ -3490,10 +3504,11 @@
                     return;
                 }
 
-                // Check if expiry date is today or in the future (we don't need to check if it's in the past)
+                // Check if expiry date is today or in the future
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                const expiryDateOnly = new Date(expiryInput);
+                const expiryDateOnly = new Date(expiryDate);
+                expiryDateOnly.setHours(0, 0, 0, 0);
                 if (expiryDateOnly.getTime() < today.getTime()) {
                     const examError = document.getElementById('exam-error');
                     if (examError) {
@@ -3520,15 +3535,12 @@
                     return;
                 }
 
-                // Format expiry date for Airtable (store date only in YYYY-MM-DD format)
-                const formattedExpiry = expiryInput;
-
                 // Create exam object - use 'Questions' to match Airtable field name
                 const newExam = {
                     'Exam Code': examCode,
                     'Title': examTitle,
                     'Duration (mins)': duration,
-                    'Expiry (IST)': formattedExpiry,
+                    'Expiry (IST)': formattedExpiryForBackend,
                     'Questions': selectedQuestions
                 };
 
@@ -5184,22 +5196,24 @@
         }
 
             // Initialize Flatpickr for expiry date
-            const now = new Date();
-            now.setDate(now.getDate() + 1);
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
             const expiryInput = document.getElementById('exam-expiry');
-            if (expiryInput) {
-                flatpickr(expiryInput, {
-                    dateFormat: "Y-m-d",         // Internal format: YYYY-MM-DD (for backend)
-                    altInput: true,              // Show user-friendly format
-                    altFormat: "d-m-Y",          // User sees: dd-mm-yyyy
-                    defaultDate: now,            // Set default to tomorrow
+            if (expiryInput && typeof flatpickr !== 'undefined') {
+                const fp = flatpickr(expiryInput, {
+                    dateFormat: "d-m-Y",         // Display format: dd-mm-yyyy
+                    defaultDate: tomorrow,       // Set default to tomorrow
                     minDate: "today",            // Prevent selecting past dates
-                    allowInput: true,            // Allow keyboard input
+                    allowInput: true,            // Allow manual keyboard input
                     clickOpens: true,            // Open calendar on click
-                    appendTo: document.body,     // Append to body to avoid overflow:hidden clipping
-                    static: false,               // Use absolute positioning (not static)
-                    disableMobile: false,        // Enable native mobile date picker on mobile devices
+                    disableMobile: true,         // Use Flatpickr on mobile too (not native picker)
+                    onReady: function(selectedDates, dateStr, instance) {
+                        // Ensure calendar is visible above other elements
+                        instance.calendarContainer.style.zIndex = '99999';
+                    }
                 });
+                // Store reference for potential cleanup
+                window.expiryDatePicker = fp;
             }
 
             // Check if user is already logged in (do this AFTER all event handlers are attached)
