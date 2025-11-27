@@ -2156,6 +2156,34 @@
             localStorage.removeItem('userData');
         }
 
+        // Helper function to format date correctly (handles YYYY-MM-DD as local date)
+        function formatDateForDisplay(dateInput) {
+            if (!dateInput) return 'N/A';
+
+            let date;
+            const dateStr = String(dateInput);
+
+            // Check if date is in YYYY-MM-DD format (parse as local, not UTC)
+            const yyyymmddMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (yyyymmddMatch) {
+                const year = parseInt(yyyymmddMatch[1], 10);
+                const month = parseInt(yyyymmddMatch[2], 10) - 1;
+                const day = parseInt(yyyymmddMatch[3], 10);
+                date = new Date(year, month, day);
+            } else {
+                // Try parsing as-is for other formats
+                date = new Date(dateInput);
+            }
+
+            if (isNaN(date.getTime())) return 'Invalid Date';
+
+            // Format as dd-mm-yyyy
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}-${month}-${year}`;
+        }
+
         // OCR Review Modal Functions
         function openOCRReviewModal(questions) {
             const modal = document.getElementById('ocr-review-modal');
@@ -2633,7 +2661,7 @@
                 let historyHTML = '';
 
                 examHistory.examHistory.forEach((exam, index) => {
-                    const date = new Date(exam.date).toLocaleDateString('en-IN');
+                    const date = formatDateForDisplay(exam.date);
                     const scoreClass = (exam.score || 0) < 0 ? 'negative' : '';
 
                     // Parse answers to build question details
@@ -3680,7 +3708,7 @@
                     const examCode = exam['Exam Code'] || exam.examCode;
                     const title = exam['Title'] || exam.title || 'Untitled';
                     const expiryDate = exam['Expiry (IST)'] ? new Date(exam['Expiry (IST)']) : null;
-                    const expiryStr = expiryDate ? expiryDate.toLocaleDateString('en-IN') : 'No Expiry';
+                    const expiryStr = exam['Expiry (IST)'] ? formatDateForDisplay(exam['Expiry (IST)']) : 'No Expiry';
 
                     let isExpired = false;
                     if (expiryDate) {
@@ -3749,7 +3777,7 @@
                 // Get exam details
                 const exam = exams.find(e => (e['Exam Code'] || e.examCode) === examCode);
                 const title = exam ? (exam['Title'] || exam.title || 'Untitled') : 'Unknown';
-                const expiryDate = exam && exam['Expiry (IST)'] ? new Date(exam['Expiry (IST)']).toLocaleDateString('en-IN') : 'No Expiry';
+                const expiryDateStr = exam && exam['Expiry (IST)'] ? formatDateForDisplay(exam['Expiry (IST)']) : 'No Expiry';
                 const duration = exam ? (exam['Duration (mins)'] || exam['Duration'] || exam.duration || 60) : 60;
                 // 'Questions' is the correct Airtable field name for linked records
                 const examQuestionIds = exam ? (exam['Questions'] || exam['Question IDs'] || exam['QuestionIDs'] || exam.questionIds || []) : [];
@@ -3760,7 +3788,7 @@
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                         <div><strong>Exam Code:</strong> ${examCode}</div>
                         <div><strong>Title:</strong> ${title}</div>
-                        <div><strong>Expiry Date:</strong> ${expiryDate}</div>
+                        <div><strong>Expiry Date:</strong> ${expiryDateStr}</div>
                         <div><strong>Duration:</strong> ${duration} minutes</div>
                         <div><strong>Total Questions:</strong> ${questionCount}</div>
                     </div>
@@ -3793,7 +3821,7 @@
                     const score = parseFloat(result.Score || result.score || 0);
                     const mobile = result.Mobile || result.mobile || 'N/A';
                     const submittedAt = result['Submitted At'] || result.submittedAt || '';
-                    const dateStr = submittedAt ? new Date(submittedAt).toLocaleDateString('en-IN') : 'N/A';
+                    const dateStr = submittedAt ? formatDateForDisplay(submittedAt) : 'N/A';
 
                     const scoreColor = score >= 0 ? '#27ae60' : '#e74c3c';
                     const rankBadge = index < 3 ? ['🥇', '🥈', '🥉'][index] : `#${index + 1}`;
