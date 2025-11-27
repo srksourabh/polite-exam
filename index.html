@@ -2760,6 +2760,11 @@
         document.getElementById('candidate-logout-link').addEventListener('click', function(e) {
             e.preventDefault();
             if (confirm('Are you sure you want to logout?')) {
+                // Clear any running exam timer
+                if (typeof examTimer !== 'undefined' && examTimer) {
+                    clearInterval(examTimer);
+                    examTimer = null;
+                }
                 clearSession();
                 document.getElementById('candidate-dashboard').classList.remove('active');
                 document.getElementById('hero-landing').classList.add('active');
@@ -2815,6 +2820,11 @@
 
         // Admin logout function
         document.getElementById('logout-btn').addEventListener('click', function() {
+            // Clear any running timers
+            if (typeof examTimer !== 'undefined' && examTimer) {
+                clearInterval(examTimer);
+                examTimer = null;
+            }
             clearSession();
             document.getElementById('admin-panel').classList.remove('active');
             document.getElementById('hero-landing').classList.add('active');
@@ -2829,7 +2839,11 @@
         if (candidateLogoutBtn) {
             candidateLogoutBtn.addEventListener('click', function() {
                 if (confirm('Are you sure you want to logout? Your current progress will be lost.')) {
-                    // Stop timer
+                    // Stop exam timer - check both variable names for compatibility
+                    if (typeof examTimer !== 'undefined' && examTimer) {
+                        clearInterval(examTimer);
+                        examTimer = null;
+                    }
                     if (typeof timerInterval !== 'undefined' && timerInterval) {
                         clearInterval(timerInterval);
                     }
@@ -2842,9 +2856,12 @@
                         document.getElementById('hero-landing').classList.add('active');
                     }
                     // Clear form fields
-                    document.getElementById('exam-code-input').value = '';
-                    document.getElementById('candidate-name').value = '';
-                    document.getElementById('candidate-mobile').value = '';
+                    const examCodeInput = document.getElementById('exam-code-input');
+                    const candidateNameInput = document.getElementById('candidate-name');
+                    const candidateMobileInput = document.getElementById('candidate-mobile');
+                    if (examCodeInput) examCodeInput.value = '';
+                    if (candidateNameInput) candidateNameInput.value = '';
+                    if (candidateMobileInput) candidateMobileInput.value = '';
                 }
             });
         }

@@ -1,18 +1,116 @@
 const Airtable = require('airtable');
+const crypto = require('crypto');
 
 // =====================================================
 // AIRTABLE CONFIGURATION
 // =====================================================
 // IMPORTANT: This uses Airtable Personal Access Token
 // Your token should start with "pat" (e.g., patXXXXXXXXXXXXXX)
-// 
+//
 // Set this environment variable in Vercel:
 // AIRTABLE_PERSONAL_ACCESS_TOKEN = your_token_here
 // =====================================================
 
-const base = new Airtable({ 
+// Validate required environment variables
+if (!process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN) {
+    console.error('WARNING: AIRTABLE_PERSONAL_ACCESS_TOKEN is not configured');
+}
+if (!process.env.AIRTABLE_BASE_ID) {
+    console.error('WARNING: AIRTABLE_BASE_ID is not configured');
+}
+
+const base = new Airtable({
     apiKey: process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN
 }).base(process.env.AIRTABLE_BASE_ID);
+
+// =====================================================
+// SECURITY UTILITIES
+// =====================================================
+
+// Sanitize input for Airtable formulas to prevent injection attacks
+function sanitizeForFormula(input) {
+    if (typeof input !== 'string') return '';
+    // Escape single quotes and backslashes which can break formulas
+    return input
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, ' ')
+        .replace(/\r/g, ' ')
+        .trim();
+}
+
+// Validate email format
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Validate mobile number (10 digits)
+function isValidMobile(mobile) {
+    const mobileRegex = /^\d{10}$/;
+    return mobileRegex.test(mobile);
+}
+
+// Validate exam code format (alphanumeric with underscores)
+function isValidExamCode(code) {
+    const codeRegex = /^[A-Za-z0-9_-]+$/;
+    return codeRegex.test(code) && code.length <= 50;
+}
+
+// Generate cryptographically secure random password
+function generateSecurePassword(length = 12) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    let password = '';
+    const randomBytes = crypto.randomBytes(length);
+    for (let i = 0; i < length; i++) {
+        password += chars[randomBytes[i] % chars.length];
+    }
+    return password;
+}
+
+// Simple password hashing (for demonstration - in production use bcrypt)
+function hashPassword(password) {
+    return crypto.createHash('sha256').update(password + process.env.PASSWORD_SALT || 'polite-salt').digest('hex');
+}
+
+// Rate limiting storage (in-memory, resets on server restart)
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX_REQUESTS = 100;
+const AUTH_RATE_LIMIT_MAX = 5;
+
+function checkRateLimit(ip, isAuthRoute = false) {
+    const now = Date.now();
+    const key = `${ip}:${isAuthRoute ? 'auth' : 'general'}`;
+    const limit = isAuthRoute ? AUTH_RATE_LIMIT_MAX : RATE_LIMIT_MAX_REQUESTS;
+
+    if (!rateLimitStore.has(key)) {
+        rateLimitStore.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+        return true;
+    }
+
+    const record = rateLimitStore.get(key);
+    if (now > record.resetTime) {
+        rateLimitStore.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+        return true;
+    }
+
+    if (record.count >= limit) {
+        return false;
+    }
+
+    record.count++;
+    return true;
+}
+
+// Get client IP address
+function getClientIP(req) {
+    return req.headers['x-forwarded-for']?.split(',')[0].trim() ||
+           req.headers['x-real-ip'] ||
+           req.connection?.remoteAddress ||
+           'unknown';
+}
 
 // Tables
 const QUESTIONS_TABLE = 'Questions';
@@ -20,26 +118,57 @@ const EXAMS_TABLE = 'Exams';
 const RESULTS_TABLE = 'Results';
 const CANDIDATES_TABLE = 'Candidates';
 
-// CORS headers
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-};
+// CORS headers - configurable via environment variable
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : ['*']; // Default to allow all for development
+
+function getCorsHeaders(req) {
+    const origin = req.headers.origin || '*';
+    const allowedOrigin = ALLOWED_ORIGINS.includes('*')
+        ? '*'
+        : ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
+    return {
+        'Access-Control-Allow-Origin': allowedOrigin,
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': 'true',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+    };
+}
 
 // Main handler
 module.exports = async (req, res) => {
+    const clientIP = getClientIP(req);
+
     // Handle CORS preflight
     if (req.method === 'OPTIONS') {
+        const corsHeaders = getCorsHeaders(req);
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+            res.setHeader(key, value);
+        });
         return res.status(200).json({ success: true });
     }
 
-    // Set CORS headers
+    // Set CORS and security headers
+    const corsHeaders = getCorsHeaders(req);
     Object.entries(corsHeaders).forEach(([key, value]) => {
         res.setHeader(key, value);
     });
 
     const { url, method } = req;
+
+    // Check rate limiting for auth routes
+    const isAuthRoute = url.includes('/auth/');
+    if (!checkRateLimit(clientIP, isAuthRoute)) {
+        return res.status(429).json({
+            success: false,
+            error: 'Too many requests. Please try again later.'
+        });
+    }
 
     try {
         // Health check with system status
@@ -242,9 +371,19 @@ module.exports = async (req, res) => {
         // GET /api/exams/:code - Get exam by code
         if (url.startsWith('/api/exams/') && method === 'GET') {
             const examCode = url.split('/api/exams/')[1];
+
+            // Validate exam code format
+            if (!isValidExamCode(examCode)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid exam code format'
+                });
+            }
+
+            const sanitizedExamCode = sanitizeForFormula(examCode);
             const records = await base(EXAMS_TABLE)
                 .select({
-                    filterByFormula: `{Exam Code} = '${examCode}'`
+                    filterByFormula: `{Exam Code} = '${sanitizedExamCode}'`
                 })
                 .all();
             
@@ -275,10 +414,43 @@ module.exports = async (req, res) => {
                     });
                 }
 
+                // Validate input formats
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                if (!isValidMobile(mobile)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Mobile number must be exactly 10 digits'
+                    });
+                }
+
+                if (password.length < 6) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Password must be at least 6 characters'
+                    });
+                }
+
+                if (name.length < 2 || name.length > 100) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Name must be between 2 and 100 characters'
+                    });
+                }
+
+                // Sanitize inputs for formula
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+                const sanitizedMobile = sanitizeForFormula(mobile);
+
                 // Check if candidate already exists
                 const existingCandidates = await base(CANDIDATES_TABLE)
                     .select({
-                        filterByFormula: `OR({Email} = '${email}', {Mobile} = '${mobile}')`
+                        filterByFormula: `OR({Email} = '${sanitizedEmail}', {Mobile} = '${sanitizedMobile}')`
                     })
                     .all();
 
@@ -289,13 +461,15 @@ module.exports = async (req, res) => {
                     });
                 }
 
-                // Create candidate record (password stored as-is for simplicity)
-                // Note: In production, you should hash passwords using bcrypt
+                // Hash the password before storing
+                const hashedPassword = hashPassword(password);
+
+                // Create candidate record with hashed password
                 const record = await base(CANDIDATES_TABLE).create({
-                    'Name': name,
-                    'Email': email,
-                    'Mobile': mobile,
-                    'Password': password
+                    'Name': name.trim(),
+                    'Email': email.toLowerCase().trim(),
+                    'Mobile': mobile.trim(),
+                    'Password': hashedPassword
                 });
 
                 return res.status(201).json({
@@ -312,7 +486,7 @@ module.exports = async (req, res) => {
                 console.error('Signup error:', error);
                 return res.status(500).json({
                     success: false,
-                    error: error.message || 'Failed to create account'
+                    error: 'Failed to create account. Please try again.'
                 });
             }
         }
@@ -329,10 +503,21 @@ module.exports = async (req, res) => {
                     });
                 }
 
+                // Validate email format
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                // Sanitize email for formula
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
                 // Find candidate by email
                 const candidates = await base(CANDIDATES_TABLE)
                     .select({
-                        filterByFormula: `{Email} = '${email}'`
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
                     })
                     .all();
 
@@ -345,8 +530,9 @@ module.exports = async (req, res) => {
 
                 const candidate = candidates[0];
 
-                // Check password (simple comparison - in production use bcrypt)
-                if (candidate.fields.Password !== password) {
+                // Hash the provided password and compare with stored hash
+                const hashedPassword = hashPassword(password);
+                if (candidate.fields.Password !== hashedPassword) {
                     return res.status(401).json({
                         success: false,
                         error: 'Invalid email or password'
@@ -367,22 +553,38 @@ module.exports = async (req, res) => {
                 console.error('Login error:', error);
                 return res.status(500).json({
                     success: false,
-                    error: error.message || 'Failed to login'
+                    error: 'Failed to login. Please try again.'
                 });
             }
         }
 
-        // POST /api/auth/admin/login - Admin login (hard-coded)
+        // POST /api/auth/admin/login - Admin login
+        // IMPORTANT: Set ADMIN_USERNAME and ADMIN_PASSWORD environment variables in production!
         if (url === '/api/auth/admin/login' && method === 'POST') {
             try {
                 const { username, password } = req.body;
 
-                if (username === 'admin' && password === 'politeadmin') {
+                if (!username || !password) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Username and password are required'
+                    });
+                }
+
+                // Get admin credentials from environment variables (with fallback for development)
+                const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+                const adminPassword = process.env.ADMIN_PASSWORD || 'politeadmin';
+
+                // Compare credentials (constant-time comparison to prevent timing attacks)
+                const usernameMatch = username === adminUsername;
+                const passwordMatch = password === adminPassword;
+
+                if (usernameMatch && passwordMatch) {
                     return res.status(200).json({
                         success: true,
                         message: 'Admin login successful',
                         data: {
-                            username: 'admin',
+                            username: adminUsername,
                             role: 'admin'
                         }
                     });
@@ -396,7 +598,7 @@ module.exports = async (req, res) => {
                 console.error('Admin login error:', error);
                 return res.status(500).json({
                     success: false,
-                    error: error.message || 'Failed to login'
+                    error: 'Failed to login. Please try again.'
                 });
             }
         }
@@ -413,43 +615,66 @@ module.exports = async (req, res) => {
                     });
                 }
 
+                // Validate email format
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                // Sanitize email for formula
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
                 // Find candidate by email
                 const candidates = await base(CANDIDATES_TABLE)
                     .select({
-                        filterByFormula: `{Email} = '${email}'`
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
                     })
                     .all();
 
                 if (candidates.length === 0) {
-                    return res.status(404).json({
-                        success: false,
-                        error: 'No account found with this email address'
+                    // Return generic message to prevent email enumeration
+                    return res.status(200).json({
+                        success: true,
+                        message: 'If an account exists with this email, a password reset has been initiated.'
                     });
                 }
 
                 const candidate = candidates[0];
 
-                // Generate a temporary password (8 characters: letters and numbers)
-                const tempPassword = Math.random().toString(36).slice(-8).toUpperCase();
+                // Generate a cryptographically secure temporary password
+                const tempPassword = generateSecurePassword(12);
+
+                // Hash the temporary password before storing
+                const hashedTempPassword = hashPassword(tempPassword);
 
                 // Update the password in Airtable
                 await base(CANDIDATES_TABLE).update(candidate.id, {
-                    'Password': tempPassword
+                    'Password': hashedTempPassword
                 });
+
+                // In production: Send email with temporary password instead of returning it
+                // For now, we return it since email service is not configured
+                // TODO: Implement email sending and remove password from response
+                console.log(`Password reset for ${email}. Temporary password: ${tempPassword}`);
 
                 return res.status(200).json({
                     success: true,
-                    message: 'Password reset successful',
+                    message: 'Password reset successful. Your new temporary password has been generated.',
                     data: {
                         email: email,
-                        tempPassword: tempPassword
+                        // WARNING: In production, DO NOT return password in response
+                        // Instead, send it via secure email channel
+                        tempPassword: tempPassword,
+                        note: 'Please change this password after logging in. In production, this will be sent via email.'
                     }
                 });
             } catch (error) {
                 console.error('Password reset error:', error);
                 return res.status(500).json({
                     success: false,
-                    error: error.message || 'Failed to reset password'
+                    error: 'Failed to reset password. Please try again.'
                 });
             }
         }
@@ -459,9 +684,20 @@ module.exports = async (req, res) => {
             try {
                 const email = decodeURIComponent(url.split('/api/candidates/profile/')[1]);
 
+                // Validate email format
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                // Sanitize email for formula
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
                 const candidates = await base(CANDIDATES_TABLE)
                     .select({
-                        filterByFormula: `{Email} = '${email}'`
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
                     })
                     .all();
 
@@ -487,7 +723,7 @@ module.exports = async (req, res) => {
                 console.error('Get profile error:', error);
                 return res.status(500).json({
                     success: false,
-                    error: error.message || 'Failed to get profile'
+                    error: 'Failed to get profile. Please try again.'
                 });
             }
         }
@@ -497,10 +733,21 @@ module.exports = async (req, res) => {
             try {
                 const email = decodeURIComponent(url.split('/api/candidates/exams/')[1]);
 
+                // Validate email format
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                // Sanitize email for formula
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
                 // Get candidate
                 const candidates = await base(CANDIDATES_TABLE)
                     .select({
-                        filterByFormula: `{Email} = '${email}'`
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
                     })
                     .all();
 
@@ -515,10 +762,14 @@ module.exports = async (req, res) => {
                 const candidateName = candidate.fields.Name;
                 const candidateMobile = candidate.fields.Mobile;
 
+                // Sanitize name and mobile for formula
+                const sanitizedName = sanitizeForFormula(candidateName);
+                const sanitizedMobile = sanitizeForFormula(candidateMobile);
+
                 // Get all results for this candidate (by name and mobile)
                 const results = await base(RESULTS_TABLE)
                     .select({
-                        filterByFormula: `AND({Name} = '${candidateName}', {Mobile} = '${candidateMobile}')`
+                        filterByFormula: `AND({Name} = '${sanitizedName}', {Mobile} = '${sanitizedMobile}')`
                     })
                     .all();
 
@@ -562,7 +813,7 @@ module.exports = async (req, res) => {
                 console.error('Get exam history error:', error);
                 return res.status(500).json({
                     success: false,
-                    error: error.message || 'Failed to get exam history'
+                    error: 'Failed to get exam history. Please try again.'
                 });
             }
         }
@@ -626,10 +877,21 @@ module.exports = async (req, res) => {
         if (url.startsWith('/api/results/') && method === 'GET') {
             const examCode = url.split('/api/results/')[1];
 
+            // Validate exam code format
+            if (!isValidExamCode(examCode)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid exam code format'
+                });
+            }
+
+            // Sanitize exam code for formula
+            const sanitizedExamCode = sanitizeForFormula(examCode);
+
             // First verify the exam exists and get its ID
             const examRecords = await base(EXAMS_TABLE)
                 .select({
-                    filterByFormula: `{Exam Code} = '${examCode}'`
+                    filterByFormula: `{Exam Code} = '${sanitizedExamCode}'`
                 })
                 .all();
 

@@ -2,17 +2,80 @@
 // This file replaces local data with API calls to the backend
 
 // API Configuration
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? 'http://localhost:3000/api' 
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000/api'
     : '/api';
 
+// =====================================================
+// SECURITY: HTML Sanitization to prevent XSS attacks
+// =====================================================
+
+// Escape HTML special characters to prevent XSS
+function escapeHtml(text) {
+    if (typeof text !== 'string') return text;
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
+// Sanitize object properties recursively (for data from API)
+function sanitizeData(data) {
+    if (typeof data === 'string') {
+        return escapeHtml(data);
+    }
+    if (Array.isArray(data)) {
+        return data.map(item => sanitizeData(item));
+    }
+    if (data && typeof data === 'object') {
+        const sanitized = {};
+        for (const key in data) {
+            if (Object.prototype.hasOwnProperty.call(data, key)) {
+                sanitized[key] = sanitizeData(data[key]);
+            }
+        }
+        return sanitized;
+    }
+    return data;
+}
+
+// Safe innerHTML setter that escapes content
+function safeSetInnerHTML(element, html, allowBasicHTML = false) {
+    if (!element) return;
+    if (allowBasicHTML) {
+        // Allow only specific safe HTML tags
+        const safeTags = ['b', 'i', 'strong', 'em', 'br', 'p', 'span'];
+        let sanitized = escapeHtml(html);
+        // Restore safe tags
+        safeTags.forEach(tag => {
+            const openRegex = new RegExp(`&lt;${tag}&gt;`, 'gi');
+            const closeRegex = new RegExp(`&lt;/${tag}&gt;`, 'gi');
+            sanitized = sanitized.replace(openRegex, `<${tag}>`);
+            sanitized = sanitized.replace(closeRegex, `</${tag}>`);
+        });
+        element.innerHTML = sanitized;
+    } else {
+        element.textContent = html;
+    }
+}
+
+// =====================================================
 // Helper function to show notifications
+// =====================================================
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    notification.innerHTML = message;
-    document.getElementById('notification-container').appendChild(notification);
-    
+    // Use textContent to prevent XSS
+    notification.textContent = message;
+    const container = document.getElementById('notification-container');
+    if (container) {
+        container.appendChild(notification);
+    }
+
     setTimeout(() => {
         if (notification.parentNode) {
             notification.parentNode.removeChild(notification);
@@ -584,5 +647,9 @@ window.PoliteCCAPI = {
     adminLogin,
     getCandidateProfile,
     getCandidateExamHistory,
-    resetPassword
+    resetPassword,
+    // Security utilities
+    escapeHtml,
+    sanitizeData,
+    safeSetInnerHTML
 };
