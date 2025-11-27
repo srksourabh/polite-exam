@@ -1075,6 +1075,10 @@
             z-index: 2000;
             overflow-y: auto;
         }
+        /* Flatpickr calendar z-index override to ensure visibility */
+        .flatpickr-calendar {
+            z-index: 10000 !important;
+        }
         .ocr-review-content {
             background: white;
             margin: 20px auto;
@@ -1221,6 +1225,13 @@
             }
         }
     </style>
+
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
     <script src="api-integration.js"></script>
 </head>
 <body>
@@ -1515,7 +1526,7 @@
                     </div>
                     <div class="form-group">
                         <label>Expiry Date (IST)</label>
-                        <input type="date" id="exam-expiry">
+                        <input type="text" id="exam-expiry" placeholder="Select or enter date (dd-mm-yyyy)">
                     </div>
                     <div class="form-group">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
@@ -1790,8 +1801,7 @@
                     </p>
 
                     <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                        <button class="primary-btn" id="view-my-results-btn" style="background: var(--primary); color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s;">📊 View Detailed Results</button>
-                        <button class="success-btn" id="restart-btn">Take Another Exam</button>
+                        <button class="primary-btn" id="result-logout-btn" style="background: var(--primary); color: white; padding: 15px 40px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1.1rem; transition: all 0.3s;">🚪 Log Out / Close</button>
                     </div>
                 </div>
             </div>
@@ -1856,7 +1866,6 @@
             };
 
             localStorage.setItem(EXAM_STATE_KEY, JSON.stringify(examState));
-            console.log('📝 Exam state saved');
         }
 
         // Load saved exam state from localStorage
@@ -1872,7 +1881,6 @@
                 const hoursDiff = (now - savedAt) / (1000 * 60 * 60);
 
                 if (hoursDiff > 24) {
-                    console.log('⚠️ Saved exam state expired');
                     clearExamState();
                     return null;
                 }
@@ -1888,7 +1896,6 @@
         // Clear saved exam state
         function clearExamState() {
             localStorage.removeItem(EXAM_STATE_KEY);
-            console.log('🗑️ Exam state cleared');
         }
 
         // Check and resume exam if one was in progress
@@ -1908,7 +1915,6 @@
                 const currentMobile = session.userData.mobile;
 
                 if (currentName !== savedName || currentMobile !== savedMobile) {
-                    console.log('⚠️ Saved exam belongs to different user');
                     clearExamState();
                     return;
                 }
@@ -1982,8 +1988,6 @@
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                 window.PoliteCCAPI.showNotification('✅ Exam resumed successfully!', 'success');
             }
-
-            console.log('✅ Exam resumed from saved state');
         }
 
         // Start or restart the exam timer
@@ -2159,6 +2163,34 @@
         function clearSession() {
             localStorage.removeItem('userType');
             localStorage.removeItem('userData');
+        }
+
+        // Helper function to format date correctly (handles YYYY-MM-DD as local date)
+        function formatDateForDisplay(dateInput) {
+            if (!dateInput) return 'N/A';
+
+            let date;
+            const dateStr = String(dateInput);
+
+            // Check if date is in YYYY-MM-DD format (parse as local, not UTC)
+            const yyyymmddMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (yyyymmddMatch) {
+                const year = parseInt(yyyymmddMatch[1], 10);
+                const month = parseInt(yyyymmddMatch[2], 10) - 1;
+                const day = parseInt(yyyymmddMatch[3], 10);
+                date = new Date(year, month, day);
+            } else {
+                // Try parsing as-is for other formats
+                date = new Date(dateInput);
+            }
+
+            if (isNaN(date.getTime())) return 'Invalid Date';
+
+            // Format as dd-mm-yyyy
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}-${month}-${year}`;
         }
 
         // OCR Review Modal Functions
@@ -2638,7 +2670,7 @@
                 let historyHTML = '';
 
                 examHistory.examHistory.forEach((exam, index) => {
-                    const date = new Date(exam.date).toLocaleDateString('en-IN');
+                    const date = formatDateForDisplay(exam.date);
                     const scoreClass = (exam.score || 0) < 0 ? 'negative' : '';
 
                     // Parse answers to build question details
@@ -3333,10 +3365,6 @@
             document.getElementById('upload-section').classList.add('hidden');
             document.getElementById('ai-generator-section').classList.add('hidden');
 
-            // Debug: Show what questions are available for exam creation
-            console.log('📝 Create Exam - Questions available:', questions.length);
-            console.log('📝 Create Exam - Sample questions:', questions.slice(0, 3).map(q => ({ id: q.id, ID: q.ID, Subject: q.Subject })));
-
             // Render exam questions list
             const examQuestionsList = document.getElementById('exam-questions-list');
 
@@ -3483,15 +3511,29 @@
                     return;
                 }
 
-                // Convert date value to Date object (set to end of day for comparison)
-                // date input gives us "YYYY-MM-DD"
-                const expiryDate = new Date(expiryInput + 'T23:59:59');
+                // Parse date from dd-mm-yyyy format
+                let expiryDate;
+                let formattedExpiryForBackend;
+
+                // Check if date is in dd-mm-yyyy format
+                const ddmmyyyyMatch = expiryInput.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+                if (ddmmyyyyMatch) {
+                    const day = parseInt(ddmmyyyyMatch[1], 10);
+                    const month = parseInt(ddmmyyyyMatch[2], 10) - 1; // JS months are 0-indexed
+                    const year = parseInt(ddmmyyyyMatch[3], 10);
+                    expiryDate = new Date(year, month, day, 23, 59, 59);
+                    formattedExpiryForBackend = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                } else {
+                    // Try YYYY-MM-DD format as fallback
+                    expiryDate = new Date(expiryInput + 'T23:59:59');
+                    formattedExpiryForBackend = expiryInput;
+                }
 
                 // Check if the expiry date is valid
                 if (isNaN(expiryDate.getTime())) {
                     const examError = document.getElementById('exam-error');
                     if (examError) {
-                        examError.textContent = '❌ Invalid expiry date!';
+                        examError.textContent = '❌ Invalid expiry date! Use format: dd-mm-yyyy';
                         setTimeout(() => {
                             examError.textContent = '';
                         }, 3000);
@@ -3499,10 +3541,11 @@
                     return;
                 }
 
-                // Check if expiry date is today or in the future (we don't need to check if it's in the past)
+                // Check if expiry date is today or in the future
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                const expiryDateOnly = new Date(expiryInput);
+                const expiryDateOnly = new Date(expiryDate);
+                expiryDateOnly.setHours(0, 0, 0, 0);
                 if (expiryDateOnly.getTime() < today.getTime()) {
                     const examError = document.getElementById('exam-error');
                     if (examError) {
@@ -3529,24 +3572,14 @@
                     return;
                 }
 
-                // Format expiry date for Airtable (store date only in YYYY-MM-DD format)
-                const formattedExpiry = expiryInput;
-
-                console.log('📅 Debug - Expiry Input:', expiryInput);
-                console.log('📅 Debug - Expiry Date:', expiryDate);
-                console.log('📅 Debug - Formatted Expiry:', formattedExpiry);
-                console.log('📋 Debug - Selected Questions (Record IDs):', selectedQuestions);
-
                 // Create exam object - use 'Questions' to match Airtable field name
                 const newExam = {
                     'Exam Code': examCode,
                     'Title': examTitle,
                     'Duration (mins)': duration,
-                    'Expiry (IST)': formattedExpiry,
-                    'Questions': selectedQuestions  // Correct field name for Airtable
+                    'Expiry (IST)': formattedExpiryForBackend,
+                    'Questions': selectedQuestions
                 };
-
-                console.log('📤 Debug - Exam Data Being Sent:', JSON.stringify(newExam, null, 2));
 
                 // Save to database if API is available
                 if (window.PoliteCCAPI && window.PoliteCCAPI.createExamInDatabase) {
@@ -3684,7 +3717,7 @@
                     const examCode = exam['Exam Code'] || exam.examCode;
                     const title = exam['Title'] || exam.title || 'Untitled';
                     const expiryDate = exam['Expiry (IST)'] ? new Date(exam['Expiry (IST)']) : null;
-                    const expiryStr = expiryDate ? expiryDate.toLocaleDateString('en-IN') : 'No Expiry';
+                    const expiryStr = exam['Expiry (IST)'] ? formatDateForDisplay(exam['Expiry (IST)']) : 'No Expiry';
 
                     let isExpired = false;
                     if (expiryDate) {
@@ -3753,7 +3786,7 @@
                 // Get exam details
                 const exam = exams.find(e => (e['Exam Code'] || e.examCode) === examCode);
                 const title = exam ? (exam['Title'] || exam.title || 'Untitled') : 'Unknown';
-                const expiryDate = exam && exam['Expiry (IST)'] ? new Date(exam['Expiry (IST)']).toLocaleDateString('en-IN') : 'No Expiry';
+                const expiryDateStr = exam && exam['Expiry (IST)'] ? formatDateForDisplay(exam['Expiry (IST)']) : 'No Expiry';
                 const duration = exam ? (exam['Duration (mins)'] || exam['Duration'] || exam.duration || 60) : 60;
                 // 'Questions' is the correct Airtable field name for linked records
                 const examQuestionIds = exam ? (exam['Questions'] || exam['Question IDs'] || exam['QuestionIDs'] || exam.questionIds || []) : [];
@@ -3764,7 +3797,7 @@
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                         <div><strong>Exam Code:</strong> ${examCode}</div>
                         <div><strong>Title:</strong> ${title}</div>
-                        <div><strong>Expiry Date:</strong> ${expiryDate}</div>
+                        <div><strong>Expiry Date:</strong> ${expiryDateStr}</div>
                         <div><strong>Duration:</strong> ${duration} minutes</div>
                         <div><strong>Total Questions:</strong> ${questionCount}</div>
                     </div>
@@ -3797,7 +3830,7 @@
                     const score = parseFloat(result.Score || result.score || 0);
                     const mobile = result.Mobile || result.mobile || 'N/A';
                     const submittedAt = result['Submitted At'] || result.submittedAt || '';
-                    const dateStr = submittedAt ? new Date(submittedAt).toLocaleDateString('en-IN') : 'N/A';
+                    const dateStr = submittedAt ? formatDateForDisplay(submittedAt) : 'N/A';
 
                     const scoreColor = score >= 0 ? '#27ae60' : '#e74c3c';
                     const rankBadge = index < 3 ? ['🥇', '🥈', '🥉'][index] : `#${index + 1}`;
@@ -4699,9 +4732,6 @@
                     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                         window.PoliteCCAPI.showNotification('✅ AI question added to your bank!', 'success');
                     }
-
-                    // Optionally go back to question bank
-                    // document.getElementById('question-bank-btn').click();
                 }
 
             } catch (error) {
@@ -4771,7 +4801,6 @@
                     }
 
                     if (loginError) loginError.textContent = '';
-                    console.log(`📚 Loaded ${exams.length} exams and ${questions.length} questions`);
                 }
 
                 // Find exam (case-insensitive comparison)
@@ -4809,12 +4838,7 @@
 
                 // Get questions for this exam
                 // 'Questions' is the correct Airtable field name (linked record field returns array of record IDs)
-                console.log('📋 Full exam object:', exam);
-                console.log('📋 Exam field names:', Object.keys(exam));
-
                 let questionIds = exam['Questions'] || exam['Question IDs'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || [];
-
-                console.log('🔍 Raw questionIds value:', questionIds, 'Type:', typeof questionIds);
 
                 // Ensure it's an array
                 if (typeof questionIds === 'string') {
@@ -4824,21 +4848,11 @@
                     questionIds = [];
                 }
 
-                console.log('🔍 Processed questionIds:', questionIds);
-                console.log('🔍 Available questions (first 5):', questions.slice(0, 5).map(q => ({ id: q.id, ID: q.ID })));
-
                 // Find questions by Airtable record ID (new format) or by Question ID field (old format)
                 const examQuestions = questionIds
-                    .map(id => {
-                        const found = questions.find(q => q.id === id || q.ID === id);
-                        if (!found) {
-                            console.log(`⚠️ Question not found for ID: ${id}`);
-                        }
-                        return found;
-                    })
+                    .map(id => questions.find(q => q.id === id || q.ID === id))
                     .filter(q => q);
 
-                console.log(`✅ Matched ${examQuestions.length} questions out of ${questionIds.length} IDs`);
 
                 if (examQuestions.length === 0) {
                     const loginError = document.getElementById('login-error');
@@ -4954,16 +4968,7 @@
             submitExam();
         });
 
-        // View candidate's own detailed results
-        document.getElementById('view-my-answers-btn').addEventListener('click', function() {
-            if (!candidateDetailedAnswers) {
-                window.PoliteCCAPI.showNotification('❌ No results available to display', 'error');
-                return;
-            }
-            showCandidateOwnResults();
-        });
-
-        // Function to show candidate's own detailed results
+        // Function to show candidate's own detailed results (used by results modal)
         function showCandidateOwnResults() {
             const modal = document.getElementById('results-detail-modal');
             const content = document.getElementById('results-detail-content');
@@ -5019,42 +5024,33 @@
             // Close modal handler is already set up for results-detail-modal
         }
 
-        // Restart app - Take Another Exam
-        document.getElementById('restart-btn').addEventListener('click', async function() {
-            document.getElementById('result-screen').classList.remove('active');
+        // Log out and close from result screen
+        document.getElementById('result-logout-btn').addEventListener('click', function() {
+            // Clear any running exam timer
+            if (typeof examTimer !== 'undefined' && examTimer) {
+                clearInterval(examTimer);
+                examTimer = null;
+            }
 
             // Reset candidate detailed answers
             candidateDetailedAnswers = null;
 
-            // Check if user is logged in and redirect accordingly
-            const session = getSession();
-            if (session && session.userType === 'candidate') {
-                // Refresh dashboard and show it
-                await showCandidateDashboard(session.userData);
-            } else {
-                document.getElementById('hero-landing').classList.add('active');
-                updateHeaderNav('hero-landing');
+            // Clear session
+            clearSession();
+
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+
+            // Show landing page
+            document.getElementById('hero-landing').classList.add('active');
+            updateHeaderNav('hero-landing');
+
+            // Show notification
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('👋 Session ended successfully', 'success');
             }
-
-            const notification = document.createElement('div');
-            notification.className = 'notification success';
-            notification.innerHTML = '✅ Ready for next exam!';
-            document.getElementById('notification-container').appendChild(notification);
-
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 3000);
-        });
-
-        // View detailed results after exam completion
-        document.getElementById('view-my-results-btn').addEventListener('click', function() {
-            if (!candidateDetailedAnswers) {
-                window.PoliteCCAPI.showNotification('❌ No results available to display', 'error');
-                return;
-            }
-            showCandidateOwnResults();
         });
 
         // Timer functions
@@ -5236,16 +5232,25 @@
             }
         }
 
-            // Initialize: Set default expiry date to tomorrow
-            const now = new Date();
-            now.setDate(now.getDate() + 1);
+            // Initialize Flatpickr for expiry date
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
             const expiryInput = document.getElementById('exam-expiry');
-            if (expiryInput) {
-                // For date input, use .value with YYYY-MM-DD format
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                expiryInput.value = `${year}-${month}-${day}`;
+            if (expiryInput && typeof flatpickr !== 'undefined') {
+                const fp = flatpickr(expiryInput, {
+                    dateFormat: "d-m-Y",         // Display format: dd-mm-yyyy
+                    defaultDate: tomorrow,       // Set default to tomorrow
+                    minDate: "today",            // Prevent selecting past dates
+                    allowInput: true,            // Allow manual keyboard input
+                    clickOpens: true,            // Open calendar on click
+                    disableMobile: true,         // Use Flatpickr on mobile too (not native picker)
+                    onReady: function(selectedDates, dateStr, instance) {
+                        // Ensure calendar is visible above other elements
+                        instance.calendarContainer.style.zIndex = '99999';
+                    }
+                });
+                // Store reference for potential cleanup
+                window.expiryDatePicker = fp;
             }
 
             // Check if user is already logged in (do this AFTER all event handlers are attached)
