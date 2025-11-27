@@ -3289,7 +3289,11 @@
             document.getElementById('view-results-section').classList.add('hidden');
             document.getElementById('upload-section').classList.add('hidden');
             document.getElementById('ai-generator-section').classList.add('hidden');
-            
+
+            // Debug: Show what questions are available for exam creation
+            console.log('📝 Create Exam - Questions available:', questions.length);
+            console.log('📝 Create Exam - Sample questions:', questions.slice(0, 3).map(q => ({ id: q.id, ID: q.ID, Subject: q.Subject })));
+
             // Render exam questions list
             const examQuestionsList = document.getElementById('exam-questions-list');
 
