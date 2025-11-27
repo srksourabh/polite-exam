@@ -1212,6 +1212,13 @@
             }
         }
     </style>
+
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
     <script src="api-integration.js"></script>
 </head>
 <body>
@@ -1506,7 +1513,7 @@
                     </div>
                     <div class="form-group">
                         <label>Expiry Date (IST)</label>
-                        <input type="date" id="exam-expiry">
+                        <input type="text" id="exam-expiry" placeholder="dd-mm-yyyy" readonly>
                     </div>
                     <div class="form-group">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
@@ -1782,7 +1789,8 @@
 
                     <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                         <button class="primary-btn" id="view-my-results-btn" style="background: var(--primary); color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s;">📊 View Detailed Results</button>
-                        <button class="success-btn" id="restart-btn">Take Another Exam</button>
+                        <button class="primary-btn" id="close-result-btn" style="background: var(--secondary); color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s;">✖ Close</button>
+                        <button class="danger-btn" id="result-logout-btn" style="background: var(--danger); color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s;">🚪 Log Out</button>
                     </div>
                 </div>
             </div>
@@ -5010,33 +5018,54 @@
             // Close modal handler is already set up for results-detail-modal
         }
 
-        // Restart app - Take Another Exam
-        document.getElementById('restart-btn').addEventListener('click', async function() {
+        // Close result screen
+        document.getElementById('close-result-btn').addEventListener('click', function() {
             document.getElementById('result-screen').classList.remove('active');
 
             // Reset candidate detailed answers
             candidateDetailedAnswers = null;
 
-            // Check if user is logged in and redirect accordingly
+            // Check if user is logged in and redirect to dashboard
             const session = getSession();
             if (session && session.userType === 'candidate') {
-                // Refresh dashboard and show it
-                await showCandidateDashboard(session.userData);
+                // Show dashboard
+                document.getElementById('candidate-dashboard').classList.add('active');
+                updateHeaderNav('candidate-dashboard');
             } else {
                 document.getElementById('hero-landing').classList.add('active');
                 updateHeaderNav('hero-landing');
             }
+        });
 
-            const notification = document.createElement('div');
-            notification.className = 'notification success';
-            notification.innerHTML = '✅ Ready for next exam!';
-            document.getElementById('notification-container').appendChild(notification);
-
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
+        // Log out from result screen
+        document.getElementById('result-logout-btn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to log out?')) {
+                // Clear any running exam timer
+                if (typeof examTimer !== 'undefined' && examTimer) {
+                    clearInterval(examTimer);
+                    examTimer = null;
                 }
-            }, 3000);
+
+                // Reset candidate detailed answers
+                candidateDetailedAnswers = null;
+
+                // Clear session
+                clearSession();
+
+                // Hide all screens
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.classList.remove('active');
+                });
+
+                // Show landing page
+                document.getElementById('hero-landing').classList.add('active');
+                updateHeaderNav('hero-landing');
+
+                // Show notification
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('👋 Logged out successfully', 'success');
+                }
+            }
         });
 
         // View detailed results after exam completion
@@ -5227,16 +5256,20 @@
             }
         }
 
-            // Initialize: Set default expiry date to tomorrow
+            // Initialize Flatpickr for expiry date
             const now = new Date();
             now.setDate(now.getDate() + 1);
             const expiryInput = document.getElementById('exam-expiry');
             if (expiryInput) {
-                // For date input, use .value with YYYY-MM-DD format
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                expiryInput.value = `${year}-${month}-${day}`;
+                flatpickr(expiryInput, {
+                    dateFormat: "Y-m-d",         // Internal format: YYYY-MM-DD (for backend)
+                    altInput: true,              // Show user-friendly format
+                    altFormat: "d-m-Y",          // User sees: dd-mm-yyyy
+                    defaultDate: now,            // Set default to tomorrow
+                    minDate: "today",            // Prevent selecting past dates
+                    allowInput: true,            // Allow keyboard input
+                    clickOpens: true,            // Open calendar on click
+                });
             }
 
             // Check if user is already logged in (do this AFTER all event handlers are attached)
