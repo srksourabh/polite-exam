@@ -1859,7 +1859,6 @@
             };
 
             localStorage.setItem(EXAM_STATE_KEY, JSON.stringify(examState));
-            console.log('📝 Exam state saved');
         }
 
         // Load saved exam state from localStorage
@@ -1875,7 +1874,6 @@
                 const hoursDiff = (now - savedAt) / (1000 * 60 * 60);
 
                 if (hoursDiff > 24) {
-                    console.log('⚠️ Saved exam state expired');
                     clearExamState();
                     return null;
                 }
@@ -1891,7 +1889,6 @@
         // Clear saved exam state
         function clearExamState() {
             localStorage.removeItem(EXAM_STATE_KEY);
-            console.log('🗑️ Exam state cleared');
         }
 
         // Check and resume exam if one was in progress
@@ -1911,7 +1908,6 @@
                 const currentMobile = session.userData.mobile;
 
                 if (currentName !== savedName || currentMobile !== savedMobile) {
-                    console.log('⚠️ Saved exam belongs to different user');
                     clearExamState();
                     return;
                 }
@@ -1985,8 +1981,6 @@
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                 window.PoliteCCAPI.showNotification('✅ Exam resumed successfully!', 'success');
             }
-
-            console.log('✅ Exam resumed from saved state');
         }
 
         // Start or restart the exam timer
@@ -3336,10 +3330,6 @@
             document.getElementById('upload-section').classList.add('hidden');
             document.getElementById('ai-generator-section').classList.add('hidden');
 
-            // Debug: Show what questions are available for exam creation
-            console.log('📝 Create Exam - Questions available:', questions.length);
-            console.log('📝 Create Exam - Sample questions:', questions.slice(0, 3).map(q => ({ id: q.id, ID: q.ID, Subject: q.Subject })));
-
             // Render exam questions list
             const examQuestionsList = document.getElementById('exam-questions-list');
 
@@ -3535,21 +3525,14 @@
                 // Format expiry date for Airtable (store date only in YYYY-MM-DD format)
                 const formattedExpiry = expiryInput;
 
-                console.log('📅 Debug - Expiry Input:', expiryInput);
-                console.log('📅 Debug - Expiry Date:', expiryDate);
-                console.log('📅 Debug - Formatted Expiry:', formattedExpiry);
-                console.log('📋 Debug - Selected Questions (Record IDs):', selectedQuestions);
-
                 // Create exam object - use 'Questions' to match Airtable field name
                 const newExam = {
                     'Exam Code': examCode,
                     'Title': examTitle,
                     'Duration (mins)': duration,
                     'Expiry (IST)': formattedExpiry,
-                    'Questions': selectedQuestions  // Correct field name for Airtable
+                    'Questions': selectedQuestions
                 };
-
-                console.log('📤 Debug - Exam Data Being Sent:', JSON.stringify(newExam, null, 2));
 
                 // Save to database if API is available
                 if (window.PoliteCCAPI && window.PoliteCCAPI.createExamInDatabase) {
@@ -4702,9 +4685,6 @@
                     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                         window.PoliteCCAPI.showNotification('✅ AI question added to your bank!', 'success');
                     }
-
-                    // Optionally go back to question bank
-                    // document.getElementById('question-bank-btn').click();
                 }
 
             } catch (error) {
@@ -4774,7 +4754,6 @@
                     }
 
                     if (loginError) loginError.textContent = '';
-                    console.log(`📚 Loaded ${exams.length} exams and ${questions.length} questions`);
                 }
 
                 // Find exam (case-insensitive comparison)
@@ -4812,12 +4791,7 @@
 
                 // Get questions for this exam
                 // 'Questions' is the correct Airtable field name (linked record field returns array of record IDs)
-                console.log('📋 Full exam object:', exam);
-                console.log('📋 Exam field names:', Object.keys(exam));
-
                 let questionIds = exam['Questions'] || exam['Question IDs'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || [];
-
-                console.log('🔍 Raw questionIds value:', questionIds, 'Type:', typeof questionIds);
 
                 // Ensure it's an array
                 if (typeof questionIds === 'string') {
@@ -4827,21 +4801,11 @@
                     questionIds = [];
                 }
 
-                console.log('🔍 Processed questionIds:', questionIds);
-                console.log('🔍 Available questions (first 5):', questions.slice(0, 5).map(q => ({ id: q.id, ID: q.ID })));
-
                 // Find questions by Airtable record ID (new format) or by Question ID field (old format)
                 const examQuestions = questionIds
-                    .map(id => {
-                        const found = questions.find(q => q.id === id || q.ID === id);
-                        if (!found) {
-                            console.log(`⚠️ Question not found for ID: ${id}`);
-                        }
-                        return found;
-                    })
+                    .map(id => questions.find(q => q.id === id || q.ID === id))
                     .filter(q => q);
 
-                console.log(`✅ Matched ${examQuestions.length} questions out of ${questionIds.length} IDs`);
 
                 if (examQuestions.length === 0) {
                     const loginError = document.getElementById('login-error');
