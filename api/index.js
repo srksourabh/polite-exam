@@ -210,14 +210,14 @@ module.exports = async (req, res) => {
             try {
                 const examData = req.body;
 
-                // Get question IDs value
-                const questionIdsValue = examData['Question IDs'] || examData['questionIds'] || examData['Questions'];
+                // Get question IDs value - prioritize 'Questions' as it's the correct Airtable field name
+                const questionIdsValue = examData['Questions'] || examData['Question IDs'] || examData['questionIds'];
 
                 // Try different possible field name variations for Question IDs
-                // Airtable might use: "Question IDs", "Questions", "QuestionIDs", etc.
+                // 'Questions' is the correct field name in Airtable (linked record field)
                 const fieldVariations = [
+                    'Questions',      // Correct Airtable field name (linked record)
                     'Question IDs',
-                    'Questions',
                     'QuestionIDs',
                     'questionIds',
                     'question_ids'
