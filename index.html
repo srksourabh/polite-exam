@@ -4761,7 +4761,12 @@
 
                 // Get questions for this exam
                 // 'Questions' is the correct Airtable field name (linked record field returns array of record IDs)
+                console.log('📋 Full exam object:', exam);
+                console.log('📋 Exam field names:', Object.keys(exam));
+
                 let questionIds = exam['Questions'] || exam['Question IDs'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || [];
+
+                console.log('🔍 Raw questionIds value:', questionIds, 'Type:', typeof questionIds);
 
                 // Ensure it's an array
                 if (typeof questionIds === 'string') {
@@ -4771,8 +4776,8 @@
                     questionIds = [];
                 }
 
-                console.log('🔍 Exam question IDs:', questionIds);
-                console.log('🔍 Available questions:', questions.map(q => ({ id: q.id, ID: q.ID })));
+                console.log('🔍 Processed questionIds:', questionIds);
+                console.log('🔍 Available questions (first 5):', questions.slice(0, 5).map(q => ({ id: q.id, ID: q.ID })));
 
                 // Find questions by Airtable record ID (new format) or by Question ID field (old format)
                 const examQuestions = questionIds
