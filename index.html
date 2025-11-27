@@ -1066,6 +1066,10 @@
             z-index: 2000;
             overflow-y: auto;
         }
+        /* Flatpickr calendar z-index override to ensure visibility */
+        .flatpickr-calendar {
+            z-index: 10000 !important;
+        }
         .ocr-review-content {
             background: white;
             margin: 20px auto;
@@ -5269,6 +5273,9 @@
                     minDate: "today",            // Prevent selecting past dates
                     allowInput: true,            // Allow keyboard input
                     clickOpens: true,            // Open calendar on click
+                    appendTo: document.body,     // Append to body to avoid overflow:hidden clipping
+                    static: false,               // Use absolute positioning (not static)
+                    disableMobile: false,        // Enable native mobile date picker on mobile devices
                 });
             }
 
