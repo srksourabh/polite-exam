@@ -4951,11 +4951,11 @@
                 window.PoliteCCAPI.showNotification('❌ No results available to display', 'error');
                 return;
             }
-            showCandidateDetailedResults();
+            showCandidateOwnResults();
         });
 
-        // Function to show candidate's detailed results
-        function showCandidateDetailedResults() {
+        // Function to show candidate's own detailed results
+        function showCandidateOwnResults() {
             const modal = document.getElementById('results-detail-modal');
             const content = document.getElementById('results-detail-content');
 
@@ -5045,7 +5045,7 @@
                 window.PoliteCCAPI.showNotification('❌ No results available to display', 'error');
                 return;
             }
-            showCandidateDetailedResults();
+            showCandidateOwnResults();
         });
 
         // Timer functions
