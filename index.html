@@ -4702,14 +4702,24 @@
                 }
 
                 // Load exams and questions from API if not already loaded
-                if (exams.length === 0 && window.PoliteCCAPI && window.PoliteCCAPI.loadExams) {
+                if (window.PoliteCCAPI) {
                     const loginError = document.getElementById('login-error');
-                    if (loginError) loginError.textContent = '🔄 Loading exam data...';
 
-                    exams = await window.PoliteCCAPI.loadExams() || [];
-                    questions = await window.PoliteCCAPI.loadQuestions() || [];
+                    // Always ensure both exams and questions are loaded
+                    if (exams.length === 0 || questions.length === 0) {
+                        if (loginError) loginError.textContent = '🔄 Loading exam data...';
 
-                    if (loginError) loginError.textContent = '';
+                        if (exams.length === 0 && window.PoliteCCAPI.loadExams) {
+                            exams = await window.PoliteCCAPI.loadExams() || [];
+                        }
+                        if (questions.length === 0 && window.PoliteCCAPI.loadQuestions) {
+                            questions = await window.PoliteCCAPI.loadQuestions() || [];
+                        }
+
+                        if (loginError) loginError.textContent = '';
+                    }
+
+                    console.log(`📚 Loaded ${exams.length} exams and ${questions.length} questions`);
                 }
 
                 // Find exam (case-insensitive comparison)
@@ -4747,22 +4757,43 @@
 
                 // Get questions for this exam
                 // Handle Question IDs - can be an array of record IDs or comma-separated string of question IDs (for backward compatibility)
-                let questionIds = exam['Question IDs'] || exam['Questions'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || '';
+                let questionIds = exam['Question IDs'] || exam['Questions'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || [];
+
+                // Ensure it's an array
                 if (typeof questionIds === 'string') {
-                    questionIds = questionIds.split(',').map(id => id.trim());
+                    questionIds = questionIds.split(',').map(id => id.trim()).filter(id => id);
                 }
+                if (!Array.isArray(questionIds)) {
+                    questionIds = [];
+                }
+
+                console.log('🔍 Exam question IDs:', questionIds);
+                console.log('🔍 Available questions:', questions.map(q => ({ id: q.id, ID: q.ID })));
+
                 // Find questions by Airtable record ID (new format) or by Question ID field (old format)
                 const examQuestions = questionIds
-                    .map(id => questions.find(q => q.id === id || q.ID === id))
+                    .map(id => {
+                        const found = questions.find(q => q.id === id || q.ID === id);
+                        if (!found) {
+                            console.log(`⚠️ Question not found for ID: ${id}`);
+                        }
+                        return found;
+                    })
                     .filter(q => q);
+
+                console.log(`✅ Matched ${examQuestions.length} questions out of ${questionIds.length} IDs`);
 
                 if (examQuestions.length === 0) {
                     const loginError = document.getElementById('login-error');
                     if (loginError) {
-                        loginError.textContent = '❌ No questions found for this exam!';
+                        if (questionIds.length === 0) {
+                            loginError.textContent = '❌ This exam has no questions assigned to it!';
+                        } else {
+                            loginError.textContent = `❌ Could not find questions (${questionIds.length} IDs in exam but none matched)`;
+                        }
                         setTimeout(() => {
                             loginError.textContent = '';
-                        }, 3000);
+                        }, 5000);
                     }
                     return;
                 }
