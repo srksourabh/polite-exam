@@ -167,12 +167,22 @@
             background: var(--danger);
             color: white;
             text-align: center;
-            padding: 12px;
+            padding: 12px 20px;
             border-radius: 10px;
             font-weight: bold;
-            font-size: 1.3rem;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 999;
+            min-width: 200px;
+            animation: timerPulse 2s infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
         }
         .question-container {
             background: var(--light);
@@ -1714,10 +1724,8 @@
 
             <!-- Exam Screen -->
             <div id="exam-screen" class="screen">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div class="timer" id="timer-display">⏱️ Time Remaining: 10:00</div>
-                    <button style="background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 0.85rem;" id="candidate-logout-btn">Logout</button>
-                </div>
+                <!-- Floating Timer -->
+                <div class="timer" id="timer-display">⏱️ Time Remaining: 10:00</div>
 
                 <div class="question-container">
                     <div class="question-tag" id="question-subject-display">Reasoning</div>
@@ -1773,6 +1781,7 @@
                     </p>
 
                     <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <button class="primary-btn" id="view-my-results-btn" style="background: var(--primary); color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s;">📊 View Detailed Results</button>
                         <button class="success-btn" id="restart-btn">Take Another Exam</button>
                     </div>
                 </div>
@@ -2022,6 +2031,9 @@
             const candidateScreens = ['candidate-signup-screen', 'candidate-signin-screen', 'candidate-dashboard',
                                       'candidate-login-screen', 'exam-screen', 'result-screen', 'forgot-password-screen'];
 
+            // Screens where admin link should be hidden (admin panel and login screen)
+            const adminScreens = ['admin-panel', 'admin-login-screen'];
+
             // Screens where back button should be hidden (root screens)
             const noBackScreens = ['hero-landing', 'candidate-dashboard'];
 
@@ -2047,6 +2059,10 @@
                         headerLogoutBtn.style.display = 'block';
                     }
                 }
+            } else if (adminScreens.includes(screenId)) {
+                // Hide admin link on admin panel and login screen
+                adminLink.classList.add('hidden');
+                candidateNavButtons.classList.remove('visible');
             } else {
                 adminLink.classList.remove('hidden');
                 candidateNavButtons.classList.remove('visible');
@@ -4940,8 +4956,8 @@
 
         // Function to show candidate's detailed results
         function showCandidateDetailedResults() {
-            const modal = document.getElementById('detailed-result-modal');
-            const content = document.getElementById('detailed-result-content');
+            const modal = document.getElementById('results-detail-modal');
+            const content = document.getElementById('results-detail-content');
 
             const data = candidateDetailedAnswers;
 
@@ -4991,10 +5007,7 @@
             content.innerHTML = html;
             modal.style.display = 'block';
 
-            // Close modal handler
-            document.getElementById('close-detailed-modal').onclick = function() {
-                modal.style.display = 'none';
-            };
+            // Close modal handler is already set up for results-detail-modal
         }
 
         // Restart app - Take Another Exam
@@ -5024,6 +5037,15 @@
                     notification.parentNode.removeChild(notification);
                 }
             }, 3000);
+        });
+
+        // View detailed results after exam completion
+        document.getElementById('view-my-results-btn').addEventListener('click', function() {
+            if (!candidateDetailedAnswers) {
+                window.PoliteCCAPI.showNotification('❌ No results available to display', 'error');
+                return;
+            }
+            showCandidateDetailedResults();
         });
 
         // Timer functions
