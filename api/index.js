@@ -626,7 +626,7 @@ module.exports = async (req, res) => {
         if (url.startsWith('/api/results/') && method === 'GET') {
             const examCode = url.split('/api/results/')[1];
 
-            // First verify the exam exists
+            // First verify the exam exists and get its ID
             const examRecords = await base(EXAMS_TABLE)
                 .select({
                     filterByFormula: `{Exam Code} = '${examCode}'`
@@ -643,47 +643,26 @@ module.exports = async (req, res) => {
             const examId = examRecords[0].id;
             let resultRecords = [];
 
-            // Primary method: Filter by Exam Code field (most reliable)
+            // Get all results and filter by linked Exam field
             try {
-                resultRecords = await base(RESULTS_TABLE)
-                    .select({
-                        filterByFormula: `{Exam Code} = '${examCode}'`
-                    })
-                    .all();
-                console.log(`Found ${resultRecords.length} results by Exam Code for: ${examCode}`);
-            } catch (err) {
-                console.log('Failed to filter by Exam Code:', err.message);
-            }
-
-            // Fallback: If no results found by Exam Code, try linked record field
-            if (resultRecords.length === 0) {
-                const fieldVariations = [
-                    `{Exam}`,  // Direct linked field name
-                    `{Exam (from Exam)}`,  // Rollup/lookup field
-                    `ARRAYJOIN({Exam})`,  // Array join for linked records
-                ];
-
-                for (const fieldFormula of fieldVariations) {
-                    try {
-                        resultRecords = await base(RESULTS_TABLE)
-                            .select({
-                                filterByFormula: `FIND('${examId}', ${fieldFormula})`
-                            })
-                            .all();
-
-                        if (resultRecords.length > 0) {
-                            console.log(`Found ${resultRecords.length} results by linked field for: ${examCode}`);
-                            break;
-                        }
-                    } catch (err) {
-                        console.log(`Failed with formula: FIND('${examId}', ${fieldFormula})`, err.message);
+                const allResults = await base(RESULTS_TABLE).select().all();
+                resultRecords = allResults.filter(record => {
+                    const linkedExams = record.fields['Exam'];
+                    if (Array.isArray(linkedExams)) {
+                        return linkedExams.includes(examId);
                     }
-                }
+                    return false;
+                });
+                console.log(`Found ${resultRecords.length} results for exam: ${examCode}`);
+            } catch (err) {
+                console.log('Error fetching results:', err.message);
             }
 
             const results = resultRecords.map(record => ({
                 id: record.id,
-                ...record.fields
+                ...record.fields,
+                // Add examCode to the result for display purposes
+                'Exam Code': examCode
             }));
 
             return res.status(200).json({ success: true, data: results });
