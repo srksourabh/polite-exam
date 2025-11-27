@@ -432,29 +432,253 @@
             }
         }
         
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                border-radius: 10px;
+                max-width: 100%;
+            }
             .content {
-                padding: 20px;
+                padding: 15px;
             }
             header {
-                padding: 20px;
+                padding: 15px;
+                min-height: 80px;
             }
             header h1 {
-                font-size: 1.5rem;
+                font-size: 1.3rem;
             }
             .logo {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
+                margin-bottom: 5px;
             }
+            .subtitle {
+                font-size: 0.9rem;
+            }
+            /* Admin link positioning */
+            .admin-link {
+                top: 10px;
+                right: 10px;
+                font-size: 0.8rem;
+                padding: 6px 10px;
+            }
+            /* Candidate nav buttons positioning */
+            .candidate-nav-buttons {
+                top: 10px;
+                right: 10px;
+                flex-direction: row;
+                gap: 5px;
+            }
+            .nav-btn {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+            /* Question display */
             .question-text {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
+                line-height: 1.5;
+            }
+            .question-container {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            .question-number {
+                font-size: 0.95rem;
             }
             .option {
-                padding: 12px;
+                padding: 12px 10px;
+                font-size: 0.95rem;
+            }
+            .option-letter {
+                width: 28px;
+                height: 28px;
+                font-size: 0.85rem;
+                margin-right: 10px;
+            }
+            /* Timer */
+            .timer {
                 font-size: 1rem;
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+            /* Navigation buttons */
+            .navigation {
+                flex-wrap: wrap;
+                gap: 10px;
             }
             .navigation button {
-                padding: 10px 15px;
+                flex: 1;
+                min-width: 45%;
+                padding: 12px 10px;
+                font-size: 14px;
+            }
+            /* Progress */
+            .progress {
+                font-size: 1rem;
+            }
+            /* Form elements */
+            .form-group {
+                margin-bottom: 15px;
+            }
+            input, select, textarea {
+                padding: 12px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            button {
+                padding: 12px 20px;
                 font-size: 16px;
+            }
+            /* Admin panel buttons */
+            #admin-panel > div:nth-child(2) {
+                flex-direction: column;
+                gap: 10px;
+            }
+            #admin-panel button {
+                width: 100%;
+            }
+            /* Status grid */
+            .status-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .status-item {
+                padding: 12px;
+            }
+            /* Question bank items */
+            .question-item {
+                padding: 12px !important;
+                padding-right: 50px !important;
+                padding-left: 40px !important;
+            }
+            .question-item .delete-question-btn,
+            .question-item .edit-question-btn {
+                width: 30px !important;
+                height: 30px !important;
+                font-size: 0.85rem !important;
+            }
+            /* Hero section */
+            .hero-section {
+                padding: 30px 15px;
+            }
+            .hero-title {
+                font-size: 1.5rem !important;
+            }
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            .hero-cta {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+            /* Auth forms */
+            .auth-form {
+                padding: 20px 15px;
+            }
+            .form-title {
+                font-size: 1.3rem;
+            }
+            /* Dashboard */
+            .dashboard-header {
+                padding: 20px 15px;
+            }
+            .dashboard-title {
+                font-size: 1.3rem;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 15px 10px;
+            }
+            .stat-number {
+                font-size: 1.5rem;
+            }
+            /* Result screen */
+            .result-container {
+                padding: 20px 15px;
+            }
+            .score-display {
+                font-size: 2.5rem;
+            }
+            /* Exam cards in results */
+            .exam-result-card,
+            .candidate-result-card {
+                padding: 15px;
+            }
+            /* Modals */
+            .ocr-review-content,
+            #results-detail-modal > div {
+                margin: 10px;
+                padding: 15px;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            /* Logout link in dashboard */
+            .logout-link {
+                font-size: 0.85rem;
+            }
+            /* AI Generator section */
+            #ai-generator-section .form-group {
+                margin-bottom: 12px;
+            }
+            /* Exam screen header */
+            #exam-screen > div:first-child {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            #exam-screen #candidate-logout-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            .content {
+                padding: 12px;
+            }
+            header {
+                padding: 12px;
+            }
+            .logo {
+                font-size: 1.3rem;
+            }
+            .subtitle {
+                font-size: 0.8rem;
+            }
+            .question-text {
+                font-size: 1rem;
+            }
+            .option {
+                padding: 10px 8px;
+                font-size: 0.9rem;
+            }
+            .option-letter {
+                width: 24px;
+                height: 24px;
+                font-size: 0.8rem;
+                margin-right: 8px;
+            }
+            .navigation button {
+                min-width: 100%;
+                padding: 10px;
+            }
+            /* Stack stats vertically on very small screens */
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            /* Button stacking in results */
+            #results-detail-modal button,
+            .ocr-review-actions button {
+                width: 100%;
+            }
+            .ocr-review-actions {
+                flex-direction: column;
             }
         }
 
@@ -1591,11 +1815,206 @@
         let candidateDetailedAnswers = null; // Store candidate's detailed results for viewing
         let currentScreen = 'hero-landing'; // Track current screen for navigation
 
+        // ========== EXAM SESSION TRACKING FOR RESUME FUNCTIONALITY ==========
+        const EXAM_STATE_KEY = 'polite_exam_in_progress';
+
+        // Save current exam state to localStorage
+        function saveExamState() {
+            if (!currentExam) return;
+
+            const examState = {
+                examCode: currentExam.code,
+                examId: currentExam.examId,
+                examTitle: currentExam.title,
+                duration: currentExam.duration,
+                questions: currentExam.questions,
+                startTime: currentExam.startTime.toISOString(),
+                currentQuestionIndex: currentQuestionIndex,
+                userAnswers: userAnswers,
+                timeRemaining: timeRemaining,
+                candidateName: document.getElementById('candidate-name')?.value || '',
+                candidateMobile: document.getElementById('candidate-mobile')?.value || '',
+                savedAt: new Date().toISOString()
+            };
+
+            localStorage.setItem(EXAM_STATE_KEY, JSON.stringify(examState));
+            console.log('📝 Exam state saved');
+        }
+
+        // Load saved exam state from localStorage
+        function loadExamState() {
+            const savedState = localStorage.getItem(EXAM_STATE_KEY);
+            if (!savedState) return null;
+
+            try {
+                const state = JSON.parse(savedState);
+                // Check if exam state is not too old (max 24 hours)
+                const savedAt = new Date(state.savedAt);
+                const now = new Date();
+                const hoursDiff = (now - savedAt) / (1000 * 60 * 60);
+
+                if (hoursDiff > 24) {
+                    console.log('⚠️ Saved exam state expired');
+                    clearExamState();
+                    return null;
+                }
+
+                return state;
+            } catch (e) {
+                console.error('Error loading exam state:', e);
+                clearExamState();
+                return null;
+            }
+        }
+
+        // Clear saved exam state
+        function clearExamState() {
+            localStorage.removeItem(EXAM_STATE_KEY);
+            console.log('🗑️ Exam state cleared');
+        }
+
+        // Check and resume exam if one was in progress
+        function checkAndResumeExam() {
+            const savedState = loadExamState();
+            if (!savedState) return;
+
+            // Check if the saved exam belongs to the current user
+            const session = getSession();
+            if (session && session.userData) {
+                const currentEmail = session.userData.email;
+                const savedName = savedState.candidateName;
+                const savedMobile = savedState.candidateMobile;
+
+                // Only resume if same user (by name and mobile)
+                const currentName = session.userData.name;
+                const currentMobile = session.userData.mobile;
+
+                if (currentName !== savedName || currentMobile !== savedMobile) {
+                    console.log('⚠️ Saved exam belongs to different user');
+                    clearExamState();
+                    return;
+                }
+            }
+
+            // Calculate remaining time
+            const startTime = new Date(savedState.startTime);
+            const now = new Date();
+            const elapsedSeconds = Math.floor((now - startTime) / 1000);
+            const totalDurationSeconds = savedState.duration * 60;
+            const remainingSeconds = totalDurationSeconds - elapsedSeconds;
+
+            if (remainingSeconds <= 0) {
+                // Exam time expired
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('⚠️ Your previous exam has expired. Please start a new one.', 'error');
+                }
+                clearExamState();
+                return;
+            }
+
+            // Ask user if they want to resume
+            const confirmResume = confirm(
+                `You have an ongoing exam: "${savedState.examTitle}"\n\n` +
+                `Time remaining: ${Math.floor(remainingSeconds / 60)} minutes ${remainingSeconds % 60} seconds\n` +
+                `Questions answered: ${savedState.userAnswers.filter(a => a !== null).length}/${savedState.questions.length}\n\n` +
+                `Do you want to resume this exam?`
+            );
+
+            if (confirmResume) {
+                resumeExam(savedState, remainingSeconds);
+            } else {
+                // User chose not to resume, clear the state
+                clearExamState();
+            }
+        }
+
+        // Resume exam from saved state
+        function resumeExam(savedState, remainingSeconds) {
+            // Restore exam state
+            currentExam = {
+                code: savedState.examCode,
+                examId: savedState.examId,
+                title: savedState.examTitle,
+                duration: savedState.duration,
+                questions: savedState.questions,
+                startTime: new Date(savedState.startTime)
+            };
+
+            currentQuestionIndex = savedState.currentQuestionIndex;
+            userAnswers = savedState.userAnswers;
+            timeRemaining = remainingSeconds;
+
+            // Set candidate info
+            const nameInput = document.getElementById('candidate-name');
+            const mobileInput = document.getElementById('candidate-mobile');
+            if (nameInput) nameInput.value = savedState.candidateName;
+            if (mobileInput) mobileInput.value = savedState.candidateMobile;
+
+            // Hide other screens and show exam screen
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById('exam-screen').classList.add('active');
+            updateHeaderNav('exam-screen');
+
+            // Start timer
+            startExamTimer();
+
+            // Load current question
+            loadQuestion();
+
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('✅ Exam resumed successfully!', 'success');
+            }
+
+            console.log('✅ Exam resumed from saved state');
+        }
+
+        // Start or restart the exam timer
+        function startExamTimer() {
+            if (examTimer) {
+                clearInterval(examTimer);
+            }
+
+            examTimer = setInterval(function() {
+                timeRemaining--;
+
+                // Update timer display
+                const mins = Math.floor(timeRemaining / 60);
+                const secs = timeRemaining % 60;
+                document.getElementById('timer-display').textContent =
+                    `⏱️ Time Remaining: ${mins}:${secs.toString().padStart(2, '0')}`;
+
+                // Save state every 30 seconds
+                if (timeRemaining % 30 === 0) {
+                    saveExamState();
+                }
+
+                // Auto-submit when time runs out
+                if (timeRemaining <= 0) {
+                    clearInterval(examTimer);
+
+                    const notification = document.createElement('div');
+                    notification.className = 'notification error';
+                    notification.innerHTML = '⏰ Time\'s up! Submitting your exam automatically...';
+                    document.getElementById('notification-container').appendChild(notification);
+
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 3000);
+
+                    submitExam(true);
+                }
+            }, 1000);
+        }
+        // ========== END EXAM SESSION TRACKING ==========
+
         // Function to manage header navigation visibility (global scope)
         function updateHeaderNav(screenId) {
             const adminLink = document.getElementById('admin-link');
             const candidateNavButtons = document.getElementById('candidate-nav-buttons');
             const backBtn = document.getElementById('header-back-btn');
+            const headerLogoutBtn = document.getElementById('header-logout-btn');
 
             if (!adminLink || !candidateNavButtons || !backBtn) return; // Guard for early calls
 
@@ -1606,6 +2025,9 @@
             // Screens where back button should be hidden (root screens)
             const noBackScreens = ['hero-landing', 'candidate-dashboard'];
 
+            // Screens where header logout should be hidden (dashboard has its own logout)
+            const noHeaderLogoutScreens = ['candidate-dashboard'];
+
             if (candidateScreens.includes(screenId)) {
                 adminLink.classList.add('hidden');
                 candidateNavButtons.classList.add('visible');
@@ -1615,6 +2037,15 @@
                     backBtn.style.display = 'none';
                 } else {
                     backBtn.style.display = 'block';
+                }
+
+                // Hide header logout button on dashboard (it has its own logout link)
+                if (headerLogoutBtn) {
+                    if (noHeaderLogoutScreens.includes(screenId)) {
+                        headerLogoutBtn.style.display = 'none';
+                    } else {
+                        headerLogoutBtn.style.display = 'block';
+                    }
                 }
             } else {
                 adminLink.classList.remove('hidden');
@@ -2357,11 +2788,15 @@
                     document.getElementById('admin-login-screen').classList.remove('active');
                     document.getElementById('admin-panel').classList.add('active');
                     document.getElementById('question-bank-section').classList.remove('hidden');
+                    updateHeaderNav('admin-panel');
 
                     // Check system status when admin logs in
                     if (window.PoliteCCAPI && window.PoliteCCAPI.checkSystemStatus) {
                         await window.PoliteCCAPI.checkSystemStatus();
                     }
+
+                    // Auto-load questions when admin panel opens
+                    document.getElementById('question-bank-btn').click();
 
                     // Clear form
                     document.getElementById('admin-username').value = '';
@@ -4184,11 +4619,12 @@
 
         // Accept AI question and add to database
         document.getElementById('accept-ai-btn').addEventListener('click', async function() {
+            // Get button reference BEFORE try block so it's accessible in finally
+            const acceptBtn = document.getElementById('accept-ai-btn');
             try {
                 if (!aiGeneratedQuestion) return;
 
                 // Disable button during save
-                const acceptBtn = document.getElementById('accept-ai-btn');
                 acceptBtn.disabled = true;
                 acceptBtn.textContent = '⏳ Saving...';
                 // Add to database
@@ -4345,10 +4781,10 @@
                 userAnswers = new Array(examQuestions.length).fill(null);
                 currentQuestionIndex = 0;
 
-                // Start timer
+                // Start timer using the centralized timer function
                 timeRemaining = currentExam.duration * 60;
                 startTime = new Date();
-                startTimer();
+                startExamTimer();
 
                 // Show exam screen
                 document.getElementById('candidate-login-screen').classList.remove('active');
@@ -4356,6 +4792,9 @@
                 updateHeaderNav('exam-screen');
 
                 loadQuestion();
+
+                // Save initial exam state for resume functionality
+                saveExamState();
 
                 const notification = document.createElement('div');
                 notification.className = 'notification success';
@@ -4400,6 +4839,8 @@
                     option.classList.remove('selected');
                 }
             });
+            // Save exam state after answer selection for resume functionality
+            saveExamState();
         }
 
         // Previous question
@@ -4407,6 +4848,7 @@
             if (currentQuestionIndex > 0) {
                 currentQuestionIndex--;
                 loadQuestion();
+                saveExamState(); // Save state on navigation
             }
         });
 
@@ -4415,6 +4857,7 @@
             if (currentQuestionIndex < currentExam.questions.length - 1) {
                 currentQuestionIndex++;
                 loadQuestion();
+                saveExamState(); // Save state on navigation
             }
         });
 
@@ -4560,6 +5003,9 @@
         async function submitExam(isAutoSubmit = false) {
             clearInterval(examTimer);
 
+            // Clear saved exam state since we're submitting
+            clearExamState();
+
             // Calculate score and prepare detailed answers
             let score = 0;
             const detailedAnswers = [];
@@ -4610,7 +5056,7 @@
                         'Mobile': candidateMobile,
                         'Score': parseFloat(score.toFixed(2)),
                         'Answers': JSON.stringify(detailedAnswers),
-                        'Exam Code': currentExam.code  // Always include exam code for reference
+                        'Submitted At': new Date().toISOString()
                     };
 
                     // Only add Exam linked record field if examId is valid
@@ -4715,10 +5161,14 @@
                 if (session) {
                     if (session.userType === 'candidate') {
                         showCandidateDashboard(session.userData);
+                        // Check if there's a saved exam in progress
+                        checkAndResumeExam();
                     } else if (session.userType === 'admin') {
                         document.getElementById('hero-landing').classList.remove('active');
                         document.getElementById('admin-panel').classList.add('active');
                         updateHeaderNav('admin-panel');
+                        // Auto-load questions when admin session is restored
+                        document.getElementById('question-bank-btn').click();
                     }
                 }
             } catch (e) {
