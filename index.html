@@ -2711,9 +2711,10 @@
             examSelect.innerHTML = '<option value="">-- Loading Exams... --</option>';
 
             try {
-                // Load exams from API
+                // Load exams and questions from API
                 if (window.PoliteCCAPI && window.PoliteCCAPI.loadExams) {
                     exams = await window.PoliteCCAPI.loadExams() || [];
+                    questions = await window.PoliteCCAPI.loadQuestions() || [];
                 }
 
                 // Filter only active exams (not expired)
@@ -4726,24 +4727,25 @@
                     return;
                 }
 
-                // Load exams and questions from API if not already loaded
+                // Always load exams and questions from API (ignore sample data)
+                // This fixes the "Questions not found" bug where sample data blocked API loading
                 if (window.PoliteCCAPI) {
                     const loginError = document.getElementById('login-error');
+                    if (loginError) loginError.textContent = '🔄 Loading exam data...';
 
-                    // Always ensure both exams and questions are loaded
-                    if (exams.length === 0 || questions.length === 0) {
-                        if (loginError) loginError.textContent = '🔄 Loading exam data...';
+                    // Always load fresh data from API
+                    const apiExams = await window.PoliteCCAPI.loadExams();
+                    const apiQuestions = await window.PoliteCCAPI.loadQuestions();
 
-                        if (exams.length === 0 && window.PoliteCCAPI.loadExams) {
-                            exams = await window.PoliteCCAPI.loadExams() || [];
-                        }
-                        if (questions.length === 0 && window.PoliteCCAPI.loadQuestions) {
-                            questions = await window.PoliteCCAPI.loadQuestions() || [];
-                        }
-
-                        if (loginError) loginError.textContent = '';
+                    // Use API data if available, otherwise fall back to existing data
+                    if (apiExams && apiExams.length > 0) {
+                        exams = apiExams;
+                    }
+                    if (apiQuestions && apiQuestions.length > 0) {
+                        questions = apiQuestions;
                     }
 
+                    if (loginError) loginError.textContent = '';
                     console.log(`📚 Loaded ${exams.length} exams and ${questions.length} questions`);
                 }
 
