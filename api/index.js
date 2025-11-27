@@ -292,6 +292,38 @@ module.exports = async (req, res) => {
             }
         }
 
+        // GET /api/debug - Debug endpoint to inspect data structure
+        if (url === '/api/debug' && method === 'GET') {
+            try {
+                const examRecords = await base(EXAMS_TABLE).select({ maxRecords: 3 }).all();
+                const questionRecords = await base(QUESTIONS_TABLE).select({ maxRecords: 3 }).all();
+
+                const examsDebug = examRecords.map(record => ({
+                    airtableId: record.id,
+                    fields: record.fields,
+                    fieldNames: Object.keys(record.fields)
+                }));
+
+                const questionsDebug = questionRecords.map(record => ({
+                    airtableId: record.id,
+                    fields: record.fields,
+                    fieldNames: Object.keys(record.fields)
+                }));
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Debug info for data structure',
+                    exams: examsDebug,
+                    questions: questionsDebug
+                });
+            } catch (error) {
+                return res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        }
+
         // GET /api/exams - List all exams
         if (url === '/api/exams' && method === 'GET') {
             const records = await base(EXAMS_TABLE).select().all();
@@ -307,14 +339,14 @@ module.exports = async (req, res) => {
             try {
                 const examData = req.body;
 
-                // Get question IDs value
-                const questionIdsValue = examData['Question IDs'] || examData['questionIds'] || examData['Questions'];
+                // Get question IDs value - prioritize 'Questions' as it's the correct Airtable field name
+                const questionIdsValue = examData['Questions'] || examData['Question IDs'] || examData['questionIds'];
 
                 // Try different possible field name variations for Question IDs
-                // Airtable might use: "Question IDs", "Questions", "QuestionIDs", etc.
+                // 'Questions' is the correct field name in Airtable (linked record field)
                 const fieldVariations = [
+                    'Questions',      // Correct Airtable field name (linked record)
                     'Question IDs',
-                    'Questions',
                     'QuestionIDs',
                     'questionIds',
                     'question_ids'

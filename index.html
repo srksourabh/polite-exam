@@ -3306,7 +3306,11 @@
             document.getElementById('view-results-section').classList.add('hidden');
             document.getElementById('upload-section').classList.add('hidden');
             document.getElementById('ai-generator-section').classList.add('hidden');
-            
+
+            // Debug: Show what questions are available for exam creation
+            console.log('📝 Create Exam - Questions available:', questions.length);
+            console.log('📝 Create Exam - Sample questions:', questions.slice(0, 3).map(q => ({ id: q.id, ID: q.ID, Subject: q.Subject })));
+
             // Render exam questions list
             const examQuestionsList = document.getElementById('exam-questions-list');
 
@@ -3507,13 +3511,13 @@
                 console.log('📅 Debug - Formatted Expiry:', formattedExpiry);
                 console.log('📋 Debug - Selected Questions (Record IDs):', selectedQuestions);
 
-                // Create exam object
+                // Create exam object - use 'Questions' to match Airtable field name
                 const newExam = {
                     'Exam Code': examCode,
                     'Title': examTitle,
                     'Duration (mins)': duration,
                     'Expiry (IST)': formattedExpiry,
-                    'Question IDs': selectedQuestions
+                    'Questions': selectedQuestions  // Correct field name for Airtable
                 };
 
                 console.log('📤 Debug - Exam Data Being Sent:', JSON.stringify(newExam, null, 2));
@@ -3666,8 +3670,8 @@
                         ? '<span style="background: #e74c3c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">EXPIRED</span>'
                         : '<span style="background: #27ae60; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">ACTIVE</span>';
 
-                    // Handle multiple possible Airtable field names for questions
-                    const questionIds = exam['Question IDs'] || exam['Questions'] || exam['QuestionIDs'] || exam.questionIds || [];
+                    // 'Questions' is the correct Airtable field name for linked records
+                    const questionIds = exam['Questions'] || exam['Question IDs'] || exam['QuestionIDs'] || exam.questionIds || [];
                     const questionCount = Array.isArray(questionIds) ? questionIds.length : (typeof questionIds === 'string' && questionIds.trim() ? questionIds.split(',').filter(id => id.trim()).length : 0);
                     const duration = exam['Duration (mins)'] || exam['Duration'] || exam.duration || 60;
                     const candidateCount = examResultCounts[examCode] || 0;
@@ -3725,8 +3729,8 @@
                 const title = exam ? (exam['Title'] || exam.title || 'Untitled') : 'Unknown';
                 const expiryDate = exam && exam['Expiry (IST)'] ? new Date(exam['Expiry (IST)']).toLocaleDateString('en-IN') : 'No Expiry';
                 const duration = exam ? (exam['Duration (mins)'] || exam['Duration'] || exam.duration || 60) : 60;
-                // Handle multiple possible Airtable field names for questions
-                const examQuestionIds = exam ? (exam['Question IDs'] || exam['Questions'] || exam['QuestionIDs'] || exam.questionIds || []) : [];
+                // 'Questions' is the correct Airtable field name for linked records
+                const examQuestionIds = exam ? (exam['Questions'] || exam['Question IDs'] || exam['QuestionIDs'] || exam.questionIds || []) : [];
                 const questionCount = Array.isArray(examQuestionIds) ? examQuestionIds.length : (typeof examQuestionIds === 'string' && examQuestionIds.trim() ? examQuestionIds.split(',').filter(id => id.trim()).length : 0);
 
                 document.getElementById('selected-exam-title').textContent = `${examCode} - ${title}`;
@@ -4065,12 +4069,15 @@
                 return;
             }
 
-            // Handle Question IDs - can be an array of record IDs or comma-separated string of question IDs (for backward compatibility)
-            let questionIds = exam['Question IDs'] || exam['Questions'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || '';
+            // 'Questions' is the correct Airtable field name (linked record field returns array of record IDs)
+            let questionIds = exam['Questions'] || exam['Question IDs'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || [];
             if (typeof questionIds === 'string') {
-                questionIds = questionIds.split(',').map(id => id.trim());
+                questionIds = questionIds.split(',').map(id => id.trim()).filter(id => id);
             }
-            // Find questions by Airtable record ID (new format) or by Question ID field (old format)
+            if (!Array.isArray(questionIds)) {
+                questionIds = [];
+            }
+            // Find questions by Airtable record ID (linked field) or by Question ID field (fallback)
             const examQuestions = questionIds.map(id =>
                 questions.find(q => q.id === id || q.ID === id)
             ).filter(q => q);
@@ -4562,6 +4569,8 @@
 
         // Generate AI question with real Gemini API
         document.getElementById('generate-ai-btn').addEventListener('click', async function() {
+            // Get button reference BEFORE try block so it's accessible in finally
+            const generateBtn = document.getElementById('generate-ai-btn');
             try {
                 const subject = document.getElementById('ai-subject').value;
                 const difficulty = document.getElementById('ai-difficulty').value;
@@ -4573,7 +4582,6 @@
                 }
 
                 // Disable button during generation
-                const generateBtn = document.getElementById('generate-ai-btn');
                 generateBtn.disabled = true;
                 generateBtn.textContent = '⏳ Generating...';
                 // Call backend API
@@ -4719,14 +4727,24 @@
                 }
 
                 // Load exams and questions from API if not already loaded
-                if (exams.length === 0 && window.PoliteCCAPI && window.PoliteCCAPI.loadExams) {
+                if (window.PoliteCCAPI) {
                     const loginError = document.getElementById('login-error');
-                    if (loginError) loginError.textContent = '🔄 Loading exam data...';
 
-                    exams = await window.PoliteCCAPI.loadExams() || [];
-                    questions = await window.PoliteCCAPI.loadQuestions() || [];
+                    // Always ensure both exams and questions are loaded
+                    if (exams.length === 0 || questions.length === 0) {
+                        if (loginError) loginError.textContent = '🔄 Loading exam data...';
 
-                    if (loginError) loginError.textContent = '';
+                        if (exams.length === 0 && window.PoliteCCAPI.loadExams) {
+                            exams = await window.PoliteCCAPI.loadExams() || [];
+                        }
+                        if (questions.length === 0 && window.PoliteCCAPI.loadQuestions) {
+                            questions = await window.PoliteCCAPI.loadQuestions() || [];
+                        }
+
+                        if (loginError) loginError.textContent = '';
+                    }
+
+                    console.log(`📚 Loaded ${exams.length} exams and ${questions.length} questions`);
                 }
 
                 // Find exam (case-insensitive comparison)
@@ -4763,23 +4781,49 @@
                 }
 
                 // Get questions for this exam
-                // Handle Question IDs - can be an array of record IDs or comma-separated string of question IDs (for backward compatibility)
-                let questionIds = exam['Question IDs'] || exam['Questions'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || '';
+                // 'Questions' is the correct Airtable field name (linked record field returns array of record IDs)
+                console.log('📋 Full exam object:', exam);
+                console.log('📋 Exam field names:', Object.keys(exam));
+
+                let questionIds = exam['Questions'] || exam['Question IDs'] || exam.questionIds || exam.QuestionIDs || exam.question_ids || [];
+
+                console.log('🔍 Raw questionIds value:', questionIds, 'Type:', typeof questionIds);
+
+                // Ensure it's an array
                 if (typeof questionIds === 'string') {
-                    questionIds = questionIds.split(',').map(id => id.trim());
+                    questionIds = questionIds.split(',').map(id => id.trim()).filter(id => id);
                 }
+                if (!Array.isArray(questionIds)) {
+                    questionIds = [];
+                }
+
+                console.log('🔍 Processed questionIds:', questionIds);
+                console.log('🔍 Available questions (first 5):', questions.slice(0, 5).map(q => ({ id: q.id, ID: q.ID })));
+
                 // Find questions by Airtable record ID (new format) or by Question ID field (old format)
                 const examQuestions = questionIds
-                    .map(id => questions.find(q => q.id === id || q.ID === id))
+                    .map(id => {
+                        const found = questions.find(q => q.id === id || q.ID === id);
+                        if (!found) {
+                            console.log(`⚠️ Question not found for ID: ${id}`);
+                        }
+                        return found;
+                    })
                     .filter(q => q);
+
+                console.log(`✅ Matched ${examQuestions.length} questions out of ${questionIds.length} IDs`);
 
                 if (examQuestions.length === 0) {
                     const loginError = document.getElementById('login-error');
                     if (loginError) {
-                        loginError.textContent = '❌ No questions found for this exam!';
+                        if (questionIds.length === 0) {
+                            loginError.textContent = '❌ This exam has no questions assigned to it!';
+                        } else {
+                            loginError.textContent = `❌ Could not find questions (${questionIds.length} IDs in exam but none matched)`;
+                        }
                         setTimeout(() => {
                             loginError.textContent = '';
-                        }, 3000);
+                        }, 5000);
                     }
                     return;
                 }
@@ -5072,8 +5116,7 @@
                         'Name': candidateName,
                         'Mobile': candidateMobile,
                         'Score': parseFloat(score.toFixed(2)),
-                        'Answers': JSON.stringify(detailedAnswers),
-                        'Submitted At': new Date().toISOString()
+                        'Answers': JSON.stringify(detailedAnswers)
                     };
 
                     // Only add Exam linked record field if examId is valid
