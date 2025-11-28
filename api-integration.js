@@ -2,9 +2,33 @@
 // This file replaces local data with API calls to the backend
 
 // API Configuration
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000/api'
-    : '/api';
+// IMPORTANT: Set your Vercel deployment URL here for Android app to work
+const VERCEL_API_URL = 'https://polite-exam.vercel.app/api';  // <-- UPDATE THIS WITH YOUR ACTUAL VERCEL URL
+
+// Detect if running in Capacitor (Android/iOS app)
+const isCapacitorApp = () => {
+    return window.Capacitor !== undefined ||
+           window.location.protocol === 'capacitor:' ||
+           window.location.protocol === 'ionic:' ||
+           (window.location.hostname === 'localhost' && window.location.port === '');
+};
+
+// Determine API URL based on environment
+const API_URL = (() => {
+    // Running as native app (Capacitor)
+    if (isCapacitorApp()) {
+        console.log('📱 Running as native app - using Vercel API');
+        return VERCEL_API_URL;
+    }
+    // Running locally for development
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.log('🔧 Running locally - using local API');
+        return 'http://localhost:3000/api';
+    }
+    // Running on Vercel (production web)
+    console.log('🌐 Running on web - using relative API');
+    return '/api';
+})();
 
 // =====================================================
 // SECURITY: HTML Sanitization to prevent XSS attacks
