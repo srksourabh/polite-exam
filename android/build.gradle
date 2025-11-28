@@ -24,6 +24,11 @@ allprojects {
     }
 }
 
+// Configure Java toolchain for all projects
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
