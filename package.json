@@ -4,11 +4,23 @@
   "description": "Exam system for Polite Coaching Centre with Airtable integration",
   "main": "api/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node scripts/build.js",
+    "cap:init": "npx cap init \"Polite Exam\" com.politecoaching.exam --web-dir www",
+    "cap:add:android": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "android:build": "npm run build && npm run cap:sync",
+    "android:studio": "npm run android:build && npm run cap:open:android"
   },
   "dependencies": {
     "airtable": "^0.12.2",
     "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
   },
   "engines": {
     "node": ">=14.x"
