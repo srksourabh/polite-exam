@@ -2,60 +2,34 @@
 // This file replaces local data with API calls to the backend
 
 // API Configuration
-// IMPORTANT: Set your Vercel deployment URL here for Android app to work
-const VERCEL_API_URL = 'https://polite-exam.vercel.app/api';  // <-- UPDATE THIS WITH YOUR ACTUAL VERCEL URL
-
-// Detect if running in Capacitor (Android/iOS app)
-const isCapacitorApp = () => {
-    // Check for Capacitor global object (most reliable)
-    if (typeof window.Capacitor !== 'undefined') {
-        return true;
-    }
-    // Check for Capacitor protocol
-    if (window.location.protocol === 'capacitor:' || window.location.protocol === 'ionic:') {
-        return true;
-    }
-    // Check if loaded from file or local assets (Android WebView)
-    if (window.location.protocol === 'file:' || window.location.protocol === 'content:') {
-        return true;
-    }
-    // Check for Android WebView user agent
-    if (navigator.userAgent && navigator.userAgent.includes('wv')) {
-        return true;
-    }
-    // Check if running on localhost without a port (Capacitor serves on localhost without port)
-    if (window.location.hostname === 'localhost' && !window.location.port) {
-        return true;
-    }
-    return false;
-};
-
-// Log environment info for debugging
-console.log('🔍 Environment Detection:');
-console.log('  - Protocol:', window.location.protocol);
-console.log('  - Hostname:', window.location.hostname);
-console.log('  - Port:', window.location.port || '(none)');
-console.log('  - Capacitor object:', typeof window.Capacitor);
-console.log('  - User Agent:', navigator.userAgent.substring(0, 50) + '...');
+const VERCEL_API_URL = 'https://polite-exam.vercel.app/api';
 
 // Determine API URL based on environment
 const API_URL = (() => {
-    // Running as native app (Capacitor)
-    if (isCapacitorApp()) {
-        console.log('📱 Running as native app - using Vercel API:', VERCEL_API_URL);
-        return VERCEL_API_URL;
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    const port = window.location.port;
+
+    console.log('🔍 Environment:', { protocol, hostname, port, capacitor: typeof window.Capacitor });
+
+    // Running on Vercel production - use relative path
+    if (hostname === 'polite-exam.vercel.app' || hostname.endsWith('.vercel.app')) {
+        console.log('🌐 Vercel web - using /api');
+        return '/api';
     }
-    // Running locally for development
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        console.log('🔧 Running locally - using local API');
+
+    // Running on localhost WITH a port (local development server)
+    if ((hostname === 'localhost' || hostname === '127.0.0.1') && port && port !== '') {
+        console.log('🔧 Local dev server - using localhost:3000/api');
         return 'http://localhost:3000/api';
     }
-    // Running on Vercel (production web)
-    console.log('🌐 Running on web - using relative API');
-    return '/api';
+
+    // Everything else (Capacitor app, file://, etc.) - use Vercel API
+    console.log('📱 Mobile app or other - using Vercel API');
+    return VERCEL_API_URL;
 })();
 
-console.log('✅ API URL configured as:', API_URL);
+console.log('✅ API URL:', API_URL);
 
 // =====================================================
 // SECURITY: HTML Sanitization to prevent XSS attacks
