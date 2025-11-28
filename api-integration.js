@@ -7,17 +7,42 @@ const VERCEL_API_URL = 'https://polite-exam.vercel.app/api';  // <-- UPDATE THIS
 
 // Detect if running in Capacitor (Android/iOS app)
 const isCapacitorApp = () => {
-    return window.Capacitor !== undefined ||
-           window.location.protocol === 'capacitor:' ||
-           window.location.protocol === 'ionic:' ||
-           (window.location.hostname === 'localhost' && window.location.port === '');
+    // Check for Capacitor global object (most reliable)
+    if (typeof window.Capacitor !== 'undefined') {
+        return true;
+    }
+    // Check for Capacitor protocol
+    if (window.location.protocol === 'capacitor:' || window.location.protocol === 'ionic:') {
+        return true;
+    }
+    // Check if loaded from file or local assets (Android WebView)
+    if (window.location.protocol === 'file:' || window.location.protocol === 'content:') {
+        return true;
+    }
+    // Check for Android WebView user agent
+    if (navigator.userAgent && navigator.userAgent.includes('wv')) {
+        return true;
+    }
+    // Check if running on localhost without a port (Capacitor serves on localhost without port)
+    if (window.location.hostname === 'localhost' && !window.location.port) {
+        return true;
+    }
+    return false;
 };
+
+// Log environment info for debugging
+console.log('🔍 Environment Detection:');
+console.log('  - Protocol:', window.location.protocol);
+console.log('  - Hostname:', window.location.hostname);
+console.log('  - Port:', window.location.port || '(none)');
+console.log('  - Capacitor object:', typeof window.Capacitor);
+console.log('  - User Agent:', navigator.userAgent.substring(0, 50) + '...');
 
 // Determine API URL based on environment
 const API_URL = (() => {
     // Running as native app (Capacitor)
     if (isCapacitorApp()) {
-        console.log('📱 Running as native app - using Vercel API');
+        console.log('📱 Running as native app - using Vercel API:', VERCEL_API_URL);
         return VERCEL_API_URL;
     }
     // Running locally for development
@@ -29,6 +54,8 @@ const API_URL = (() => {
     console.log('🌐 Running on web - using relative API');
     return '/api';
 })();
+
+console.log('✅ API URL configured as:', API_URL);
 
 // =====================================================
 // SECURITY: HTML Sanitization to prevent XSS attacks
