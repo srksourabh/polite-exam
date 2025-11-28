@@ -6,11 +6,31 @@
       "use": "@vercel/node"
     },
     {
-      "src": "index.html",
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "docs/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "icons/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "manifest.json",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "sw.js",
       "use": "@vercel/static"
     },
     {
       "src": "api-integration.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": ".well-known/**",
       "use": "@vercel/static"
     }
   ],
