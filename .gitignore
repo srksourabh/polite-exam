@@ -24,3 +24,19 @@ Thumbs.db
 
 # Vercel
 .vercel
+
+# Capacitor build output
+www/
+
+# Android build artifacts (keep android/ folder itself for Android Studio)
+android/.gradle/
+android/app/build/
+android/build/
+android/capacitor-cordova-android-plugins/build/
+*.apk
+*.aab
+*.keystore
+
+# iOS (if added later)
+ios/App/Pods/
+ios/App/build/

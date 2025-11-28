@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Polite Exam Theme Colors -->
+    <color name="colorPrimary">#2c3e50</color>
+    <color name="colorPrimaryDark">#1a252f</color>
+    <color name="colorAccent">#3498db</color>
+
+    <!-- Splash Screen -->
+    <color name="splash_background">#2c3e50</color>
+
+    <!-- Status Bar -->
+    <color name="status_bar">#1a252f</color>
+</resources>
