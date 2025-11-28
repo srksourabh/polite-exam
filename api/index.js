@@ -119,12 +119,48 @@ const RESULTS_TABLE = 'Results';
 const CANDIDATES_TABLE = 'Candidates';
 
 // CORS headers - configurable via environment variable
+// Capacitor apps send origin as 'capacitor://localhost' or 'http://localhost'
+const CAPACITOR_ORIGINS = [
+    'capacitor://localhost',
+    'http://localhost',
+    'https://localhost',
+    'ionic://localhost',
+    'http://localhost:8100'  // Ionic dev server
+];
+
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    ? [...process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()), ...CAPACITOR_ORIGINS]
     : ['*']; // Default to allow all for development
 
 function getCorsHeaders(req) {
-    const origin = req.headers.origin || '*';
+    const origin = req.headers.origin;
+
+    // For Capacitor/mobile apps, always allow their origins
+    if (origin && CAPACITOR_ORIGINS.includes(origin)) {
+        return {
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'Access-Control-Allow-Credentials': 'true',
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY',
+            'X-XSS-Protection': '1; mode=block',
+        };
+    }
+
+    // For requests without origin (like curl, Postman, or same-origin), allow
+    if (!origin) {
+        return {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY',
+            'X-XSS-Protection': '1; mode=block',
+        };
+    }
+
+    // For web origins
     const allowedOrigin = ALLOWED_ORIGINS.includes('*')
         ? '*'
         : ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -132,7 +168,7 @@ function getCorsHeaders(req) {
     return {
         'Access-Control-Allow-Origin': allowedOrigin,
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
         'Access-Control-Allow-Credentials': 'true',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
