@@ -3028,7 +3028,7 @@
                                 <div style="margin: 5px 0;">D) ${q['Option D']}</div>
                             </div>
                             <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 8px; border-radius: 6px; display: inline-block;">
-                                ✅ Correct Answer: ${q.Correct}
+                                ✅ Correct Answer: ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}
                             </div>
                         </div>
                         `;
@@ -3090,9 +3090,11 @@
                             document.getElementById('option-c').value = question['Option C'];
                             document.getElementById('option-d').value = question['Option D'];
 
-                            // Set correct answer
-                            const correctIndex = question.Correct.charCodeAt(0) - 65; // A=0, B=1, C=2, D=3
-                            document.getElementById('correct-answer').value = correctIndex;
+                            // Set correct answer - support both 'Correct' and 'Correct Answer' field names
+                            const correctValue = question.Correct || question['Correct Answer'] || 'A';
+                            const correctLetter = String(correctValue).toUpperCase().trim();
+                            const correctIndex = correctLetter.charCodeAt(0) - 65; // A=0, B=1, C=2, D=3
+                            document.getElementById('correct-answer').value = (correctIndex >= 0 && correctIndex <= 3) ? correctIndex : 0;
 
                             // Change button text to "Update Question"
                             const addBtn = document.getElementById('add-question-btn');
@@ -3174,7 +3176,7 @@
                     q['Option B'] || '',
                     q['Option C'] || '',
                     q['Option D'] || '',
-                    q.Correct || ''
+                    (q.Correct || q['Correct Answer'] || '').toString().toUpperCase()
                 ];
             });
 
@@ -3398,7 +3400,7 @@
                                     <div style="margin: 4px 0; color: #555;"><strong>B)</strong> ${q['Option B']}</div>
                                     <div style="margin: 4px 0; color: #555;"><strong>C)</strong> ${q['Option C']}</div>
                                     <div style="margin: 4px 0; color: #555;"><strong>D)</strong> ${q['Option D']}</div>
-                                    <div style="margin-top: 8px; padding: 6px; background: #d4edda; border-radius: 4px; color: #155724; font-weight: 600;"><strong>✓ Correct:</strong> ${q.Correct}</div>
+                                    <div style="margin-top: 8px; padding: 6px; background: #d4edda; border-radius: 4px; color: #155724; font-weight: 600;"><strong>✓ Correct:</strong> ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}</div>
                                 </div>
                             </details>
                         </div>
@@ -4232,7 +4234,9 @@
                     examQuestions.forEach((q, index) => {
                     const userAnswerIndex = userAnswers[index];
                     const userAnswerLetter = userAnswerIndex !== null && userAnswerIndex !== undefined ? String.fromCharCode(65 + userAnswerIndex) : 'Not Answered';
-                    const correctAnswerLetter = q.Correct;
+                    // Support both 'Correct' and 'Correct Answer' field names, handle lowercase
+                    const correctValue = q.Correct || q['Correct Answer'] || '';
+                    const correctAnswerLetter = String(correctValue).toUpperCase().trim();
                     const isCorrect = userAnswerLetter === correctAnswerLetter;
                     const userAnswerText = userAnswerIndex !== null && userAnswerIndex !== undefined ? q[`Option ${userAnswerLetter}`] : 'Not Answered';
                     const correctAnswerText = q[`Option ${correctAnswerLetter}`];
@@ -5102,8 +5106,16 @@
 
             currentExam.questions.forEach((question, index) => {
                 const userAnswer = userAnswers[index];
-                const correctAnswerIndex = question.Correct.charCodeAt(0) - 65;
-                const isCorrect = (userAnswer === correctAnswerIndex);
+
+                // Get correct answer - support both 'Correct' and 'Correct Answer' field names
+                // Also handle lowercase and ensure it's a valid letter (A, B, C, D)
+                const correctValue = question.Correct || question['Correct Answer'] || '';
+                const correctLetter = String(correctValue).toUpperCase().trim();
+                const correctAnswerIndex = correctLetter.charCodeAt(0) - 65; // A=0, B=1, C=2, D=3
+
+                // Validate that correctAnswerIndex is valid (0-3)
+                const isValidCorrectAnswer = correctAnswerIndex >= 0 && correctAnswerIndex <= 3;
+                const isCorrect = isValidCorrectAnswer && (userAnswer === correctAnswerIndex);
 
                 if (userAnswer !== null) {
                     score += isCorrect ? 1 : -0.25;
@@ -5119,7 +5131,7 @@
                     optionC: question['Option C'],
                     optionD: question['Option D'],
                     userAnswer: userAnswer !== null ? ['A', 'B', 'C', 'D'][userAnswer] : 'Not Answered',
-                    correctAnswer: question.Correct,
+                    correctAnswer: correctLetter || question.Correct,
                     isCorrect: isCorrect,
                     points: userAnswer !== null ? (isCorrect ? 1 : -0.25) : 0
                 });
