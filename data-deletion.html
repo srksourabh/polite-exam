@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account & Data Deletion - Polite Exam</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .content {
+            background: white;
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+        
+        .danger-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+        
+        .info-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+        
+        h2 {
+            color: #667eea;
+            margin: 2rem 0 1rem 0;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5rem;
+        }
+        
+        h3 {
+            color: #764ba2;
+            margin: 1.5rem 0 0.8rem 0;
+            font-size: 1.3rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+        }
+        
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .form-section {
+            background: #f9f9f9;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            margin: 1rem 0;
+        }
+        
+        input[type="checkbox"] {
+            margin-right: 0.75rem;
+            margin-top: 0.25rem;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+        
+        .contact-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+        }
+        
+        .contact-section h2 {
+            color: white;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .contact-section a {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .steps {
+            counter-reset: step-counter;
+            list-style: none;
+            margin: 2rem 0;
+        }
+        
+        .steps li {
+            counter-increment: step-counter;
+            position: relative;
+            padding-left: 3rem;
+            margin-bottom: 2rem;
+        }
+        
+        .steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2rem;
+            height: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 1.5rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            .form-section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗑️ Account & Data Deletion</h1>
+        <p>Polite Exam - Request Account and Data Deletion</p>
+    </div>
+    
+    <div class="container">
+        <div class="content">
+            <h2>📋 Account Deletion Overview</h2>
+            
+            <p>We understand that you may want to delete your account and personal data from Polite Exam. This page provides comprehensive information about the account deletion process and what happens to your data.</p>
+            
+            <div class="danger-box">
+                <strong>⚠️ IMPORTANT - READ BEFORE PROCEEDING:</strong>
+                <ul style="margin-top: 1rem;">
+                    <li><strong>Account deletion is PERMANENT and IRREVERSIBLE</strong></li>
+                    <li>You will lose access to all exams, question banks, and results</li>
+                    <li>Deleted data CANNOT be recovered</li>
+                    <li>Active subscriptions will be cancelled (no refunds for remaining time)</li>
+                    <li>You will need to create a new account to use Polite Exam again</li>
+                </ul>
+            </div>
+            
+            <h2>🔍 What Data Gets Deleted?</h2>
+            
+            <h3>✅ Data That Will Be Permanently Deleted</h3>
+            <ul>
+                <li><strong>Account Information:</strong> Name, email address, phone number, password</li>
+                <li><strong>Profile Data:</strong> User preferences, settings, profile pictures</li>
+                <li><strong>Exam Content:</strong> Created question banks, exams, answer keys</li>
+                <li><strong>Student Data:</strong> Exam submissions, scores, evaluation records</li>
+                <li><strong>Images:</strong> Uploaded answer sheets and scanned documents</li>
+                <li><strong>Activity Logs:</strong> Login history, usage patterns, app interactions</li>
+                <li><strong>Notification Preferences:</strong> Communication settings and opt-ins</li>
+            </ul>
+            
+            <h3>⚠️ Data That May Be Retained (Anonymized)</h3>
+            <p>For legal, regulatory, and security purposes, certain data may be retained in <strong>anonymized form</strong> (not linked to your identity):</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data Type</th>
+                        <th>Retention Period</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Financial/Transaction Records</td>
+                        <td>3-7 years</td>
+                        <td>Tax and accounting compliance (Indian law)</td>
+                    </tr>
+                    <tr>
+                        <td>Exam Records (Educational Institutions)</td>
+                        <td>3 years</td>
+                        <td>Educational record-keeping requirements</td>
+                    </tr>
+                    <tr>
+                        <td>Fraud Prevention Logs</td>
+                        <td>90 days</td>
+                        <td>Security and fraud detection</td>
+                    </tr>
+                    <tr>
+                        <td>Legal Dispute Records</td>
+                        <td>Duration of dispute</td>
+                        <td>Legal proceedings (if applicable)</td>
+                    </tr>
+                    <tr>
+                        <td>Aggregated Analytics</td>
+                        <td>Indefinitely</td>
+                        <td>Anonymous usage statistics for service improvement</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="info-box">
+                <strong>💡 Note:</strong> Retained data is completely anonymized, meaning it cannot be traced back to you personally. It's used only for legal compliance and statistical analysis.
+            </div>
+            
+            <h2>🚀 How to Delete Your Account</h2>
+            
+            <h3>Option 1: Online Form (Fastest)</h3>
+            <p>Use the form below to submit your deletion request. You'll receive a verification email to confirm.</p>
+            
+            <h3>Option 2: In-App Deletion</h3>
+            <ol class="steps">
+                <li><strong>Open the Polite Exam app</strong> and log in to your account</li>
+                <li><strong>Go to Settings</strong> (tap the menu icon → Settings)</li>
+                <li><strong>Navigate to Account & Privacy</strong></li>
+                <li><strong>Tap "Delete My Account"</strong></li>
+                <li><strong>Read the warning</strong> and confirm your decision</li>
+                <li><strong>Verify via email</strong> (we'll send a confirmation link)</li>
+            </ol>
+            
+            <h3>Option 3: Email Request</h3>
+            <p>Send an email to: <strong>privacy@ultimatedigitalsolutions.in</strong></p>
+            
+            <p><strong>Email Subject:</strong> "Account Deletion Request - Polite Exam"</p>
+            
+            <p><strong>Include in your email:</strong></p>
+            <ul>
+                <li>Your registered email address</li>
+                <li>Your User ID (if available)</li>
+                <li>Clear statement requesting account and data deletion</li>
+                <li>Reason for deletion (optional but helpful)</li>
+            </ul>
+            
+            <h2>⏱️ Deletion Timeline</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Step</th>
+                        <th>Timeline</th>
+                        <th>What Happens</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Request Submitted</td>
+                        <td>Immediate</td>
+                        <td>You receive an acknowledgment</td>
+                    </tr>
+                    <tr>
+                        <td>Verification Email Sent</td>
+                        <td>Within 5 minutes</td>
+                        <td>Click link to verify identity</td>
+                    </tr>
+                    <tr>
+                        <td>Email Verification</td>
+                        <td>48 hours</td>
+                        <td>You must verify within 48 hours</td>
+                    </tr>
+                    <tr>
+                        <td>Account Deactivated</td>
+                        <td>Immediate after verification</td>
+                        <td>You lose access to the account</td>
+                    </tr>
+                    <tr>
+                        <td>Data Deletion Processing</td>
+                        <td>Up to 30 days</td>
+                        <td>Permanent deletion from all systems</td>
+                    </tr>
+                    <tr>
+                        <td>Confirmation Email</td>
+                        <td>After completion</td>
+                        <td>Final confirmation sent to you</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h2>📝 Account Deletion Request Form</h2>
+            
+            <div class="form-section">
+                <form id="deletionForm" onsubmit="handleSubmit(event)">
+                    <div class="form-group">
+                        <label for="fullName">Full Name *</label>
+                        <input type="text" id="fullName" name="fullName" required placeholder="Enter your full name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Registered Email Address *</label>
+                        <input type="email" id="email" name="email" required placeholder="your.email@example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userId">User ID (if known)</label>
+                        <input type="text" id="userId" name="userId" placeholder="Your User ID from the app">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="text" id="phone" name="phone" placeholder="+91-XXXXX-XXXXX">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reason">Reason for Deletion (Optional)</label>
+                        <select id="reason" name="reason">
+                            <option value="">Select a reason...</option>
+                            <option value="not_using">No longer using the service</option>
+                            <option value="privacy_concerns">Privacy concerns</option>
+                            <option value="switching_service">Switching to another service</option>
+                            <option value="technical_issues">Technical issues</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="comments">Additional Comments (Optional)</label>
+                        <textarea id="comments" name="comments" placeholder="Any additional information or feedback..."></textarea>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="confirm1" name="confirm1" required>
+                        <label for="confirm1">I understand that account deletion is permanent and irreversible</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="confirm2" name="confirm2" required>
+                        <label for="confirm2">I understand that I will lose access to all my exams, question banks, and data</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="confirm3" name="confirm3" required>
+                        <label for="confirm3">I acknowledge that certain data may be retained for legal compliance (anonymized)</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="confirm4" name="confirm4" required>
+                        <label for="confirm4">I will verify this deletion request via email within 48 hours</label>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">🗑️ Submit Deletion Request</button>
+                </form>
+            </div>
+            
+            <div class="warning-box">
+                <strong>📧 After Submission:</strong>
+                <ol style="margin-top: 1rem;">
+                    <li>You'll receive a verification email at your registered email address</li>
+                    <li>Click the verification link within <strong>48 hours</strong></li>
+                    <li>Your account will be immediately deactivated</li>
+                    <li>Data deletion will be processed within <strong>30 days</strong></li>
+                    <li>You'll receive a final confirmation email when complete</li>
+                </ol>
+            </div>
+            
+            <h2>🔄 Can I Change My Mind?</h2>
+            
+            <p><strong>Before Email Verification (within 48 hours):</strong></p>
+            <ul>
+                <li>✅ Yes! Simply don't click the verification link</li>
+                <li>✅ The deletion request will automatically expire</li>
+                <li>✅ Your account will remain active</li>
+            </ul>
+            
+            <p><strong>After Email Verification:</strong></p>
+            <ul>
+                <li>❌ No, deletion cannot be cancelled</li>
+                <li>❌ Your account and data will be permanently deleted</li>
+                <li>❌ You'll need to create a new account to use Polite Exam again</li>
+            </ul>
+            
+            <h2>💰 Subscription and Payment Information</h2>
+            
+            <h3>If You Have an Active Subscription:</h3>
+            <ul>
+                <li>All future charges will be stopped immediately</li>
+                <li>You will NOT receive a refund for unused subscription time</li>
+                <li>Access will be revoked when deletion is processed</li>
+                <li>For refund inquiries, contact: support@ultimatedigitalsolutions.in</li>
+            </ul>
+            
+            <h3>Payment Records:</h3>
+            <ul>
+                <li>Transaction history may be retained (anonymized) for 3-7 years for tax compliance</li>
+                <li>Only the last 4 digits of payment methods are kept for billing records</li>
+                <li>Full payment details are deleted immediately</li>
+            </ul>
+            
+            <h2>❓ Frequently Asked Questions</h2>
+            
+            <details style="margin: 1rem 0; padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                <summary style="font-weight: 600; cursor: pointer; color: #667eea;">Q: How long does account deletion take?</summary>
+                <p style="margin-top: 1rem;">Most deletion requests are processed within 30 days. You'll receive a confirmation email when your data has been completely deleted.</p>
+            </details>
+            
+            <details style="margin: 1rem 0; padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                <summary style="font-weight: 600; cursor: pointer; color: #667eea;">Q: Can I recover my account after deletion?</summary>
+                <p style="margin-top: 1rem;">No, account deletion is permanent and irreversible. Once deleted, we cannot restore your account or data.</p>
+            </details>
+            
+            <details style="margin: 1rem 0; padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                <summary style="font-weight: 600; cursor: pointer; color: #667eea;">Q: What happens to my exam results?</summary>
+                <p style="margin-top: 1rem;">Your exam results will be deleted. However, if you're part of an educational institution, they may retain anonymized exam records separately for their own compliance purposes.</p>
+            </details>
+            
+            <details style="margin: 1rem 0; padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                <summary style="font-weight: 600; cursor: pointer; color: #667eea;">Q: I didn't receive the verification email. What should I do?</summary>
+                <p style="margin-top: 1rem;">Check your spam/junk folder. If you still don't see it, contact us at privacy@ultimatedigitalsolutions.in with your registered email address.</p>
+            </details>
+            
+            <details style="margin: 1rem 0; padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                <summary style="font-weight: 600; cursor: pointer; color: #667eea;">Q: Will deletion affect other users in my organization?</summary>
+                <p style="margin-top: 1rem;">No, only your personal account and data will be deleted. Other users' accounts and shared organizational data remain unaffected.</p>
+            </details>
+            
+            <details style="margin: 1rem 0; padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                <summary style="font-weight: 600; cursor: pointer; color: #667eea;">Q: Can I delete just some of my data instead of my entire account?</summary>
+                <p style="margin-top: 1rem;">Yes! For partial data deletion requests, contact us at privacy@ultimatedigitalsolutions.in with specific details about what data you'd like removed.</p>
+            </details>
+            
+            <details style="margin: 1rem 0; padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                <summary style="font-weight: 600; cursor: pointer; color: #667eea;">Q: What if I'm part of an educational institution?</summary>
+                <p style="margin-top: 1rem;">Contact your institution's administrator first. They may need to remove you from their system before you can delete your account. Some educational records may be retained by the institution.</p>
+            </details>
+            
+            <h2>🔒 Data Privacy During Deletion</h2>
+            
+            <p>During the deletion process:</p>
+            <ul>
+                <li>Your account is immediately deactivated (no login access)</li>
+                <li>Your data is marked for deletion and isolated from production systems</li>
+                <li>Deletion is processed across all databases, backups, and storage systems</li>
+                <li>Secure deletion procedures ensure data cannot be recovered</li>
+                <li>Final verification ensures complete removal from all systems</li>
+            </ul>
+            
+            <div class="contact-section">
+                <h2>📞 Need Help?</h2>
+                
+                <p>If you have questions or need assistance with account deletion:</p>
+                
+                <h3 style="color: white; margin-top: 1.5rem;">Contact Information</h3>
+                <p><strong>Privacy Team:</strong> privacy@ultimatedigitalsolutions.in<br>
+                <strong>General Support:</strong> support@ultimatedigitalsolutions.in<br>
+                <strong>Phone:</strong> +91-XXXX-XXXXXX</p>
+                
+                <p style="margin-top: 1.5rem;"><strong>Response Time:</strong> We respond to all privacy requests within 48 hours.</p>
+                
+                <h3 style="color: white; margin-top: 1.5rem;">Mailing Address</h3>
+                <p>Ultimate Digital Solutions<br>
+                [Your Complete Address]<br>
+                [City, State, PIN Code]<br>
+                India</p>
+                
+                <p style="margin-top: 1.5rem;"><strong>Data Protection Officer:</strong> dpo@ultimatedigitalsolutions.in</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #f0f0f0; color: #666;">
+                <p><strong>Polite Exam</strong> by Ultimate Digital Solutions</p>
+                <p>© 2025 Ultimate Digital Solutions. All rights reserved.</p>
+                <p style="margin-top: 1rem;">
+                    <a href="privacy-policy.html" style="color: #667eea; text-decoration: none; margin: 0 1rem;">Privacy Policy</a>
+                    <a href="data-deletion.html" style="color: #667eea; text-decoration: none; margin: 0 1rem;">Delete My Data</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Validate confirmations
+            if (!data.confirm1 || !data.confirm2 || !data.confirm3 || !data.confirm4) {
+                alert('Please confirm all checkboxes to proceed with account deletion.');
+                return;
+            }
+            
+            // Here you would typically send the data to your backend
+            // For now, we'll show a confirmation message
+            
+            alert('Thank you for submitting your account deletion request.\n\n' +
+                  'NEXT STEPS:\n' +
+                  '1. Check your email (' + data.email + ') within 5 minutes\n' +
+                  '2. Click the verification link in the email\n' +
+                  '3. Your account will be deactivated immediately\n' +
+                  '4. Data deletion will be processed within 30 days\n\n' +
+                  'If you don\'t receive the email, check your spam folder or contact privacy@ultimatedigitalsolutions.in');
+            
+            // Reset form
+            event.target.reset();
+            
+            // In a real implementation, you would send this data to your backend:
+            // fetch('/api/delete-account', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify(data)
+            // });
+        }
+    </script>
+</body>
+</html>
