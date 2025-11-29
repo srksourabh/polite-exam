@@ -641,12 +641,63 @@ async function resetPassword(email) {
 
         if (data.success) {
             console.log('✅ Password reset successful');
-            return data.data;
+            return {
+                success: true,
+                message: data.message,
+                tempPassword: data.data?.tempPassword // Only in dev mode
+            };
         } else {
             throw new Error(data.error || 'Failed to reset password');
         }
     } catch (error) {
         console.error('❌ Error resetting password:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return null;
+    }
+}
+
+// Verify email
+async function verifyEmail(token) {
+    try {
+        const response = await fetch(`${API_URL}/auth/verify/${token}`);
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Email verified successfully');
+            showNotification('✅ Email verified! You can now login.', 'success');
+            return data;
+        } else {
+            throw new Error(data.error || 'Failed to verify email');
+        }
+    } catch (error) {
+        console.error('❌ Error verifying email:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return null;
+    }
+}
+
+// Resend verification email
+async function resendVerification(email) {
+    try {
+        const response = await fetch(`${API_URL}/auth/resend-verification`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Verification email sent');
+            showNotification('✅ Verification email sent. Please check your inbox.', 'success');
+            return data;
+        } else {
+            throw new Error(data.error || 'Failed to send verification email');
+        }
+    } catch (error) {
+        console.error('❌ Error sending verification email:', error);
         showNotification(`❌ ${error.message}`, 'error');
         return null;
     }
@@ -673,6 +724,8 @@ window.PoliteCCAPI = {
     getCandidateProfile,
     getCandidateExamHistory,
     resetPassword,
+    verifyEmail,
+    resendVerification,
     // Security utilities
     escapeHtml,
     sanitizeData,

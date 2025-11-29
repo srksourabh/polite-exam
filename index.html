@@ -1285,8 +1285,8 @@
                         <input type="email" id="signup-email" placeholder="your@email.com" required>
                     </div>
                     <div class="form-group">
-                        <label for="signup-mobile">Mobile Number *</label>
-                        <input type="tel" id="signup-mobile" placeholder="10-digit mobile number" required>
+                        <label for="signup-mobile">Mobile Number (Optional)</label>
+                        <input type="tel" id="signup-mobile" placeholder="10-digit mobile number">
                     </div>
                     <div class="form-group">
                         <label for="signup-password">Password *</label>
@@ -1297,8 +1297,42 @@
                         <input type="password" id="signup-confirm-password" placeholder="Re-enter your password" required>
                     </div>
                     <button id="signup-submit-btn" class="success-btn">Create Account</button>
+                    <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 15px;">
+                        A verification link will be sent to your email
+                    </p>
                     <div class="form-link">
                         Already have an account? <a id="goto-signin-link">Sign In</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Verification Success Screen -->
+            <div id="verification-success-screen" class="screen">
+                <div class="auth-form" style="text-align: center;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
+                    <h2 class="form-title" style="color: var(--success);">Email Verified!</h2>
+                    <p style="color: #666; margin-bottom: 25px;">
+                        Your email has been verified successfully. You can now login to your account.
+                    </p>
+                    <button id="goto-signin-after-verify" class="success-btn">Go to Sign In</button>
+                </div>
+            </div>
+
+            <!-- Verification Pending Screen -->
+            <div id="verification-pending-screen" class="screen">
+                <div class="auth-form" style="text-align: center;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">📧</div>
+                    <h2 class="form-title">Check Your Email!</h2>
+                    <p style="color: #666; margin-bottom: 15px;">
+                        We've sent a verification link to:
+                    </p>
+                    <p style="font-weight: 600; color: var(--primary); margin-bottom: 25px;" id="pending-verification-email"></p>
+                    <p style="color: #666; margin-bottom: 25px;">
+                        Click the link in the email to verify your account. Once verified, you can login.
+                    </p>
+                    <button id="resend-verification-btn" class="success-btn" style="margin-bottom: 15px;">Resend Verification Email</button>
+                    <div class="form-link">
+                        <a id="goto-signin-from-pending">Already verified? Sign In</a>
                     </div>
                 </div>
             </div>
@@ -2427,6 +2461,55 @@
             // Initialize header navigation first
             updateHeaderNav('hero-landing');
 
+            // Check for email verification token in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const verifyToken = urlParams.get('verify');
+
+            if (verifyToken) {
+                // Remove the query parameter from URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                // Verify the email
+                (async function() {
+                    try {
+                        const result = await window.PoliteCCAPI.verifyEmail(verifyToken);
+                        if (result && result.success) {
+                            // Show verification success screen
+                            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                            document.getElementById('verification-success-screen').classList.add('active');
+                        }
+                    } catch (error) {
+                        console.error('Verification error:', error);
+                        window.PoliteCCAPI.showNotification('Verification failed. Please try again.', 'error');
+                    }
+                })();
+            }
+
+            // Verification success - go to signin handler
+            document.getElementById('goto-signin-after-verify').addEventListener('click', function() {
+                document.getElementById('verification-success-screen').classList.remove('active');
+                document.getElementById('candidate-signin-screen').classList.add('active');
+            });
+
+            // Verification pending - resend verification handler
+            document.getElementById('resend-verification-btn').addEventListener('click', async function() {
+                const email = document.getElementById('pending-verification-email').textContent;
+                if (email) {
+                    this.disabled = true;
+                    this.textContent = 'Sending...';
+                    await window.PoliteCCAPI.resendVerification(email);
+                    this.disabled = false;
+                    this.textContent = 'Resend Verification Email';
+                }
+            });
+
+            // Verification pending - go to signin handler
+            document.getElementById('goto-signin-from-pending').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('verification-pending-screen').classList.remove('active');
+                document.getElementById('candidate-signin-screen').classList.add('active');
+            });
+
             // Header Back Button Handler
             document.getElementById('header-back-btn').addEventListener('click', function() {
                 const currentScreenId = currentScreen;
@@ -2438,7 +2521,9 @@
                     'forgot-password-screen': 'candidate-signin-screen',
                     'candidate-login-screen': 'candidate-dashboard',
                     'exam-screen': 'candidate-login-screen',
-                    'result-screen': 'candidate-dashboard'
+                    'result-screen': 'candidate-dashboard',
+                    'verification-pending-screen': 'candidate-signin-screen',
+                    'verification-success-screen': 'candidate-signin-screen'
                 };
 
                 const targetScreen = backMap[currentScreenId] || 'hero-landing';
@@ -2570,13 +2655,14 @@
                 const password = document.getElementById('signup-password').value;
                 const confirmPassword = document.getElementById('signup-confirm-password').value;
 
-                // Validation
-                if (!name || !email || !mobile || !password || !confirmPassword) {
-                    window.PoliteCCAPI.showNotification('Please fill all fields', 'error');
+                // Validation - mobile is now optional
+                if (!name || !email || !password || !confirmPassword) {
+                    window.PoliteCCAPI.showNotification('Please fill all required fields', 'error');
                     return;
                 }
 
-                if (mobile.length !== 10 || isNaN(mobile)) {
+                // Validate mobile only if provided
+                if (mobile && (mobile.length !== 10 || isNaN(mobile))) {
                     window.PoliteCCAPI.showNotification('Please enter a valid 10-digit mobile number', 'error');
                     return;
                 }
@@ -2602,9 +2688,10 @@
                     document.getElementById('signup-password').value = '';
                     document.getElementById('signup-confirm-password').value = '';
 
-                    // Navigate to signin
+                    // Show verification pending screen
+                    document.getElementById('pending-verification-email').textContent = email;
                     document.getElementById('candidate-signup-screen').classList.remove('active');
-                    document.getElementById('candidate-signin-screen').classList.add('active');
+                    document.getElementById('verification-pending-screen').classList.add('active');
                 }
             } catch (error) {
                 console.error('❌ Event handler error:', error);
@@ -2625,9 +2712,19 @@
                     return;
                 }
 
-                const result = await window.PoliteCCAPI.candidateLogin(email, password);
+                // Call API directly to check for verification requirement
+                const response = await fetch(`${window.PoliteCCAPI ? (window.location.hostname === 'polite-exam.vercel.app' ? '/api' : 'https://polite-exam.vercel.app/api') : '/api'}/auth/candidate/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
 
-                if (result) {
+                const data = await response.json();
+
+                if (data.success) {
+                    // Login successful
+                    const result = data.data;
+
                     // Save session
                     saveSession('candidate', result);
 
@@ -2637,6 +2734,16 @@
 
                     // Show dashboard
                     showCandidateDashboard(result);
+                    window.PoliteCCAPI.showNotification('Welcome back!', 'success');
+                } else if (data.requiresVerification) {
+                    // Account not verified - show verification pending screen
+                    document.getElementById('pending-verification-email').textContent = email;
+                    document.getElementById('candidate-signin-screen').classList.remove('active');
+                    document.getElementById('verification-pending-screen').classList.add('active');
+                    window.PoliteCCAPI.showNotification('Please verify your email first', 'info');
+                } else {
+                    // Other error
+                    window.PoliteCCAPI.showNotification(data.error || 'Invalid email or password', 'error');
                 }
             } catch (error) {
                 console.error('❌ Event handler error:', error);
@@ -2666,7 +2773,7 @@
                 // Disable button while processing
                 const btn = document.getElementById('reset-password-btn');
                 btn.disabled = true;
-                btn.textContent = 'Resetting...';
+                btn.textContent = 'Sending...';
 
                 const result = await window.PoliteCCAPI.resetPassword(email);
 
@@ -2675,15 +2782,41 @@
                 btn.textContent = 'Reset Password';
 
                 if (result) {
-                    // Show the temporary password
-                    document.getElementById('new-temp-password').textContent = result.tempPassword;
-                    document.getElementById('reset-result').style.display = 'block';
+                    // Check if temp password is returned (dev mode only)
+                    if (result.tempPassword) {
+                        // Dev mode - show the temporary password
+                        document.getElementById('new-temp-password').textContent = result.tempPassword;
+                        document.getElementById('reset-result').style.display = 'block';
+                    } else {
+                        // Production mode - password sent via email
+                        document.getElementById('reset-result').innerHTML = `
+                            <p style="font-weight: 600; color: #27ae60; margin-bottom: 10px;">✅ Password Reset Successful!</p>
+                            <p style="color: #666; margin-bottom: 10px;">A new temporary password has been sent to:</p>
+                            <div style="background: white; padding: 15px; border-radius: 8px; font-weight: 600; color: #2c3e50; text-align: center;">${email}</div>
+                            <p style="color: #666; margin-top: 15px; font-size: 0.9rem;">
+                                Please check your email and use the temporary password to sign in. We recommend changing it after logging in.
+                            </p>
+                            <button id="goto-signin-after-reset" style="margin-top: 15px; background: var(--success);">Go to Sign In</button>
+                        `;
+                        document.getElementById('reset-result').style.display = 'block';
+
+                        // Re-attach event handler for the new button
+                        document.getElementById('goto-signin-after-reset').addEventListener('click', function() {
+                            document.getElementById('forgot-password-screen').classList.remove('active');
+                            document.getElementById('candidate-signin-screen').classList.add('active');
+                            // Reset the forgot password form
+                            document.getElementById('forgot-email').value = '';
+                            document.getElementById('forgot-email').style.display = 'block';
+                            document.getElementById('reset-password-btn').style.display = 'block';
+                            document.getElementById('reset-result').style.display = 'none';
+                        });
+                    }
 
                     // Hide the form elements
                     document.getElementById('forgot-email').style.display = 'none';
                     btn.style.display = 'none';
 
-                    window.PoliteCCAPI.showNotification('✅ Password reset successful!', 'success');
+                    window.PoliteCCAPI.showNotification('✅ Password reset successful! Check your email.', 'success');
                 }
             } catch (error) {
                 console.error('❌ Event handler error:', error);
