@@ -583,7 +583,8 @@
                 padding-left: 40px !important;
             }
             .question-item .delete-question-btn,
-            .question-item .edit-question-btn {
+            .question-item .edit-question-btn,
+            .question-item .add-to-cart-btn {
                 width: 30px !important;
                 height: 30px !important;
                 font-size: 0.85rem !important;
@@ -1562,6 +1563,7 @@
                             <span>📊 Total: <strong id="total-questions-count">0</strong></span>
                             <span>✅ Selected: <strong id="selected-questions-count">0</strong></span>
                             <span>📄 Showing: <strong id="showing-questions-count">0</strong></span>
+                            <span style="background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 12px;">🛒 Cart: <strong id="cart-questions-count">0</strong></span>
                         </div>
                         <div style="font-size: 0.85rem; opacity: 0.9;">
                             Scroll down to load more questions
@@ -1715,6 +1717,9 @@
                                         🎲 Random
                                     </button>
                                 </div>
+                                <button id="show-cart-btn" style="background: #27ae60; color: white; padding: 6px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
+                                    🛒 Cart (<span id="exam-cart-count">0</span>)
+                                </button>
                                 <div id="selected-count" style="background: white; color: #667eea; padding: 8px 20px; border-radius: 25px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2); min-width: 120px; text-align: center;">
                                     0 Selected
                                 </div>
@@ -1746,6 +1751,48 @@
                     <button id="create-exam-submit-btn">Create Exam</button>
                     <div class="error" id="exam-error"></div>
                     <div class="success" id="exam-success"></div>
+                </div>
+
+                <!-- Cart Modal -->
+                <div id="cart-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto;">
+                    <div style="background: white; margin: 30px auto; max-width: 800px; border-radius: 12px; padding: 25px; position: relative; max-height: 90vh; overflow-y: auto;">
+                        <button id="close-cart-modal-btn" style="position: absolute; top: 15px; right: 15px; background: var(--danger); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; z-index: 10;">✖ Close</button>
+
+                        <h3 style="color: var(--secondary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.5rem;">🛒</span> Question Cart
+                        </h3>
+
+                        <!-- Cart Stats Summary -->
+                        <div id="cart-stats-summary" style="margin-bottom: 20px;">
+                            <!-- Stats will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Cart Action Buttons -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                            <button id="cart-select-all-btn" style="background: #3498db; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                ☑️ Select All
+                            </button>
+                            <button id="cart-deselect-all-btn" style="background: #95a5a6; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                ☐ Deselect All
+                            </button>
+                            <button id="cart-clear-btn" style="background: #e74c3c; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                🗑️ Clear Cart
+                            </button>
+                        </div>
+
+                        <!-- Cart Questions List -->
+                        <div id="cart-questions-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                            <!-- Questions will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Add to Exam Button -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 2px solid #e0e0e0;">
+                            <span id="cart-selected-info" style="color: #666; font-weight: 500;">0 questions selected</span>
+                            <button id="add-cart-to-exam-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                                ➕ Add Selected to Exam
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- View Results Section -->
@@ -3481,11 +3528,88 @@
         const QUESTIONS_PER_PAGE = 100;
         let isLoadingMoreQuestions = false;
 
+        // Question Cart - stores full question objects for exam creation
+        let questionCart = new Map(); // Map of question id/displayId -> question object
+
         // Function to update question bank stats
         function updateQuestionBankStats() {
             document.getElementById('total-questions-count').textContent = allQuestions.length;
             document.getElementById('selected-questions-count').textContent = selectedQuestionIds.size;
             document.getElementById('showing-questions-count').textContent = Math.min(displayedQuestionsCount, filteredQuestions.length);
+            document.getElementById('cart-questions-count').textContent = questionCart.size;
+            // Also update exam cart count if it exists
+            const examCartCount = document.getElementById('exam-cart-count');
+            if (examCartCount) {
+                examCartCount.textContent = questionCart.size;
+            }
+        }
+
+        // Function to add question to cart
+        function addToCart(question) {
+            const key = question.id || question.ID;
+            if (!questionCart.has(key)) {
+                questionCart.set(key, question);
+                updateQuestionBankStats();
+                return true;
+            }
+            return false;
+        }
+
+        // Function to remove question from cart
+        function removeFromCart(questionId) {
+            if (questionCart.has(questionId)) {
+                questionCart.delete(questionId);
+                updateQuestionBankStats();
+                return true;
+            }
+            return false;
+        }
+
+        // Function to toggle cart item
+        function toggleCartItem(question) {
+            const key = question.id || question.ID;
+            if (questionCart.has(key)) {
+                questionCart.delete(key);
+                updateQuestionBankStats();
+                return false; // removed
+            } else {
+                questionCart.set(key, question);
+                updateQuestionBankStats();
+                return true; // added
+            }
+        }
+
+        // Function to clear cart
+        function clearCart() {
+            questionCart.clear();
+            updateQuestionBankStats();
+        }
+
+        // Function to get cart statistics
+        function getCartStats() {
+            const stats = {
+                total: questionCart.size,
+                subjects: {},
+                difficulties: { Easy: 0, Medium: 0, Hard: 0 }
+            };
+
+            questionCart.forEach((q) => {
+                // Count by subject
+                const subject = q.Subject || 'Unknown';
+                if (!stats.subjects[subject]) {
+                    stats.subjects[subject] = { total: 0, Easy: 0, Medium: 0, Hard: 0 };
+                }
+                stats.subjects[subject].total++;
+
+                // Count by difficulty
+                const difficulty = q.Difficulty || 'Unknown';
+                if (stats.difficulties[difficulty] !== undefined) {
+                    stats.difficulties[difficulty]++;
+                    stats.subjects[subject][difficulty]++;
+                }
+            });
+
+            return stats;
         }
 
         // Function to render a single question item
@@ -3505,6 +3629,9 @@
                     </button>
                     <button class="edit-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Edit Question" style="background: var(--primary); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                         ✏️
+                    </button>
+                    <button class="add-to-cart-btn" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" title="Add to Cart" style="background: ${questionCart.has(q.id || q.ID) ? '#27ae60' : '#f39c12'}; color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        ${questionCart.has(q.id || q.ID) ? '✓' : '🛒'}
                     </button>
                 </div>
 
@@ -3682,6 +3809,45 @@
                             document.getElementById('add-question-form').scrollIntoView({ behavior: 'smooth' });
                         } catch (error) {
                             console.error('❌ Edit error:', error);
+                            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                                window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Cart button listeners
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                if (!btn.hasAttribute('data-listener-attached')) {
+                    btn.setAttribute('data-listener-attached', 'true');
+                    btn.addEventListener('click', function(e) {
+                        try {
+                            e.stopPropagation();
+                            const index = parseInt(this.getAttribute('data-index'));
+                            const question = filteredQuestions[index];
+                            const key = question.id || question.ID;
+
+                            const added = toggleCartItem(question);
+
+                            // Update button appearance
+                            if (added) {
+                                this.style.background = '#27ae60';
+                                this.innerHTML = '✓';
+                                this.title = 'Remove from Cart';
+                                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                                    window.PoliteCCAPI.showNotification(`Added ${question.ID} to cart`, 'success');
+                                }
+                            } else {
+                                this.style.background = '#f39c12';
+                                this.innerHTML = '🛒';
+                                this.title = 'Add to Cart';
+                                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                                    window.PoliteCCAPI.showNotification(`Removed ${question.ID} from cart`, 'info');
+                                }
+                            }
+                        } catch (error) {
+                            console.error('❌ Cart error:', error);
                             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                                 window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
                             }
@@ -4418,6 +4584,267 @@
                     // Show notification
                     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                         window.PoliteCCAPI.showNotification(`🎲 Randomly selected ${randomCount} questions!`, 'success');
+                    }
+                });
+
+                // Cart Modal Functions
+                const cartModal = document.getElementById('cart-modal');
+                const cartStatsSummary = document.getElementById('cart-stats-summary');
+                const cartQuestionsList = document.getElementById('cart-questions-list');
+                const cartSelectedInfo = document.getElementById('cart-selected-info');
+
+                // Function to render cart stats summary
+                function renderCartStats() {
+                    const stats = getCartStats();
+
+                    if (stats.total === 0) {
+                        cartStatsSummary.innerHTML = `
+                            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; color: #666;">
+                                <span style="font-size: 2rem;">🛒</span>
+                                <p style="margin-top: 10px;">Your cart is empty. Add questions from the Question Bank!</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    // Subject colors
+                    const subjectColors = {
+                        'Math': '#3498db',
+                        'Reasoning': '#9b59b6',
+                        'GK': '#e67e22',
+                        'General Knowledge': '#e67e22',
+                        'English': '#1abc9c',
+                        'Others': '#95a5a6'
+                    };
+
+                    let html = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 1.8rem; font-weight: 700;">${stats.total}</div>
+                                <div style="font-size: 0.85rem; opacity: 0.9;">Total Questions</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 1.8rem; font-weight: 700;">${stats.difficulties.Easy}</div>
+                                <div style="font-size: 0.85rem; opacity: 0.9;">Easy</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #f39c12, #f1c40f); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 1.8rem; font-weight: 700;">${stats.difficulties.Medium}</div>
+                                <div style="font-size: 0.85rem; opacity: 0.9;">Medium</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 1.8rem; font-weight: 700;">${stats.difficulties.Hard}</div>
+                                <div style="font-size: 0.85rem; opacity: 0.9;">Hard</div>
+                            </div>
+                        </div>
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Questions by Subject</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                    `;
+
+                    for (const [subject, data] of Object.entries(stats.subjects)) {
+                        const color = subjectColors[subject] || '#95a5a6';
+                        html += `
+                            <div style="background: ${color}; color: white; padding: 10px 15px; border-radius: 8px; min-width: 150px;">
+                                <div style="font-weight: 700; margin-bottom: 5px;">${subject}</div>
+                                <div style="font-size: 0.85rem; display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <span>Total: ${data.total}</span>
+                                    <span style="opacity: 0.8;">E:${data.Easy} M:${data.Medium} H:${data.Hard}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    html += '</div>';
+                    cartStatsSummary.innerHTML = html;
+                }
+
+                // Function to render cart questions list
+                function renderCartQuestions() {
+                    if (questionCart.size === 0) {
+                        cartQuestionsList.innerHTML = `
+                            <div style="text-align: center; padding: 30px; color: #999;">
+                                No questions in cart
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    const subjectColors = {
+                        'Math': '#3498db',
+                        'Reasoning': '#9b59b6',
+                        'GK': '#e67e22',
+                        'General Knowledge': '#e67e22',
+                        'English': '#1abc9c',
+                        'Others': '#95a5a6'
+                    };
+
+                    const difficultyColors = {
+                        'Easy': '#27ae60',
+                        'Medium': '#f39c12',
+                        'Hard': '#e74c3c'
+                    };
+
+                    let html = '';
+                    questionCart.forEach((q, key) => {
+                        const subjectColor = subjectColors[q.Subject] || '#95a5a6';
+                        const difficultyColor = difficultyColors[q.Difficulty] || '#95a5a6';
+
+                        html += `
+                            <label class="cart-question-item" data-question-key="${key}" style="display: flex; align-items: flex-start; padding: 12px; border-bottom: 1px solid #e0e0e0; cursor: pointer; transition: background 0.2s;">
+                                <input type="checkbox" class="cart-item-checkbox" value="${key}" data-question-id="${q.id || ''}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;" checked>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap;">
+                                        <strong style="color: var(--secondary);">${q.ID}</strong>
+                                        <span style="background: ${subjectColor}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">${q.Subject}</span>
+                                        <span style="background: ${difficultyColor}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">${q.Difficulty}</span>
+                                        <button class="remove-from-cart-btn" data-question-key="${key}" style="background: #e74c3c; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; margin-left: auto;">Remove</button>
+                                    </div>
+                                    <div style="color: #555; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${q.Question}</div>
+                                </div>
+                            </label>
+                        `;
+                    });
+
+                    cartQuestionsList.innerHTML = html;
+
+                    // Add hover effects
+                    document.querySelectorAll('.cart-question-item').forEach(item => {
+                        item.addEventListener('mouseenter', function() {
+                            this.style.background = '#f0f8ff';
+                        });
+                        item.addEventListener('mouseleave', function() {
+                            this.style.background = 'transparent';
+                        });
+                    });
+
+                    // Add remove button handlers
+                    document.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const key = this.getAttribute('data-question-key');
+                            questionCart.delete(key);
+                            updateQuestionBankStats();
+                            renderCartStats();
+                            renderCartQuestions();
+                            updateCartSelectedInfo();
+                            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                                window.PoliteCCAPI.showNotification('Removed from cart', 'info');
+                            }
+                        });
+                    });
+
+                    // Add checkbox change handlers
+                    document.querySelectorAll('.cart-item-checkbox').forEach(cb => {
+                        cb.addEventListener('change', updateCartSelectedInfo);
+                    });
+
+                    updateCartSelectedInfo();
+                }
+
+                // Function to update cart selected info
+                function updateCartSelectedInfo() {
+                    const checkedCount = document.querySelectorAll('.cart-item-checkbox:checked').length;
+                    cartSelectedInfo.textContent = `${checkedCount} questions selected`;
+                }
+
+                // Show cart modal
+                document.getElementById('show-cart-btn').addEventListener('click', function() {
+                    renderCartStats();
+                    renderCartQuestions();
+                    cartModal.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                });
+
+                // Close cart modal
+                document.getElementById('close-cart-modal-btn').addEventListener('click', function() {
+                    cartModal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                });
+
+                // Close modal when clicking outside
+                cartModal.addEventListener('click', function(e) {
+                    if (e.target === cartModal) {
+                        cartModal.style.display = 'none';
+                        document.body.style.overflow = 'auto';
+                    }
+                });
+
+                // Select all in cart
+                document.getElementById('cart-select-all-btn').addEventListener('click', function() {
+                    document.querySelectorAll('.cart-item-checkbox').forEach(cb => {
+                        cb.checked = true;
+                    });
+                    updateCartSelectedInfo();
+                });
+
+                // Deselect all in cart
+                document.getElementById('cart-deselect-all-btn').addEventListener('click', function() {
+                    document.querySelectorAll('.cart-item-checkbox').forEach(cb => {
+                        cb.checked = false;
+                    });
+                    updateCartSelectedInfo();
+                });
+
+                // Clear cart
+                document.getElementById('cart-clear-btn').addEventListener('click', function() {
+                    if (questionCart.size === 0) {
+                        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                            window.PoliteCCAPI.showNotification('Cart is already empty', 'info');
+                        }
+                        return;
+                    }
+
+                    if (confirm(`Are you sure you want to clear all ${questionCart.size} questions from cart?`)) {
+                        clearCart();
+                        renderCartStats();
+                        renderCartQuestions();
+                        // Also refresh the question bank display to update cart button states
+                        if (filteredQuestions.length > 0) {
+                            applySearchAndFilter();
+                        }
+                        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                            window.PoliteCCAPI.showNotification('Cart cleared', 'success');
+                        }
+                    }
+                });
+
+                // Add selected cart items to exam
+                document.getElementById('add-cart-to-exam-btn').addEventListener('click', function() {
+                    const selectedKeys = [];
+                    document.querySelectorAll('.cart-item-checkbox:checked').forEach(cb => {
+                        selectedKeys.push(cb.value);
+                    });
+
+                    if (selectedKeys.length === 0) {
+                        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                            window.PoliteCCAPI.showNotification('Please select at least one question to add', 'warning');
+                        }
+                        return;
+                    }
+
+                    // Find and check the corresponding question checkboxes in the exam questions list
+                    let addedCount = 0;
+                    selectedKeys.forEach(key => {
+                        const q = questionCart.get(key);
+                        if (q) {
+                            // Find the checkbox with matching question id
+                            const examCheckbox = document.querySelector(`.question-checkbox[value="${q.id}"]`);
+                            if (examCheckbox && !examCheckbox.checked) {
+                                examCheckbox.checked = true;
+                                addedCount++;
+                            }
+                        }
+                    });
+
+                    // Update counter
+                    updateSelectedCount();
+
+                    // Close modal
+                    cartModal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+
+                    if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                        window.PoliteCCAPI.showNotification(`Added ${addedCount} questions to exam selection`, 'success');
                     }
                 });
             }
