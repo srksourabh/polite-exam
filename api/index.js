@@ -235,7 +235,7 @@ async function sendPasswordEmail(email, name, password, isTemporary = false) {
 const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 const RATE_LIMIT_MAX_REQUESTS = 100;
-const AUTH_RATE_LIMIT_MAX = 5;
+const AUTH_RATE_LIMIT_MAX = 20;
 
 function checkRateLimit(ip, isAuthRoute = false) {
     const now = Date.now();
