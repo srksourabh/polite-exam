@@ -1,5 +1,6 @@
 const Airtable = require('airtable');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 // =====================================================
 // AIRTABLE CONFIGURATION
@@ -72,6 +73,162 @@ function generateSecurePassword(length = 12) {
 // Simple password hashing (for demonstration - in production use bcrypt)
 function hashPassword(password) {
     return crypto.createHash('sha256').update(password + process.env.PASSWORD_SALT || 'polite-salt').digest('hex');
+}
+
+// Generate verification token
+function generateVerificationToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+// =====================================================
+// EMAIL SERVICE CONFIGURATION
+// =====================================================
+// Configure email transporter using Nodemailer
+// Set these environment variables:
+// SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, APP_URL
+
+function getEmailTransporter() {
+    // Check if email is configured
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+        console.log('⚠️ Email not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASSWORD in environment.');
+        return null;
+    }
+
+    return nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT) || 587,
+        secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD
+        }
+    });
+}
+
+// Send verification email
+async function sendVerificationEmail(email, name, verificationToken) {
+    const transporter = getEmailTransporter();
+    const appUrl = process.env.APP_URL || 'https://polite-exam.vercel.app';
+    const verificationLink = `${appUrl}?verify=${verificationToken}`;
+
+    if (!transporter) {
+        console.log('📧 [DEV MODE] Verification link:', verificationLink);
+        return { success: true, devMode: true, verificationLink };
+    }
+
+    const mailOptions = {
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: 'Verify Your Polite Coaching Centre Account',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: #2c3e50; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0; color: #f1c40f;">POLITE COACHING CENTRE</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">Email Verification</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #2c3e50; margin-top: 0;">Hello ${name}!</h2>
+                    <p style="color: #666; line-height: 1.6;">
+                        Thank you for creating an account with Polite Coaching Centre.
+                        Please click the button below to verify your email address and activate your account.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${verificationLink}"
+                           style="background: #27ae60; color: white; padding: 15px 30px; text-decoration: none;
+                                  border-radius: 8px; font-weight: bold; display: inline-block;">
+                            Verify My Email
+                        </a>
+                    </div>
+                    <p style="color: #999; font-size: 0.9rem;">
+                        If the button doesn't work, copy and paste this link into your browser:<br>
+                        <a href="${verificationLink}" style="color: #3498db; word-break: break-all;">${verificationLink}</a>
+                    </p>
+                    <p style="color: #999; font-size: 0.9rem; margin-top: 20px;">
+                        If you didn't create this account, please ignore this email.
+                    </p>
+                </div>
+                <p style="text-align: center; color: #999; font-size: 0.8rem; margin-top: 20px;">
+                    © Polite Coaching Centre - Reasoning, Math & GK Tests for Job Aspirants
+                </p>
+            </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 Verification email sent to ${email}`);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Failed to send verification email:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Send password email (for signup or forgot password)
+async function sendPasswordEmail(email, name, password, isTemporary = false) {
+    const transporter = getEmailTransporter();
+    const appUrl = process.env.APP_URL || 'https://polite-exam.vercel.app';
+
+    if (!transporter) {
+        console.log(`📧 [DEV MODE] Password for ${email}: ${password}`);
+        return { success: true, devMode: true, password };
+    }
+
+    const subject = isTemporary
+        ? 'Your Temporary Password - Polite Coaching Centre'
+        : 'Your Account Password - Polite Coaching Centre';
+
+    const mailOptions = {
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: subject,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: #2c3e50; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0; color: #f1c40f;">POLITE COACHING CENTRE</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">${isTemporary ? 'Password Reset' : 'Account Created'}</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #2c3e50; margin-top: 0;">Hello ${name}!</h2>
+                    <p style="color: #666; line-height: 1.6;">
+                        ${isTemporary
+                            ? 'Your password has been reset. Here is your new temporary password:'
+                            : 'Your account has been created successfully! Here is your password:'}
+                    </p>
+                    <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 2px solid #3498db;">
+                        <span style="font-family: monospace; font-size: 1.5rem; font-weight: bold; color: #2c3e50; letter-spacing: 2px;">
+                            ${password}
+                        </span>
+                    </div>
+                    <p style="color: #e74c3c; font-weight: 500;">
+                        ⚠️ Please change this password after logging in for security reasons.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${appUrl}"
+                           style="background: #3498db; color: white; padding: 15px 30px; text-decoration: none;
+                                  border-radius: 8px; font-weight: bold; display: inline-block;">
+                            Login to Your Account
+                        </a>
+                    </div>
+                    <p style="color: #999; font-size: 0.9rem;">
+                        If you didn't request this, please contact support immediately.
+                    </p>
+                </div>
+                <p style="text-align: center; color: #999; font-size: 0.8rem; margin-top: 20px;">
+                    © Polite Coaching Centre - Reasoning, Math & GK Tests for Job Aspirants
+                </p>
+            </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 Password email sent to ${email}`);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Failed to send password email:', error);
+        return { success: false, error: error.message };
+    }
 }
 
 // Rate limiting storage (in-memory, resets on server restart)
@@ -475,10 +632,11 @@ module.exports = async (req, res) => {
             try {
                 const { name, email, mobile, password } = req.body;
 
-                if (!name || !email || !mobile || !password) {
+                // Name, email, password required; mobile is optional
+                if (!name || !email || !password) {
                     return res.status(400).json({
                         success: false,
-                        error: 'All fields are required'
+                        error: 'Name, email, and password are required'
                     });
                 }
 
@@ -490,7 +648,8 @@ module.exports = async (req, res) => {
                     });
                 }
 
-                if (!isValidMobile(mobile)) {
+                // Mobile is optional but must be valid if provided
+                if (mobile && !isValidMobile(mobile)) {
                     return res.status(400).json({
                         success: false,
                         error: 'Mobile number must be exactly 10 digits'
@@ -513,42 +672,58 @@ module.exports = async (req, res) => {
 
                 // Sanitize inputs for formula
                 const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
-                const sanitizedMobile = sanitizeForFormula(mobile);
 
-                // Check if candidate already exists
+                // Check if candidate already exists by email
                 const existingCandidates = await base(CANDIDATES_TABLE)
                     .select({
-                        filterByFormula: `OR({Email} = '${sanitizedEmail}', {Mobile} = '${sanitizedMobile}')`
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
                     })
                     .all();
 
                 if (existingCandidates.length > 0) {
                     return res.status(400).json({
                         success: false,
-                        error: 'Candidate with this email or mobile already exists'
+                        error: 'An account with this email already exists'
                     });
                 }
 
                 // Hash the password before storing
                 const hashedPassword = hashPassword(password);
 
-                // Create candidate record with hashed password
-                const record = await base(CANDIDATES_TABLE).create({
+                // Generate verification token
+                const verificationToken = generateVerificationToken();
+
+                // Create candidate record with hashed password and verification token
+                const candidateData = {
                     'Name': name.trim(),
                     'Email': email.toLowerCase().trim(),
-                    'Mobile': mobile.trim(),
-                    'Password': hashedPassword
-                });
+                    'Password': hashedPassword,
+                    'Verified': false,
+                    'VerificationToken': verificationToken
+                };
+
+                // Add mobile if provided
+                if (mobile) {
+                    candidateData['Mobile'] = mobile.trim();
+                }
+
+                const record = await base(CANDIDATES_TABLE).create(candidateData);
+
+                // Send verification email
+                const emailResult = await sendVerificationEmail(email.toLowerCase(), name, verificationToken);
 
                 return res.status(201).json({
                     success: true,
-                    message: 'Account created successfully',
+                    message: 'Account created! Please check your email to verify your account.',
+                    requiresVerification: true,
                     data: {
                         id: record.id,
                         name: record.fields.Name,
                         email: record.fields.Email,
-                        mobile: record.fields.Mobile
-                    }
+                        mobile: record.fields.Mobile || ''
+                    },
+                    // Include verification link in dev mode (when email is not configured)
+                    ...(emailResult.devMode ? { devVerificationLink: emailResult.verificationLink } : {})
                 });
             } catch (error) {
                 console.error('Signup error:', error);
@@ -598,6 +773,19 @@ module.exports = async (req, res) => {
 
                 const candidate = candidates[0];
 
+                // Check if account is verified
+                // If Verified field doesn't exist (legacy account), treat as verified
+                const isVerified = candidate.fields.Verified === undefined || candidate.fields.Verified === true;
+
+                if (!isVerified) {
+                    return res.status(403).json({
+                        success: false,
+                        error: 'Please verify your email before logging in. Check your inbox for the verification link.',
+                        requiresVerification: true,
+                        email: email
+                    });
+                }
+
                 // Hash the provided password and compare with stored hash
                 // Support both hashed (new) and plaintext (legacy) passwords during migration
                 const hashedPassword = hashPassword(password);
@@ -642,7 +830,7 @@ module.exports = async (req, res) => {
                         id: candidate.id,
                         name: candidate.fields.Name,
                         email: candidate.fields.Email,
-                        mobile: candidate.fields.Mobile
+                        mobile: candidate.fields.Mobile || ''
                     }
                 });
             } catch (error) {
@@ -733,7 +921,7 @@ module.exports = async (req, res) => {
                     // Return generic message to prevent email enumeration
                     return res.status(200).json({
                         success: true,
-                        message: 'If an account exists with this email, a password reset has been initiated.'
+                        message: 'If an account exists with this email, a password reset email has been sent.'
                     });
                 }
 
@@ -750,27 +938,171 @@ module.exports = async (req, res) => {
                     'Password': hashedTempPassword
                 });
 
-                // In production: Send email with temporary password instead of returning it
-                // For now, we return it since email service is not configured
-                // TODO: Implement email sending and remove password from response
-                console.log(`Password reset for ${email}. Temporary password: ${tempPassword}`);
+                // Send password via email
+                const emailResult = await sendPasswordEmail(
+                    email.toLowerCase(),
+                    candidate.fields.Name,
+                    tempPassword,
+                    true // isTemporary
+                );
+
+                console.log(`Password reset for ${email}. Email sent: ${emailResult.success}`);
 
                 return res.status(200).json({
                     success: true,
-                    message: 'Password reset successful. Your new temporary password has been generated.',
-                    data: {
-                        email: email,
-                        // WARNING: In production, DO NOT return password in response
-                        // Instead, send it via secure email channel
-                        tempPassword: tempPassword,
-                        note: 'Please change this password after logging in. In production, this will be sent via email.'
-                    }
+                    message: 'Password reset successful. Check your email for the new temporary password.',
+                    // Include temp password in dev mode (when email is not configured)
+                    ...(emailResult.devMode ? {
+                        data: {
+                            tempPassword: tempPassword,
+                            note: 'DEV MODE: In production, this will only be sent via email.'
+                        }
+                    } : {})
                 });
             } catch (error) {
                 console.error('Password reset error:', error);
                 return res.status(500).json({
                     success: false,
                     error: 'Failed to reset password. Please try again.'
+                });
+            }
+        }
+
+        // GET /api/auth/verify/:token - Verify email address
+        if (url.startsWith('/api/auth/verify/') && method === 'GET') {
+            try {
+                const token = url.split('/api/auth/verify/')[1];
+
+                if (!token || token.length !== 64) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid verification token'
+                    });
+                }
+
+                // Sanitize token for formula
+                const sanitizedToken = sanitizeForFormula(token);
+
+                // Find candidate by verification token
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{VerificationToken} = '${sanitizedToken}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Invalid or expired verification link'
+                    });
+                }
+
+                const candidate = candidates[0];
+
+                // Check if already verified
+                if (candidate.fields.Verified === true) {
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Your email is already verified. You can now login.',
+                        alreadyVerified: true
+                    });
+                }
+
+                // Update candidate to verified status
+                await base(CANDIDATES_TABLE).update(candidate.id, {
+                    'Verified': true,
+                    'VerificationToken': '' // Clear the token after use
+                });
+
+                console.log(`✅ Email verified for ${candidate.fields.Email}`);
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Email verified successfully! You can now login to your account.',
+                    data: {
+                        name: candidate.fields.Name,
+                        email: candidate.fields.Email
+                    }
+                });
+            } catch (error) {
+                console.error('Verification error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to verify email. Please try again.'
+                });
+            }
+        }
+
+        // POST /api/auth/resend-verification - Resend verification email
+        if (url === '/api/auth/resend-verification' && method === 'POST') {
+            try {
+                const { email } = req.body;
+
+                if (!email) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Email is required'
+                    });
+                }
+
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    // Return generic message to prevent email enumeration
+                    return res.status(200).json({
+                        success: true,
+                        message: 'If an account exists with this email, a verification link has been sent.'
+                    });
+                }
+
+                const candidate = candidates[0];
+
+                // Check if already verified
+                if (candidate.fields.Verified === true) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'This email is already verified. Please login.'
+                    });
+                }
+
+                // Generate new verification token
+                const verificationToken = generateVerificationToken();
+
+                // Update token in database
+                await base(CANDIDATES_TABLE).update(candidate.id, {
+                    'VerificationToken': verificationToken
+                });
+
+                // Send verification email
+                const emailResult = await sendVerificationEmail(
+                    email.toLowerCase(),
+                    candidate.fields.Name,
+                    verificationToken
+                );
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Verification email sent. Please check your inbox.',
+                    ...(emailResult.devMode ? { devVerificationLink: emailResult.verificationLink } : {})
+                });
+            } catch (error) {
+                console.error('Resend verification error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to resend verification email. Please try again.'
                 });
             }
         }
@@ -812,7 +1144,8 @@ module.exports = async (req, res) => {
                         id: candidate.id,
                         name: candidate.fields.Name,
                         email: candidate.fields.Email,
-                        mobile: candidate.fields.Mobile
+                        mobile: candidate.fields.Mobile || '',
+                        profileImage: candidate.fields.ProfileImage || ''
                     }
                 });
             } catch (error) {
@@ -820,6 +1153,188 @@ module.exports = async (req, res) => {
                 return res.status(500).json({
                     success: false,
                     error: 'Failed to get profile. Please try again.'
+                });
+            }
+        }
+
+        // PUT /api/candidates/profile - Update candidate profile
+        if (url === '/api/candidates/profile' && method === 'PUT') {
+            try {
+                const { email, name, mobile, profileImage } = req.body;
+
+                if (!email) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Email is required'
+                    });
+                }
+
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                // Validate mobile if provided
+                if (mobile && !isValidMobile(mobile)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Mobile number must be exactly 10 digits'
+                    });
+                }
+
+                // Validate name if provided
+                if (name && (name.length < 2 || name.length > 100)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Name must be between 2 and 100 characters'
+                    });
+                }
+
+                // Validate profile image size (max 500KB base64)
+                if (profileImage && profileImage.length > 700000) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Profile image is too large. Maximum size is 500KB.'
+                    });
+                }
+
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
+                // Find candidate
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Candidate not found'
+                    });
+                }
+
+                const candidate = candidates[0];
+
+                // Build update object with only provided fields
+                const updateData = {};
+                if (name) updateData['Name'] = name.trim();
+                if (mobile !== undefined) updateData['Mobile'] = mobile.trim();
+                if (profileImage !== undefined) updateData['ProfileImage'] = profileImage;
+
+                // Update candidate record
+                await base(CANDIDATES_TABLE).update(candidate.id, updateData);
+
+                console.log(`✅ Profile updated for ${email}`);
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Profile updated successfully',
+                    data: {
+                        name: name || candidate.fields.Name,
+                        email: candidate.fields.Email,
+                        mobile: mobile !== undefined ? mobile : candidate.fields.Mobile,
+                        profileImage: profileImage !== undefined ? profileImage : candidate.fields.ProfileImage
+                    }
+                });
+            } catch (error) {
+                console.error('Update profile error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to update profile. Please try again.'
+                });
+            }
+        }
+
+        // PUT /api/candidates/password - Change candidate password
+        if (url === '/api/candidates/password' && method === 'PUT') {
+            try {
+                const { email, currentPassword, newPassword } = req.body;
+
+                if (!email || !currentPassword || !newPassword) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Email, current password, and new password are required'
+                    });
+                }
+
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                if (newPassword.length < 6) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'New password must be at least 6 characters'
+                    });
+                }
+
+                if (currentPassword === newPassword) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'New password must be different from current password'
+                    });
+                }
+
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
+                // Find candidate
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Candidate not found'
+                    });
+                }
+
+                const candidate = candidates[0];
+                const storedPassword = candidate.fields.Password;
+
+                // Verify current password
+                const hashedCurrentPassword = hashPassword(currentPassword);
+                const isHashedPassword = /^[a-f0-9]{64}$/i.test(storedPassword);
+
+                let passwordMatch = false;
+                if (isHashedPassword) {
+                    passwordMatch = storedPassword === hashedCurrentPassword;
+                } else {
+                    passwordMatch = storedPassword === currentPassword;
+                }
+
+                if (!passwordMatch) {
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Current password is incorrect'
+                    });
+                }
+
+                // Hash and update new password
+                const hashedNewPassword = hashPassword(newPassword);
+                await base(CANDIDATES_TABLE).update(candidate.id, {
+                    'Password': hashedNewPassword
+                });
+
+                console.log(`✅ Password changed for ${email}`);
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Password changed successfully'
+                });
+            } catch (error) {
+                console.error('Change password error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to change password. Please try again.'
                 });
             }
         }
