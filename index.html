@@ -1390,7 +1390,32 @@
                 <div class="dashboard-header">
                     <a href="#" id="candidate-logout-link" class="logout-link">Logout</a>
                     <h2 class="dashboard-title">Welcome, <span id="dashboard-name"></span>!</h2>
-                    <p class="dashboard-info"><span id="dashboard-email"></span> | <span id="dashboard-mobile"></span></p>
+                </div>
+
+                <!-- Profile Section -->
+                <div class="profile-section" style="background: white; border-radius: 15px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <div style="display: flex; align-items: center; gap: 25px; flex-wrap: wrap;">
+                        <!-- Profile Image -->
+                        <div class="profile-image-container" style="position: relative;">
+                            <div id="profile-image-display" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--primary)); display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem; font-weight: bold; overflow: hidden;">
+                                <span id="profile-initials"></span>
+                            </div>
+                            <label for="profile-image-input" style="position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 0.9rem; border: 2px solid white;">
+                                📷
+                            </label>
+                            <input type="file" id="profile-image-input" accept="image/*" style="display: none;">
+                        </div>
+                        <!-- Profile Info -->
+                        <div style="flex: 1; min-width: 200px;">
+                            <div style="font-size: 1.3rem; font-weight: 600; color: var(--primary); margin-bottom: 5px;" id="profile-name-display"></div>
+                            <div style="color: #666; margin-bottom: 3px;"><span style="font-weight: 500;">Email:</span> <span id="dashboard-email"></span></div>
+                            <div style="color: #666;"><span style="font-weight: 500;">Mobile:</span> <span id="dashboard-mobile"></span> <a href="#" id="edit-mobile-link" style="color: var(--secondary); font-size: 0.85rem; margin-left: 5px;">Edit</a></div>
+                        </div>
+                        <!-- Edit Profile Button -->
+                        <div>
+                            <button id="edit-profile-btn" style="background: var(--secondary); color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 500; cursor: pointer;">Edit Profile</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="stats-grid">
@@ -1404,8 +1429,9 @@
                     </div>
                 </div>
 
-                <div style="margin-bottom: 20px;">
-                    <button id="take-exam-dashboard-btn" class="success-btn">Take a New Exam</button>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px;">
+                    <button id="take-exam-dashboard-btn" class="success-btn" style="flex: 1; min-width: 150px;">Take a New Exam</button>
+                    <button id="change-password-btn" style="flex: 1; min-width: 150px; background: var(--accent);">Change Password</button>
                 </div>
 
                 <h3 style="color: var(--primary); margin-bottom: 20px;">Your Exam History</h3>
@@ -1414,6 +1440,59 @@
                         <div class="empty-state-icon">📝</div>
                         <p>No exams taken yet. Start your first exam!</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Edit Profile Modal -->
+            <div id="edit-profile-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+                <div class="modal-content" style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h3 style="color: var(--primary); margin: 0;">Edit Profile</h3>
+                        <button id="close-profile-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Profile Image</label>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div id="modal-profile-preview" style="width: 80px; height: 80px; border-radius: 50%; background: var(--secondary); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; overflow: hidden;"></div>
+                            <div>
+                                <label for="modal-profile-image" style="display: inline-block; background: var(--secondary); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Choose Image</label>
+                                <input type="file" id="modal-profile-image" accept="image/*" style="display: none;">
+                                <p style="font-size: 0.8rem; color: #999; margin-top: 5px;">Max size: 500KB</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-profile-name">Full Name</label>
+                        <input type="text" id="edit-profile-name" placeholder="Enter your full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-profile-mobile">Mobile Number</label>
+                        <input type="tel" id="edit-profile-mobile" placeholder="10-digit mobile number">
+                    </div>
+                    <button id="save-profile-btn" class="success-btn">Save Changes</button>
+                </div>
+            </div>
+
+            <!-- Change Password Modal -->
+            <div id="change-password-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+                <div class="modal-content" style="background: white; border-radius: 15px; padding: 30px; max-width: 450px; width: 90%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h3 style="color: var(--primary); margin: 0;">Change Password</h3>
+                        <button id="close-password-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="current-password">Current Password *</label>
+                        <input type="password" id="current-password" placeholder="Enter current password">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">New Password *</label>
+                        <input type="password" id="new-password" placeholder="Enter new password (min 6 characters)">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-new-password">Confirm New Password *</label>
+                        <input type="password" id="confirm-new-password" placeholder="Re-enter new password">
+                    </div>
+                    <button id="save-password-btn" class="success-btn">Change Password</button>
                 </div>
             </div>
 
@@ -2826,6 +2905,10 @@
             }
         });
 
+        // Store current user data globally for profile operations
+        let currentUserData = null;
+        let pendingProfileImage = null;
+
         // Show Candidate Dashboard
         async function showCandidateDashboard(userData) {
             document.getElementById('candidate-signin-screen').classList.remove('active');
@@ -2833,10 +2916,24 @@
             document.getElementById('candidate-dashboard').classList.add('active');
             updateHeaderNav('candidate-dashboard');
 
+            // Store user data
+            currentUserData = userData;
+
             // Populate dashboard
             document.getElementById('dashboard-name').textContent = userData.name;
             document.getElementById('dashboard-email').textContent = userData.email;
-            document.getElementById('dashboard-mobile').textContent = userData.mobile;
+            document.getElementById('dashboard-mobile').textContent = userData.mobile || 'Not set';
+            document.getElementById('profile-name-display').textContent = userData.name;
+
+            // Set profile initials
+            const initials = userData.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            document.getElementById('profile-initials').textContent = initials;
+
+            // Load profile image if exists
+            if (userData.profileImage) {
+                const imgContainer = document.getElementById('profile-image-display');
+                imgContainer.innerHTML = `<img src="${userData.profileImage}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            }
 
             // Load exam history
             const examHistory = await window.PoliteCCAPI.getCandidateExamHistory(userData.email);
@@ -3007,10 +3104,241 @@
                     examTimer = null;
                 }
                 clearSession();
+                currentUserData = null;
                 document.getElementById('candidate-dashboard').classList.remove('active');
                 document.getElementById('hero-landing').classList.add('active');
                 updateHeaderNav('hero-landing');
                 window.PoliteCCAPI.showNotification('Logged out successfully', 'success');
+            }
+        });
+
+        // =====================================================
+        // PROFILE EDITING HANDLERS
+        // =====================================================
+
+        // Open edit profile modal
+        document.getElementById('edit-profile-btn').addEventListener('click', function() {
+            if (!currentUserData) return;
+
+            // Populate form with current data
+            document.getElementById('edit-profile-name').value = currentUserData.name || '';
+            document.getElementById('edit-profile-mobile').value = currentUserData.mobile || '';
+
+            // Show current profile image or initials
+            const preview = document.getElementById('modal-profile-preview');
+            if (currentUserData.profileImage) {
+                preview.innerHTML = `<img src="${currentUserData.profileImage}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            } else {
+                const initials = currentUserData.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                preview.innerHTML = initials;
+            }
+
+            pendingProfileImage = null;
+            document.getElementById('edit-profile-modal').style.display = 'flex';
+        });
+
+        // Edit mobile link
+        document.getElementById('edit-mobile-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('edit-profile-btn').click();
+        });
+
+        // Close profile modal
+        document.getElementById('close-profile-modal').addEventListener('click', function() {
+            document.getElementById('edit-profile-modal').style.display = 'none';
+            pendingProfileImage = null;
+        });
+
+        // Handle profile image selection in modal
+        document.getElementById('modal-profile-image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Check file size (max 500KB)
+            if (file.size > 500 * 1024) {
+                window.PoliteCCAPI.showNotification('Image too large. Maximum size is 500KB.', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                pendingProfileImage = event.target.result;
+                document.getElementById('modal-profile-preview').innerHTML =
+                    `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Quick profile image upload from dashboard
+        document.getElementById('profile-image-input').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file || !currentUserData) return;
+
+            if (file.size > 500 * 1024) {
+                window.PoliteCCAPI.showNotification('Image too large. Maximum size is 500KB.', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const result = await window.PoliteCCAPI.updateCandidateProfile({
+                    email: currentUserData.email,
+                    profileImage: event.target.result
+                });
+
+                if (result) {
+                    currentUserData.profileImage = event.target.result;
+                    document.getElementById('profile-image-display').innerHTML =
+                        `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Save profile changes
+        document.getElementById('save-profile-btn').addEventListener('click', async function() {
+            if (!currentUserData) return;
+
+            const name = document.getElementById('edit-profile-name').value.trim();
+            const mobile = document.getElementById('edit-profile-mobile').value.trim();
+
+            // Validation
+            if (name && (name.length < 2 || name.length > 100)) {
+                window.PoliteCCAPI.showNotification('Name must be between 2 and 100 characters', 'error');
+                return;
+            }
+
+            if (mobile && (mobile.length !== 10 || isNaN(mobile))) {
+                window.PoliteCCAPI.showNotification('Please enter a valid 10-digit mobile number', 'error');
+                return;
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            const updateData = {
+                email: currentUserData.email
+            };
+            if (name) updateData.name = name;
+            if (mobile !== undefined) updateData.mobile = mobile;
+            if (pendingProfileImage) updateData.profileImage = pendingProfileImage;
+
+            const result = await window.PoliteCCAPI.updateCandidateProfile(updateData);
+
+            btn.disabled = false;
+            btn.textContent = 'Save Changes';
+
+            if (result) {
+                // Update local data
+                if (name) {
+                    currentUserData.name = name;
+                    document.getElementById('dashboard-name').textContent = name;
+                    document.getElementById('profile-name-display').textContent = name;
+                    const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    if (!currentUserData.profileImage && !pendingProfileImage) {
+                        document.getElementById('profile-initials').textContent = initials;
+                    }
+                }
+                if (mobile !== undefined) {
+                    currentUserData.mobile = mobile;
+                    document.getElementById('dashboard-mobile').textContent = mobile || 'Not set';
+                }
+                if (pendingProfileImage) {
+                    currentUserData.profileImage = pendingProfileImage;
+                    document.getElementById('profile-image-display').innerHTML =
+                        `<img src="${pendingProfileImage}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                }
+
+                // Update session
+                saveSession('candidate', currentUserData);
+
+                // Close modal
+                document.getElementById('edit-profile-modal').style.display = 'none';
+                pendingProfileImage = null;
+            }
+        });
+
+        // =====================================================
+        // CHANGE PASSWORD HANDLERS
+        // =====================================================
+
+        // Open change password modal
+        document.getElementById('change-password-btn').addEventListener('click', function() {
+            // Clear form
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-new-password').value = '';
+            document.getElementById('change-password-modal').style.display = 'flex';
+        });
+
+        // Close password modal
+        document.getElementById('close-password-modal').addEventListener('click', function() {
+            document.getElementById('change-password-modal').style.display = 'none';
+        });
+
+        // Save new password
+        document.getElementById('save-password-btn').addEventListener('click', async function() {
+            if (!currentUserData) return;
+
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-new-password').value;
+
+            // Validation
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                window.PoliteCCAPI.showNotification('Please fill all fields', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                window.PoliteCCAPI.showNotification('New password must be at least 6 characters', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                window.PoliteCCAPI.showNotification('New passwords do not match', 'error');
+                return;
+            }
+
+            if (currentPassword === newPassword) {
+                window.PoliteCCAPI.showNotification('New password must be different from current password', 'error');
+                return;
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Changing...';
+
+            const result = await window.PoliteCCAPI.changePassword(
+                currentUserData.email,
+                currentPassword,
+                newPassword
+            );
+
+            btn.disabled = false;
+            btn.textContent = 'Change Password';
+
+            if (result) {
+                // Clear form and close modal
+                document.getElementById('current-password').value = '';
+                document.getElementById('new-password').value = '';
+                document.getElementById('confirm-new-password').value = '';
+                document.getElementById('change-password-modal').style.display = 'none';
+            }
+        });
+
+        // Close modals on overlay click
+        document.getElementById('edit-profile-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+                pendingProfileImage = null;
+            }
+        });
+
+        document.getElementById('change-password-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
             }
         });
 

@@ -1144,7 +1144,8 @@ module.exports = async (req, res) => {
                         id: candidate.id,
                         name: candidate.fields.Name,
                         email: candidate.fields.Email,
-                        mobile: candidate.fields.Mobile
+                        mobile: candidate.fields.Mobile || '',
+                        profileImage: candidate.fields.ProfileImage || ''
                     }
                 });
             } catch (error) {
@@ -1152,6 +1153,188 @@ module.exports = async (req, res) => {
                 return res.status(500).json({
                     success: false,
                     error: 'Failed to get profile. Please try again.'
+                });
+            }
+        }
+
+        // PUT /api/candidates/profile - Update candidate profile
+        if (url === '/api/candidates/profile' && method === 'PUT') {
+            try {
+                const { email, name, mobile, profileImage } = req.body;
+
+                if (!email) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Email is required'
+                    });
+                }
+
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                // Validate mobile if provided
+                if (mobile && !isValidMobile(mobile)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Mobile number must be exactly 10 digits'
+                    });
+                }
+
+                // Validate name if provided
+                if (name && (name.length < 2 || name.length > 100)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Name must be between 2 and 100 characters'
+                    });
+                }
+
+                // Validate profile image size (max 500KB base64)
+                if (profileImage && profileImage.length > 700000) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Profile image is too large. Maximum size is 500KB.'
+                    });
+                }
+
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
+                // Find candidate
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Candidate not found'
+                    });
+                }
+
+                const candidate = candidates[0];
+
+                // Build update object with only provided fields
+                const updateData = {};
+                if (name) updateData['Name'] = name.trim();
+                if (mobile !== undefined) updateData['Mobile'] = mobile.trim();
+                if (profileImage !== undefined) updateData['ProfileImage'] = profileImage;
+
+                // Update candidate record
+                await base(CANDIDATES_TABLE).update(candidate.id, updateData);
+
+                console.log(`✅ Profile updated for ${email}`);
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Profile updated successfully',
+                    data: {
+                        name: name || candidate.fields.Name,
+                        email: candidate.fields.Email,
+                        mobile: mobile !== undefined ? mobile : candidate.fields.Mobile,
+                        profileImage: profileImage !== undefined ? profileImage : candidate.fields.ProfileImage
+                    }
+                });
+            } catch (error) {
+                console.error('Update profile error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to update profile. Please try again.'
+                });
+            }
+        }
+
+        // PUT /api/candidates/password - Change candidate password
+        if (url === '/api/candidates/password' && method === 'PUT') {
+            try {
+                const { email, currentPassword, newPassword } = req.body;
+
+                if (!email || !currentPassword || !newPassword) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Email, current password, and new password are required'
+                    });
+                }
+
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                if (newPassword.length < 6) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'New password must be at least 6 characters'
+                    });
+                }
+
+                if (currentPassword === newPassword) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'New password must be different from current password'
+                    });
+                }
+
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
+                // Find candidate
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Candidate not found'
+                    });
+                }
+
+                const candidate = candidates[0];
+                const storedPassword = candidate.fields.Password;
+
+                // Verify current password
+                const hashedCurrentPassword = hashPassword(currentPassword);
+                const isHashedPassword = /^[a-f0-9]{64}$/i.test(storedPassword);
+
+                let passwordMatch = false;
+                if (isHashedPassword) {
+                    passwordMatch = storedPassword === hashedCurrentPassword;
+                } else {
+                    passwordMatch = storedPassword === currentPassword;
+                }
+
+                if (!passwordMatch) {
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Current password is incorrect'
+                    });
+                }
+
+                // Hash and update new password
+                const hashedNewPassword = hashPassword(newPassword);
+                await base(CANDIDATES_TABLE).update(candidate.id, {
+                    'Password': hashedNewPassword
+                });
+
+                console.log(`✅ Password changed for ${email}`);
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Password changed successfully'
+                });
+            } catch (error) {
+                console.error('Change password error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to change password. Please try again.'
                 });
             }
         }

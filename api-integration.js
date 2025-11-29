@@ -703,6 +703,60 @@ async function resendVerification(email) {
     }
 }
 
+// Update candidate profile
+async function updateCandidateProfile(profileData) {
+    try {
+        const response = await fetch(`${API_URL}/candidates/profile`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(profileData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Profile updated successfully');
+            showNotification('✅ Profile updated successfully!', 'success');
+            return data.data;
+        } else {
+            throw new Error(data.error || 'Failed to update profile');
+        }
+    } catch (error) {
+        console.error('❌ Error updating profile:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return null;
+    }
+}
+
+// Change candidate password
+async function changePassword(email, currentPassword, newPassword) {
+    try {
+        const response = await fetch(`${API_URL}/candidates/password`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, currentPassword, newPassword })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Password changed successfully');
+            showNotification('✅ Password changed successfully!', 'success');
+            return true;
+        } else {
+            throw new Error(data.error || 'Failed to change password');
+        }
+    } catch (error) {
+        console.error('❌ Error changing password:', error);
+        showNotification(`❌ ${error.message}`, 'error');
+        return false;
+    }
+}
+
 // Export functions for use in main script
 window.PoliteCCAPI = {
     loadQuestions,
@@ -726,6 +780,8 @@ window.PoliteCCAPI = {
     resetPassword,
     verifyEmail,
     resendVerification,
+    updateCandidateProfile,
+    changePassword,
     // Security utilities
     escapeHtml,
     sanitizeData,
