@@ -250,6 +250,17 @@
             font-weight: bold;
             flex-shrink: 0;
         }
+        .option-radio {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            cursor: pointer;
+            accent-color: var(--secondary);
+            flex-shrink: 0;
+        }
+        .option.selected .option-radio {
+            accent-color: var(--secondary);
+        }
         .navigation {
             display: flex;
             justify-content: space-between;
@@ -1754,18 +1765,22 @@
                     
                     <div class="options">
                         <div class="option" data-index="0">
+                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-0">
                             <span class="option-letter">A</span>
                             <span id="option-a-display">Loading...</span>
                         </div>
                         <div class="option" data-index="1">
+                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-1">
                             <span class="option-letter">B</span>
                             <span id="option-b-display">Loading...</span>
                         </div>
                         <div class="option" data-index="2">
+                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-2">
                             <span class="option-letter">C</span>
                             <span id="option-c-display">Loading...</span>
                         </div>
                         <div class="option" data-index="3">
+                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-3">
                             <span class="option-letter">D</span>
                             <span id="option-d-display">Loading...</span>
                         </div>
@@ -4927,24 +4942,39 @@
             }
         });
 
-        // Option selection
+        // Option selection - handle clicks on option div, radio button, or child elements
         document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('option')) {
-                const optionIndex = parseInt(e.target.getAttribute('data-index'));
+            // Find the parent option element
+            const optionElement = e.target.closest('.option');
+            if (optionElement && optionElement.closest('#exam-screen')) {
+                const optionIndex = parseInt(optionElement.getAttribute('data-index'));
                 selectOption(optionIndex);
             }
         });
 
         function selectOption(index) {
-            userAnswers[currentQuestionIndex] = index;
-            const options = document.querySelectorAll('.option');
-            options.forEach((option, i) => {
-                if (i === index) {
-                    option.classList.add('selected');
-                } else {
-                    option.classList.remove('selected');
-                }
-            });
+            const options = document.querySelectorAll('#exam-screen .option');
+            const radios = document.querySelectorAll('#exam-screen .option-radio');
+
+            // Check if clicking the same option again (toggle off)
+            if (userAnswers[currentQuestionIndex] === index) {
+                // Deselect - user wants to not answer this question
+                userAnswers[currentQuestionIndex] = undefined;
+                options[index].classList.remove('selected');
+                radios[index].checked = false;
+            } else {
+                // Select new option
+                userAnswers[currentQuestionIndex] = index;
+                options.forEach((option, i) => {
+                    if (i === index) {
+                        option.classList.add('selected');
+                        radios[i].checked = true;
+                    } else {
+                        option.classList.remove('selected');
+                        radios[i].checked = false;
+                    }
+                });
+            }
             // Save exam state after answer selection for resume functionality
             saveExamState();
         }
@@ -5223,16 +5253,19 @@
             document.getElementById('option-c-display').textContent = question['Option C'] || 'Option C';
             document.getElementById('option-d-display').textContent = question['Option D'] || 'Option D';
             
-            // Update selected option
-            const options = document.querySelectorAll('.option');
+            // Update selected option and radio buttons
+            const options = document.querySelectorAll('#exam-screen .option');
+            const radios = document.querySelectorAll('#exam-screen .option-radio');
             options.forEach((option, index) => {
                 if (userAnswers[currentQuestionIndex] === index) {
                     option.classList.add('selected');
+                    radios[index].checked = true;
                 } else {
                     option.classList.remove('selected');
+                    radios[index].checked = false;
                 }
             });
-            
+
             // Update navigation buttons
             document.getElementById('prev-btn').disabled = (currentQuestionIndex === 0);
             if (currentQuestionIndex === currentExam.questions.length - 1) {
