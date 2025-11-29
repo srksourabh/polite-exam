@@ -1443,14 +1443,45 @@
                 <div id="question-bank-section" class="hidden">
                     <h3 style="margin: 0 0 15px 0; color: var(--secondary);">Question Bank</h3>
 
+                    <!-- Stats Bar -->
+                    <div id="question-bank-stats" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                            <span>📊 Total: <strong id="total-questions-count">0</strong></span>
+                            <span>✅ Selected: <strong id="selected-questions-count">0</strong></span>
+                            <span>📄 Showing: <strong id="showing-questions-count">0</strong></span>
+                        </div>
+                        <div style="font-size: 0.85rem; opacity: 0.9;">
+                            Scroll down to load more questions
+                        </div>
+                    </div>
+
+                    <!-- Search and Filter Row -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <input type="text" id="question-search-input" placeholder="🔍 Search questions..." style="flex: 1; min-width: 200px; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem;">
+                        <select id="question-filter-subject" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
+                            <option value="">All Subjects</option>
+                            <option value="Math">Math</option>
+                            <option value="Reasoning">Reasoning</option>
+                            <option value="GK">GK</option>
+                            <option value="English">English</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+
                     <!-- Action Buttons Row -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px; background: #f8f9fa; border-radius: 8px; flex-wrap: wrap; gap: 10px;">
                         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                             <button id="select-all-questions-btn" style="background: #3498db; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
                                 ☑️ Select All
                             </button>
                             <button id="deselect-all-questions-btn" style="background: #95a5a6; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
                                 ☐ Deselect All
+                            </button>
+                            <button id="bulk-delete-questions-btn" style="background: #e74c3c; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                                🗑️ Delete Selected
+                            </button>
+                            <button id="sanitize-question-bank-btn" style="background: #9b59b6; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                                🧹 Sanitize (Remove Duplicates)
                             </button>
                             <button id="export-questions-btn" style="background: #27ae60; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
                                 📥 Export CSV
@@ -1514,8 +1545,12 @@
                     <!-- Existing Questions List -->
                     <div>
                         <h4 style="margin: 20px 0 15px; color: var(--secondary);">Existing Questions</h4>
-                        <div id="questions-list">
+                        <div id="questions-list" style="max-height: 70vh; overflow-y: auto; padding-right: 5px;">
                             <p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>
+                        </div>
+                        <div id="questions-loading-more" style="display: none; text-align: center; padding: 20px;">
+                            <div style="display: inline-block; width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid var(--secondary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                            <p style="margin-top: 10px; color: #7f8c8d;">Loading more questions...</p>
                         </div>
                     </div>
                 </div>
@@ -2940,120 +2975,146 @@
         }
 
         // Show question bank
-        document.getElementById('question-bank-btn').addEventListener('click', async function() {
-            try {
-                document.getElementById('question-bank-section').classList.remove('hidden');
-                document.getElementById('create-exam-section').classList.add('hidden');
-                document.getElementById('view-results-section').classList.add('hidden');
-                document.getElementById('upload-section').classList.add('hidden');
-                document.getElementById('ai-generator-section').classList.add('hidden');
-            
-                // Load questions from database
-                const questionsList = document.getElementById('questions-list');
-                questionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>';
-            
-                // Load questions via API if available
-                if (window.PoliteCCAPI && window.PoliteCCAPI.loadQuestions) {
-                    questions = await window.PoliteCCAPI.loadQuestions() || questions;
-                }
-            
-                // Remove duplicates and generate unique simple IDs
-                const seenIds = new Set();
-                const uniqueQuestions = [];
+        // Question Bank State Management
+        let allQuestions = []; // Full question bank from database
+        let filteredQuestions = []; // Questions after search/filter
+        let displayedQuestionsCount = 0; // How many are currently displayed
+        let selectedQuestionIds = new Set(); // Track selected questions by their database ID
+        const QUESTIONS_PER_PAGE = 100;
+        let isLoadingMoreQuestions = false;
 
-                // Find the highest existing question number
-                let maxNum = 0;
-                questions.forEach(q => {
-                    if (q.ID) {
-                        // Support both old format (q1, q2) and new format (Q0001, Q0002)
-                        const match = q.ID.match(/^[qQ](\d+)$/);
-                        if (match) {
-                            const num = parseInt(match[1]);
-                            if (!isNaN(num) && num > maxNum) {
-                                maxNum = num;
+        // Function to update question bank stats
+        function updateQuestionBankStats() {
+            document.getElementById('total-questions-count').textContent = allQuestions.length;
+            document.getElementById('selected-questions-count').textContent = selectedQuestionIds.size;
+            document.getElementById('showing-questions-count').textContent = Math.min(displayedQuestionsCount, filteredQuestions.length);
+        }
+
+        // Function to render a single question item
+        function renderQuestionItem(q, index) {
+            const isSelected = selectedQuestionIds.has(q.id || q.ID);
+            return `
+            <div class="question-item" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" style="background: ${isSelected ? '#e3f2fd' : '#f8f9fa'}; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid ${isSelected ? '#2196f3' : 'var(--secondary)'}; position: relative; padding-right: 60px; padding-left: 50px; transition: all 0.2s;">
+                <!-- Checkbox for selection -->
+                <div style="position: absolute; top: 15px; left: 15px;">
+                    <input type="checkbox" class="question-select-checkbox" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" style="width: 20px; height: 20px; cursor: pointer;" ${isSelected ? 'checked' : ''}>
+                </div>
+
+                <!-- Action buttons in top right -->
+                <div style="position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 5px;">
+                    <button class="delete-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Delete Question" style="background: var(--danger); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        🗑️
+                    </button>
+                    <button class="edit-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Edit Question" style="background: var(--primary); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        ✏️
+                    </button>
+                </div>
+
+                <div style="margin-bottom: 8px;">
+                    <strong style="font-size: 1.1rem;">${q.ID}</strong>
+                    <span class="question-tag" style="margin-left: 10px; background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject || 'Unknown'}</span>
+                </div>
+                <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question || ''}</p>
+                <div style="margin-left: 25px; margin-bottom: 8px;">
+                    <div style="margin: 5px 0;">A) ${q['Option A'] || ''}</div>
+                    <div style="margin: 5px 0;">B) ${q['Option B'] || ''}</div>
+                    <div style="margin: 5px 0;">C) ${q['Option C'] || ''}</div>
+                    <div style="margin: 5px 0;">D) ${q['Option D'] || ''}</div>
+                </div>
+                <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 8px; border-radius: 6px; display: inline-block;">
+                    ✅ Correct Answer: ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}
+                </div>
+            </div>
+            `;
+        }
+
+        // Function to apply search and filter
+        function applySearchAndFilter() {
+            const searchTerm = document.getElementById('question-search-input').value.toLowerCase().trim();
+            const subjectFilter = document.getElementById('question-filter-subject').value;
+
+            filteredQuestions = allQuestions.filter(q => {
+                const matchesSearch = !searchTerm ||
+                    (q.Question && q.Question.toLowerCase().includes(searchTerm)) ||
+                    (q.ID && q.ID.toLowerCase().includes(searchTerm)) ||
+                    (q['Option A'] && q['Option A'].toLowerCase().includes(searchTerm)) ||
+                    (q['Option B'] && q['Option B'].toLowerCase().includes(searchTerm)) ||
+                    (q['Option C'] && q['Option C'].toLowerCase().includes(searchTerm)) ||
+                    (q['Option D'] && q['Option D'].toLowerCase().includes(searchTerm));
+
+                const matchesSubject = !subjectFilter || q.Subject === subjectFilter;
+
+                return matchesSearch && matchesSubject;
+            });
+
+            displayedQuestionsCount = 0;
+            document.getElementById('questions-list').innerHTML = '';
+            loadMoreQuestions();
+        }
+
+        // Function to load more questions (pagination)
+        function loadMoreQuestions() {
+            if (isLoadingMoreQuestions) return;
+            if (displayedQuestionsCount >= filteredQuestions.length) return;
+
+            isLoadingMoreQuestions = true;
+            document.getElementById('questions-loading-more').style.display = 'block';
+
+            // Simulate small delay for UX (can be removed for instant loading)
+            setTimeout(() => {
+                const questionsList = document.getElementById('questions-list');
+                const startIndex = displayedQuestionsCount;
+                const endIndex = Math.min(startIndex + QUESTIONS_PER_PAGE, filteredQuestions.length);
+
+                let html = '';
+                for (let i = startIndex; i < endIndex; i++) {
+                    html += renderQuestionItem(filteredQuestions[i], i);
+                }
+
+                questionsList.insertAdjacentHTML('beforeend', html);
+                displayedQuestionsCount = endIndex;
+
+                // Attach event listeners to new elements
+                attachQuestionEventListeners(startIndex, endIndex);
+
+                document.getElementById('questions-loading-more').style.display = 'none';
+                isLoadingMoreQuestions = false;
+                updateQuestionBankStats();
+            }, 100);
+        }
+
+        // Function to attach event listeners to question items
+        function attachQuestionEventListeners(startIndex, endIndex) {
+            // Checkbox change listeners
+            document.querySelectorAll('.question-select-checkbox').forEach(cb => {
+                if (!cb.hasAttribute('data-listener-attached')) {
+                    cb.setAttribute('data-listener-attached', 'true');
+                    cb.addEventListener('change', function() {
+                        const questionId = this.getAttribute('data-question-id') || this.getAttribute('data-question-display-id');
+                        const questionItem = this.closest('.question-item');
+
+                        if (this.checked) {
+                            selectedQuestionIds.add(questionId);
+                            if (questionItem) {
+                                questionItem.style.background = '#e3f2fd';
+                                questionItem.style.borderLeftColor = '#2196f3';
+                            }
+                        } else {
+                            selectedQuestionIds.delete(questionId);
+                            if (questionItem) {
+                                questionItem.style.background = '#f8f9fa';
+                                questionItem.style.borderLeftColor = 'var(--secondary)';
                             }
                         }
-                    }
-                });
-                let idCounter = maxNum + 1;
-
-                questions.forEach(q => {
-                    // Generate unique ID if needed (Q0001, Q0002, etc.)
-                    if (!q.ID || seenIds.has(q.ID)) {
-                        q.ID = 'Q' + String(idCounter).padStart(4, '0');
-                        idCounter++;
-                    }
-
-                    // Check if this question content is duplicate
-                    const isDuplicate = uniqueQuestions.some(uq =>
-                        uq.Question === q.Question &&
-                        uq['Option A'] === q['Option A'] &&
-                        uq['Option B'] === q['Option B']
-                    );
-
-                    if (!isDuplicate) {
-                        seenIds.add(q.ID);
-                        uniqueQuestions.push(q);
-                    }
-                });
-
-                // Update questions array and sort (newest first - descending by ID number)
-                questions = uniqueQuestions;
-                questions.sort((a, b) => {
-                    const matchA = a.ID.match(/^[qQ](\d+)$/);
-                    const matchB = b.ID.match(/^[qQ](\d+)$/);
-                    const numA = matchA ? parseInt(matchA[1]) : 0;
-                    const numB = matchB ? parseInt(matchB[1]) : 0;
-                    return numB - numA; // Descending order (newest first)
-                });
-            
-                // Render questions with Delete buttons
-                let html = '';
-            
-                if (questions.length === 0) {
-                    html = '<p style="text-align: center; color: #7f8c8d;">No questions found. Click "Add New Question" button above to add your first question!</p>';
-                } else {
-                    questions.forEach((q, index) => {
-                        html += `
-                        <div class="question-item" data-question-id="${q.id || ''}" data-index="${index}" style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary); position: relative; padding-right: 60px; padding-left: 50px;">
-                            <!-- Checkbox for selection -->
-                            <div style="position: absolute; top: 15px; left: 15px;">
-                                <input type="checkbox" class="question-select-checkbox" data-index="${index}" style="width: 20px; height: 20px; cursor: pointer;" checked>
-                            </div>
-
-                            <!-- Action buttons in top right -->
-                            <div style="position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 5px;">
-                                <button class="delete-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Delete Question" style="background: var(--danger); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                                    🗑️
-                                </button>
-                                <button class="edit-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Edit Question" style="background: var(--primary); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                                    ✏️
-                                </button>
-                            </div>
-
-                            <div style="margin-bottom: 8px;">
-                                <strong style="font-size: 1.1rem;">${q.ID}</strong>
-                                <span class="question-tag" style="margin-left: 10px; background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject}</span>
-                            </div>
-                            <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question}</p>
-                            <div style="margin-left: 25px; margin-bottom: 8px;">
-                                <div style="margin: 5px 0;">A) ${q['Option A']}</div>
-                                <div style="margin: 5px 0;">B) ${q['Option B']}</div>
-                                <div style="margin: 5px 0;">C) ${q['Option C']}</div>
-                                <div style="margin: 5px 0;">D) ${q['Option D']}</div>
-                            </div>
-                            <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 8px; border-radius: 6px; display: inline-block;">
-                                ✅ Correct Answer: ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}
-                            </div>
-                        </div>
-                        `;
+                        updateQuestionBankStats();
                     });
                 }
-            
-                questionsList.innerHTML = html;
-            
-                // Add delete button event listeners
-                document.querySelectorAll('.delete-question-btn').forEach(btn => {
+            });
+
+            // Delete button listeners
+            document.querySelectorAll('.delete-question-btn').forEach(btn => {
+                if (!btn.hasAttribute('data-listener-attached')) {
+                    btn.setAttribute('data-listener-attached', 'true');
                     btn.addEventListener('click', async function(e) {
                         try {
                             e.stopPropagation();
@@ -3061,95 +3122,342 @@
                             const index = parseInt(this.getAttribute('data-index'));
 
                             if (confirm('Are you sure you want to delete this question?')) {
-                                // Delete from database if ID exists
                                 if (questionId && window.PoliteCCAPI && window.PoliteCCAPI.deleteQuestionFromDatabase) {
                                     const success = await window.PoliteCCAPI.deleteQuestionFromDatabase(questionId);
                                     if (success) {
-                                        // Remove from local array
-                                        questions.splice(index, 1);
+                                        // Remove from arrays
+                                        const q = filteredQuestions[index];
+                                        allQuestions = allQuestions.filter(aq => aq.id !== questionId);
+                                        selectedQuestionIds.delete(questionId);
                                         // Refresh display
-                                        document.getElementById('question-bank-btn').click();
+                                        applySearchAndFilter();
                                     }
                                 } else {
                                     // Remove from local array only
-                                    questions.splice(index, 1);
-                                    // Refresh display
-                                    document.getElementById('question-bank-btn').click();
+                                    allQuestions.splice(index, 1);
+                                    applySearchAndFilter();
                                 }
                             }
                         } catch (error) {
-                        console.error('❌ Event handler error:', error);
-                        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                            window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
+                            console.error('❌ Delete error:', error);
+                            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                                window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
+                            }
                         }
-                    }
                     });
-                });
+                }
+            });
 
-                // Add edit button event listeners
-                document.querySelectorAll('.edit-question-btn').forEach(btn => {
+            // Edit button listeners
+            document.querySelectorAll('.edit-question-btn').forEach(btn => {
+                if (!btn.hasAttribute('data-listener-attached')) {
+                    btn.setAttribute('data-listener-attached', 'true');
                     btn.addEventListener('click', function(e) {
                         try {
                             e.stopPropagation();
                             const index = parseInt(this.getAttribute('data-index'));
-                            const question = questions[index];
+                            const question = filteredQuestions[index];
 
-                            // Show the add question form
                             document.getElementById('add-question-form').classList.remove('hidden');
+                            document.getElementById('question-subject').value = question.Subject || 'Others';
+                            document.getElementById('question-text').value = question.Question || '';
+                            document.getElementById('option-a').value = question['Option A'] || '';
+                            document.getElementById('option-b').value = question['Option B'] || '';
+                            document.getElementById('option-c').value = question['Option C'] || '';
+                            document.getElementById('option-d').value = question['Option D'] || '';
 
-                            // Populate form with existing question data
-                            document.getElementById('question-subject').value = question.Subject;
-                            document.getElementById('question-text').value = question.Question;
-                            document.getElementById('option-a').value = question['Option A'];
-                            document.getElementById('option-b').value = question['Option B'];
-                            document.getElementById('option-c').value = question['Option C'];
-                            document.getElementById('option-d').value = question['Option D'];
-
-                            // Set correct answer - support both 'Correct' and 'Correct Answer' field names
                             const correctValue = question.Correct || question['Correct Answer'] || 'A';
                             const correctLetter = String(correctValue).toUpperCase().trim();
-                            const correctIndex = correctLetter.charCodeAt(0) - 65; // A=0, B=1, C=2, D=3
+                            const correctIndex = correctLetter.charCodeAt(0) - 65;
                             document.getElementById('correct-answer').value = (correctIndex >= 0 && correctIndex <= 3) ? correctIndex : 0;
 
-                            // Change button text to "Update Question"
                             const addBtn = document.getElementById('add-question-btn');
                             addBtn.textContent = 'Update Question';
                             addBtn.setAttribute('data-edit-index', index);
                             addBtn.setAttribute('data-edit-id', question.id || '');
                             addBtn.setAttribute('data-edit-mode', 'true');
 
-                            // Scroll to form
                             document.getElementById('add-question-form').scrollIntoView({ behavior: 'smooth' });
                         } catch (error) {
-                            console.error('❌ Event handler error:', error);
+                            console.error('❌ Edit error:', error);
                             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                                 window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
                             }
                         }
                     });
+                }
+            });
+        }
+
+        // Main question bank button click handler
+        document.getElementById('question-bank-btn').addEventListener('click', async function() {
+            try {
+                document.getElementById('question-bank-section').classList.remove('hidden');
+                document.getElementById('create-exam-section').classList.add('hidden');
+                document.getElementById('view-results-section').classList.add('hidden');
+                document.getElementById('upload-section').classList.add('hidden');
+                document.getElementById('ai-generator-section').classList.add('hidden');
+
+                const questionsList = document.getElementById('questions-list');
+                questionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>';
+
+                // Load questions via API
+                if (window.PoliteCCAPI && window.PoliteCCAPI.loadQuestions) {
+                    allQuestions = await window.PoliteCCAPI.loadQuestions() || [];
+                }
+
+                // Generate unique IDs and sort
+                const seenIds = new Set();
+                let maxNum = 0;
+                allQuestions.forEach(q => {
+                    if (q.ID) {
+                        const match = q.ID.match(/^[qQ](\d+)$/);
+                        if (match) {
+                            const num = parseInt(match[1]);
+                            if (!isNaN(num) && num > maxNum) maxNum = num;
+                        }
+                    }
                 });
+
+                let idCounter = maxNum + 1;
+                allQuestions.forEach(q => {
+                    if (!q.ID || seenIds.has(q.ID)) {
+                        q.ID = 'Q' + String(idCounter).padStart(4, '0');
+                        idCounter++;
+                    }
+                    seenIds.add(q.ID);
+                });
+
+                // Sort by ID descending (newest first)
+                allQuestions.sort((a, b) => {
+                    const matchA = a.ID.match(/^[qQ](\d+)$/);
+                    const matchB = b.ID.match(/^[qQ](\d+)$/);
+                    const numA = matchA ? parseInt(matchA[1]) : 0;
+                    const numB = matchB ? parseInt(matchB[1]) : 0;
+                    return numB - numA;
+                });
+
+                // Also update the global questions array for exam creation
+                questions = allQuestions;
+
+                // Reset search and filter
+                document.getElementById('question-search-input').value = '';
+                document.getElementById('question-filter-subject').value = '';
+
+                // Apply filter and load first batch
+                applySearchAndFilter();
+
+                if (allQuestions.length === 0) {
+                    questionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No questions found. Click "Add New Question" button above to add your first question!</p>';
+                }
             } catch (error) {
-                console.error('❌ Event handler error:', error);
+                console.error('❌ Question bank error:', error);
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                     window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
                 }
             }
         });
 
-        // Select All questions
+        // Infinite scroll for questions list
+        document.getElementById('questions-list').addEventListener('scroll', function() {
+            const { scrollTop, scrollHeight, clientHeight } = this;
+            if (scrollTop + clientHeight >= scrollHeight - 100) {
+                loadMoreQuestions();
+            }
+        });
+
+        // Search input handler with debounce
+        let searchDebounceTimer;
+        document.getElementById('question-search-input').addEventListener('input', function() {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                applySearchAndFilter();
+            }, 300);
+        });
+
+        // Subject filter handler
+        document.getElementById('question-filter-subject').addEventListener('change', function() {
+            applySearchAndFilter();
+        });
+
+        // Select All questions (selects ALL questions in current filter, not just displayed ones)
         document.getElementById('select-all-questions-btn').addEventListener('click', function() {
+            // Add all filtered questions to selection
+            filteredQuestions.forEach(q => {
+                const id = q.id || q.ID;
+                selectedQuestionIds.add(id);
+            });
+            // Update displayed checkboxes
             document.querySelectorAll('.question-select-checkbox').forEach(cb => {
                 cb.checked = true;
+                const questionItem = cb.closest('.question-item');
+                if (questionItem) {
+                    questionItem.style.background = '#e3f2fd';
+                    questionItem.style.borderLeftColor = '#2196f3';
+                }
             });
-            window.PoliteCCAPI.showNotification('✅ All questions selected', 'success');
+            updateQuestionBankStats();
+            window.PoliteCCAPI.showNotification(`✅ Selected ${filteredQuestions.length} questions`, 'success');
         });
 
         // Deselect All questions
         document.getElementById('deselect-all-questions-btn').addEventListener('click', function() {
+            // Clear all selections
+            selectedQuestionIds.clear();
+            // Update displayed checkboxes
             document.querySelectorAll('.question-select-checkbox').forEach(cb => {
                 cb.checked = false;
+                const questionItem = cb.closest('.question-item');
+                if (questionItem) {
+                    questionItem.style.background = '#f8f9fa';
+                    questionItem.style.borderLeftColor = 'var(--secondary)';
+                }
             });
+            updateQuestionBankStats();
             window.PoliteCCAPI.showNotification('✅ All questions deselected', 'info');
+        });
+
+        // Bulk Delete Selected Questions
+        document.getElementById('bulk-delete-questions-btn').addEventListener('click', async function() {
+            if (selectedQuestionIds.size === 0) {
+                window.PoliteCCAPI.showNotification('⚠️ Please select at least one question to delete', 'error');
+                return;
+            }
+
+            const confirmDelete = confirm(`Are you sure you want to delete ${selectedQuestionIds.size} selected questions?\n\nThis action cannot be undone!`);
+            if (!confirmDelete) return;
+
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Deleting...';
+
+            let successCount = 0;
+            let failCount = 0;
+
+            // Convert Set to Array for iteration
+            const idsToDelete = Array.from(selectedQuestionIds);
+
+            for (const questionId of idsToDelete) {
+                try {
+                    if (questionId && window.PoliteCCAPI && window.PoliteCCAPI.deleteQuestionFromDatabase) {
+                        const success = await window.PoliteCCAPI.deleteQuestionFromDatabase(questionId);
+                        if (success) {
+                            successCount++;
+                            allQuestions = allQuestions.filter(q => q.id !== questionId);
+                        } else {
+                            failCount++;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    failCount++;
+                }
+            }
+
+            // Clear selections and refresh
+            selectedQuestionIds.clear();
+            questions = allQuestions;
+            applySearchAndFilter();
+
+            btn.disabled = false;
+            btn.innerHTML = '🗑️ Delete Selected';
+
+            if (failCount > 0) {
+                window.PoliteCCAPI.showNotification(`✅ Deleted ${successCount} questions. ❌ ${failCount} failed.`, 'warning');
+            } else {
+                window.PoliteCCAPI.showNotification(`✅ Successfully deleted ${successCount} questions!`, 'success');
+            }
+        });
+
+        // Sanitize Question Bank (Remove Duplicates)
+        document.getElementById('sanitize-question-bank-btn').addEventListener('click', async function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Scanning...';
+
+            try {
+                // Find duplicates based on question text and options
+                const seen = new Map();
+                const duplicates = [];
+
+                allQuestions.forEach(q => {
+                    // Create a unique key based on question content
+                    const key = `${(q.Question || '').toLowerCase().trim()}|${(q['Option A'] || '').toLowerCase().trim()}|${(q['Option B'] || '').toLowerCase().trim()}`;
+
+                    if (seen.has(key)) {
+                        // This is a duplicate - keep the first one (with lower ID number), delete the later one
+                        const existing = seen.get(key);
+                        const existingNum = parseInt((existing.ID || '').replace(/\D/g, '')) || 0;
+                        const currentNum = parseInt((q.ID || '').replace(/\D/g, '')) || 0;
+
+                        if (currentNum > existingNum) {
+                            // Current question has higher ID, so it's the duplicate to delete
+                            duplicates.push(q);
+                        } else {
+                            // Existing has higher ID, replace it and mark existing as duplicate
+                            duplicates.push(existing);
+                            seen.set(key, q);
+                        }
+                    } else {
+                        seen.set(key, q);
+                    }
+                });
+
+                if (duplicates.length === 0) {
+                    btn.disabled = false;
+                    btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
+                    window.PoliteCCAPI.showNotification('✅ No duplicates found! Question bank is clean.', 'success');
+                    return;
+                }
+
+                const confirmDelete = confirm(`Found ${duplicates.length} duplicate questions.\n\nDo you want to remove them from the database?\n\nThis action cannot be undone!`);
+                if (!confirmDelete) {
+                    btn.disabled = false;
+                    btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
+                    return;
+                }
+
+                btn.innerHTML = `⏳ Removing ${duplicates.length} duplicates...`;
+
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const dup of duplicates) {
+                    try {
+                        if (dup.id && window.PoliteCCAPI && window.PoliteCCAPI.deleteQuestionFromDatabase) {
+                            const success = await window.PoliteCCAPI.deleteQuestionFromDatabase(dup.id);
+                            if (success) {
+                                successCount++;
+                                allQuestions = allQuestions.filter(q => q.id !== dup.id);
+                            } else {
+                                failCount++;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Sanitize delete error:', error);
+                        failCount++;
+                    }
+                }
+
+                // Refresh display
+                questions = allQuestions;
+                selectedQuestionIds.clear();
+                applySearchAndFilter();
+
+                btn.disabled = false;
+                btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
+
+                if (failCount > 0) {
+                    window.PoliteCCAPI.showNotification(`✅ Removed ${successCount} duplicates. ❌ ${failCount} failed.`, 'warning');
+                } else {
+                    window.PoliteCCAPI.showNotification(`✅ Successfully removed ${successCount} duplicate questions!`, 'success');
+                }
+            } catch (error) {
+                console.error('Sanitize error:', error);
+                btn.disabled = false;
+                btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
+                window.PoliteCCAPI.showNotification('❌ Error during sanitization: ' + error.message, 'error');
+            }
         });
 
         // Export questions to CSV
@@ -3159,26 +3467,21 @@
 
         // Function to export questions to CSV (only selected ones)
         function exportQuestionsToCSV() {
-            if (!questions || questions.length === 0) {
+            if (!allQuestions || allQuestions.length === 0) {
                 window.PoliteCCAPI.showNotification('No questions to export', 'error');
                 return;
             }
 
-            // Get selected question indices
-            const selectedIndices = [];
-            document.querySelectorAll('.question-select-checkbox').forEach(cb => {
-                if (cb.checked) {
-                    selectedIndices.push(parseInt(cb.getAttribute('data-index')));
-                }
-            });
-
-            if (selectedIndices.length === 0) {
+            if (selectedQuestionIds.size === 0) {
                 window.PoliteCCAPI.showNotification('⚠️ Please select at least one question to export', 'error');
                 return;
             }
 
-            // Filter questions to only selected ones
-            const selectedQuestions = questions.filter((q, index) => selectedIndices.includes(index));
+            // Filter questions to only selected ones using the Set
+            const selectedQuestions = allQuestions.filter(q => {
+                const id = q.id || q.ID;
+                return selectedQuestionIds.has(id);
+            });
 
             // Prepare CSV content with all question details
             const headers = ['ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer'];
@@ -3375,7 +3678,7 @@
         });
 
         // Show create exam
-        document.getElementById('create-exam-btn').addEventListener('click', function() {
+        document.getElementById('create-exam-btn').addEventListener('click', async function() {
             document.getElementById('question-bank-section').classList.add('hidden');
             document.getElementById('create-exam-section').classList.remove('hidden');
             document.getElementById('view-results-section').classList.add('hidden');
@@ -3384,6 +3687,36 @@
 
             // Render exam questions list
             const examQuestionsList = document.getElementById('exam-questions-list');
+            examQuestionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">Loading questions from database...</p>';
+
+            // Ensure we have ALL questions from database for random selection
+            if (window.PoliteCCAPI && window.PoliteCCAPI.loadQuestions) {
+                const loadedQuestions = await window.PoliteCCAPI.loadQuestions() || [];
+                if (loadedQuestions.length > 0) {
+                    allQuestions = loadedQuestions;
+                    // Generate unique IDs
+                    const seenIds = new Set();
+                    let maxNum = 0;
+                    allQuestions.forEach(q => {
+                        if (q.ID) {
+                            const match = q.ID.match(/^[qQ](\d+)$/);
+                            if (match) {
+                                const num = parseInt(match[1]);
+                                if (!isNaN(num) && num > maxNum) maxNum = num;
+                            }
+                        }
+                    });
+                    let idCounter = maxNum + 1;
+                    allQuestions.forEach(q => {
+                        if (!q.ID || seenIds.has(q.ID)) {
+                            q.ID = 'Q' + String(idCounter).padStart(4, '0');
+                            idCounter++;
+                        }
+                        seenIds.add(q.ID);
+                    });
+                    questions = allQuestions;
+                }
+            }
 
             if (questions.length === 0) {
                 examQuestionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No questions available. Please add questions first!</p>';
