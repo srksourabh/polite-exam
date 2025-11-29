@@ -1749,35 +1749,35 @@ Make sure the question is unique, relevant, and has one clearly correct answer.`
         // POST /api/admin/create-sample-exams - Create sample exams with questions
         if (url === '/api/admin/create-sample-exams' && method === 'POST') {
             try {
-                // Sample questions for different subjects
+                // Sample questions for different subjects with difficulty levels
                 const SAMPLE_QUESTIONS = [
                     // Math Questions
-                    { ID: 'Q0001', Subject: 'Math', Question: 'What is 15 × 8?', 'Option A': '100', 'Option B': '120', 'Option C': '140', 'Option D': '160', Correct: 'B' },
-                    { ID: 'Q0002', Subject: 'Math', Question: 'What is the value of √144?', 'Option A': '10', 'Option B': '11', 'Option C': '12', 'Option D': '13', Correct: 'C' },
-                    { ID: 'Q0003', Subject: 'Math', Question: 'What is 25% of 200?', 'Option A': '25', 'Option B': '50', 'Option C': '75', 'Option D': '100', Correct: 'B' },
-                    { ID: 'Q0004', Subject: 'Math', Question: 'If x + 7 = 15, what is the value of x?', 'Option A': '6', 'Option B': '7', 'Option C': '8', 'Option D': '9', Correct: 'C' },
-                    { ID: 'Q0005', Subject: 'Math', Question: 'What is the area of a rectangle with length 12 cm and width 8 cm?', 'Option A': '20 sq cm', 'Option B': '40 sq cm', 'Option C': '96 sq cm', 'Option D': '120 sq cm', Correct: 'C' },
+                    { ID: 'Q0001', Subject: 'Math', Difficulty: 'Easy', Question: 'What is 15 × 8?', 'Option A': '100', 'Option B': '120', 'Option C': '140', 'Option D': '160', Correct: 'B' },
+                    { ID: 'Q0002', Subject: 'Math', Difficulty: 'Easy', Question: 'What is the value of √144?', 'Option A': '10', 'Option B': '11', 'Option C': '12', 'Option D': '13', Correct: 'C' },
+                    { ID: 'Q0003', Subject: 'Math', Difficulty: 'Easy', Question: 'What is 25% of 200?', 'Option A': '25', 'Option B': '50', 'Option C': '75', 'Option D': '100', Correct: 'B' },
+                    { ID: 'Q0004', Subject: 'Math', Difficulty: 'Medium', Question: 'If x + 7 = 15, what is the value of x?', 'Option A': '6', 'Option B': '7', 'Option C': '8', 'Option D': '9', Correct: 'C' },
+                    { ID: 'Q0005', Subject: 'Math', Difficulty: 'Medium', Question: 'What is the area of a rectangle with length 12 cm and width 8 cm?', 'Option A': '20 sq cm', 'Option B': '40 sq cm', 'Option C': '96 sq cm', 'Option D': '120 sq cm', Correct: 'C' },
 
                     // General Knowledge Questions
-                    { ID: 'Q0006', Subject: 'General Knowledge', Question: 'What is the capital of India?', 'Option A': 'New Delhi', 'Option B': 'Mumbai', 'Option C': 'Kolkata', 'Option D': 'Chennai', Correct: 'A' },
-                    { ID: 'Q0007', Subject: 'General Knowledge', Question: 'Who is known as the Father of the Nation in India?', 'Option A': 'Jawaharlal Nehru', 'Option B': 'Mahatma Gandhi', 'Option C': 'Subhas Chandra Bose', 'Option D': 'Sardar Patel', Correct: 'B' },
-                    { ID: 'Q0008', Subject: 'General Knowledge', Question: 'Which is the largest planet in our solar system?', 'Option A': 'Earth', 'Option B': 'Mars', 'Option C': 'Jupiter', 'Option D': 'Saturn', Correct: 'C' },
-                    { ID: 'Q0009', Subject: 'General Knowledge', Question: 'How many continents are there in the world?', 'Option A': '5', 'Option B': '6', 'Option C': '7', 'Option D': '8', Correct: 'C' },
-                    { ID: 'Q0010', Subject: 'General Knowledge', Question: 'What is the national animal of India?', 'Option A': 'Lion', 'Option B': 'Tiger', 'Option C': 'Elephant', 'Option D': 'Peacock', Correct: 'B' },
+                    { ID: 'Q0006', Subject: 'General Knowledge', Difficulty: 'Easy', Question: 'What is the capital of India?', 'Option A': 'New Delhi', 'Option B': 'Mumbai', 'Option C': 'Kolkata', 'Option D': 'Chennai', Correct: 'A' },
+                    { ID: 'Q0007', Subject: 'General Knowledge', Difficulty: 'Easy', Question: 'Who is known as the Father of the Nation in India?', 'Option A': 'Jawaharlal Nehru', 'Option B': 'Mahatma Gandhi', 'Option C': 'Subhas Chandra Bose', 'Option D': 'Sardar Patel', Correct: 'B' },
+                    { ID: 'Q0008', Subject: 'General Knowledge', Difficulty: 'Medium', Question: 'Which is the largest planet in our solar system?', 'Option A': 'Earth', 'Option B': 'Mars', 'Option C': 'Jupiter', 'Option D': 'Saturn', Correct: 'C' },
+                    { ID: 'Q0009', Subject: 'General Knowledge', Difficulty: 'Easy', Question: 'How many continents are there in the world?', 'Option A': '5', 'Option B': '6', 'Option C': '7', 'Option D': '8', Correct: 'C' },
+                    { ID: 'Q0010', Subject: 'General Knowledge', Difficulty: 'Medium', Question: 'What is the national animal of India?', 'Option A': 'Lion', 'Option B': 'Tiger', 'Option C': 'Elephant', 'Option D': 'Peacock', Correct: 'B' },
 
                     // Reasoning Questions
-                    { ID: 'Q0011', Subject: 'Reasoning', Question: 'If CAT is coded as 3120, then DOG would be coded as:', 'Option A': '4157', 'Option B': '41507', 'Option C': '4-15-7', 'Option D': '4-15-07', Correct: 'A' },
-                    { ID: 'Q0012', Subject: 'Reasoning', Question: 'Complete the series: 2, 6, 12, 20, 30, ?', 'Option A': '40', 'Option B': '42', 'Option C': '44', 'Option D': '46', Correct: 'B' },
-                    { ID: 'Q0013', Subject: 'Reasoning', Question: 'Which number is the odd one out: 3, 5, 7, 9, 12, 13?', 'Option A': '3', 'Option B': '7', 'Option C': '12', 'Option D': '13', Correct: 'C' },
-                    { ID: 'Q0014', Subject: 'Reasoning', Question: 'If all roses are flowers and all flowers are plants, then:', 'Option A': 'All plants are roses', 'Option B': 'All roses are plants', 'Option C': 'Some plants are flowers', 'Option D': 'No conclusion', Correct: 'B' },
-                    { ID: 'Q0015', Subject: 'Reasoning', Question: 'Find the missing number: 5, 10, 20, 40, ?, 160', 'Option A': '60', 'Option B': '70', 'Option C': '80', 'Option D': '90', Correct: 'C' },
+                    { ID: 'Q0011', Subject: 'Reasoning', Difficulty: 'Hard', Question: 'If CAT is coded as 3120, then DOG would be coded as:', 'Option A': '4157', 'Option B': '41507', 'Option C': '4-15-7', 'Option D': '4-15-07', Correct: 'A' },
+                    { ID: 'Q0012', Subject: 'Reasoning', Difficulty: 'Medium', Question: 'Complete the series: 2, 6, 12, 20, 30, ?', 'Option A': '40', 'Option B': '42', 'Option C': '44', 'Option D': '46', Correct: 'B' },
+                    { ID: 'Q0013', Subject: 'Reasoning', Difficulty: 'Easy', Question: 'Which number is the odd one out: 3, 5, 7, 9, 12, 13?', 'Option A': '3', 'Option B': '7', 'Option C': '12', 'Option D': '13', Correct: 'C' },
+                    { ID: 'Q0014', Subject: 'Reasoning', Difficulty: 'Hard', Question: 'If all roses are flowers and all flowers are plants, then:', 'Option A': 'All plants are roses', 'Option B': 'All roses are plants', 'Option C': 'Some plants are flowers', 'Option D': 'No conclusion', Correct: 'B' },
+                    { ID: 'Q0015', Subject: 'Reasoning', Difficulty: 'Medium', Question: 'Find the missing number: 5, 10, 20, 40, ?, 160', 'Option A': '60', 'Option B': '70', 'Option C': '80', 'Option D': '90', Correct: 'C' },
 
                     // English Questions
-                    { ID: 'Q0016', Subject: 'English', Question: 'Choose the correct synonym of "Abundant":', 'Option A': 'Scarce', 'Option B': 'Plentiful', 'Option C': 'Limited', 'Option D': 'Rare', Correct: 'B' },
-                    { ID: 'Q0017', Subject: 'English', Question: 'Identify the correctly spelled word:', 'Option A': 'Occassion', 'Option B': 'Occasion', 'Option C': 'Ocassion', 'Option D': 'Ocasion', Correct: 'B' },
-                    { ID: 'Q0018', Subject: 'English', Question: 'What is the antonym of "Ancient"?', 'Option A': 'Old', 'Option B': 'Modern', 'Option C': 'Historic', 'Option D': 'Traditional', Correct: 'B' },
-                    { ID: 'Q0019', Subject: 'English', Question: 'Choose the correct sentence:', 'Option A': 'She don\'t like apples', 'Option B': 'She doesn\'t likes apples', 'Option C': 'She doesn\'t like apples', 'Option D': 'She don\'t likes apples', Correct: 'C' },
-                    { ID: 'Q0020', Subject: 'English', Question: 'What is the plural of "Child"?', 'Option A': 'Childs', 'Option B': 'Childes', 'Option C': 'Children', 'Option D': 'Childrens', Correct: 'C' }
+                    { ID: 'Q0016', Subject: 'English', Difficulty: 'Easy', Question: 'Choose the correct synonym of "Abundant":', 'Option A': 'Scarce', 'Option B': 'Plentiful', 'Option C': 'Limited', 'Option D': 'Rare', Correct: 'B' },
+                    { ID: 'Q0017', Subject: 'English', Difficulty: 'Medium', Question: 'Identify the correctly spelled word:', 'Option A': 'Occassion', 'Option B': 'Occasion', 'Option C': 'Ocassion', 'Option D': 'Ocasion', Correct: 'B' },
+                    { ID: 'Q0018', Subject: 'English', Difficulty: 'Easy', Question: 'What is the antonym of "Ancient"?', 'Option A': 'Old', 'Option B': 'Modern', 'Option C': 'Historic', 'Option D': 'Traditional', Correct: 'B' },
+                    { ID: 'Q0019', Subject: 'English', Difficulty: 'Hard', Question: 'Choose the correct sentence:', 'Option A': 'She don\'t like apples', 'Option B': 'She doesn\'t likes apples', 'Option C': 'She doesn\'t like apples', 'Option D': 'She don\'t likes apples', Correct: 'C' },
+                    { ID: 'Q0020', Subject: 'English', Difficulty: 'Easy', Question: 'What is the plural of "Child"?', 'Option A': 'Childs', 'Option B': 'Childes', 'Option C': 'Children', 'Option D': 'Childrens', Correct: 'C' }
                 ];
 
                 // Check if questions already exist

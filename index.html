@@ -1576,8 +1576,15 @@
                             <option value="Math">Math</option>
                             <option value="Reasoning">Reasoning</option>
                             <option value="GK">GK</option>
+                            <option value="General Knowledge">General Knowledge</option>
                             <option value="English">English</option>
                             <option value="Others">Others</option>
+                        </select>
+                        <select id="question-filter-difficulty" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
+                            <option value="">All Difficulty</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
                         </select>
                     </div>
 
@@ -1612,14 +1619,25 @@
                             <button id="close-add-question-btn" style="background: #e74c3c; color: white; padding: 5px 12px; border-radius: 5px; border: none; cursor: pointer; font-size: 0.85rem;">✖ Close</button>
                         </div>
 
-                        <div class="form-group">
-                            <label>Subject</label>
-                            <select id="question-subject">
-                                <option value="Math">Math</option>
-                                <option value="Reasoning">Reasoning</option>
-                                <option value="GK">GK</option>
-                                <option value="Others">Others</option>
-                            </select>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <div class="form-group" style="flex: 1; min-width: 150px;">
+                                <label>Subject</label>
+                                <select id="question-subject">
+                                    <option value="Math">Math</option>
+                                    <option value="Reasoning">Reasoning</option>
+                                    <option value="GK">GK</option>
+                                    <option value="English">English</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1; min-width: 150px;">
+                                <label>Difficulty</label>
+                                <select id="question-difficulty">
+                                    <option value="Easy">Easy</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Hard">Hard</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Question Text</label>
@@ -1688,9 +1706,9 @@
                         <input type="text" id="exam-expiry" placeholder="Select or enter date (dd-mm-yyyy)">
                     </div>
                     <div class="form-group">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; flex-wrap: wrap; gap: 10px;">
                             <label style="margin: 0; color: white; font-size: 1.1rem; font-weight: 600;">Select Questions for Exam</label>
-                            <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                 <div style="display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 8px;">
                                     <input type="number" id="random-count" min="1" value="5" placeholder="#" style="width: 60px; padding: 5px; border: none; border-radius: 5px; text-align: center; font-weight: 600;">
                                     <button id="random-select-btn" style="background: #f39c12; color: white; padding: 6px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">
@@ -1701,6 +1719,25 @@
                                     0 Selected
                                 </div>
                             </div>
+                        </div>
+                        <!-- Filter controls for exam question selector -->
+                        <div id="exam-question-filters" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                            <input type="text" id="exam-question-search" placeholder="🔍 Search questions..." style="flex: 1; min-width: 180px; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem;">
+                            <select id="exam-question-filter-subject" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
+                                <option value="">All Subjects</option>
+                                <option value="Math">Math</option>
+                                <option value="Reasoning">Reasoning</option>
+                                <option value="GK">GK</option>
+                                <option value="General Knowledge">General Knowledge</option>
+                                <option value="English">English</option>
+                                <option value="Others">Others</option>
+                            </select>
+                            <select id="exam-question-filter-difficulty" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
+                                <option value="">All Difficulty</option>
+                                <option value="Easy">Easy</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Hard">Hard</option>
+                            </select>
                         </div>
                         <div id="exam-questions-list">
                             <p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>
@@ -3471,9 +3508,10 @@
                     </button>
                 </div>
 
-                <div style="margin-bottom: 8px;">
+                <div style="margin-bottom: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
                     <strong style="font-size: 1.1rem;">${q.ID}</strong>
-                    <span class="question-tag" style="margin-left: 10px; background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject || 'Unknown'}</span>
+                    <span class="question-tag" style="background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject || 'Unknown'}</span>
+                    <span class="difficulty-tag" style="background: ${q.Difficulty === 'Easy' ? '#27ae60' : q.Difficulty === 'Medium' ? '#f39c12' : q.Difficulty === 'Hard' ? '#e74c3c' : '#95a5a6'}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Difficulty || 'Unknown'}</span>
                 </div>
                 <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question || ''}</p>
                 <div style="margin-left: 25px; margin-bottom: 8px;">
@@ -3493,6 +3531,7 @@
         function applySearchAndFilter() {
             const searchTerm = document.getElementById('question-search-input').value.toLowerCase().trim();
             const subjectFilter = document.getElementById('question-filter-subject').value;
+            const difficultyFilter = document.getElementById('question-filter-difficulty').value;
 
             filteredQuestions = allQuestions.filter(q => {
                 const matchesSearch = !searchTerm ||
@@ -3504,8 +3543,9 @@
                     (q['Option D'] && q['Option D'].toLowerCase().includes(searchTerm));
 
                 const matchesSubject = !subjectFilter || q.Subject === subjectFilter;
+                const matchesDifficulty = !difficultyFilter || q.Difficulty === difficultyFilter;
 
-                return matchesSearch && matchesSubject;
+                return matchesSearch && matchesSubject && matchesDifficulty;
             });
 
             displayedQuestionsCount = 0;
@@ -3621,6 +3661,7 @@
 
                             document.getElementById('add-question-form').classList.remove('hidden');
                             document.getElementById('question-subject').value = question.Subject || 'Others';
+                            document.getElementById('question-difficulty').value = question.Difficulty || 'Medium';
                             document.getElementById('question-text').value = question.Question || '';
                             document.getElementById('option-a').value = question['Option A'] || '';
                             document.getElementById('option-b').value = question['Option B'] || '';
@@ -3738,6 +3779,11 @@
 
         // Subject filter handler
         document.getElementById('question-filter-subject').addEventListener('change', function() {
+            applySearchAndFilter();
+        });
+
+        // Difficulty filter handler
+        document.getElementById('question-filter-difficulty').addEventListener('change', function() {
             applySearchAndFilter();
         });
 
@@ -3945,11 +3991,12 @@
             });
 
             // Prepare CSV content with all question details
-            const headers = ['ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer'];
+            const headers = ['ID', 'Subject', 'Difficulty', 'Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer'];
             const rows = selectedQuestions.map(q => {
                 return [
                     q.ID || '',
                     q.Subject || '',
+                    q.Difficulty || 'Medium',
                     q.Question || '',
                     q['Option A'] || '',
                     q['Option B'] || '',
@@ -4002,6 +4049,7 @@
         document.getElementById('add-question-btn').addEventListener('click', async function() {
             try {
                 const subject = document.getElementById('question-subject').value;
+                const difficulty = document.getElementById('question-difficulty').value;
                 const question = document.getElementById('question-text').value.trim();
                 const optionA = document.getElementById('option-a').value.trim();
                 const optionB = document.getElementById('option-b').value.trim();
@@ -4037,6 +4085,7 @@
                     if (window.PoliteCCAPI && window.PoliteCCAPI.updateQuestionInDatabase && editId) {
                         const success = await window.PoliteCCAPI.updateQuestionInDatabase(editId, {
                             subject: subject,
+                            difficulty: difficulty,
                             question: question,
                             optionA: optionA,
                             optionB: optionB,
@@ -4056,6 +4105,7 @@
                     } else {
                         // Update in local array
                         questions[editIndex].Subject = subject;
+                        questions[editIndex].Difficulty = difficulty;
                         questions[editIndex].Question = question;
                         questions[editIndex]['Option A'] = optionA;
                         questions[editIndex]['Option B'] = optionB;
@@ -4081,6 +4131,7 @@
                     if (window.PoliteCCAPI && window.PoliteCCAPI.addQuestionToDatabase) {
                         const success = await window.PoliteCCAPI.addQuestionToDatabase({
                             subject: subject,
+                            difficulty: difficulty,
                             question: question,
                             optionA: optionA,
                             optionB: optionB,
@@ -4102,6 +4153,7 @@
                         questions.push({
                             ID: questionId,
                             Subject: subject,
+                            Difficulty: difficulty,
                             Question: question,
                             'Option A': optionA,
                             'Option B': optionB,
@@ -4182,43 +4234,63 @@
             if (questions.length === 0) {
                 examQuestionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No questions available. Please add questions first!</p>';
             } else {
-                let html = '<div style="max-height: 450px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">';
+                // Store all questions for filtering
+                let examFilteredQuestions = [...questions];
 
-                questions.forEach(q => {
-                    const subjectColors = {
-                        'Math': '#3498db',
-                        'Reasoning': '#9b59b6',
-                        'GK': '#e67e22',
-                        'Others': '#95a5a6'
-                    };
-                    const color = subjectColors[q.Subject] || '#95a5a6';
+                // Function to render exam questions list
+                function renderExamQuestionsList() {
+                    let html = '<div id="exam-questions-container" style="max-height: 450px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">';
 
-                    html += `
-                    <label class="exam-question-item" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;">
-                        <input type="checkbox" class="question-checkbox" value="${q.id}" data-question-id="${q.ID}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
-                                <strong style="font-size: 1rem; color: var(--secondary);">${q.ID}</strong>
-                                <span style="background: ${color}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Subject}</span>
-                            </div>
-                            <div style="color: #2c3e50; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-size: 0.95rem; margin-bottom: 8px;"><strong>Q:</strong> ${q.Question}</div>
-                            <details style="margin-top: 8px; cursor: pointer;">
-                                <summary style="color: #3498db; font-weight: 600; font-size: 0.85rem; user-select: none; padding: 4px 0;">Show Options</summary>
-                                <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px; border: 1px solid #e0e0e0;">
-                                    <div style="margin: 4px 0; color: #555;"><strong>A)</strong> ${q['Option A']}</div>
-                                    <div style="margin: 4px 0; color: #555;"><strong>B)</strong> ${q['Option B']}</div>
-                                    <div style="margin: 4px 0; color: #555;"><strong>C)</strong> ${q['Option C']}</div>
-                                    <div style="margin: 4px 0; color: #555;"><strong>D)</strong> ${q['Option D']}</div>
-                                    <div style="margin-top: 8px; padding: 6px; background: #d4edda; border-radius: 4px; color: #155724; font-weight: 600;"><strong>✓ Correct:</strong> ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}</div>
+                    if (examFilteredQuestions.length === 0) {
+                        html += '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No questions match the current filters.</p>';
+                    } else {
+                        examFilteredQuestions.forEach(q => {
+                            const subjectColors = {
+                                'Math': '#3498db',
+                                'Reasoning': '#9b59b6',
+                                'GK': '#e67e22',
+                                'General Knowledge': '#e67e22',
+                                'English': '#1abc9c',
+                                'Others': '#95a5a6'
+                            };
+                            const difficultyColors = {
+                                'Easy': '#27ae60',
+                                'Medium': '#f39c12',
+                                'Hard': '#e74c3c'
+                            };
+                            const subjectColor = subjectColors[q.Subject] || '#95a5a6';
+                            const difficultyColor = difficultyColors[q.Difficulty] || '#95a5a6';
+
+                            html += `
+                            <label class="exam-question-item" data-subject="${q.Subject || ''}" data-difficulty="${q.Difficulty || ''}" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;">
+                                <input type="checkbox" class="question-checkbox" value="${q.id}" data-question-id="${q.ID}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+                                        <strong style="font-size: 1rem; color: var(--secondary);">${q.ID}</strong>
+                                        <span style="background: ${subjectColor}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Subject}</span>
+                                        <span style="background: ${difficultyColor}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Difficulty || 'Unknown'}</span>
+                                    </div>
+                                    <div style="color: #2c3e50; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-size: 0.95rem; margin-bottom: 8px;"><strong>Q:</strong> ${q.Question}</div>
+                                    <details style="margin-top: 8px; cursor: pointer;">
+                                        <summary style="color: #3498db; font-weight: 600; font-size: 0.85rem; user-select: none; padding: 4px 0;">Show Options</summary>
+                                        <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px; border: 1px solid #e0e0e0;">
+                                            <div style="margin: 4px 0; color: #555;"><strong>A)</strong> ${q['Option A']}</div>
+                                            <div style="margin: 4px 0; color: #555;"><strong>B)</strong> ${q['Option B']}</div>
+                                            <div style="margin: 4px 0; color: #555;"><strong>C)</strong> ${q['Option C']}</div>
+                                            <div style="margin: 4px 0; color: #555;"><strong>D)</strong> ${q['Option D']}</div>
+                                            <div style="margin-top: 8px; padding: 6px; background: #d4edda; border-radius: 4px; color: #155724; font-weight: 600;"><strong>✓ Correct:</strong> ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}</div>
+                                        </div>
+                                    </details>
                                 </div>
-                            </details>
-                        </div>
-                    </label>
-                    `;
-                });
+                            </label>
+                            `;
+                        });
+                    }
 
-                html += '</div>';
-                examQuestionsList.innerHTML = html;
+                    html += '</div>';
+                    examQuestionsList.innerHTML = html;
+                    attachExamQuestionEventListeners();
+                }
 
                 // Update counter when checkboxes change
                 function updateSelectedCount() {
@@ -4226,28 +4298,88 @@
                     document.getElementById('selected-count').textContent = checkedCount + ' Selected';
                 }
 
-                // Add event listeners to checkboxes
-                document.querySelectorAll('.question-checkbox').forEach(checkbox => {
-                    checkbox.addEventListener('change', updateSelectedCount);
-                });
-
-                // Add hover effect to question items
-                document.querySelectorAll('.exam-question-item').forEach(item => {
-                    item.addEventListener('mouseenter', function() {
-                        this.style.borderColor = 'var(--primary)';
-                        this.style.background = '#e8f4fd';
+                // Function to attach event listeners
+                function attachExamQuestionEventListeners() {
+                    // Add event listeners to checkboxes
+                    document.querySelectorAll('.question-checkbox').forEach(checkbox => {
+                        checkbox.addEventListener('change', updateSelectedCount);
                     });
-                    item.addEventListener('mouseleave', function() {
-                        const checkbox = this.querySelector('.question-checkbox');
-                        if (!checkbox.checked) {
-                            this.style.borderColor = 'transparent';
-                            this.style.background = '#f8f9fa';
+
+                    // Add hover effect to question items
+                    document.querySelectorAll('.exam-question-item').forEach(item => {
+                        item.addEventListener('mouseenter', function() {
+                            this.style.borderColor = 'var(--primary)';
+                            this.style.background = '#e8f4fd';
+                        });
+                        item.addEventListener('mouseleave', function() {
+                            const checkbox = this.querySelector('.question-checkbox');
+                            if (!checkbox.checked) {
+                                this.style.borderColor = 'transparent';
+                                this.style.background = '#f8f9fa';
+                            }
+                        });
+                    });
+                }
+
+                // Function to apply exam question filters
+                function applyExamQuestionFilters() {
+                    const searchTerm = document.getElementById('exam-question-search').value.toLowerCase().trim();
+                    const subjectFilter = document.getElementById('exam-question-filter-subject').value;
+                    const difficultyFilter = document.getElementById('exam-question-filter-difficulty').value;
+
+                    // Store currently checked question IDs before re-rendering
+                    const checkedIds = new Set();
+                    document.querySelectorAll('.question-checkbox:checked').forEach(cb => {
+                        checkedIds.add(cb.value);
+                    });
+
+                    examFilteredQuestions = questions.filter(q => {
+                        const matchesSearch = !searchTerm ||
+                            (q.Question && q.Question.toLowerCase().includes(searchTerm)) ||
+                            (q.ID && q.ID.toLowerCase().includes(searchTerm)) ||
+                            (q['Option A'] && q['Option A'].toLowerCase().includes(searchTerm)) ||
+                            (q['Option B'] && q['Option B'].toLowerCase().includes(searchTerm)) ||
+                            (q['Option C'] && q['Option C'].toLowerCase().includes(searchTerm)) ||
+                            (q['Option D'] && q['Option D'].toLowerCase().includes(searchTerm));
+
+                        const matchesSubject = !subjectFilter || q.Subject === subjectFilter;
+                        const matchesDifficulty = !difficultyFilter || q.Difficulty === difficultyFilter;
+
+                        return matchesSearch && matchesSubject && matchesDifficulty;
+                    });
+
+                    renderExamQuestionsList();
+
+                    // Restore checked state
+                    document.querySelectorAll('.question-checkbox').forEach(cb => {
+                        if (checkedIds.has(cb.value)) {
+                            cb.checked = true;
                         }
                     });
+
+                    updateSelectedCount();
+                }
+
+                // Initial render
+                renderExamQuestionsList();
+                updateSelectedCount();
+
+                // Add filter event listeners
+                let examSearchTimeout;
+                document.getElementById('exam-question-search').addEventListener('input', function() {
+                    clearTimeout(examSearchTimeout);
+                    examSearchTimeout = setTimeout(() => {
+                        applyExamQuestionFilters();
+                    }, 300);
                 });
 
-                // Reset counter
-                updateSelectedCount();
+                document.getElementById('exam-question-filter-subject').addEventListener('change', function() {
+                    applyExamQuestionFilters();
+                });
+
+                document.getElementById('exam-question-filter-difficulty').addEventListener('change', function() {
+                    applyExamQuestionFilters();
+                });
 
                 // Random selection button
                 document.getElementById('random-select-btn').addEventListener('click', function() {
@@ -4258,21 +4390,21 @@
                         return;
                     }
 
-                    if (randomCount > questions.length) {
-                        alert(`You can only select up to ${questions.length} questions from the bank.`);
+                    // Get visible checkboxes (from filtered questions)
+                    const visibleCheckboxes = Array.from(document.querySelectorAll('.question-checkbox'));
+
+                    if (randomCount > visibleCheckboxes.length) {
+                        alert(`You can only select up to ${visibleCheckboxes.length} questions from the current filtered view.`);
                         return;
                     }
 
                     // Uncheck all first
-                    document.querySelectorAll('.question-checkbox').forEach(cb => {
+                    visibleCheckboxes.forEach(cb => {
                         cb.checked = false;
                     });
 
-                    // Get all checkboxes
-                    const allCheckboxes = Array.from(document.querySelectorAll('.question-checkbox'));
-
                     // Shuffle and select random questions
-                    const shuffled = allCheckboxes.sort(() => Math.random() - 0.5);
+                    const shuffled = visibleCheckboxes.sort(() => Math.random() - 0.5);
                     const selectedCheckboxes = shuffled.slice(0, randomCount);
 
                     // Check the randomly selected checkboxes
