@@ -1955,7 +1955,7 @@
             const confirmResume = confirm(
                 `You have an ongoing exam: "${savedState.examTitle}"\n\n` +
                 `Time remaining: ${Math.floor(remainingSeconds / 60)} minutes ${remainingSeconds % 60} seconds\n` +
-                `Questions answered: ${savedState.userAnswers.filter(a => a !== null).length}/${savedState.questions.length}\n\n` +
+                `Questions answered: ${savedState.userAnswers.filter(a => typeof a === 'number' && a >= 0 && a <= 3).length}/${savedState.questions.length}\n\n` +
                 `Do you want to resume this exam?`
             );
 
@@ -4248,23 +4248,25 @@
                 } else {
                     examQuestions.forEach((q, index) => {
                     const userAnswerIndex = userAnswers[index];
-                    const userAnswerLetter = userAnswerIndex !== null && userAnswerIndex !== undefined ? String.fromCharCode(65 + userAnswerIndex) : 'Not Answered';
+                    // Check if user actually answered (valid answer is number 0-3)
+                    const hasAnswered = typeof userAnswerIndex === 'number' && userAnswerIndex >= 0 && userAnswerIndex <= 3;
+                    const userAnswerLetter = hasAnswered ? String.fromCharCode(65 + userAnswerIndex) : 'Not Answered';
                     // Support both 'Correct' and 'Correct Answer' field names, handle lowercase
                     const correctValue = q.Correct || q['Correct Answer'] || '';
                     const correctAnswerLetter = String(correctValue).toUpperCase().trim();
-                    const isCorrect = userAnswerLetter === correctAnswerLetter;
-                    const userAnswerText = userAnswerIndex !== null && userAnswerIndex !== undefined ? q[`Option ${userAnswerLetter}`] : 'Not Answered';
+                    const isCorrect = hasAnswered && userAnswerLetter === correctAnswerLetter;
+                    const userAnswerText = hasAnswered ? q[`Option ${userAnswerLetter}`] : 'Not Answered';
                     const correctAnswerText = q[`Option ${correctAnswerLetter}`];
 
                     html += `
-                        <div style="background: ${isCorrect ? '#e8f5e9' : (userAnswerIndex !== null ? '#ffebee' : '#f5f5f5')}; border-left: 4px solid ${isCorrect ? '#27ae60' : (userAnswerIndex !== null ? '#e74c3c' : '#95a5a6')}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                        <div style="background: ${isCorrect ? '#e8f5e9' : (hasAnswered ? '#ffebee' : '#f5f5f5')}; border-left: 4px solid ${isCorrect ? '#27ae60' : (hasAnswered ? '#e74c3c' : '#95a5a6')}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
                             <div style="font-weight: 600; margin-bottom: 8px; color: var(--secondary);">Question ${index + 1} (${q.ID} - ${q.Subject})</div>
                             <div style="margin-bottom: 12px; font-size: 1.05rem;">${q.Question}</div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
                                 <div>
                                     <strong>Your Answer:</strong>
-                                    <span style="color: ${isCorrect ? '#27ae60' : (userAnswerIndex !== null ? '#e74c3c' : '#7f8c8d')}; font-weight: 600;">
-                                        ${userAnswerLetter}${userAnswerIndex !== null && userAnswerIndex !== undefined ? ' - ' + userAnswerText : ''}
+                                    <span style="color: ${isCorrect ? '#27ae60' : (hasAnswered ? '#e74c3c' : '#7f8c8d')}; font-weight: 600;">
+                                        ${userAnswerLetter}${hasAnswered ? ' - ' + userAnswerText : ''}
                                     </span>
                                 </div>
                                 <div>
@@ -4275,7 +4277,7 @@
                                 </div>
                             </div>
                             <div style="font-weight: 600; font-size: 1.1rem;">
-                                ${isCorrect ? '✅ Correct (+1)' : (userAnswerIndex !== null ? '❌ Incorrect (-0.25)' : '⚪ Not Answered (0)')}
+                                ${isCorrect ? '✅ Correct (+1)' : (hasAnswered ? '❌ Incorrect (-0.25)' : '⚪ Not Answered (0)')}
                             </div>
                         </div>
                     `;
@@ -5137,6 +5139,9 @@
             currentExam.questions.forEach((question, index) => {
                 const userAnswer = userAnswers[index];
 
+                // Check if user actually answered this question (valid answer is 0, 1, 2, or 3)
+                const hasAnswered = typeof userAnswer === 'number' && userAnswer >= 0 && userAnswer <= 3;
+
                 // Get correct answer - support both 'Correct' and 'Correct Answer' field names
                 // Also handle lowercase and ensure it's a valid letter (A, B, C, D)
                 const correctValue = question.Correct || question['Correct Answer'] || '';
@@ -5145,11 +5150,13 @@
 
                 // Validate that correctAnswerIndex is valid (0-3)
                 const isValidCorrectAnswer = correctAnswerIndex >= 0 && correctAnswerIndex <= 3;
-                const isCorrect = isValidCorrectAnswer && (userAnswer === correctAnswerIndex);
+                const isCorrect = hasAnswered && isValidCorrectAnswer && (userAnswer === correctAnswerIndex);
 
-                if (userAnswer !== null) {
+                // Score calculation: +1 correct, -0.25 wrong, 0 unanswered
+                if (hasAnswered) {
                     score += isCorrect ? 1 : -0.25;
                 }
+                // If not answered, score += 0 (no change)
 
                 // Store detailed answer info
                 detailedAnswers.push({
@@ -5160,10 +5167,10 @@
                     optionB: question['Option B'],
                     optionC: question['Option C'],
                     optionD: question['Option D'],
-                    userAnswer: userAnswer !== null ? ['A', 'B', 'C', 'D'][userAnswer] : 'Not Answered',
+                    userAnswer: hasAnswered ? ['A', 'B', 'C', 'D'][userAnswer] : 'Not Answered',
                     correctAnswer: correctLetter || question.Correct,
                     isCorrect: isCorrect,
-                    points: userAnswer !== null ? (isCorrect ? 1 : -0.25) : 0
+                    points: hasAnswered ? (isCorrect ? 1 : -0.25) : 0
                 });
             });
 
