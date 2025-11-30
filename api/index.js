@@ -389,13 +389,66 @@ module.exports = async (req, res) => {
             });
         }
 
-        // GET /api/questions - List all questions
+        // GET /api/questions - List all questions (with optional grouping)
         if (url === '/api/questions' && method === 'GET') {
             const records = await base(QUESTIONS_TABLE).select().all();
             const questions = records.map(record => ({
                 id: record.id,
                 ...record.fields
             }));
+
+            // Check if grouped view is requested
+            const urlObj = new URL(req.url, `http://${req.headers.host}`);
+            const grouped = urlObj.searchParams.get('grouped') === 'true';
+
+            if (grouped) {
+                // Group questions: main questions with their sub-questions
+                const mainQuestions = [];
+                const subQuestionsMap = {};
+
+                // First pass: identify sub-questions and group them
+                questions.forEach(q => {
+                    const isSubQuestion = q['Is Sub Question'] === true || q['Is Sub Question'] === 'true';
+                    const parentId = q['Parent Question ID'];
+
+                    if (isSubQuestion && parentId) {
+                        if (!subQuestionsMap[parentId]) {
+                            subQuestionsMap[parentId] = [];
+                        }
+                        subQuestionsMap[parentId].push(q);
+                    } else {
+                        mainQuestions.push(q);
+                    }
+                });
+
+                // Sort sub-questions by order
+                Object.keys(subQuestionsMap).forEach(parentId => {
+                    subQuestionsMap[parentId].sort((a, b) => {
+                        const orderA = parseInt(a['Sub Question Order']) || 0;
+                        const orderB = parseInt(b['Sub Question Order']) || 0;
+                        return orderA - orderB;
+                    });
+                });
+
+                // Attach sub-questions to their parent
+                const groupedQuestions = mainQuestions.map(q => ({
+                    ...q,
+                    subQuestions: subQuestionsMap[q.ID] || [],
+                    hasSubQuestions: (subQuestionsMap[q.ID] || []).length > 0,
+                    totalQuestions: 1 + (subQuestionsMap[q.ID] || []).length
+                }));
+
+                return res.status(200).json({
+                    success: true,
+                    data: groupedQuestions,
+                    summary: {
+                        totalMainQuestions: mainQuestions.length,
+                        totalSubQuestions: questions.length - mainQuestions.length,
+                        totalQuestions: questions.length
+                    }
+                });
+            }
+
             return res.status(200).json({ success: true, data: questions });
         }
 
@@ -405,9 +458,11 @@ module.exports = async (req, res) => {
 
             // Define valid fields for the Questions table in Airtable
             // This prevents errors from unknown field names
+            // Includes parent-child relationship fields for grouped questions
             const validQuestionFields = [
                 'ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D',
-                'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation'
+                'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation',
+                'Parent Question ID', 'Is Sub Question', 'Sub Question Order'
             ];
 
             // Filter out unknown fields to prevent Airtable errors
@@ -433,9 +488,11 @@ module.exports = async (req, res) => {
             const updateData = req.body;
 
             // Define valid fields for the Questions table in Airtable
+            // Includes parent-child relationship fields for grouped questions
             const validQuestionFields = [
                 'ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D',
-                'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation'
+                'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation',
+                'Parent Question ID', 'Is Sub Question', 'Sub Question Order'
             ];
 
             // Filter out unknown fields to prevent Airtable errors
@@ -516,6 +573,208 @@ module.exports = async (req, res) => {
                 return res.status(500).json({
                     success: false,
                     error: error.message
+                });
+            }
+        }
+
+        // Bulk upload configuration constants
+        const BULK_UPLOAD_CONFIG = {
+            maxQuestionsPerRequest: 500,
+            airtableBatchSize: 10,
+            rateLimit: {
+                maxRequests: 100,
+                windowMinutes: 15
+            },
+            estimatedProcessingTimePerQuestion: 0.1, // seconds
+            recommendedQuestionsPerMinute: 100
+        };
+
+        // GET /api/questions/bulk/limits - Get bulk upload limits and guidelines
+        if (url === '/api/questions/bulk/limits' && method === 'GET') {
+            const config = BULK_UPLOAD_CONFIG;
+            return res.status(200).json({
+                success: true,
+                message: 'Bulk upload limits and guidelines',
+                limits: {
+                    maxQuestionsPerRequest: config.maxQuestionsPerRequest,
+                    maxRequestsPer15Minutes: config.rateLimit.maxRequests,
+                    maxQuestionsPerMinute: config.recommendedQuestionsPerMinute,
+                    maxQuestionsIn15Minutes: config.maxQuestionsPerRequest * Math.floor(config.rateLimit.maxRequests / 2),
+                    estimatedProcessingTime: `${config.maxQuestionsPerRequest * config.estimatedProcessingTimePerQuestion} seconds for ${config.maxQuestionsPerRequest} questions`
+                },
+                guidelines: {
+                    recommended: `Upload up to ${config.recommendedQuestionsPerMinute} questions per minute for optimal performance`,
+                    maximum: `You can upload up to ${config.maxQuestionsPerRequest} questions in a single request`,
+                    rateLimit: `Maximum ${config.rateLimit.maxRequests} API requests allowed per ${config.rateLimit.windowMinutes} minutes`,
+                    bulkCapacity: `With bulk uploads, you can add up to ${config.maxQuestionsPerRequest * 6} questions per minute (6 requests x ${config.maxQuestionsPerRequest} questions)`,
+                    tip: 'For uploading 100 questions every minute, use a single bulk request - this is well within the limits'
+                },
+                example: {
+                    endpoint: 'POST /api/questions/bulk',
+                    requestBody: {
+                        questions: [
+                            {
+                                ID: 'Q0001',
+                                Subject: 'Mathematics',
+                                Question: 'What is 2+2?',
+                                'Option A': '3',
+                                'Option B': '4',
+                                'Option C': '5',
+                                'Option D': '6',
+                                Correct: 'B',
+                                Difficulty: 'Easy'
+                            }
+                        ]
+                    }
+                }
+            });
+        }
+
+        // POST /api/questions/bulk - Bulk upload questions (up to 500 questions per request)
+        if (url === '/api/questions/bulk' && method === 'POST') {
+            try {
+                const { questions } = req.body;
+                const config = BULK_UPLOAD_CONFIG;
+
+                // Validate input
+                if (!questions || !Array.isArray(questions)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Request body must contain a "questions" array',
+                        hint: 'Send a JSON object with a "questions" key containing an array of question objects',
+                        uploadLimits: {
+                            maxQuestionsPerRequest: config.maxQuestionsPerRequest,
+                            maxRequestsPer15Minutes: config.rateLimit.maxRequests,
+                            checkLimitsEndpoint: 'GET /api/questions/bulk/limits'
+                        }
+                    });
+                }
+
+                if (questions.length === 0) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Questions array cannot be empty',
+                        hint: 'Provide at least 1 question in the questions array',
+                        uploadLimits: {
+                            maxQuestionsPerRequest: config.maxQuestionsPerRequest,
+                            checkLimitsEndpoint: 'GET /api/questions/bulk/limits'
+                        }
+                    });
+                }
+
+                if (questions.length > config.maxQuestionsPerRequest) {
+                    const suggestedBatches = Math.ceil(questions.length / config.maxQuestionsPerRequest);
+                    return res.status(400).json({
+                        success: false,
+                        error: `Too many questions! You sent ${questions.length} questions, but the maximum is ${config.maxQuestionsPerRequest} per request.`,
+                        received: questions.length,
+                        uploadLimits: {
+                            maxQuestionsPerRequest: config.maxQuestionsPerRequest,
+                            maxRequestsPer15Minutes: config.rateLimit.maxRequests,
+                            maxQuestionsIn15Minutes: config.maxQuestionsPerRequest * Math.floor(config.rateLimit.maxRequests / 2)
+                        },
+                        suggestion: {
+                            message: `Split your ${questions.length} questions into ${suggestedBatches} separate requests`,
+                            recommendedBatchSize: config.maxQuestionsPerRequest,
+                            numberOfBatchesNeeded: suggestedBatches,
+                            estimatedTime: `${suggestedBatches * 10} seconds (${suggestedBatches} batches)`
+                        },
+                        checkLimitsEndpoint: 'GET /api/questions/bulk/limits'
+                    });
+                }
+
+                // Define valid fields for the Questions table in Airtable
+                // Includes parent-child relationship fields for grouped questions
+                const validQuestionFields = [
+                    'ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D',
+                    'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation',
+                    'Parent Question ID', 'Is Sub Question', 'Sub Question Order'
+                ];
+
+                // Clean and prepare all questions
+                const preparedQuestions = questions.map((questionData, index) => {
+                    const cleanedQuestionData = {};
+                    for (const key of Object.keys(questionData)) {
+                        if (validQuestionFields.includes(key)) {
+                            cleanedQuestionData[key] = questionData[key];
+                        }
+                    }
+                    return { fields: cleanedQuestionData, originalIndex: index };
+                });
+
+                // Airtable allows up to 10 records per batch
+                const AIRTABLE_BATCH_SIZE = 10;
+                const createdRecords = [];
+                const errors = [];
+
+                // Process in batches
+                for (let i = 0; i < preparedQuestions.length; i += AIRTABLE_BATCH_SIZE) {
+                    const batch = preparedQuestions.slice(i, i + AIRTABLE_BATCH_SIZE);
+
+                    try {
+                        const records = await base(QUESTIONS_TABLE).create(
+                            batch.map(q => ({ fields: q.fields }))
+                        );
+
+                        records.forEach((record, idx) => {
+                            createdRecords.push({
+                                id: record.id,
+                                originalIndex: batch[idx].originalIndex,
+                                ...record.fields
+                            });
+                        });
+                    } catch (batchError) {
+                        // Log batch error but continue processing other batches
+                        console.error(`Batch ${Math.floor(i / AIRTABLE_BATCH_SIZE) + 1} error:`, batchError.message);
+                        batch.forEach(q => {
+                            errors.push({
+                                originalIndex: q.originalIndex,
+                                error: batchError.message
+                            });
+                        });
+                    }
+                }
+
+                return res.status(201).json({
+                    success: true,
+                    message: `Bulk upload completed. ${createdRecords.length} questions created successfully.`,
+                    summary: {
+                        total: questions.length,
+                        created: createdRecords.length,
+                        failed: errors.length,
+                        batchesProcessed: Math.ceil(questions.length / AIRTABLE_BATCH_SIZE)
+                    },
+                    data: createdRecords,
+                    errors: errors.length > 0 ? errors : undefined
+                });
+
+            } catch (error) {
+                console.error('Bulk upload error:', error);
+                const config = BULK_UPLOAD_CONFIG;
+
+                // Provide helpful error response with limits info
+                return res.status(500).json({
+                    success: false,
+                    error: error.message,
+                    errorType: 'BULK_UPLOAD_ERROR',
+                    troubleshooting: {
+                        commonCauses: [
+                            'Invalid question data format',
+                            'Network timeout (try smaller batches)',
+                            'Database connection issues'
+                        ],
+                        suggestions: [
+                            'Verify all questions have required fields (Subject, Question, Options, Correct)',
+                            'Try uploading fewer questions per request',
+                            'Check your network connection and retry'
+                        ]
+                    },
+                    uploadLimits: {
+                        maxQuestionsPerRequest: config.maxQuestionsPerRequest,
+                        maxRequestsPer15Minutes: config.rateLimit.maxRequests,
+                        recommendedQuestionsPerMinute: config.recommendedQuestionsPerMinute,
+                        checkLimitsEndpoint: 'GET /api/questions/bulk/limits'
+                    }
                 });
             }
         }
@@ -658,8 +917,211 @@ module.exports = async (req, res) => {
                 id: records[0].id,
                 ...records[0].fields
             };
-            
+
             return res.status(200).json({ success: true, data: exam });
+        }
+
+        // POST /api/questions/expand - Get questions with their sub-questions expanded
+        // This endpoint takes question IDs and returns them with all sub-questions included
+        if (url === '/api/questions/expand' && method === 'POST') {
+            try {
+                const { questionIds } = req.body;
+
+                if (!questionIds || !Array.isArray(questionIds)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'questionIds array is required'
+                    });
+                }
+
+                // Get all questions from database
+                const allRecords = await base(QUESTIONS_TABLE).select().all();
+                const allQuestions = allRecords.map(record => ({
+                    id: record.id,
+                    ...record.fields
+                }));
+
+                // Create lookup maps
+                const questionById = {};
+                const questionByFieldId = {};
+                const subQuestionsByParent = {};
+
+                allQuestions.forEach(q => {
+                    questionById[q.id] = q;
+                    if (q.ID) {
+                        questionByFieldId[q.ID] = q;
+                    }
+
+                    // Group sub-questions by parent
+                    const isSubQuestion = q['Is Sub Question'] === true || q['Is Sub Question'] === 'true';
+                    const parentId = q['Parent Question ID'];
+                    if (isSubQuestion && parentId) {
+                        if (!subQuestionsByParent[parentId]) {
+                            subQuestionsByParent[parentId] = [];
+                        }
+                        subQuestionsByParent[parentId].push(q);
+                    }
+                });
+
+                // Sort sub-questions by order
+                Object.keys(subQuestionsByParent).forEach(parentId => {
+                    subQuestionsByParent[parentId].sort((a, b) => {
+                        const orderA = parseInt(a['Sub Question Order']) || 0;
+                        const orderB = parseInt(b['Sub Question Order']) || 0;
+                        return orderA - orderB;
+                    });
+                });
+
+                // Expand questions with their sub-questions
+                const expandedQuestions = [];
+                const includedIds = new Set();
+
+                questionIds.forEach(qId => {
+                    // Find the question (by Airtable ID or field ID)
+                    const question = questionById[qId] || questionByFieldId[qId];
+
+                    if (question && !includedIds.has(question.id)) {
+                        // Skip if this is a sub-question (it will be included with its parent)
+                        const isSubQuestion = question['Is Sub Question'] === true || question['Is Sub Question'] === 'true';
+                        if (isSubQuestion) return;
+
+                        includedIds.add(question.id);
+
+                        // Get sub-questions for this parent
+                        const subQuestions = subQuestionsByParent[question.ID] || [];
+
+                        // Add parent question with sub-questions info
+                        expandedQuestions.push({
+                            ...question,
+                            subQuestions: subQuestions,
+                            hasSubQuestions: subQuestions.length > 0,
+                            totalQuestions: 1 + subQuestions.length
+                        });
+
+                        // Mark sub-questions as included
+                        subQuestions.forEach(sq => includedIds.add(sq.id));
+                    }
+                });
+
+                // Calculate total questions (including sub-questions)
+                let totalMainQuestions = expandedQuestions.length;
+                let totalSubQuestions = expandedQuestions.reduce((sum, q) => sum + (q.subQuestions?.length || 0), 0);
+
+                return res.status(200).json({
+                    success: true,
+                    data: expandedQuestions,
+                    summary: {
+                        requestedIds: questionIds.length,
+                        mainQuestions: totalMainQuestions,
+                        subQuestions: totalSubQuestions,
+                        totalQuestions: totalMainQuestions + totalSubQuestions
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error expanding questions:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        }
+
+        // POST /api/exams/with-subquestions - Create exam with auto-included sub-questions
+        // When selecting a parent question, all its sub-questions are automatically included
+        if (url === '/api/exams/with-subquestions' && method === 'POST') {
+            try {
+                const examData = req.body;
+                const questionIds = examData['Questions'] || examData['Question IDs'] || examData['questionIds'] || [];
+
+                // Get all questions to find sub-questions
+                const allRecords = await base(QUESTIONS_TABLE).select().all();
+                const allQuestions = allRecords.map(record => ({
+                    id: record.id,
+                    ...record.fields
+                }));
+
+                // Create lookup maps
+                const questionById = {};
+                const questionByFieldId = {};
+                const subQuestionsByParent = {};
+
+                allQuestions.forEach(q => {
+                    questionById[q.id] = q;
+                    if (q.ID) {
+                        questionByFieldId[q.ID] = q;
+                    }
+
+                    const isSubQuestion = q['Is Sub Question'] === true || q['Is Sub Question'] === 'true';
+                    const parentId = q['Parent Question ID'];
+                    if (isSubQuestion && parentId) {
+                        if (!subQuestionsByParent[parentId]) {
+                            subQuestionsByParent[parentId] = [];
+                        }
+                        subQuestionsByParent[parentId].push(q);
+                    }
+                });
+
+                // Expand question IDs to include sub-questions
+                const expandedQuestionIds = [];
+                const includedIds = new Set();
+
+                questionIds.forEach(qId => {
+                    const question = questionById[qId] || questionByFieldId[qId];
+
+                    if (question && !includedIds.has(question.id)) {
+                        // Skip if this is a sub-question
+                        const isSubQuestion = question['Is Sub Question'] === true || question['Is Sub Question'] === 'true';
+                        if (isSubQuestion) return;
+
+                        // Add parent question
+                        includedIds.add(question.id);
+                        expandedQuestionIds.push(question.id);
+
+                        // Add all sub-questions (sorted by order)
+                        const subQuestions = (subQuestionsByParent[question.ID] || []).sort((a, b) => {
+                            const orderA = parseInt(a['Sub Question Order']) || 0;
+                            const orderB = parseInt(b['Sub Question Order']) || 0;
+                            return orderA - orderB;
+                        });
+
+                        subQuestions.forEach(sq => {
+                            if (!includedIds.has(sq.id)) {
+                                includedIds.add(sq.id);
+                                expandedQuestionIds.push(sq.id);
+                            }
+                        });
+                    }
+                });
+
+                // Create exam with expanded question IDs
+                const mappedData = {
+                    'Exam Code': examData['Exam Code'],
+                    'Title': examData['Title'],
+                    'Duration (mins)': examData['Duration (mins)'],
+                    'Expiry (IST)': examData['Expiry (IST)'],
+                    'Questions': expandedQuestionIds
+                };
+
+                const record = await base(EXAMS_TABLE).create(mappedData);
+
+                return res.status(201).json({
+                    success: true,
+                    data: { id: record.id, ...record.fields },
+                    questionSummary: {
+                        originalCount: questionIds.length,
+                        expandedCount: expandedQuestionIds.length,
+                        subQuestionsAdded: expandedQuestionIds.length - questionIds.length
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error creating exam with sub-questions:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
         }
 
         // POST /api/auth/candidate/signup - Create candidate account

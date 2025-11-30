@@ -3612,14 +3612,25 @@
             return stats;
         }
 
-        // Function to render a single question item
+        // Function to render a single question item (supports grouped questions with sub-questions)
         function renderQuestionItem(q, index) {
             const isSelected = selectedQuestionIds.has(q.id || q.ID);
-            return `
-            <div class="question-item" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" style="background: ${isSelected ? '#e3f2fd' : '#f8f9fa'}; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid ${isSelected ? '#2196f3' : 'var(--secondary)'}; position: relative; padding-right: 60px; padding-left: 50px; transition: all 0.2s;">
+            const isSubQuestion = q['Is Sub Question'] === true || q['Is Sub Question'] === 'true';
+            const parentQuestionId = q['Parent Question ID'];
+            const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
+            const subQuestionCount = q.subQuestions ? q.subQuestions.length : 0;
+
+            // Skip rendering sub-questions individually (they will be rendered with their parent)
+            if (isSubQuestion && parentQuestionId) {
+                return ''; // Sub-questions are rendered as part of parent
+            }
+
+            // Render main question with optional sub-questions
+            let html = `
+            <div class="question-item ${hasSubQuestions ? 'has-sub-questions' : ''}" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" style="background: ${isSelected ? '#e3f2fd' : '#f8f9fa'}; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid ${isSelected ? '#2196f3' : hasSubQuestions ? '#9c27b0' : 'var(--secondary)'}; position: relative; padding-right: 60px; padding-left: 50px; transition: all 0.2s;">
                 <!-- Checkbox for selection -->
                 <div style="position: absolute; top: 15px; left: 15px;">
-                    <input type="checkbox" class="question-select-checkbox" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" style="width: 20px; height: 20px; cursor: pointer;" ${isSelected ? 'checked' : ''}>
+                    <input type="checkbox" class="question-select-checkbox" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" data-has-sub-questions="${hasSubQuestions}" data-sub-question-count="${subQuestionCount}" style="width: 20px; height: 20px; cursor: pointer;" ${isSelected ? 'checked' : ''}>
                 </div>
 
                 <!-- Action buttons in top right -->
@@ -3630,7 +3641,7 @@
                     <button class="edit-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Edit Question" style="background: var(--primary); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                         ✏️
                     </button>
-                    <button class="add-to-cart-btn" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" title="Add to Cart" style="background: ${questionCart.has(q.id || q.ID) ? '#27ae60' : '#f39c12'}; color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <button class="add-to-cart-btn" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" title="${hasSubQuestions ? 'Add Group to Cart' : 'Add to Cart'}" style="background: ${questionCart.has(q.id || q.ID) ? '#27ae60' : '#f39c12'}; color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                         ${questionCart.has(q.id || q.ID) ? '✓' : '🛒'}
                     </button>
                 </div>
@@ -3639,6 +3650,7 @@
                     <strong style="font-size: 1.1rem;">${q.ID}</strong>
                     <span class="question-tag" style="background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject || 'Unknown'}</span>
                     <span class="difficulty-tag" style="background: ${q.Difficulty === 'Easy' ? '#27ae60' : q.Difficulty === 'Medium' ? '#f39c12' : q.Difficulty === 'Hard' ? '#e74c3c' : '#95a5a6'}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Difficulty || 'Unknown'}</span>
+                    ${hasSubQuestions ? `<span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📋 ${subQuestionCount} Sub-Q</span>` : ''}
                 </div>
                 <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question || ''}</p>
                 <div style="margin-left: 25px; margin-bottom: 8px;">
@@ -3649,9 +3661,41 @@
                 </div>
                 <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 8px; border-radius: 6px; display: inline-block;">
                     ✅ Correct Answer: ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}
-                </div>
-            </div>
-            `;
+                </div>`;
+
+            // Render sub-questions if any
+            if (hasSubQuestions) {
+                html += `
+                <div class="sub-questions-container" style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #9c27b0;">
+                    <div style="color: #9c27b0; font-weight: 600; margin-bottom: 10px; font-size: 0.95rem;">
+                        📋 Sub-Questions (${subQuestionCount}) - Selected together with main question:
+                    </div>`;
+
+                q.subQuestions.forEach((sq, sqIndex) => {
+                    html += `
+                    <div class="sub-question-item" style="background: #f3e5f5; border-radius: 8px; padding: 12px; margin-bottom: 10px; margin-left: 20px; border-left: 3px solid #9c27b0;">
+                        <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+                            <strong style="font-size: 0.95rem;">${sq.ID || `Sub-Q ${sqIndex + 1}`}</strong>
+                            <span style="background: #ce93d8; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">Sub-Question ${sq['Sub Question Order'] || sqIndex + 1}</span>
+                        </div>
+                        <p style="margin-bottom: 8px; font-weight: 500; font-size: 1rem;">${sq.Question || ''}</p>
+                        <div style="margin-left: 20px; font-size: 0.95rem;">
+                            <div style="margin: 4px 0;">A) ${sq['Option A'] || ''}</div>
+                            <div style="margin: 4px 0;">B) ${sq['Option B'] || ''}</div>
+                            <div style="margin: 4px 0;">C) ${sq['Option C'] || ''}</div>
+                            <div style="margin: 4px 0;">D) ${sq['Option D'] || ''}</div>
+                        </div>
+                        <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 6px; border-radius: 4px; display: inline-block; font-size: 0.9rem; margin-top: 6px;">
+                            ✅ Correct: ${(sq.Correct || sq['Correct Answer'] || '').toString().toUpperCase()}
+                        </div>
+                    </div>`;
+                });
+
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+            return html;
         }
 
         // Function to apply search and filter
@@ -5342,19 +5386,38 @@
                     const userAnswerLetter = answer.userAnswer;
                     const correctAnswerLetter = answer.correctAnswer;
 
+                    // Check if this is a sub-question
+                    const isSubQuestion = answer.isSubQuestion;
+                    const parentQuestionId = answer.parentQuestionId;
+                    const subQuestionOrder = answer.subQuestionOrder;
+
                     const bgColor = isCorrect ? '#e8f5e9' : (userAnswered ? '#ffebee' : '#f5f5f5');
                     const borderColor = isCorrect ? '#27ae60' : (userAnswered ? '#e74c3c' : '#95a5a6');
 
+                    // Find parent question for context if this is a sub-question
+                    let parentQuestion = null;
+                    if (isSubQuestion && parentQuestionId) {
+                        parentQuestion = userAnswers.find(a => a.questionId === parentQuestionId);
+                    }
+
                     html += `
-                        <div style="background: ${bgColor}; border-left: 5px solid ${borderColor}; padding: 20px; margin-bottom: 15px; border-radius: 8px;">
+                        <div style="background: ${bgColor}; border-left: 5px solid ${isSubQuestion ? '#9c27b0' : borderColor}; padding: 20px; margin-bottom: 15px; border-radius: 8px; ${isSubQuestion ? 'margin-left: 25px;' : ''}">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                 <div style="font-weight: 700; color: var(--secondary); font-size: 1rem;">
-                                    Q${index + 1}. ${answer.questionId || ''} <span style="background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">${answer.subject || ''}</span>
+                                    Q${index + 1}. ${answer.questionId || ''}
+                                    ${isSubQuestion ? `<span style="background: #e1bee7; color: #7b1fa2; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">📋 Sub-Q${subQuestionOrder ? ' #' + subQuestionOrder : ''}</span>` : ''}
+                                    <span style="background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">${answer.subject || ''}</span>
                                 </div>
                                 <div style="font-weight: 600; font-size: 0.9rem; padding: 5px 12px; border-radius: 6px; background: ${isCorrect ? '#c8e6c9' : (userAnswered ? '#ffcdd2' : '#e0e0e0')}; color: ${isCorrect ? '#388e3c' : (userAnswered ? '#c62828' : '#666')};">
                                     ${isCorrect ? '+1' : (userAnswered ? '-0.25' : '0')}
                                 </div>
                             </div>
+                            ${isSubQuestion && parentQuestion ? `
+                            <div style="background: #f3e5f5; padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #9c27b0;">
+                                <div style="color: #9c27b0; font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">📖 Reference (${parentQuestionId}):</div>
+                                <div style="color: #333; font-size: 0.95rem;">${parentQuestion.question || ''}</div>
+                            </div>
+                            ` : ''}
                             <div style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 15px; color: #333; background: white; padding: 15px; border-radius: 8px;">
                                 ${answer.question || 'Question not available'}
                             </div>
@@ -6511,6 +6574,10 @@
                 }
                 // If not answered, score += 0 (no change)
 
+                // Check if this is a sub-question
+                const isSubQuestion = question['Is Sub Question'] === true || question['Is Sub Question'] === 'true';
+                const parentQuestionId = question['Parent Question ID'];
+
                 // Store detailed answer info
                 detailedAnswers.push({
                     questionId: question.ID,
@@ -6523,7 +6590,10 @@
                     userAnswer: hasAnswered ? ['A', 'B', 'C', 'D'][userAnswer] : 'Not Answered',
                     correctAnswer: correctLetter || question.Correct,
                     isCorrect: isCorrect,
-                    points: hasAnswered ? (isCorrect ? 1 : -0.25) : 0
+                    points: hasAnswered ? (isCorrect ? 1 : -0.25) : 0,
+                    isSubQuestion: isSubQuestion,
+                    parentQuestionId: parentQuestionId || null,
+                    subQuestionOrder: question['Sub Question Order'] || null
                 });
             });
 
@@ -6598,21 +6668,57 @@
         // Question loading
         function loadQuestion() {
             if (!currentExam || currentQuestionIndex >= currentExam.questions.length) return;
-            
+
             const question = currentExam.questions[currentQuestionIndex];
-            
+            const isSubQuestion = question['Is Sub Question'] === true || question['Is Sub Question'] === 'true';
+            const parentQuestionId = question['Parent Question ID'];
+
+            // Find parent question if this is a sub-question
+            let parentQuestion = null;
+            if (isSubQuestion && parentQuestionId) {
+                parentQuestion = currentExam.questions.find(q => q.ID === parentQuestionId);
+            }
+
             // Update UI
             document.getElementById('current-q-num').textContent = currentQuestionIndex + 1;
             document.getElementById('total-questions').textContent = currentExam.questions.length;
             document.getElementById('progress-num').textContent = currentQuestionIndex + 1;
             document.getElementById('progress-total').textContent = currentExam.questions.length;
-            document.getElementById('question-subject-display').textContent = question.Subject || 'Unknown';
-            document.getElementById('question-text-display').textContent = question.Question || 'Loading question...';
+
+            // Show subject with sub-question indicator if applicable
+            let subjectDisplay = question.Subject || 'Unknown';
+            if (isSubQuestion) {
+                subjectDisplay = `📋 Sub-Q of ${parentQuestionId}`;
+            }
+            document.getElementById('question-subject-display').textContent = subjectDisplay;
+
+            // Build question text with parent context for sub-questions
+            let questionTextDisplay = question.Question || 'Loading question...';
+            const questionTextElement = document.getElementById('question-text-display');
+
+            if (isSubQuestion && parentQuestion) {
+                // Show parent question context for sub-questions
+                questionTextElement.innerHTML = `
+                    <div style="background: #f3e5f5; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #9c27b0;">
+                        <div style="color: #9c27b0; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">
+                            📖 Reference (${parentQuestionId}):
+                        </div>
+                        <div style="color: #333; font-size: 0.95rem;">${parentQuestion.Question || ''}</div>
+                    </div>
+                    <div style="color: #9c27b0; font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">
+                        Sub-Question ${question['Sub Question Order'] || ''}:
+                    </div>
+                    <div>${questionTextDisplay}</div>
+                `;
+            } else {
+                questionTextElement.textContent = questionTextDisplay;
+            }
+
             document.getElementById('option-a-display').textContent = question['Option A'] || 'Option A';
             document.getElementById('option-b-display').textContent = question['Option B'] || 'Option B';
             document.getElementById('option-c-display').textContent = question['Option C'] || 'Option C';
             document.getElementById('option-d-display').textContent = question['Option D'] || 'Option D';
-            
+
             // Update selected option and radio buttons
             const options = document.querySelectorAll('#exam-screen .option');
             const radios = document.querySelectorAll('#exam-screen .option-radio');
