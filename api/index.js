@@ -364,25 +364,44 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // Health check with system status
+        // Health check with system status - actually test connections
         if (url === '/api/health') {
+            // Test Airtable connection by making a simple query
+            let airtableStatus = { status: 'error', message: 'Not configured' };
+
+            if (process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN && process.env.AIRTABLE_BASE_ID) {
+                try {
+                    // Try to fetch one record to verify connection
+                    await base(QUESTIONS_TABLE).select({ maxRecords: 1 }).firstPage();
+                    airtableStatus = { status: 'connected', message: 'Airtable database connected' };
+                } catch (dbError) {
+                    console.error('Airtable connection test failed:', dbError.message);
+                    airtableStatus = {
+                        status: 'error',
+                        message: `Connection failed: ${dbError.message}`
+                    };
+                }
+            } else {
+                airtableStatus = {
+                    status: 'not_configured',
+                    message: 'AIRTABLE_PERSONAL_ACCESS_TOKEN or AIRTABLE_BASE_ID not set'
+                };
+            }
+
             const systemStatus = {
-                airtable: {
-                    status: 'connected',
-                    message: 'Airtable database connected'
-                },
+                airtable: airtableStatus,
                 gemini: {
                     status: process.env.GEMINI_API_KEY ? 'connected' : 'not_configured',
-                    message: process.env.GEMINI_API_KEY ? 'Gemini AI ready' : 'API key not configured'
+                    message: process.env.GEMINI_API_KEY ? 'Gemini AI ready' : 'GEMINI_API_KEY not configured'
                 },
                 ocr: {
                     status: process.env.OCR_SPACE_API_KEY ? 'connected' : 'not_configured',
-                    message: process.env.OCR_SPACE_API_KEY ? 'OCR service ready' : 'API key not configured'
+                    message: process.env.OCR_SPACE_API_KEY ? 'OCR service ready' : 'OCR_SPACE_API_KEY not configured'
                 }
             };
-            
-            return res.status(200).json({ 
-                status: 'ok', 
+
+            return res.status(200).json({
+                status: 'ok',
                 message: 'System health check',
                 services: systemStatus,
                 timestamp: new Date().toISOString()
