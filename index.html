@@ -4927,16 +4927,22 @@
             }
         });
 
-        // Option selection
+        // Option selection - use closest() to handle clicks on child elements (option letter, option text)
         document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('option')) {
-                const optionIndex = parseInt(e.target.getAttribute('data-index'));
-                selectOption(optionIndex);
+            const optionElement = e.target.closest('.option');
+            if (optionElement) {
+                const optionIndex = parseInt(optionElement.getAttribute('data-index'));
+                if (!isNaN(optionIndex) && optionIndex >= 0 && optionIndex <= 3) {
+                    selectOption(optionIndex);
+                }
             }
         });
 
         function selectOption(index) {
+            console.log(`📝 Option selected: Q${currentQuestionIndex + 1}, Option ${['A', 'B', 'C', 'D'][index]} (index: ${index})`);
             userAnswers[currentQuestionIndex] = index;
+            console.log('📝 Updated userAnswers:', JSON.stringify(userAnswers));
+            
             const options = document.querySelectorAll('.option');
             options.forEach((option, i) => {
                 if (i === index) {
@@ -5101,11 +5107,21 @@
             clearExamState();
 
             // Calculate score and prepare detailed answers
+            // Scoring formula: +1.0 for correct, -0.25 for wrong, 0 for unanswered
             let score = 0;
             const detailedAnswers = [];
+            
+            console.log('📊 Starting score calculation...');
+            console.log('Total questions:', currentExam.questions.length);
+            console.log('User answers array:', JSON.stringify(userAnswers));
 
             currentExam.questions.forEach((question, index) => {
                 const userAnswer = userAnswers[index];
+                
+                // Check if the user actually answered this question
+                // Handle both null and undefined as "not answered"
+                const hasAnswered = userAnswer !== null && userAnswer !== undefined && 
+                                    typeof userAnswer === 'number' && userAnswer >= 0 && userAnswer <= 3;
 
                 // Get correct answer - support both 'Correct' and 'Correct Answer' field names
                 // Also handle lowercase and ensure it's a valid letter (A, B, C, D)
@@ -5115,11 +5131,17 @@
 
                 // Validate that correctAnswerIndex is valid (0-3)
                 const isValidCorrectAnswer = correctAnswerIndex >= 0 && correctAnswerIndex <= 3;
-                const isCorrect = isValidCorrectAnswer && (userAnswer === correctAnswerIndex);
+                const isCorrect = hasAnswered && isValidCorrectAnswer && (userAnswer === correctAnswerIndex);
 
-                if (userAnswer !== null) {
-                    score += isCorrect ? 1 : -0.25;
+                // Calculate points for this question
+                let points = 0;
+                if (hasAnswered) {
+                    points = isCorrect ? 1.0 : -0.25;
+                    score += points;
                 }
+                // If not answered (null/undefined), points = 0 and score unchanged
+                
+                console.log(`Q${index + 1}: userAnswer=${userAnswer}, correctAnswer=${correctLetter}(${correctAnswerIndex}), isCorrect=${isCorrect}, points=${points}, runningScore=${score.toFixed(2)}`);
 
                 // Store detailed answer info
                 detailedAnswers.push({
@@ -5130,12 +5152,14 @@
                     optionB: question['Option B'],
                     optionC: question['Option C'],
                     optionD: question['Option D'],
-                    userAnswer: userAnswer !== null ? ['A', 'B', 'C', 'D'][userAnswer] : 'Not Answered',
+                    userAnswer: hasAnswered ? ['A', 'B', 'C', 'D'][userAnswer] : 'Not Answered',
                     correctAnswer: correctLetter || question.Correct,
                     isCorrect: isCorrect,
-                    points: userAnswer !== null ? (isCorrect ? 1 : -0.25) : 0
+                    points: points
                 });
             });
+            
+            console.log('📊 Final score:', score.toFixed(2));
 
             // Get candidate info (both are now mandatory)
             const candidateName = document.getElementById('candidate-name').value.trim();
