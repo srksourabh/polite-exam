@@ -402,10 +402,28 @@ module.exports = async (req, res) => {
         // POST /api/questions - Create new question
         if (url === '/api/questions' && method === 'POST') {
             const questionData = req.body;
-            const record = await base(QUESTIONS_TABLE).create(questionData);
-            return res.status(201).json({ 
-                success: true, 
-                data: { id: record.id, ...record.fields } 
+
+            // Define valid fields for the Questions table in Airtable
+            // This prevents errors from unknown field names
+            const validQuestionFields = [
+                'ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D',
+                'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation'
+            ];
+
+            // Filter out unknown fields to prevent Airtable errors
+            const cleanedQuestionData = {};
+            for (const key of Object.keys(questionData)) {
+                if (validQuestionFields.includes(key)) {
+                    cleanedQuestionData[key] = questionData[key];
+                } else {
+                    console.log(`Ignoring unknown field in question creation: ${key}`);
+                }
+            }
+
+            const record = await base(QUESTIONS_TABLE).create(cleanedQuestionData);
+            return res.status(201).json({
+                success: true,
+                data: { id: record.id, ...record.fields }
             });
         }
 
@@ -413,7 +431,24 @@ module.exports = async (req, res) => {
         if (url.startsWith('/api/questions/') && method === 'PUT') {
             const questionId = url.split('/api/questions/')[1];
             const updateData = req.body;
-            const record = await base(QUESTIONS_TABLE).update(questionId, updateData);
+
+            // Define valid fields for the Questions table in Airtable
+            const validQuestionFields = [
+                'ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D',
+                'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation'
+            ];
+
+            // Filter out unknown fields to prevent Airtable errors
+            const cleanedUpdateData = {};
+            for (const key of Object.keys(updateData)) {
+                if (validQuestionFields.includes(key)) {
+                    cleanedUpdateData[key] = updateData[key];
+                } else {
+                    console.log(`Ignoring unknown field in question update: ${key}`);
+                }
+            }
+
+            const record = await base(QUESTIONS_TABLE).update(questionId, cleanedUpdateData);
             return res.status(200).json({
                 success: true,
                 data: { id: record.id, ...record.fields }
