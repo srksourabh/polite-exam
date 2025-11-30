@@ -182,7 +182,6 @@ async function addQuestionToDatabase(questionData) {
             body: JSON.stringify({
                 ID: nextId,
                 Subject: questionData.subject,
-                Difficulty: questionData.difficulty || 'Medium',
                 Question: questionData.question,
                 'Option A': questionData.optionA,
                 'Option B': questionData.optionB,
@@ -221,7 +220,6 @@ async function updateQuestionInDatabase(questionId, questionData) {
             },
             body: JSON.stringify({
                 Subject: questionData.subject,
-                Difficulty: questionData.difficulty || 'Medium',
                 Question: questionData.question,
                 'Option A': questionData.optionA,
                 'Option B': questionData.optionB,
