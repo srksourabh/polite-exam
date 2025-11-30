@@ -520,6 +520,110 @@ module.exports = async (req, res) => {
             }
         }
 
+        // POST /api/questions/bulk - Bulk upload questions (up to 500 questions per request)
+        if (url === '/api/questions/bulk' && method === 'POST') {
+            try {
+                const { questions } = req.body;
+
+                // Validate input
+                if (!questions || !Array.isArray(questions)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Request body must contain a "questions" array'
+                    });
+                }
+
+                // Maximum questions per request (configurable limit)
+                const MAX_QUESTIONS_PER_REQUEST = 500;
+
+                if (questions.length === 0) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Questions array cannot be empty'
+                    });
+                }
+
+                if (questions.length > MAX_QUESTIONS_PER_REQUEST) {
+                    return res.status(400).json({
+                        success: false,
+                        error: `Too many questions. Maximum ${MAX_QUESTIONS_PER_REQUEST} questions per request. You sent ${questions.length} questions.`,
+                        limit: MAX_QUESTIONS_PER_REQUEST,
+                        received: questions.length
+                    });
+                }
+
+                // Define valid fields for the Questions table in Airtable
+                const validQuestionFields = [
+                    'ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D',
+                    'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation'
+                ];
+
+                // Clean and prepare all questions
+                const preparedQuestions = questions.map((questionData, index) => {
+                    const cleanedQuestionData = {};
+                    for (const key of Object.keys(questionData)) {
+                        if (validQuestionFields.includes(key)) {
+                            cleanedQuestionData[key] = questionData[key];
+                        }
+                    }
+                    return { fields: cleanedQuestionData, originalIndex: index };
+                });
+
+                // Airtable allows up to 10 records per batch
+                const AIRTABLE_BATCH_SIZE = 10;
+                const createdRecords = [];
+                const errors = [];
+
+                // Process in batches
+                for (let i = 0; i < preparedQuestions.length; i += AIRTABLE_BATCH_SIZE) {
+                    const batch = preparedQuestions.slice(i, i + AIRTABLE_BATCH_SIZE);
+
+                    try {
+                        const records = await base(QUESTIONS_TABLE).create(
+                            batch.map(q => ({ fields: q.fields }))
+                        );
+
+                        records.forEach((record, idx) => {
+                            createdRecords.push({
+                                id: record.id,
+                                originalIndex: batch[idx].originalIndex,
+                                ...record.fields
+                            });
+                        });
+                    } catch (batchError) {
+                        // Log batch error but continue processing other batches
+                        console.error(`Batch ${Math.floor(i / AIRTABLE_BATCH_SIZE) + 1} error:`, batchError.message);
+                        batch.forEach(q => {
+                            errors.push({
+                                originalIndex: q.originalIndex,
+                                error: batchError.message
+                            });
+                        });
+                    }
+                }
+
+                return res.status(201).json({
+                    success: true,
+                    message: `Bulk upload completed. ${createdRecords.length} questions created successfully.`,
+                    summary: {
+                        total: questions.length,
+                        created: createdRecords.length,
+                        failed: errors.length,
+                        batchesProcessed: Math.ceil(questions.length / AIRTABLE_BATCH_SIZE)
+                    },
+                    data: createdRecords,
+                    errors: errors.length > 0 ? errors : undefined
+                });
+
+            } catch (error) {
+                console.error('Bulk upload error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        }
+
         // GET /api/debug - Debug endpoint to inspect data structure
         if (url === '/api/debug' && method === 'GET') {
             try {
