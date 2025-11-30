@@ -520,35 +520,109 @@ module.exports = async (req, res) => {
             }
         }
 
+        // Bulk upload configuration constants
+        const BULK_UPLOAD_CONFIG = {
+            maxQuestionsPerRequest: 500,
+            airtableBatchSize: 10,
+            rateLimit: {
+                maxRequests: 100,
+                windowMinutes: 15
+            },
+            estimatedProcessingTimePerQuestion: 0.1, // seconds
+            recommendedQuestionsPerMinute: 100
+        };
+
+        // GET /api/questions/bulk/limits - Get bulk upload limits and guidelines
+        if (url === '/api/questions/bulk/limits' && method === 'GET') {
+            const config = BULK_UPLOAD_CONFIG;
+            return res.status(200).json({
+                success: true,
+                message: 'Bulk upload limits and guidelines',
+                limits: {
+                    maxQuestionsPerRequest: config.maxQuestionsPerRequest,
+                    maxRequestsPer15Minutes: config.rateLimit.maxRequests,
+                    maxQuestionsPerMinute: config.recommendedQuestionsPerMinute,
+                    maxQuestionsIn15Minutes: config.maxQuestionsPerRequest * Math.floor(config.rateLimit.maxRequests / 2),
+                    estimatedProcessingTime: `${config.maxQuestionsPerRequest * config.estimatedProcessingTimePerQuestion} seconds for ${config.maxQuestionsPerRequest} questions`
+                },
+                guidelines: {
+                    recommended: `Upload up to ${config.recommendedQuestionsPerMinute} questions per minute for optimal performance`,
+                    maximum: `You can upload up to ${config.maxQuestionsPerRequest} questions in a single request`,
+                    rateLimit: `Maximum ${config.rateLimit.maxRequests} API requests allowed per ${config.rateLimit.windowMinutes} minutes`,
+                    bulkCapacity: `With bulk uploads, you can add up to ${config.maxQuestionsPerRequest * 6} questions per minute (6 requests x ${config.maxQuestionsPerRequest} questions)`,
+                    tip: 'For uploading 100 questions every minute, use a single bulk request - this is well within the limits'
+                },
+                example: {
+                    endpoint: 'POST /api/questions/bulk',
+                    requestBody: {
+                        questions: [
+                            {
+                                ID: 'Q0001',
+                                Subject: 'Mathematics',
+                                Question: 'What is 2+2?',
+                                'Option A': '3',
+                                'Option B': '4',
+                                'Option C': '5',
+                                'Option D': '6',
+                                Correct: 'B',
+                                Difficulty: 'Easy'
+                            }
+                        ]
+                    }
+                }
+            });
+        }
+
         // POST /api/questions/bulk - Bulk upload questions (up to 500 questions per request)
         if (url === '/api/questions/bulk' && method === 'POST') {
             try {
                 const { questions } = req.body;
+                const config = BULK_UPLOAD_CONFIG;
 
                 // Validate input
                 if (!questions || !Array.isArray(questions)) {
                     return res.status(400).json({
                         success: false,
-                        error: 'Request body must contain a "questions" array'
+                        error: 'Request body must contain a "questions" array',
+                        hint: 'Send a JSON object with a "questions" key containing an array of question objects',
+                        uploadLimits: {
+                            maxQuestionsPerRequest: config.maxQuestionsPerRequest,
+                            maxRequestsPer15Minutes: config.rateLimit.maxRequests,
+                            checkLimitsEndpoint: 'GET /api/questions/bulk/limits'
+                        }
                     });
                 }
-
-                // Maximum questions per request (configurable limit)
-                const MAX_QUESTIONS_PER_REQUEST = 500;
 
                 if (questions.length === 0) {
                     return res.status(400).json({
                         success: false,
-                        error: 'Questions array cannot be empty'
+                        error: 'Questions array cannot be empty',
+                        hint: 'Provide at least 1 question in the questions array',
+                        uploadLimits: {
+                            maxQuestionsPerRequest: config.maxQuestionsPerRequest,
+                            checkLimitsEndpoint: 'GET /api/questions/bulk/limits'
+                        }
                     });
                 }
 
-                if (questions.length > MAX_QUESTIONS_PER_REQUEST) {
+                if (questions.length > config.maxQuestionsPerRequest) {
+                    const suggestedBatches = Math.ceil(questions.length / config.maxQuestionsPerRequest);
                     return res.status(400).json({
                         success: false,
-                        error: `Too many questions. Maximum ${MAX_QUESTIONS_PER_REQUEST} questions per request. You sent ${questions.length} questions.`,
-                        limit: MAX_QUESTIONS_PER_REQUEST,
-                        received: questions.length
+                        error: `Too many questions! You sent ${questions.length} questions, but the maximum is ${config.maxQuestionsPerRequest} per request.`,
+                        received: questions.length,
+                        uploadLimits: {
+                            maxQuestionsPerRequest: config.maxQuestionsPerRequest,
+                            maxRequestsPer15Minutes: config.rateLimit.maxRequests,
+                            maxQuestionsIn15Minutes: config.maxQuestionsPerRequest * Math.floor(config.rateLimit.maxRequests / 2)
+                        },
+                        suggestion: {
+                            message: `Split your ${questions.length} questions into ${suggestedBatches} separate requests`,
+                            recommendedBatchSize: config.maxQuestionsPerRequest,
+                            numberOfBatchesNeeded: suggestedBatches,
+                            estimatedTime: `${suggestedBatches * 10} seconds (${suggestedBatches} batches)`
+                        },
+                        checkLimitsEndpoint: 'GET /api/questions/bulk/limits'
                     });
                 }
 
@@ -617,9 +691,31 @@ module.exports = async (req, res) => {
 
             } catch (error) {
                 console.error('Bulk upload error:', error);
+                const config = BULK_UPLOAD_CONFIG;
+
+                // Provide helpful error response with limits info
                 return res.status(500).json({
                     success: false,
-                    error: error.message
+                    error: error.message,
+                    errorType: 'BULK_UPLOAD_ERROR',
+                    troubleshooting: {
+                        commonCauses: [
+                            'Invalid question data format',
+                            'Network timeout (try smaller batches)',
+                            'Database connection issues'
+                        ],
+                        suggestions: [
+                            'Verify all questions have required fields (Subject, Question, Options, Correct)',
+                            'Try uploading fewer questions per request',
+                            'Check your network connection and retry'
+                        ]
+                    },
+                    uploadLimits: {
+                        maxQuestionsPerRequest: config.maxQuestionsPerRequest,
+                        maxRequestsPer15Minutes: config.rateLimit.maxRequests,
+                        recommendedQuestionsPerMinute: config.recommendedQuestionsPerMinute,
+                        checkLimitsEndpoint: 'GET /api/questions/bulk/limits'
+                    }
                 });
             }
         }
