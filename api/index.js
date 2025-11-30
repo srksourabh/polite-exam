@@ -234,8 +234,8 @@ async function sendPasswordEmail(email, name, password, isTemporary = false) {
 // Rate limiting storage (in-memory, resets on server restart)
 const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
-const RATE_LIMIT_MAX_REQUESTS = 100;
-const AUTH_RATE_LIMIT_MAX = 20;
+const RATE_LIMIT_MAX_REQUESTS = 500; // Increased from 100 to handle normal dashboard usage
+const AUTH_RATE_LIMIT_MAX = 50; // Increased from 20 for better login experience
 
 function checkRateLimit(ip, isAuthRoute = false) {
     const now = Date.now();
@@ -582,7 +582,7 @@ module.exports = async (req, res) => {
             maxQuestionsPerRequest: 500,
             airtableBatchSize: 10,
             rateLimit: {
-                maxRequests: 100,
+                maxRequests: 500,
                 windowMinutes: 15
             },
             estimatedProcessingTimePerQuestion: 0.1, // seconds
