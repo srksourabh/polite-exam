@@ -2396,18 +2396,39 @@
         ];
 
         // Session Management
+        // Candidates use sessionStorage (auto-logout on browser close)
+        // Admins use localStorage (persist across sessions)
+        // Exam progress stays in localStorage (allows resume after re-login)
         function saveSession(userType, userData) {
-            localStorage.setItem('userType', userType);
-            localStorage.setItem('userData', JSON.stringify(userData));
+            if (userType === 'candidate') {
+                // Use sessionStorage for candidates - clears when browser closes
+                sessionStorage.setItem('userType', userType);
+                sessionStorage.setItem('userData', JSON.stringify(userData));
+            } else {
+                // Use localStorage for admin - persists across sessions
+                localStorage.setItem('userType', userType);
+                localStorage.setItem('userData', JSON.stringify(userData));
+            }
         }
 
         function getSession() {
-            const userType = localStorage.getItem('userType');
-            const userData = localStorage.getItem('userData');
+            // Check sessionStorage first (for candidates)
+            let userType = sessionStorage.getItem('userType');
+            let userData = sessionStorage.getItem('userData');
+
+            // If not in sessionStorage, check localStorage (for admin)
+            if (!userType || !userData) {
+                userType = localStorage.getItem('userType');
+                userData = localStorage.getItem('userData');
+            }
+
             return userType && userData ? { userType, userData: JSON.parse(userData) } : null;
         }
 
         function clearSession() {
+            // Clear both storage types to ensure complete logout
+            sessionStorage.removeItem('userType');
+            sessionStorage.removeItem('userData');
             localStorage.removeItem('userType');
             localStorage.removeItem('userData');
         }
@@ -2898,6 +2919,9 @@
                     // Show dashboard
                     showCandidateDashboard(result);
                     window.PoliteCCAPI.showNotification('Welcome back!', 'success');
+
+                    // Check for any saved exam progress to resume
+                    checkAndResumeExam();
                 } else if (data.requiresVerification) {
                     // Account not verified - show verification pending screen
                     document.getElementById('pending-verification-email').textContent = email;
