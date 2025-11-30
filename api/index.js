@@ -1,5 +1,6 @@
 const Airtable = require('airtable');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 // =====================================================
 // AIRTABLE CONFIGURATION
@@ -74,11 +75,167 @@ function hashPassword(password) {
     return crypto.createHash('sha256').update(password + process.env.PASSWORD_SALT || 'polite-salt').digest('hex');
 }
 
+// Generate verification token
+function generateVerificationToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+// =====================================================
+// EMAIL SERVICE CONFIGURATION
+// =====================================================
+// Configure email transporter using Nodemailer
+// Set these environment variables:
+// SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, APP_URL
+
+function getEmailTransporter() {
+    // Check if email is configured
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+        console.log('⚠️ Email not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASSWORD in environment.');
+        return null;
+    }
+
+    return nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT) || 587,
+        secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD
+        }
+    });
+}
+
+// Send verification email
+async function sendVerificationEmail(email, name, verificationToken) {
+    const transporter = getEmailTransporter();
+    const appUrl = process.env.APP_URL || 'https://polite-exam.vercel.app';
+    const verificationLink = `${appUrl}?verify=${verificationToken}`;
+
+    if (!transporter) {
+        console.log('📧 [DEV MODE] Verification link:', verificationLink);
+        return { success: true, devMode: true, verificationLink };
+    }
+
+    const mailOptions = {
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: 'Verify Your Polite Coaching Centre Account',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: #2c3e50; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0; color: #f1c40f;">POLITE COACHING CENTRE</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">Email Verification</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #2c3e50; margin-top: 0;">Hello ${name}!</h2>
+                    <p style="color: #666; line-height: 1.6;">
+                        Thank you for creating an account with Polite Coaching Centre.
+                        Please click the button below to verify your email address and activate your account.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${verificationLink}"
+                           style="background: #27ae60; color: white; padding: 15px 30px; text-decoration: none;
+                                  border-radius: 8px; font-weight: bold; display: inline-block;">
+                            Verify My Email
+                        </a>
+                    </div>
+                    <p style="color: #999; font-size: 0.9rem;">
+                        If the button doesn't work, copy and paste this link into your browser:<br>
+                        <a href="${verificationLink}" style="color: #3498db; word-break: break-all;">${verificationLink}</a>
+                    </p>
+                    <p style="color: #999; font-size: 0.9rem; margin-top: 20px;">
+                        If you didn't create this account, please ignore this email.
+                    </p>
+                </div>
+                <p style="text-align: center; color: #999; font-size: 0.8rem; margin-top: 20px;">
+                    © Polite Coaching Centre - Reasoning, Math & GK Tests for Job Aspirants
+                </p>
+            </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 Verification email sent to ${email}`);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Failed to send verification email:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Send password email (for signup or forgot password)
+async function sendPasswordEmail(email, name, password, isTemporary = false) {
+    const transporter = getEmailTransporter();
+    const appUrl = process.env.APP_URL || 'https://polite-exam.vercel.app';
+
+    if (!transporter) {
+        console.log(`📧 [DEV MODE] Password for ${email}: ${password}`);
+        return { success: true, devMode: true, password };
+    }
+
+    const subject = isTemporary
+        ? 'Your Temporary Password - Polite Coaching Centre'
+        : 'Your Account Password - Polite Coaching Centre';
+
+    const mailOptions = {
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: subject,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: #2c3e50; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0; color: #f1c40f;">POLITE COACHING CENTRE</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">${isTemporary ? 'Password Reset' : 'Account Created'}</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #2c3e50; margin-top: 0;">Hello ${name}!</h2>
+                    <p style="color: #666; line-height: 1.6;">
+                        ${isTemporary
+                            ? 'Your password has been reset. Here is your new temporary password:'
+                            : 'Your account has been created successfully! Here is your password:'}
+                    </p>
+                    <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 2px solid #3498db;">
+                        <span style="font-family: monospace; font-size: 1.5rem; font-weight: bold; color: #2c3e50; letter-spacing: 2px;">
+                            ${password}
+                        </span>
+                    </div>
+                    <p style="color: #e74c3c; font-weight: 500;">
+                        ⚠️ Please change this password after logging in for security reasons.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${appUrl}"
+                           style="background: #3498db; color: white; padding: 15px 30px; text-decoration: none;
+                                  border-radius: 8px; font-weight: bold; display: inline-block;">
+                            Login to Your Account
+                        </a>
+                    </div>
+                    <p style="color: #999; font-size: 0.9rem;">
+                        If you didn't request this, please contact support immediately.
+                    </p>
+                </div>
+                <p style="text-align: center; color: #999; font-size: 0.8rem; margin-top: 20px;">
+                    © Polite Coaching Centre - Reasoning, Math & GK Tests for Job Aspirants
+                </p>
+            </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 Password email sent to ${email}`);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Failed to send password email:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 // Rate limiting storage (in-memory, resets on server restart)
 const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 const RATE_LIMIT_MAX_REQUESTS = 100;
-const AUTH_RATE_LIMIT_MAX = 5;
+const AUTH_RATE_LIMIT_MAX = 20;
 
 function checkRateLimit(ip, isAuthRoute = false) {
     const now = Date.now();
@@ -245,10 +402,28 @@ module.exports = async (req, res) => {
         // POST /api/questions - Create new question
         if (url === '/api/questions' && method === 'POST') {
             const questionData = req.body;
-            const record = await base(QUESTIONS_TABLE).create(questionData);
-            return res.status(201).json({ 
-                success: true, 
-                data: { id: record.id, ...record.fields } 
+
+            // Define valid fields for the Questions table in Airtable
+            // This prevents errors from unknown field names
+            const validQuestionFields = [
+                'ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D',
+                'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation'
+            ];
+
+            // Filter out unknown fields to prevent Airtable errors
+            const cleanedQuestionData = {};
+            for (const key of Object.keys(questionData)) {
+                if (validQuestionFields.includes(key)) {
+                    cleanedQuestionData[key] = questionData[key];
+                } else {
+                    console.log(`Ignoring unknown field in question creation: ${key}`);
+                }
+            }
+
+            const record = await base(QUESTIONS_TABLE).create(cleanedQuestionData);
+            return res.status(201).json({
+                success: true,
+                data: { id: record.id, ...record.fields }
             });
         }
 
@@ -256,7 +431,24 @@ module.exports = async (req, res) => {
         if (url.startsWith('/api/questions/') && method === 'PUT') {
             const questionId = url.split('/api/questions/')[1];
             const updateData = req.body;
-            const record = await base(QUESTIONS_TABLE).update(questionId, updateData);
+
+            // Define valid fields for the Questions table in Airtable
+            const validQuestionFields = [
+                'ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D',
+                'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation'
+            ];
+
+            // Filter out unknown fields to prevent Airtable errors
+            const cleanedUpdateData = {};
+            for (const key of Object.keys(updateData)) {
+                if (validQuestionFields.includes(key)) {
+                    cleanedUpdateData[key] = updateData[key];
+                } else {
+                    console.log(`Ignoring unknown field in question update: ${key}`);
+                }
+            }
+
+            const record = await base(QUESTIONS_TABLE).update(questionId, cleanedUpdateData);
             return res.status(200).json({
                 success: true,
                 data: { id: record.id, ...record.fields }
@@ -475,10 +667,11 @@ module.exports = async (req, res) => {
             try {
                 const { name, email, mobile, password } = req.body;
 
-                if (!name || !email || !mobile || !password) {
+                // Name, email, password required; mobile is optional
+                if (!name || !email || !password) {
                     return res.status(400).json({
                         success: false,
-                        error: 'All fields are required'
+                        error: 'Name, email, and password are required'
                     });
                 }
 
@@ -490,7 +683,8 @@ module.exports = async (req, res) => {
                     });
                 }
 
-                if (!isValidMobile(mobile)) {
+                // Mobile is optional but must be valid if provided
+                if (mobile && !isValidMobile(mobile)) {
                     return res.status(400).json({
                         success: false,
                         error: 'Mobile number must be exactly 10 digits'
@@ -513,42 +707,58 @@ module.exports = async (req, res) => {
 
                 // Sanitize inputs for formula
                 const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
-                const sanitizedMobile = sanitizeForFormula(mobile);
 
-                // Check if candidate already exists
+                // Check if candidate already exists by email
                 const existingCandidates = await base(CANDIDATES_TABLE)
                     .select({
-                        filterByFormula: `OR({Email} = '${sanitizedEmail}', {Mobile} = '${sanitizedMobile}')`
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
                     })
                     .all();
 
                 if (existingCandidates.length > 0) {
                     return res.status(400).json({
                         success: false,
-                        error: 'Candidate with this email or mobile already exists'
+                        error: 'An account with this email already exists'
                     });
                 }
 
                 // Hash the password before storing
                 const hashedPassword = hashPassword(password);
 
-                // Create candidate record with hashed password
-                const record = await base(CANDIDATES_TABLE).create({
+                // Generate verification token
+                const verificationToken = generateVerificationToken();
+
+                // Create candidate record with hashed password and verification token
+                const candidateData = {
                     'Name': name.trim(),
                     'Email': email.toLowerCase().trim(),
-                    'Mobile': mobile.trim(),
-                    'Password': hashedPassword
-                });
+                    'Password': hashedPassword,
+                    'Verified': false,
+                    'VerificationToken': verificationToken
+                };
+
+                // Add mobile if provided
+                if (mobile) {
+                    candidateData['Mobile'] = mobile.trim();
+                }
+
+                const record = await base(CANDIDATES_TABLE).create(candidateData);
+
+                // Send verification email
+                const emailResult = await sendVerificationEmail(email.toLowerCase(), name, verificationToken);
 
                 return res.status(201).json({
                     success: true,
-                    message: 'Account created successfully',
+                    message: 'Account created! Please check your email to verify your account.',
+                    requiresVerification: true,
                     data: {
                         id: record.id,
                         name: record.fields.Name,
                         email: record.fields.Email,
-                        mobile: record.fields.Mobile
-                    }
+                        mobile: record.fields.Mobile || ''
+                    },
+                    // Include verification link in dev mode (when email is not configured)
+                    ...(emailResult.devMode ? { devVerificationLink: emailResult.verificationLink } : {})
                 });
             } catch (error) {
                 console.error('Signup error:', error);
@@ -598,6 +808,19 @@ module.exports = async (req, res) => {
 
                 const candidate = candidates[0];
 
+                // Check if account is verified
+                // If Verified field doesn't exist (legacy account), treat as verified
+                const isVerified = candidate.fields.Verified === undefined || candidate.fields.Verified === true;
+
+                if (!isVerified) {
+                    return res.status(403).json({
+                        success: false,
+                        error: 'Please verify your email before logging in. Check your inbox for the verification link.',
+                        requiresVerification: true,
+                        email: email
+                    });
+                }
+
                 // Hash the provided password and compare with stored hash
                 // Support both hashed (new) and plaintext (legacy) passwords during migration
                 const hashedPassword = hashPassword(password);
@@ -642,7 +865,7 @@ module.exports = async (req, res) => {
                         id: candidate.id,
                         name: candidate.fields.Name,
                         email: candidate.fields.Email,
-                        mobile: candidate.fields.Mobile
+                        mobile: candidate.fields.Mobile || ''
                     }
                 });
             } catch (error) {
@@ -733,7 +956,7 @@ module.exports = async (req, res) => {
                     // Return generic message to prevent email enumeration
                     return res.status(200).json({
                         success: true,
-                        message: 'If an account exists with this email, a password reset has been initiated.'
+                        message: 'If an account exists with this email, a password reset email has been sent.'
                     });
                 }
 
@@ -750,27 +973,171 @@ module.exports = async (req, res) => {
                     'Password': hashedTempPassword
                 });
 
-                // In production: Send email with temporary password instead of returning it
-                // For now, we return it since email service is not configured
-                // TODO: Implement email sending and remove password from response
-                console.log(`Password reset for ${email}. Temporary password: ${tempPassword}`);
+                // Send password via email
+                const emailResult = await sendPasswordEmail(
+                    email.toLowerCase(),
+                    candidate.fields.Name,
+                    tempPassword,
+                    true // isTemporary
+                );
+
+                console.log(`Password reset for ${email}. Email sent: ${emailResult.success}`);
 
                 return res.status(200).json({
                     success: true,
-                    message: 'Password reset successful. Your new temporary password has been generated.',
-                    data: {
-                        email: email,
-                        // WARNING: In production, DO NOT return password in response
-                        // Instead, send it via secure email channel
-                        tempPassword: tempPassword,
-                        note: 'Please change this password after logging in. In production, this will be sent via email.'
-                    }
+                    message: 'Password reset successful. Check your email for the new temporary password.',
+                    // Include temp password in dev mode (when email is not configured)
+                    ...(emailResult.devMode ? {
+                        data: {
+                            tempPassword: tempPassword,
+                            note: 'DEV MODE: In production, this will only be sent via email.'
+                        }
+                    } : {})
                 });
             } catch (error) {
                 console.error('Password reset error:', error);
                 return res.status(500).json({
                     success: false,
                     error: 'Failed to reset password. Please try again.'
+                });
+            }
+        }
+
+        // GET /api/auth/verify/:token - Verify email address
+        if (url.startsWith('/api/auth/verify/') && method === 'GET') {
+            try {
+                const token = url.split('/api/auth/verify/')[1];
+
+                if (!token || token.length !== 64) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid verification token'
+                    });
+                }
+
+                // Sanitize token for formula
+                const sanitizedToken = sanitizeForFormula(token);
+
+                // Find candidate by verification token
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{VerificationToken} = '${sanitizedToken}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Invalid or expired verification link'
+                    });
+                }
+
+                const candidate = candidates[0];
+
+                // Check if already verified
+                if (candidate.fields.Verified === true) {
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Your email is already verified. You can now login.',
+                        alreadyVerified: true
+                    });
+                }
+
+                // Update candidate to verified status
+                await base(CANDIDATES_TABLE).update(candidate.id, {
+                    'Verified': true,
+                    'VerificationToken': '' // Clear the token after use
+                });
+
+                console.log(`✅ Email verified for ${candidate.fields.Email}`);
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Email verified successfully! You can now login to your account.',
+                    data: {
+                        name: candidate.fields.Name,
+                        email: candidate.fields.Email
+                    }
+                });
+            } catch (error) {
+                console.error('Verification error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to verify email. Please try again.'
+                });
+            }
+        }
+
+        // POST /api/auth/resend-verification - Resend verification email
+        if (url === '/api/auth/resend-verification' && method === 'POST') {
+            try {
+                const { email } = req.body;
+
+                if (!email) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Email is required'
+                    });
+                }
+
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    // Return generic message to prevent email enumeration
+                    return res.status(200).json({
+                        success: true,
+                        message: 'If an account exists with this email, a verification link has been sent.'
+                    });
+                }
+
+                const candidate = candidates[0];
+
+                // Check if already verified
+                if (candidate.fields.Verified === true) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'This email is already verified. Please login.'
+                    });
+                }
+
+                // Generate new verification token
+                const verificationToken = generateVerificationToken();
+
+                // Update token in database
+                await base(CANDIDATES_TABLE).update(candidate.id, {
+                    'VerificationToken': verificationToken
+                });
+
+                // Send verification email
+                const emailResult = await sendVerificationEmail(
+                    email.toLowerCase(),
+                    candidate.fields.Name,
+                    verificationToken
+                );
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Verification email sent. Please check your inbox.',
+                    ...(emailResult.devMode ? { devVerificationLink: emailResult.verificationLink } : {})
+                });
+            } catch (error) {
+                console.error('Resend verification error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to resend verification email. Please try again.'
                 });
             }
         }
@@ -812,7 +1179,8 @@ module.exports = async (req, res) => {
                         id: candidate.id,
                         name: candidate.fields.Name,
                         email: candidate.fields.Email,
-                        mobile: candidate.fields.Mobile
+                        mobile: candidate.fields.Mobile || '',
+                        profileImage: candidate.fields.ProfileImage || ''
                     }
                 });
             } catch (error) {
@@ -820,6 +1188,188 @@ module.exports = async (req, res) => {
                 return res.status(500).json({
                     success: false,
                     error: 'Failed to get profile. Please try again.'
+                });
+            }
+        }
+
+        // PUT /api/candidates/profile - Update candidate profile
+        if (url === '/api/candidates/profile' && method === 'PUT') {
+            try {
+                const { email, name, mobile, profileImage } = req.body;
+
+                if (!email) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Email is required'
+                    });
+                }
+
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                // Validate mobile if provided
+                if (mobile && !isValidMobile(mobile)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Mobile number must be exactly 10 digits'
+                    });
+                }
+
+                // Validate name if provided
+                if (name && (name.length < 2 || name.length > 100)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Name must be between 2 and 100 characters'
+                    });
+                }
+
+                // Validate profile image size (max 500KB base64)
+                if (profileImage && profileImage.length > 700000) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Profile image is too large. Maximum size is 500KB.'
+                    });
+                }
+
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
+                // Find candidate
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Candidate not found'
+                    });
+                }
+
+                const candidate = candidates[0];
+
+                // Build update object with only provided fields
+                const updateData = {};
+                if (name) updateData['Name'] = name.trim();
+                if (mobile !== undefined) updateData['Mobile'] = mobile.trim();
+                if (profileImage !== undefined) updateData['ProfileImage'] = profileImage;
+
+                // Update candidate record
+                await base(CANDIDATES_TABLE).update(candidate.id, updateData);
+
+                console.log(`✅ Profile updated for ${email}`);
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Profile updated successfully',
+                    data: {
+                        name: name || candidate.fields.Name,
+                        email: candidate.fields.Email,
+                        mobile: mobile !== undefined ? mobile : candidate.fields.Mobile,
+                        profileImage: profileImage !== undefined ? profileImage : candidate.fields.ProfileImage
+                    }
+                });
+            } catch (error) {
+                console.error('Update profile error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to update profile. Please try again.'
+                });
+            }
+        }
+
+        // PUT /api/candidates/password - Change candidate password
+        if (url === '/api/candidates/password' && method === 'PUT') {
+            try {
+                const { email, currentPassword, newPassword } = req.body;
+
+                if (!email || !currentPassword || !newPassword) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Email, current password, and new password are required'
+                    });
+                }
+
+                if (!isValidEmail(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid email format'
+                    });
+                }
+
+                if (newPassword.length < 6) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'New password must be at least 6 characters'
+                    });
+                }
+
+                if (currentPassword === newPassword) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'New password must be different from current password'
+                    });
+                }
+
+                const sanitizedEmail = sanitizeForFormula(email.toLowerCase());
+
+                // Find candidate
+                const candidates = await base(CANDIDATES_TABLE)
+                    .select({
+                        filterByFormula: `{Email} = '${sanitizedEmail}'`
+                    })
+                    .all();
+
+                if (candidates.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Candidate not found'
+                    });
+                }
+
+                const candidate = candidates[0];
+                const storedPassword = candidate.fields.Password;
+
+                // Verify current password
+                const hashedCurrentPassword = hashPassword(currentPassword);
+                const isHashedPassword = /^[a-f0-9]{64}$/i.test(storedPassword);
+
+                let passwordMatch = false;
+                if (isHashedPassword) {
+                    passwordMatch = storedPassword === hashedCurrentPassword;
+                } else {
+                    passwordMatch = storedPassword === currentPassword;
+                }
+
+                if (!passwordMatch) {
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Current password is incorrect'
+                    });
+                }
+
+                // Hash and update new password
+                const hashedNewPassword = hashPassword(newPassword);
+                await base(CANDIDATES_TABLE).update(candidate.id, {
+                    'Password': hashedNewPassword
+                });
+
+                console.log(`✅ Password changed for ${email}`);
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Password changed successfully'
+                });
+            } catch (error) {
+                console.error('Change password error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to change password. Please try again.'
                 });
             }
         }
@@ -1234,35 +1784,35 @@ Make sure the question is unique, relevant, and has one clearly correct answer.`
         // POST /api/admin/create-sample-exams - Create sample exams with questions
         if (url === '/api/admin/create-sample-exams' && method === 'POST') {
             try {
-                // Sample questions for different subjects
+                // Sample questions for different subjects with difficulty levels
                 const SAMPLE_QUESTIONS = [
                     // Math Questions
-                    { ID: 'Q0001', Subject: 'Math', Question: 'What is 15 × 8?', 'Option A': '100', 'Option B': '120', 'Option C': '140', 'Option D': '160', Correct: 'B' },
-                    { ID: 'Q0002', Subject: 'Math', Question: 'What is the value of √144?', 'Option A': '10', 'Option B': '11', 'Option C': '12', 'Option D': '13', Correct: 'C' },
-                    { ID: 'Q0003', Subject: 'Math', Question: 'What is 25% of 200?', 'Option A': '25', 'Option B': '50', 'Option C': '75', 'Option D': '100', Correct: 'B' },
-                    { ID: 'Q0004', Subject: 'Math', Question: 'If x + 7 = 15, what is the value of x?', 'Option A': '6', 'Option B': '7', 'Option C': '8', 'Option D': '9', Correct: 'C' },
-                    { ID: 'Q0005', Subject: 'Math', Question: 'What is the area of a rectangle with length 12 cm and width 8 cm?', 'Option A': '20 sq cm', 'Option B': '40 sq cm', 'Option C': '96 sq cm', 'Option D': '120 sq cm', Correct: 'C' },
+                    { ID: 'Q0001', Subject: 'Math', Difficulty: 'Easy', Question: 'What is 15 × 8?', 'Option A': '100', 'Option B': '120', 'Option C': '140', 'Option D': '160', Correct: 'B' },
+                    { ID: 'Q0002', Subject: 'Math', Difficulty: 'Easy', Question: 'What is the value of √144?', 'Option A': '10', 'Option B': '11', 'Option C': '12', 'Option D': '13', Correct: 'C' },
+                    { ID: 'Q0003', Subject: 'Math', Difficulty: 'Easy', Question: 'What is 25% of 200?', 'Option A': '25', 'Option B': '50', 'Option C': '75', 'Option D': '100', Correct: 'B' },
+                    { ID: 'Q0004', Subject: 'Math', Difficulty: 'Medium', Question: 'If x + 7 = 15, what is the value of x?', 'Option A': '6', 'Option B': '7', 'Option C': '8', 'Option D': '9', Correct: 'C' },
+                    { ID: 'Q0005', Subject: 'Math', Difficulty: 'Medium', Question: 'What is the area of a rectangle with length 12 cm and width 8 cm?', 'Option A': '20 sq cm', 'Option B': '40 sq cm', 'Option C': '96 sq cm', 'Option D': '120 sq cm', Correct: 'C' },
 
                     // General Knowledge Questions
-                    { ID: 'Q0006', Subject: 'General Knowledge', Question: 'What is the capital of India?', 'Option A': 'New Delhi', 'Option B': 'Mumbai', 'Option C': 'Kolkata', 'Option D': 'Chennai', Correct: 'A' },
-                    { ID: 'Q0007', Subject: 'General Knowledge', Question: 'Who is known as the Father of the Nation in India?', 'Option A': 'Jawaharlal Nehru', 'Option B': 'Mahatma Gandhi', 'Option C': 'Subhas Chandra Bose', 'Option D': 'Sardar Patel', Correct: 'B' },
-                    { ID: 'Q0008', Subject: 'General Knowledge', Question: 'Which is the largest planet in our solar system?', 'Option A': 'Earth', 'Option B': 'Mars', 'Option C': 'Jupiter', 'Option D': 'Saturn', Correct: 'C' },
-                    { ID: 'Q0009', Subject: 'General Knowledge', Question: 'How many continents are there in the world?', 'Option A': '5', 'Option B': '6', 'Option C': '7', 'Option D': '8', Correct: 'C' },
-                    { ID: 'Q0010', Subject: 'General Knowledge', Question: 'What is the national animal of India?', 'Option A': 'Lion', 'Option B': 'Tiger', 'Option C': 'Elephant', 'Option D': 'Peacock', Correct: 'B' },
+                    { ID: 'Q0006', Subject: 'General Knowledge', Difficulty: 'Easy', Question: 'What is the capital of India?', 'Option A': 'New Delhi', 'Option B': 'Mumbai', 'Option C': 'Kolkata', 'Option D': 'Chennai', Correct: 'A' },
+                    { ID: 'Q0007', Subject: 'General Knowledge', Difficulty: 'Easy', Question: 'Who is known as the Father of the Nation in India?', 'Option A': 'Jawaharlal Nehru', 'Option B': 'Mahatma Gandhi', 'Option C': 'Subhas Chandra Bose', 'Option D': 'Sardar Patel', Correct: 'B' },
+                    { ID: 'Q0008', Subject: 'General Knowledge', Difficulty: 'Medium', Question: 'Which is the largest planet in our solar system?', 'Option A': 'Earth', 'Option B': 'Mars', 'Option C': 'Jupiter', 'Option D': 'Saturn', Correct: 'C' },
+                    { ID: 'Q0009', Subject: 'General Knowledge', Difficulty: 'Easy', Question: 'How many continents are there in the world?', 'Option A': '5', 'Option B': '6', 'Option C': '7', 'Option D': '8', Correct: 'C' },
+                    { ID: 'Q0010', Subject: 'General Knowledge', Difficulty: 'Medium', Question: 'What is the national animal of India?', 'Option A': 'Lion', 'Option B': 'Tiger', 'Option C': 'Elephant', 'Option D': 'Peacock', Correct: 'B' },
 
                     // Reasoning Questions
-                    { ID: 'Q0011', Subject: 'Reasoning', Question: 'If CAT is coded as 3120, then DOG would be coded as:', 'Option A': '4157', 'Option B': '41507', 'Option C': '4-15-7', 'Option D': '4-15-07', Correct: 'A' },
-                    { ID: 'Q0012', Subject: 'Reasoning', Question: 'Complete the series: 2, 6, 12, 20, 30, ?', 'Option A': '40', 'Option B': '42', 'Option C': '44', 'Option D': '46', Correct: 'B' },
-                    { ID: 'Q0013', Subject: 'Reasoning', Question: 'Which number is the odd one out: 3, 5, 7, 9, 12, 13?', 'Option A': '3', 'Option B': '7', 'Option C': '12', 'Option D': '13', Correct: 'C' },
-                    { ID: 'Q0014', Subject: 'Reasoning', Question: 'If all roses are flowers and all flowers are plants, then:', 'Option A': 'All plants are roses', 'Option B': 'All roses are plants', 'Option C': 'Some plants are flowers', 'Option D': 'No conclusion', Correct: 'B' },
-                    { ID: 'Q0015', Subject: 'Reasoning', Question: 'Find the missing number: 5, 10, 20, 40, ?, 160', 'Option A': '60', 'Option B': '70', 'Option C': '80', 'Option D': '90', Correct: 'C' },
+                    { ID: 'Q0011', Subject: 'Reasoning', Difficulty: 'Hard', Question: 'If CAT is coded as 3120, then DOG would be coded as:', 'Option A': '4157', 'Option B': '41507', 'Option C': '4-15-7', 'Option D': '4-15-07', Correct: 'A' },
+                    { ID: 'Q0012', Subject: 'Reasoning', Difficulty: 'Medium', Question: 'Complete the series: 2, 6, 12, 20, 30, ?', 'Option A': '40', 'Option B': '42', 'Option C': '44', 'Option D': '46', Correct: 'B' },
+                    { ID: 'Q0013', Subject: 'Reasoning', Difficulty: 'Easy', Question: 'Which number is the odd one out: 3, 5, 7, 9, 12, 13?', 'Option A': '3', 'Option B': '7', 'Option C': '12', 'Option D': '13', Correct: 'C' },
+                    { ID: 'Q0014', Subject: 'Reasoning', Difficulty: 'Hard', Question: 'If all roses are flowers and all flowers are plants, then:', 'Option A': 'All plants are roses', 'Option B': 'All roses are plants', 'Option C': 'Some plants are flowers', 'Option D': 'No conclusion', Correct: 'B' },
+                    { ID: 'Q0015', Subject: 'Reasoning', Difficulty: 'Medium', Question: 'Find the missing number: 5, 10, 20, 40, ?, 160', 'Option A': '60', 'Option B': '70', 'Option C': '80', 'Option D': '90', Correct: 'C' },
 
                     // English Questions
-                    { ID: 'Q0016', Subject: 'English', Question: 'Choose the correct synonym of "Abundant":', 'Option A': 'Scarce', 'Option B': 'Plentiful', 'Option C': 'Limited', 'Option D': 'Rare', Correct: 'B' },
-                    { ID: 'Q0017', Subject: 'English', Question: 'Identify the correctly spelled word:', 'Option A': 'Occassion', 'Option B': 'Occasion', 'Option C': 'Ocassion', 'Option D': 'Ocasion', Correct: 'B' },
-                    { ID: 'Q0018', Subject: 'English', Question: 'What is the antonym of "Ancient"?', 'Option A': 'Old', 'Option B': 'Modern', 'Option C': 'Historic', 'Option D': 'Traditional', Correct: 'B' },
-                    { ID: 'Q0019', Subject: 'English', Question: 'Choose the correct sentence:', 'Option A': 'She don\'t like apples', 'Option B': 'She doesn\'t likes apples', 'Option C': 'She doesn\'t like apples', 'Option D': 'She don\'t likes apples', Correct: 'C' },
-                    { ID: 'Q0020', Subject: 'English', Question: 'What is the plural of "Child"?', 'Option A': 'Childs', 'Option B': 'Childes', 'Option C': 'Children', 'Option D': 'Childrens', Correct: 'C' }
+                    { ID: 'Q0016', Subject: 'English', Difficulty: 'Easy', Question: 'Choose the correct synonym of "Abundant":', 'Option A': 'Scarce', 'Option B': 'Plentiful', 'Option C': 'Limited', 'Option D': 'Rare', Correct: 'B' },
+                    { ID: 'Q0017', Subject: 'English', Difficulty: 'Medium', Question: 'Identify the correctly spelled word:', 'Option A': 'Occassion', 'Option B': 'Occasion', 'Option C': 'Ocassion', 'Option D': 'Ocasion', Correct: 'B' },
+                    { ID: 'Q0018', Subject: 'English', Difficulty: 'Easy', Question: 'What is the antonym of "Ancient"?', 'Option A': 'Old', 'Option B': 'Modern', 'Option C': 'Historic', 'Option D': 'Traditional', Correct: 'B' },
+                    { ID: 'Q0019', Subject: 'English', Difficulty: 'Hard', Question: 'Choose the correct sentence:', 'Option A': 'She don\'t like apples', 'Option B': 'She doesn\'t likes apples', 'Option C': 'She doesn\'t like apples', 'Option D': 'She don\'t likes apples', Correct: 'C' },
+                    { ID: 'Q0020', Subject: 'English', Difficulty: 'Easy', Question: 'What is the plural of "Child"?', 'Option A': 'Childs', 'Option B': 'Childes', 'Option C': 'Children', 'Option D': 'Childrens', Correct: 'C' }
                 ];
 
                 // Check if questions already exist

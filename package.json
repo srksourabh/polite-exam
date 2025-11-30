@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "airtable": "^0.12.2",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "nodemailer": "^6.9.16"
   },
   "devDependencies": {
     "@capacitor/android": "^6.0.0",
