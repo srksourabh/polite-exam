@@ -182,13 +182,21 @@ async function addQuestionToDatabase(questionData) {
             Question: questionData.question
         };
 
-        // Add options only for non-main questions
+        // Add options only for non-main questions (sub-questions and standalone)
         if (!questionData.isMainQuestion) {
-            payload['Option A'] = questionData.optionA || '';
-            payload['Option B'] = questionData.optionB || '';
-            payload['Option C'] = questionData.optionC || '';
-            payload['Option D'] = questionData.optionD || '';
+            // Support both array format (options[]) and individual format (optionA, optionB, etc.)
+            const optA = questionData.optionA || (questionData.options && questionData.options[0]) || '';
+            const optB = questionData.optionB || (questionData.options && questionData.options[1]) || '';
+            const optC = questionData.optionC || (questionData.options && questionData.options[2]) || '';
+            const optD = questionData.optionD || (questionData.options && questionData.options[3]) || '';
+
+            payload['Option A'] = optA;
+            payload['Option B'] = optB;
+            payload['Option C'] = optC;
+            payload['Option D'] = optD;
             payload['Correct'] = questionData.correct || '';
+
+            console.log('📝 Adding question with options:', { optA, optB, optC, optD, correct: questionData.correct });
         }
 
         // Add hierarchical question fields

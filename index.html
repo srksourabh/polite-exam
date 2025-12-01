@@ -6663,15 +6663,19 @@
                             optionB: q.options ? q.options[1] : '',
                             optionC: q.options ? q.options[2] : '',
                             optionD: q.options ? q.options[3] : '',
+                            options: q.options || ['', '', '', ''],  // Also pass array for backup
                             correct: q.correct >= 0 ? ['A', 'B', 'C', 'D'][q.correct] : ''
                         };
+                        console.log('📦 Sub-question data:', { questionType: q.questionType, options: q.options, questionData });
 
                         // Add hierarchical fields for sub-questions
                         if (isSubQuestion) {
                             questionData.isSubQuestion = true;
                             questionData.subQuestionOrder = q.subQuestionNumber || 1;
-                            // Note: parentQuestionId will be linked via mainQuestionText matching
-                            // The API will need to find the parent by matching the mainQuestionText
+                            // Set parent question ID if available
+                            if (q.parentQuestionId) {
+                                questionData.parentQuestionId = q.parentQuestionId;
+                            }
                         }
 
                         const success = await window.PoliteCCAPI.addQuestionToDatabase(questionData);
