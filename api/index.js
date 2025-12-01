@@ -2189,16 +2189,202 @@ Extract ALL questions you can find. Return ONLY valid JSON, no other text.`
                     });
                 }
 
-                // Build the prompt
+                // Build the prompt with variety for Indian competitive exams
                 let prompt = '';
+                const difficultyText = difficulty || 'medium';
+                const subjectName = subject || 'General Knowledge';
+
+                // Indian competitive exam topics for variety when no custom prompt
+                const examTopics = {
+                    'Math': [
+                        'Railway RRB NTPC - Percentage and Profit Loss',
+                        'Bank PO - Simple and Compound Interest',
+                        'SSC CGL - Time, Speed and Distance',
+                        'Railway Group D - Number System and LCM/HCF',
+                        'Bank Clerk - Ratio and Proportion',
+                        'SSC CHSL - Average and Mixture Problems',
+                        'IBPS PO - Data Interpretation',
+                        'RRB ALP - Mensuration and Geometry',
+                        'SBI PO - Quadratic Equations',
+                        'SSC MTS - Simplification and Approximation',
+                        'Railway NTPC - Time and Work Problems',
+                        'Bank PO - Boats and Streams',
+                        'SSC - Pipes and Cisterns',
+                        'UPSC CSAT - Clock Problems',
+                        'Bank Clerk - Calendar Problems'
+                    ],
+                    'Reasoning': [
+                        'Railway RRB - Coding Decoding',
+                        'Bank PO - Blood Relations',
+                        'SSC CGL - Syllogism',
+                        'Railway NTPC - Direction Sense Test',
+                        'IBPS Clerk - Seating Arrangement',
+                        'SSC CHSL - Analogy and Classification',
+                        'Bank PO - Puzzles and Arrangement',
+                        'RRB Group D - Mirror and Water Image',
+                        'SSC MTS - Statement and Conclusion',
+                        'Bank Clerk - Alphabetical Series',
+                        'Railway ALP - Number Series',
+                        'SBI PO - Inequality',
+                        'IBPS PO - Input Output',
+                        'SSC - Venn Diagram Problems',
+                        'Railway - Ranking and Order'
+                    ],
+                    'GK': [
+                        'Railway RRB - Indian Railways History and Facts',
+                        'Bank PO - Banking and Financial Awareness',
+                        'SSC - Indian Constitution and Polity',
+                        'UPSC - Indian History - Ancient, Medieval, Modern',
+                        'Railway NTPC - Indian Geography',
+                        'Bank Clerk - Current Affairs and Economy',
+                        'SSC CGL - Science and Technology',
+                        'RRB Group D - Sports and Awards',
+                        'IBPS - Important Days and Events',
+                        'SSC CHSL - Indian Culture and Heritage',
+                        'Railway - Static GK - Capitals and Currencies',
+                        'Bank PO - RBI and Monetary Policy',
+                        'SSC MTS - Environmental Science',
+                        'UPSC - International Organizations',
+                        'Railway ALP - Physics and Chemistry Basics'
+                    ],
+                    'English': [
+                        'Bank PO - Reading Comprehension',
+                        'SSC CGL - Error Spotting',
+                        'Railway NTPC - Fill in the Blanks',
+                        'IBPS Clerk - Sentence Improvement',
+                        'SSC CHSL - One Word Substitution',
+                        'Bank Clerk - Cloze Test',
+                        'Railway Group D - Synonyms and Antonyms',
+                        'SBI PO - Para Jumbles',
+                        'SSC MTS - Idioms and Phrases',
+                        'Bank PO - Sentence Rearrangement',
+                        'Railway ALP - Active and Passive Voice',
+                        'IBPS PO - Direct and Indirect Speech',
+                        'SSC - Spelling Correction',
+                        'Bank Clerk - Vocabulary',
+                        'Railway - Comprehension Passage'
+                    ],
+                    'Science': [
+                        'Railway NTPC - Physics - Laws of Motion',
+                        'SSC CGL - Chemistry - Periodic Table',
+                        'RRB Group D - Biology - Human Body Systems',
+                        'Railway ALP - Physics - Electricity and Magnetism',
+                        'SSC CHSL - Chemistry - Acids, Bases and Salts',
+                        'Railway - Biology - Diseases and Prevention',
+                        'SSC MTS - Physics - Light and Sound',
+                        'RRB NTPC - Chemistry - Metals and Non-metals',
+                        'Railway Group D - Biology - Plant Kingdom',
+                        'SSC - Physics - Heat and Thermodynamics',
+                        'Railway ALP - Electronics Basics',
+                        'SSC CGL - Environmental Science',
+                        'RRB - Chemistry - Carbon Compounds',
+                        'Railway NTPC - Biology - Genetics',
+                        'SSC - Physics - Mechanics and Motion'
+                    ],
+                    'History': [
+                        'UPSC - Ancient India - Indus Valley Civilization',
+                        'SSC CGL - Medieval India - Mughal Empire',
+                        'Railway NTPC - Modern India - Independence Movement',
+                        'Bank PO - Indian Freedom Fighters',
+                        'SSC CHSL - World History - World Wars',
+                        'RRB Group D - Indian National Congress',
+                        'UPSC - Mauryan Empire',
+                        'SSC - Gupta Period',
+                        'Railway - Delhi Sultanate',
+                        'SSC MTS - British Rule in India',
+                        'UPSC - Indian Renaissance',
+                        'Railway NTPC - Revolt of 1857',
+                        'SSC CGL - Constitutional Development',
+                        'Bank Clerk - Economic History of India',
+                        'RRB - Social Reform Movements'
+                    ],
+                    'Geography': [
+                        'UPSC - Physical Geography of India',
+                        'SSC CGL - Indian Rivers and Drainage',
+                        'Railway NTPC - Climate of India',
+                        'Bank PO - Indian Agriculture',
+                        'SSC CHSL - Indian Minerals and Resources',
+                        'RRB Group D - Indian States and Capitals',
+                        'UPSC - World Geography',
+                        'SSC - Indian Industries',
+                        'Railway - Indian Ports and Transportation',
+                        'SSC MTS - Natural Vegetation of India',
+                        'UPSC - Physiography of India',
+                        'Railway NTPC - Census and Population',
+                        'SSC CGL - Soils of India',
+                        'Bank Clerk - Economic Geography',
+                        'RRB - Maps and Boundaries'
+                    ],
+                    'Computer': [
+                        'Bank PO - Computer Fundamentals',
+                        'IBPS Clerk - MS Office - Word, Excel, PowerPoint',
+                        'SBI PO - Internet and Networking',
+                        'SSC CGL - Computer Hardware',
+                        'Bank Clerk - Database Management',
+                        'Railway NTPC - Operating Systems',
+                        'IBPS PO - Computer Security and Viruses',
+                        'SSC CHSL - Programming Basics',
+                        'Bank PO - Number Systems - Binary, Octal, Hex',
+                        'SSC MTS - Input Output Devices',
+                        'IBPS - Computer Memory Types',
+                        'Bank Clerk - Keyboard Shortcuts',
+                        'Railway - Computer Generations',
+                        'SBI Clerk - E-Banking and UPI',
+                        'SSC - Software and Applications'
+                    ],
+                    'Others': [
+                        'Railway RRB NTPC - General Science',
+                        'Bank PO - Financial and Banking Awareness',
+                        'SSC CGL - Indian Economy',
+                        'UPSC - Indian Polity and Constitution',
+                        'Railway Group D - Current Affairs',
+                        'IBPS Clerk - Static GK',
+                        'SSC CHSL - Awards and Honours',
+                        'Bank Clerk - Sports and Games',
+                        'Railway NTPC - Art and Culture',
+                        'SSC MTS - Books and Authors',
+                        'UPSC - Government Schemes',
+                        'Bank PO - International Affairs',
+                        'Railway ALP - Inventions and Discoveries',
+                        'SSC - Important Dates and Events',
+                        'IBPS PO - Indian National Symbols'
+                    ]
+                };
+
                 if (customPrompt && customPrompt.trim()) {
-                    prompt = `Generate a multiple choice question based on this request: "${customPrompt}"`;
+                    // User has provided a custom prompt - respect it fully
+                    prompt = `Generate a unique multiple choice question based on this specific request: "${customPrompt}"
+
+The question should be suitable for Indian competitive exams. Make it ${difficultyText} difficulty level.`;
                 } else {
-                    const difficultyText = difficulty || 'medium';
-                    prompt = `Generate a ${difficultyText} difficulty multiple choice question for ${subject || 'General Knowledge'} topic suitable for competitive exams like Railway, Banking, SSC, etc.`;
+                    // No custom prompt - generate varied questions for Indian job exams
+                    const topicsForSubject = examTopics[subjectName] || examTopics['Others'];
+                    const randomTopic = topicsForSubject[Math.floor(Math.random() * topicsForSubject.length)];
+                    const randomSeed = Date.now() + Math.floor(Math.random() * 100000);
+
+                    prompt = `You are an expert question paper setter for Indian competitive exams like Railway RRB, Bank PO/Clerk, SSC, UPSC, and IBPS.
+
+Generate a UNIQUE and ORIGINAL ${difficultyText} difficulty multiple choice question for: ${randomTopic}
+
+IMPORTANT INSTRUCTIONS:
+1. Generate a COMPLETELY DIFFERENT question each time - avoid common/repeated questions
+2. The question should be practical and exam-oriented
+3. Use real facts, figures, and current information
+4. Make all 4 options plausible but only one correct
+5. Random seed for uniqueness: ${randomSeed}
+
+Question styles to vary between:
+- Direct factual questions
+- Application-based problems
+- Calculation problems (for Math)
+- Statement-based questions
+- Match the following style
+- Assertion-Reason type`;
                 }
 
-                prompt += `\n\nReturn ONLY valid JSON in this EXACT format (no other text):
+                prompt += `
+
+Return ONLY valid JSON in this EXACT format (no other text):
 {
   "question": "The complete question text",
   "optionA": "First option",
@@ -2207,11 +2393,11 @@ Extract ALL questions you can find. Return ONLY valid JSON, no other text.`
   "optionD": "Fourth option",
   "correct": "A or B or C or D",
   "explanation": "Brief explanation of the correct answer",
-  "subject": "${subject || 'Others'}",
-  "difficulty": "${difficulty || 'medium'}"
+  "subject": "${subjectName}",
+  "difficulty": "${difficultyText}"
 }
 
-Make sure the question is unique, relevant, and has one clearly correct answer.`;
+Generate a fresh, unique question that has not been commonly asked before. Ensure one clearly correct answer.`;
 
                 // Call Gemini API with latest model
                 const response = await fetch(
