@@ -161,6 +161,77 @@ const test10Pass = orderResults[1] === '1.1' &&
 console.log('Test 10:', test10Pass ? '✅ PASSED' : '❌ FAILED');
 
 
+// Test 6: Unanswered sub-questions get 0 marks
+console.log('\nTest 11: Unanswered Sub-Questions = 0 Marks');
+function calculateScoreDetailed(questions, userAnswers) {
+    const results = [];
+    let totalScore = 0;
+
+    questions.forEach((question, index) => {
+        const isMainPassage = !question['Option A'] && !question['Option B'];
+        const userAnswer = userAnswers[index];
+        // hasAnswered: must be a number 0-3
+        const hasAnswered = typeof userAnswer === 'number' && userAnswer >= 0 && userAnswer <= 3;
+        const isCorrect = hasAnswered && userAnswer === question.correctIndex;
+
+        let points = 0;
+        let status = '';
+
+        if (isMainPassage) {
+            status = 'passage';
+            points = 0;
+        } else if (!hasAnswered) {
+            status = 'unanswered';
+            points = 0;  // CRITICAL: Unanswered = 0 marks
+        } else if (isCorrect) {
+            status = 'correct';
+            points = 1;
+        } else {
+            status = 'wrong';
+            points = -0.25;
+        }
+
+        totalScore += points;
+        results.push({ index, status, points, hasAnswered });
+    });
+
+    return { results, totalScore };
+}
+
+const unansweredTest = [
+    { ID: 'S1', 'Option A': 'A', 'Option B': 'B', correctIndex: 0 },  // Sub-Q correct
+    { ID: 'S2', 'Option A': 'A', 'Option B': 'B', correctIndex: 1 },  // Sub-Q unanswered
+    { ID: 'S3', 'Option A': 'A', 'Option B': 'B', correctIndex: 0 },  // Sub-Q unanswered (null)
+    { ID: 'S4', 'Option A': 'A', 'Option B': 'B', correctIndex: 2 },  // Sub-Q unanswered (undefined)
+    { ID: 'S5', 'Option A': 'A', 'Option B': 'B', correctIndex: 0 },  // Sub-Q wrong
+];
+
+// Various ways a question can be "unanswered"
+const unansweredAnswers = [0, -1, null, undefined, 1];  // correct, invalid, null, undefined, wrong
+
+const unansweredResult = calculateScoreDetailed(unansweredTest, unansweredAnswers);
+
+console.log('  S1 (correct, answer=0):', unansweredResult.results[0].status,
+            'points:', unansweredResult.results[0].points, '(expected: correct, +1)');
+console.log('  S2 (unanswered, answer=-1):', unansweredResult.results[1].status,
+            'points:', unansweredResult.results[1].points, '(expected: unanswered, 0)');
+console.log('  S3 (unanswered, answer=null):', unansweredResult.results[2].status,
+            'points:', unansweredResult.results[2].points, '(expected: unanswered, 0)');
+console.log('  S4 (unanswered, answer=undefined):', unansweredResult.results[3].status,
+            'points:', unansweredResult.results[3].points, '(expected: unanswered, 0)');
+console.log('  S5 (wrong, answer=1):', unansweredResult.results[4].status,
+            'points:', unansweredResult.results[4].points, '(expected: wrong, -0.25)');
+console.log('  Total Score:', unansweredResult.totalScore, '(expected: 0.75 = 1 + 0 + 0 + 0 - 0.25)');
+
+const test11Pass = unansweredResult.results[0].status === 'correct' && unansweredResult.results[0].points === 1 &&
+                   unansweredResult.results[1].status === 'unanswered' && unansweredResult.results[1].points === 0 &&
+                   unansweredResult.results[2].status === 'unanswered' && unansweredResult.results[2].points === 0 &&
+                   unansweredResult.results[3].status === 'unanswered' && unansweredResult.results[3].points === 0 &&
+                   unansweredResult.results[4].status === 'wrong' && unansweredResult.results[4].points === -0.25 &&
+                   unansweredResult.totalScore === 0.75;
+console.log('Test 11:', test11Pass ? '✅ PASSED' : '❌ FAILED');
+
+
 // Summary
 console.log('\n========================================');
 console.log('       EDGE CASE TEST SUMMARY');
@@ -170,8 +241,9 @@ console.log('Test 7 (Complex Scoring):', test7Pass ? '✅' : '❌');
 console.log('Test 8 (Orphan Handling):', test8Pass ? '✅' : '❌');
 console.log('Test 9 (Empty vs Missing):', test9Pass ? '✅' : '❌');
 console.log('Test 10 (Order Edge Cases):', test10Pass ? '✅' : '❌');
+console.log('Test 11 (Unanswered = 0):', test11Pass ? '✅' : '❌');
 
-const allPassed = test6Pass && test7Pass && test8Pass && test9Pass && test10Pass;
+const allPassed = test6Pass && test7Pass && test8Pass && test9Pass && test10Pass && test11Pass;
 console.log('----------------------------------------');
 console.log('EDGE CASES:', allPassed ? '✅ ALL PASSED' : '❌ SOME FAILED');
 console.log('========================================\n');
