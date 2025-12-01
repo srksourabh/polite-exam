@@ -1662,34 +1662,68 @@
                                 </select>
                             </div>
                         </div>
+
+                        <!-- Question Type Selection for Hierarchical Questions -->
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                            <div class="form-group" style="flex: 1; min-width: 200px;">
+                                <label>Question Type</label>
+                                <select id="question-type" onchange="handleQuestionTypeChange()">
+                                    <option value="standalone">Standalone Question</option>
+                                    <option value="main">Main Question (Passage/Comprehension)</option>
+                                    <option value="sub">Sub-Question</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="parent-question-group" style="flex: 2; min-width: 250px; display: none;">
+                                <label>Select Parent Question</label>
+                                <select id="parent-question-select">
+                                    <option value="">-- Select Parent Question --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Info box for Main Questions -->
+                        <div id="main-question-info" style="display: none; background: #fff3e0; border: 1px solid #ff9800; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                            <div style="color: #e65100; font-weight: 600; margin-bottom: 5px;">📋 Main Question (Passage)</div>
+                            <div style="color: #666; font-size: 0.9rem;">This is a reference passage/comprehension. It has no options or marks. Add sub-questions to this passage for actual scoring.</div>
+                        </div>
+
+                        <!-- Info box for Sub-Questions -->
+                        <div id="sub-question-info" style="display: none; background: #e8f5e9; border: 1px solid #4caf50; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                            <div style="color: #2e7d32; font-weight: 600; margin-bottom: 5px;">📝 Sub-Question</div>
+                            <div style="color: #666; font-size: 0.9rem;">Marks: +1 correct, -0.25 wrong, 0 unanswered. This question will be grouped with its parent.</div>
+                        </div>
+
                         <div class="form-group">
-                            <label>Question Text</label>
+                            <label id="question-text-label">Question Text</label>
                             <textarea id="question-text" rows="3" placeholder="Enter the question here..."></textarea>
                         </div>
-                        <div class="form-group">
-                            <label>Option A</label>
-                            <input type="text" id="option-a" placeholder="Option A">
-                        </div>
-                        <div class="form-group">
-                            <label>Option B</label>
-                            <input type="text" id="option-b" placeholder="Option B">
-                        </div>
-                        <div class="form-group">
-                            <label>Option C</label>
-                            <input type="text" id="option-c" placeholder="Option C">
-                        </div>
-                        <div class="form-group">
-                            <label>Option D</label>
-                            <input type="text" id="option-d" placeholder="Option D">
-                        </div>
-                        <div class="form-group">
-                            <label>Correct Answer</label>
-                            <select id="correct-answer">
-                                <option value="0">A</option>
-                                <option value="1">B</option>
-                                <option value="2">C</option>
-                                <option value="3">D</option>
-                            </select>
+                        <!-- Options container (hidden for Main Questions) -->
+                        <div id="question-options-container">
+                            <div class="form-group">
+                                <label>Option A</label>
+                                <input type="text" id="option-a" placeholder="Option A">
+                            </div>
+                            <div class="form-group">
+                                <label>Option B</label>
+                                <input type="text" id="option-b" placeholder="Option B">
+                            </div>
+                            <div class="form-group">
+                                <label>Option C</label>
+                                <input type="text" id="option-c" placeholder="Option C">
+                            </div>
+                            <div class="form-group">
+                                <label>Option D</label>
+                                <input type="text" id="option-d" placeholder="Option D">
+                            </div>
+                            <div class="form-group">
+                                <label>Correct Answer</label>
+                                <select id="correct-answer">
+                                    <option value="0">A</option>
+                                    <option value="1">B</option>
+                                    <option value="2">C</option>
+                                    <option value="3">D</option>
+                                </select>
+                            </div>
                         </div>
                         <button id="add-question-btn">Add Question to Bank</button>
                         <div class="error" id="question-error"></div>
@@ -3198,18 +3232,39 @@
 
                             if (isDetailedFormat) {
                                 answers.forEach((answer, qIndex) => {
+                                    const isMainPassage = answer.isMainPassage || (!answer.optionA && !answer.optionB);
+                                    const isSubQuestion = answer.isSubQuestion;
                                     const isCorrect = answer.isCorrect;
-                                    const userAnswered = answer.userAnswer !== 'Not Answered';
-                                    const statusClass = isCorrect ? 'correct' : (userAnswered ? 'incorrect' : 'unanswered');
-                                    const resultText = isCorrect ? 'Correct (+1)' : (userAnswered ? 'Incorrect (-0.25)' : 'Not Answered (0)');
-                                    const resultBadgeClass = isCorrect ? 'correct' : (userAnswered ? 'incorrect' : 'unanswered');
+                                    const userAnswered = answer.userAnswer !== 'Not Answered' && answer.userAnswer !== 'N/A (Passage)';
+                                    const hierarchicalNum = answer.hierarchicalNumber || (qIndex + 1);
+
+                                    // Different styling for main passages vs regular questions
+                                    let statusClass, resultText, resultBadgeClass;
+                                    if (isMainPassage) {
+                                        statusClass = 'passage';
+                                        resultText = '📖 Reference Passage (No Marks)';
+                                        resultBadgeClass = 'passage';
+                                    } else {
+                                        statusClass = isCorrect ? 'correct' : (userAnswered ? 'incorrect' : 'unanswered');
+                                        resultText = isCorrect ? 'Correct (+1)' : (userAnswered ? 'Incorrect (-0.25)' : 'Not Answered (0)');
+                                        resultBadgeClass = isCorrect ? 'correct' : (userAnswered ? 'incorrect' : 'unanswered');
+                                    }
                                     const userAnswerLetter = answer.userAnswer;
                                     const correctAnswerLetter = answer.correctAnswer;
 
+                                    // Build question header with hierarchical number
+                                    const qLabel = isSubQuestion ? `Q.${hierarchicalNum}` : `Q${hierarchicalNum}`;
+                                    const typeIndicator = isMainPassage ? '<span style="background: #ff9800; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">Passage</span>' :
+                                                         isSubQuestion ? '<span style="background: #9c27b0; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">Sub-Q</span>' : '';
+
                                     questionDetailsHTML += `
-                                        <div class="question-detail-item ${statusClass}">
-                                            <div class="question-detail-header">Q${qIndex + 1}. ${answer.questionId || ''} - ${answer.subject || ''}</div>
-                                            <div class="question-detail-text" style="font-size: 1rem; line-height: 1.6; margin-bottom: 12px; color: #333;">${answer.question || ''}</div>
+                                        <div class="question-detail-item ${statusClass}" style="${isMainPassage ? 'background: #fff3e0; border-left: 3px solid #ff9800;' : isSubQuestion ? 'background: #f3e5f5; border-left: 3px solid #9c27b0; margin-left: 20px;' : ''}">
+                                            <div class="question-detail-header">${qLabel}. ${answer.questionId || ''} - ${answer.subject || ''}${typeIndicator}</div>
+                                            <div class="question-detail-text" style="font-size: 1rem; line-height: 1.6; margin-bottom: 12px; color: #333;">${answer.question || ''}</div>`;
+
+                                    // Only show options for non-passage questions
+                                    if (!isMainPassage) {
+                                        questionDetailsHTML += `
                                             <div class="question-options" style="margin-bottom: 12px;">
                                                 <div style="padding: 8px 12px; margin: 4px 0; border-radius: 6px; background: ${userAnswerLetter === 'A' ? (isCorrect || correctAnswerLetter === 'A' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'A' ? '#c8e6c9' : '#f5f5f5')};">
                                                     <strong>A:</strong> ${answer.optionA || ''} ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
@@ -3223,8 +3278,11 @@
                                                 <div style="padding: 8px 12px; margin: 4px 0; border-radius: 6px; background: ${userAnswerLetter === 'D' ? (isCorrect || correctAnswerLetter === 'D' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'D' ? '#c8e6c9' : '#f5f5f5')};">
                                                     <strong>D:</strong> ${answer.optionD || ''} ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                                 </div>
-                                            </div>
-                                            <div class="result-badge ${resultBadgeClass}" style="display: inline-block;">${resultText}</div>
+                                            </div>`;
+                                    }
+
+                                    questionDetailsHTML += `
+                                            <div class="result-badge ${resultBadgeClass}" style="display: inline-block; ${isMainPassage ? 'background: #ff9800; color: white;' : ''}">${resultText}</div>
                                         </div>
                                     `;
                                 });
@@ -3770,6 +3828,8 @@
             const parentQuestionId = q['Parent Question ID'];
             const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
             const subQuestionCount = q.subQuestions ? q.subQuestions.length : 0;
+            // Check if this is a main/passage question (has sub-questions but no options)
+            const isMainPassage = hasSubQuestions && (!q['Option A'] || !q['Option B']);
 
             // Skip rendering sub-questions individually (they will be rendered with their parent)
             if (isSubQuestion && parentQuestionId) {
@@ -3802,8 +3862,13 @@
                     <span class="question-tag" style="background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject || 'Unknown'}</span>
                     <span class="difficulty-tag" style="background: ${q.Difficulty === 'Easy' ? '#27ae60' : q.Difficulty === 'Medium' ? '#f39c12' : q.Difficulty === 'Hard' ? '#e74c3c' : '#95a5a6'}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Difficulty || 'Unknown'}</span>
                     ${hasSubQuestions ? `<span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📋 ${subQuestionCount} Sub-Q</span>` : ''}
+                    ${isMainPassage ? `<span style="background: #ff9800; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📖 Passage (No Marks)</span>` : ''}
                 </div>
-                <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question || ''}</p>
+                <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question || ''}</p>`;
+
+            // Only show options and correct answer for non-passage questions
+            if (!isMainPassage) {
+                html += `
                 <div style="margin-left: 25px; margin-bottom: 8px;">
                     <div style="margin: 5px 0;">A) ${q['Option A'] || ''}</div>
                     <div style="margin: 5px 0;">B) ${q['Option B'] || ''}</div>
@@ -3813,21 +3878,33 @@
                 <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 8px; border-radius: 6px; display: inline-block;">
                     ✅ Correct Answer: ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}
                 </div>`;
+            } else {
+                html += `
+                <div style="color: #ff9800; font-weight: 600; background: #fff3e0; padding: 8px; border-radius: 6px; display: inline-block; margin-top: 10px;">
+                    📖 Reference passage - Marks are in sub-questions below
+                </div>`;
+            }
 
             // Render sub-questions if any
             if (hasSubQuestions) {
+                // Extract parent question number for hierarchical display (e.g., Q0020 -> 20)
+                const parentNum = q.ID ? q.ID.replace(/[^0-9]/g, '').replace(/^0+/, '') || '0' : index + 1;
+
                 html += `
                 <div class="sub-questions-container" style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #9c27b0;">
                     <div style="color: #9c27b0; font-weight: 600; margin-bottom: 10px; font-size: 0.95rem;">
-                        📋 Sub-Questions (${subQuestionCount}) - Selected together with main question:
+                        📋 Sub-Questions (${subQuestionCount}) - Marks: +1 correct, -0.25 wrong, 0 unanswered
                     </div>`;
 
                 q.subQuestions.forEach((sq, sqIndex) => {
+                    const subOrder = sq['Sub Question Order'] || sqIndex + 1;
+                    const hierarchicalNum = `${parentNum}.${subOrder}`;
                     html += `
                     <div class="sub-question-item" style="background: #f3e5f5; border-radius: 8px; padding: 12px; margin-bottom: 10px; margin-left: 20px; border-left: 3px solid #9c27b0;">
                         <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
-                            <strong style="font-size: 0.95rem;">${sq.ID || `Sub-Q ${sqIndex + 1}`}</strong>
-                            <span style="background: #ce93d8; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">Sub-Question ${sq['Sub Question Order'] || sqIndex + 1}</span>
+                            <strong style="font-size: 1.1rem; color: #7b1fa2;">Q.${hierarchicalNum}</strong>
+                            <span style="background: #ce93d8; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">${sq.Subject || q.Subject || 'Unknown'}</span>
+                            <span style="background: #4caf50; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">+1 / -0.25</span>
                         </div>
                         <p style="margin-bottom: 8px; font-weight: 500; font-size: 1rem;">${sq.Question || ''}</p>
                         <div style="margin-left: 20px; font-size: 0.95rem;">
@@ -4396,15 +4473,102 @@
         }
 
         // Toggle Add Question Form
-        document.getElementById('toggle-add-question-btn').addEventListener('click', function() {
+        document.getElementById('toggle-add-question-btn').addEventListener('click', async function() {
             const form = document.getElementById('add-question-form');
             form.classList.toggle('hidden');
+
+            // Populate parent question dropdown when form opens
+            if (!form.classList.contains('hidden')) {
+                await populateParentQuestionDropdown();
+            }
         });
 
         // Close Add Question Form
         document.getElementById('close-add-question-btn').addEventListener('click', function() {
             document.getElementById('add-question-form').classList.add('hidden');
+            resetQuestionForm();
         });
+
+        // Handle question type change for hierarchical questions
+        window.handleQuestionTypeChange = function() {
+            const questionType = document.getElementById('question-type').value;
+            const parentGroup = document.getElementById('parent-question-group');
+            const optionsContainer = document.getElementById('question-options-container');
+            const mainQuestionInfo = document.getElementById('main-question-info');
+            const subQuestionInfo = document.getElementById('sub-question-info');
+            const questionTextLabel = document.getElementById('question-text-label');
+            const questionTextArea = document.getElementById('question-text');
+
+            // Hide all info boxes first
+            mainQuestionInfo.style.display = 'none';
+            subQuestionInfo.style.display = 'none';
+            parentGroup.style.display = 'none';
+            optionsContainer.style.display = 'block';
+
+            if (questionType === 'main') {
+                // Main question (passage) - hide options
+                optionsContainer.style.display = 'none';
+                mainQuestionInfo.style.display = 'block';
+                questionTextLabel.textContent = 'Passage/Comprehension Text';
+                questionTextArea.placeholder = 'Enter the passage or comprehension text here...';
+                questionTextArea.rows = 6;
+            } else if (questionType === 'sub') {
+                // Sub-question - show parent selector
+                parentGroup.style.display = 'block';
+                subQuestionInfo.style.display = 'block';
+                questionTextLabel.textContent = 'Sub-Question Text';
+                questionTextArea.placeholder = 'Enter the sub-question here...';
+                questionTextArea.rows = 3;
+            } else {
+                // Standalone question
+                questionTextLabel.textContent = 'Question Text';
+                questionTextArea.placeholder = 'Enter the question here...';
+                questionTextArea.rows = 3;
+            }
+        };
+
+        // Populate parent question dropdown with main questions
+        async function populateParentQuestionDropdown() {
+            const select = document.getElementById('parent-question-select');
+            select.innerHTML = '<option value="">-- Loading... --</option>';
+
+            try {
+                // Get all questions that are main questions (have sub-questions or are marked as main)
+                let parentQuestions = [];
+
+                if (allQuestions && allQuestions.length > 0) {
+                    parentQuestions = allQuestions.filter(q => {
+                        // Include questions that have sub-questions or are explicitly marked as main
+                        const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
+                        const isMainQuestion = !q['Option A'] && !q['Option B'] && q.Question; // No options = passage
+                        const isNotSubQuestion = q['Is Sub Question'] !== true && q['Is Sub Question'] !== 'true';
+                        return (hasSubQuestions || isMainQuestion) && isNotSubQuestion;
+                    });
+                }
+
+                select.innerHTML = '<option value="">-- Select Parent Question --</option>';
+
+                if (parentQuestions.length === 0) {
+                    select.innerHTML += '<option value="" disabled>No main questions available. Create one first.</option>';
+                } else {
+                    parentQuestions.forEach(q => {
+                        const truncatedText = (q.Question || '').substring(0, 60) + (q.Question && q.Question.length > 60 ? '...' : '');
+                        const subCount = q.subQuestions ? q.subQuestions.length : 0;
+                        select.innerHTML += `<option value="${q.ID}">${q.ID} (${subCount} sub-Q): ${truncatedText}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading parent questions:', error);
+                select.innerHTML = '<option value="">-- Error loading questions --</option>';
+            }
+        }
+
+        // Reset question form to default state
+        function resetQuestionForm() {
+            document.getElementById('question-type').value = 'standalone';
+            document.getElementById('parent-question-select').value = '';
+            handleQuestionTypeChange();
+        }
 
         // Add/Update question to bank
         document.getElementById('add-question-btn').addEventListener('click', async function() {
@@ -4412,6 +4576,8 @@
                 const subject = document.getElementById('question-subject').value;
                 const difficulty = document.getElementById('question-difficulty').value;
                 const question = document.getElementById('question-text').value.trim();
+                const questionType = document.getElementById('question-type').value;
+                const parentQuestionId = document.getElementById('parent-question-select').value;
                 const optionA = document.getElementById('option-a').value.trim();
                 const optionB = document.getElementById('option-b').value.trim();
                 const optionC = document.getElementById('option-c').value.trim();
@@ -4425,42 +4591,81 @@
                 if (questionError) questionError.textContent = '';
                 if (questionSuccess) questionSuccess.textContent = '';
 
-                // Validate inputs
-                if (!question || !optionA || !optionB || !optionC || !optionD) {
+                // Validate inputs based on question type
+                if (!question) {
                     if (questionError) {
-                        questionError.textContent = '❌ Please fill in all fields!';
-                        setTimeout(() => {
-                            questionError.textContent = '';
-                        }, 3000);
+                        questionError.textContent = '❌ Please enter the question text!';
+                        setTimeout(() => { questionError.textContent = ''; }, 3000);
                     }
                     return;
                 }
 
-                const correctAnswer = ['A', 'B', 'C', 'D'][parseInt(correct)];
+                // For main questions (passages), options are not required
+                if (questionType !== 'main') {
+                    if (!optionA || !optionB || !optionC || !optionD) {
+                        if (questionError) {
+                            questionError.textContent = '❌ Please fill in all options!';
+                            setTimeout(() => { questionError.textContent = ''; }, 3000);
+                        }
+                        return;
+                    }
+                }
+
+                // For sub-questions, parent is required
+                if (questionType === 'sub' && !parentQuestionId) {
+                    if (questionError) {
+                        questionError.textContent = '❌ Please select a parent question!';
+                        setTimeout(() => { questionError.textContent = ''; }, 3000);
+                    }
+                    return;
+                }
+
+                const correctAnswer = questionType === 'main' ? '' : ['A', 'B', 'C', 'D'][parseInt(correct)];
                 const isEditMode = this.getAttribute('data-edit-mode') === 'true';
                 const editIndex = parseInt(this.getAttribute('data-edit-index'));
                 const editId = this.getAttribute('data-edit-id');
 
+                // Calculate sub-question order for new sub-questions
+                let subQuestionOrder = null;
+                if (questionType === 'sub' && parentQuestionId) {
+                    // Find parent question and count existing sub-questions
+                    const parentQ = allQuestions.find(q => q.ID === parentQuestionId);
+                    if (parentQ && parentQ.subQuestions) {
+                        subQuestionOrder = parentQ.subQuestions.length + 1;
+                    } else {
+                        // Count from all questions
+                        const existingSubQs = allQuestions.filter(q =>
+                            q['Parent Question ID'] === parentQuestionId &&
+                            (q['Is Sub Question'] === true || q['Is Sub Question'] === 'true')
+                        );
+                        subQuestionOrder = existingSubQs.length + 1;
+                    }
+                }
+
                 if (isEditMode) {
                     // Update existing question
                     if (window.PoliteCCAPI && window.PoliteCCAPI.updateQuestionInDatabase && editId) {
-                        const success = await window.PoliteCCAPI.updateQuestionInDatabase(editId, {
+                        const updateData = {
                             subject: subject,
                             difficulty: difficulty,
-                            question: question,
-                            optionA: optionA,
-                            optionB: optionB,
-                            optionC: optionC,
-                            optionD: optionD,
-                            correct: correctAnswer
-                        });
+                            question: question
+                        };
+
+                        // Only include options for non-main questions
+                        if (questionType !== 'main') {
+                            updateData.optionA = optionA;
+                            updateData.optionB = optionB;
+                            updateData.optionC = optionC;
+                            updateData.optionD = optionD;
+                            updateData.correct = correctAnswer;
+                        }
+
+                        const success = await window.PoliteCCAPI.updateQuestionInDatabase(editId, updateData);
 
                         if (success) {
                             if (questionSuccess) {
                                 questionSuccess.textContent = '✅ Question updated successfully!';
-                                setTimeout(() => {
-                                    questionSuccess.textContent = '';
-                                }, 3000);
+                                setTimeout(() => { questionSuccess.textContent = ''; }, 3000);
                             }
                         }
                     } else {
@@ -4468,17 +4673,17 @@
                         questions[editIndex].Subject = subject;
                         questions[editIndex].Difficulty = difficulty;
                         questions[editIndex].Question = question;
-                        questions[editIndex]['Option A'] = optionA;
-                        questions[editIndex]['Option B'] = optionB;
-                        questions[editIndex]['Option C'] = optionC;
-                        questions[editIndex]['Option D'] = optionD;
-                        questions[editIndex].Correct = correctAnswer;
+                        if (questionType !== 'main') {
+                            questions[editIndex]['Option A'] = optionA;
+                            questions[editIndex]['Option B'] = optionB;
+                            questions[editIndex]['Option C'] = optionC;
+                            questions[editIndex]['Option D'] = optionD;
+                            questions[editIndex].Correct = correctAnswer;
+                        }
 
                         if (questionSuccess) {
                             questionSuccess.textContent = '✅ Question updated successfully!';
-                            setTimeout(() => {
-                                questionSuccess.textContent = '';
-                            }, 3000);
+                            setTimeout(() => { questionSuccess.textContent = ''; }, 3000);
                         }
                     }
 
@@ -4490,44 +4695,68 @@
                 } else {
                     // Add new question to database if API is available
                     if (window.PoliteCCAPI && window.PoliteCCAPI.addQuestionToDatabase) {
-                        const success = await window.PoliteCCAPI.addQuestionToDatabase({
+                        const questionData = {
                             subject: subject,
                             difficulty: difficulty,
-                            question: question,
-                            optionA: optionA,
-                            optionB: optionB,
-                            optionC: optionC,
-                            optionD: optionD,
-                            correct: correctAnswer
-                        });
+                            question: question
+                        };
+
+                        // Add options only for non-main questions
+                        if (questionType !== 'main') {
+                            questionData.optionA = optionA;
+                            questionData.optionB = optionB;
+                            questionData.optionC = optionC;
+                            questionData.optionD = optionD;
+                            questionData.correct = correctAnswer;
+                        }
+
+                        // Add hierarchical fields
+                        if (questionType === 'sub') {
+                            questionData.isSubQuestion = true;
+                            questionData.parentQuestionId = parentQuestionId;
+                            questionData.subQuestionOrder = subQuestionOrder;
+                        } else if (questionType === 'main') {
+                            questionData.isMainQuestion = true;
+                        }
+
+                        const success = await window.PoliteCCAPI.addQuestionToDatabase(questionData);
 
                         if (success && questionSuccess) {
-                            questionSuccess.textContent = '✅ Question added successfully!';
-                            setTimeout(() => {
-                                questionSuccess.textContent = '';
-                            }, 3000);
+                            const typeLabel = questionType === 'main' ? 'Main question' :
+                                              questionType === 'sub' ? 'Sub-question' : 'Question';
+                            questionSuccess.textContent = `✅ ${typeLabel} added successfully!`;
+                            setTimeout(() => { questionSuccess.textContent = ''; }, 3000);
                         }
                     } else {
                         // Add to local array if no API
                         const questionId = `q${questionCounter++}`;
 
-                        questions.push({
+                        const newQuestion = {
                             ID: questionId,
                             Subject: subject,
                             Difficulty: difficulty,
-                            Question: question,
-                            'Option A': optionA,
-                            'Option B': optionB,
-                            'Option C': optionC,
-                            'Option D': optionD,
-                            Correct: correctAnswer
-                        });
+                            Question: question
+                        };
+
+                        if (questionType !== 'main') {
+                            newQuestion['Option A'] = optionA;
+                            newQuestion['Option B'] = optionB;
+                            newQuestion['Option C'] = optionC;
+                            newQuestion['Option D'] = optionD;
+                            newQuestion.Correct = correctAnswer;
+                        }
+
+                        if (questionType === 'sub') {
+                            newQuestion['Is Sub Question'] = true;
+                            newQuestion['Parent Question ID'] = parentQuestionId;
+                            newQuestion['Sub Question Order'] = subQuestionOrder;
+                        }
+
+                        questions.push(newQuestion);
 
                         if (questionSuccess) {
                             questionSuccess.textContent = '✅ Question added successfully!';
-                            setTimeout(() => {
-                                questionSuccess.textContent = '';
-                            }, 3000);
+                            setTimeout(() => { questionSuccess.textContent = ''; }, 3000);
                         }
                     }
                 }
@@ -4539,6 +4768,7 @@
                 document.getElementById('option-c').value = '';
                 document.getElementById('option-d').value = '';
                 document.getElementById('correct-answer').value = '0';
+                resetQuestionForm();
 
                 // Refresh question list and hide form
                 document.getElementById('add-question-form').classList.add('hidden');
@@ -6721,6 +6951,11 @@
             currentExam.questions.forEach((question, index) => {
                 const userAnswer = userAnswers[index];
 
+                // Check if this is a main passage question (no options = no marks)
+                const isMainPassage = !question['Option A'] && !question['Option B'];
+                const isSubQuestion = question['Is Sub Question'] === true || question['Is Sub Question'] === 'true';
+                const parentQuestionId = question['Parent Question ID'];
+
                 // Check if user actually answered this question (valid answer is 0, 1, 2, or 3)
                 const hasAnswered = typeof userAnswer === 'number' && userAnswer >= 0 && userAnswer <= 3;
 
@@ -6735,14 +6970,17 @@
                 const isCorrect = hasAnswered && isValidCorrectAnswer && (userAnswer === correctAnswerIndex);
 
                 // Score calculation: +1 correct, -0.25 wrong, 0 unanswered
-                if (hasAnswered) {
-                    score += isCorrect ? 1 : -0.25;
+                // Main passage questions have NO marks - only sub-questions are scored
+                let points = 0;
+                if (!isMainPassage) {
+                    if (hasAnswered) {
+                        points = isCorrect ? 1 : -0.25;
+                        score += points;
+                    }
                 }
-                // If not answered, score += 0 (no change)
 
-                // Check if this is a sub-question
-                const isSubQuestion = question['Is Sub Question'] === true || question['Is Sub Question'] === 'true';
-                const parentQuestionId = question['Parent Question ID'];
+                // Calculate hierarchical question number for display
+                const hierarchicalNum = getHierarchicalQuestionNumber(index);
 
                 // Store detailed answer info
                 detailedAnswers.push({
@@ -6753,13 +6991,15 @@
                     optionB: question['Option B'],
                     optionC: question['Option C'],
                     optionD: question['Option D'],
-                    userAnswer: hasAnswered ? ['A', 'B', 'C', 'D'][userAnswer] : 'Not Answered',
-                    correctAnswer: correctLetter || question.Correct,
-                    isCorrect: isCorrect,
-                    points: hasAnswered ? (isCorrect ? 1 : -0.25) : 0,
+                    userAnswer: isMainPassage ? 'N/A (Passage)' : (hasAnswered ? ['A', 'B', 'C', 'D'][userAnswer] : 'Not Answered'),
+                    correctAnswer: isMainPassage ? 'N/A' : (correctLetter || question.Correct),
+                    isCorrect: isMainPassage ? null : isCorrect,
+                    points: points,
                     isSubQuestion: isSubQuestion,
+                    isMainPassage: isMainPassage,
                     parentQuestionId: parentQuestionId || null,
-                    subQuestionOrder: question['Sub Question Order'] || null
+                    subQuestionOrder: question['Sub Question Order'] || null,
+                    hierarchicalNumber: hierarchicalNum.display
                 });
             });
 
@@ -6831,6 +7071,28 @@
             }, 3000);
         }
 
+        // Helper function to calculate hierarchical question number
+        function getHierarchicalQuestionNumber(questionIndex) {
+            if (!currentExam || !currentExam.questions) return { display: questionIndex + 1, isSubQ: false };
+
+            const question = currentExam.questions[questionIndex];
+            const isSubQuestion = question['Is Sub Question'] === true || question['Is Sub Question'] === 'true';
+            const parentQuestionId = question['Parent Question ID'];
+            const subQuestionOrder = question['Sub Question Order'];
+
+            if (isSubQuestion && parentQuestionId) {
+                // Find the parent question's position in the exam
+                const parentIndex = currentExam.questions.findIndex(q => q.ID === parentQuestionId);
+                if (parentIndex !== -1) {
+                    const parentNum = parentIndex + 1;
+                    const subOrder = subQuestionOrder || 1;
+                    return { display: `${parentNum}.${subOrder}`, isSubQ: true, parentNum, subOrder };
+                }
+            }
+
+            return { display: questionIndex + 1, isSubQ: false };
+        }
+
         // Question loading
         function loadQuestion() {
             if (!currentExam || currentQuestionIndex >= currentExam.questions.length) return;
@@ -6838,6 +7100,7 @@
             const question = currentExam.questions[currentQuestionIndex];
             const isSubQuestion = question['Is Sub Question'] === true || question['Is Sub Question'] === 'true';
             const parentQuestionId = question['Parent Question ID'];
+            const isMainPassage = !question['Option A'] && !question['Option B'] && question.Question;
 
             // Find parent question if this is a sub-question
             let parentQuestion = null;
@@ -6845,16 +7108,21 @@
                 parentQuestion = currentExam.questions.find(q => q.ID === parentQuestionId);
             }
 
-            // Update UI
-            document.getElementById('current-q-num').textContent = currentQuestionIndex + 1;
+            // Calculate hierarchical question number
+            const hierarchicalNum = getHierarchicalQuestionNumber(currentQuestionIndex);
+
+            // Update UI with hierarchical numbering
+            document.getElementById('current-q-num').textContent = hierarchicalNum.display;
             document.getElementById('total-questions').textContent = currentExam.questions.length;
             document.getElementById('progress-num').textContent = currentQuestionIndex + 1;
             document.getElementById('progress-total').textContent = currentExam.questions.length;
 
-            // Show subject with sub-question indicator if applicable
+            // Show subject with sub-question indicator and marks if applicable
             let subjectDisplay = question.Subject || 'Unknown';
             if (isSubQuestion) {
-                subjectDisplay = `📋 Sub-Q of ${parentQuestionId}`;
+                subjectDisplay = `📋 Q.${hierarchicalNum.display} | ${question.Subject || 'Unknown'} | +1 / -0.25`;
+            } else if (isMainPassage) {
+                subjectDisplay = `📖 Passage | ${question.Subject || 'Unknown'} | No Marks`;
             }
             document.getElementById('question-subject-display').textContent = subjectDisplay;
 
@@ -6867,7 +7135,7 @@
                 questionTextElement.innerHTML = `
                     <div style="background: #f3e5f5; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #9c27b0;">
                         <div style="color: #9c27b0; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">
-                            📖 Reference (${parentQuestionId}):
+                            📖 Reference Passage:
                         </div>
                         <div style="color: #333; font-size: 0.95rem;">${parentQuestion.Question || ''}</div>
                     </div>
