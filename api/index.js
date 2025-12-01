@@ -2110,29 +2110,105 @@ module.exports = async (req, res) => {
                             contents: [{
                                 parts: [
                                     {
-                                        text: `You are an expert question extraction system. Extract ALL questions from this image with their options and identify the correct answer.
+                                        text: `You are an expert question extraction system for Indian competitive exams (Banking, SSC, Railways, UPSC).
+Extract ALL questions from this image and AUTOMATICALLY DETECT HIERARCHICAL/GROUPED QUESTIONS.
 
-IMPORTANT INSTRUCTIONS:
+HIERARCHICAL QUESTION DETECTION:
+- Look for PASSAGES, COMPREHENSIONS, DIRECTIONS, or DATA/CHARTS followed by multiple questions
+- Examples of hierarchical patterns:
+  * "Directions (Q.1-5): Read the passage..." followed by Q.1, Q.2, Q.3, Q.4, Q.5
+  * "Read the following passage and answer questions 16-20"
+  * A paragraph/table/chart followed by numbered questions referring to it
+  * "Comprehension: [text]" followed by sub-questions
+  * Data Interpretation sets with tables/graphs followed by questions
+
+QUESTION TYPES TO IDENTIFY:
+1. "passage" - A reference text/paragraph/table/chart with NO answer options (parent of sub-questions)
+2. "sub-question" - Questions that refer to a passage above (have options, carry marks)
+3. "standalone" - Regular independent questions (have options, carry marks)
+
+IMPORTANT RULES:
 1. Extract EVERY question you see in the image
-2. Look for visual cues for correct answers: bold text, underlined text, checkmarks, circles, or any other marking
-3. If you cannot identify the correct answer from visual cues, analyze the content and make your best determination
-4. Return the data in this EXACT JSON format:
+2. For PASSAGES: Set questionType="passage", leave options empty, set parentId=null
+3. For SUB-QUESTIONS: Set questionType="sub-question", include parentId matching the passage
+4. For STANDALONE: Set questionType="standalone", set parentId=null
+5. Look for visual cues for correct answers: bold text, underlined, checkmarks, circles
+6. Assign proper subQuestionOrder (1, 2, 3...) for sub-questions under same parent
+
+Return the data in this EXACT JSON format:
 
 {
   "questions": [
     {
-      "question": "Full question text here",
-      "optionA": "First option",
-      "optionB": "Second option",
-      "optionC": "Third option",
-      "optionD": "Fourth option",
-      "correct": "A or B or C or D (the letter of correct answer)",
-      "subject": "Math or GK or Reasoning or Others"
+      "question": "Full passage/comprehension text here...",
+      "optionA": "",
+      "optionB": "",
+      "optionC": "",
+      "optionD": "",
+      "correct": "",
+      "subject": "English Language",
+      "questionType": "passage",
+      "parentId": null,
+      "subQuestionOrder": null
+    },
+    {
+      "question": "First question based on above passage?",
+      "optionA": "Option 1",
+      "optionB": "Option 2",
+      "optionC": "Option 3",
+      "optionD": "Option 4",
+      "correct": "A",
+      "subject": "English Language",
+      "questionType": "sub-question",
+      "parentId": "passage_1",
+      "subQuestionOrder": 1
+    },
+    {
+      "question": "Second question based on above passage?",
+      "optionA": "Option 1",
+      "optionB": "Option 2",
+      "optionC": "Option 3",
+      "optionD": "Option 4",
+      "correct": "B",
+      "subject": "English Language",
+      "questionType": "sub-question",
+      "parentId": "passage_1",
+      "subQuestionOrder": 2
+    },
+    {
+      "question": "This is an independent standalone question?",
+      "optionA": "Option A",
+      "optionB": "Option B",
+      "optionC": "Option C",
+      "optionD": "Option D",
+      "correct": "C",
+      "subject": "Quantitative Aptitude",
+      "questionType": "standalone",
+      "parentId": null,
+      "subQuestionOrder": null
+    }
+  ],
+  "hierarchicalGroups": [
+    {
+      "passageId": "passage_1",
+      "passageText": "Brief description of passage...",
+      "subQuestionCount": 2,
+      "questionRange": "Q1-Q2"
     }
   ]
 }
 
-Extract ALL questions you can find. Return ONLY valid JSON, no other text.`
+SUBJECT CATEGORIES (use exact names):
+- Quantitative Aptitude
+- Reasoning Ability
+- English Language
+- General Awareness
+- Current Affairs
+- Banking Awareness
+- Computer Knowledge
+- Data Interpretation
+
+Extract ALL questions. Return ONLY valid JSON, no other text.`
                                     },
                                     {
                                         inline_data: {

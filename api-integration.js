@@ -174,27 +174,40 @@ async function addQuestionToDatabase(questionData) {
         // Generate new ID in Q0001 format (4 digits with leading zeros)
         const nextId = 'Q' + String(maxNum + 1).padStart(4, '0');
 
+        // Build question payload
+        const payload = {
+            ID: nextId,
+            Subject: questionData.subject,
+            Difficulty: questionData.difficulty || 'Medium',
+            Question: questionData.question
+        };
+
+        // Add options only for non-main questions
+        if (!questionData.isMainQuestion) {
+            payload['Option A'] = questionData.optionA || '';
+            payload['Option B'] = questionData.optionB || '';
+            payload['Option C'] = questionData.optionC || '';
+            payload['Option D'] = questionData.optionD || '';
+            payload['Correct'] = questionData.correct || '';
+        }
+
+        // Add hierarchical question fields
+        if (questionData.isSubQuestion) {
+            payload['Is Sub Question'] = true;
+            payload['Parent Question ID'] = questionData.parentQuestionId || '';
+            payload['Sub Question Order'] = questionData.subQuestionOrder || 1;
+        }
+
+        if (questionData.isMainQuestion) {
+            payload['Is Main Question'] = true;
+        }
+
         const response = await fetch(`${API_URL}/questions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                ID: nextId,
-                Subject: questionData.subject,
-                Difficulty: questionData.difficulty || 'Medium',
-                Question: questionData.question,
-                'Option A': questionData.optionA,
-                'Option B': questionData.optionB,
-                'Option C': questionData.optionC,
-                'Option D': questionData.optionD,
-                Correct: questionData.correct,
-                // Hierarchical question fields
-                'Question Type': questionData.questionType || 'Standalone',
-                'Sub Question Number': questionData.subQuestionNumber || null,
-                'Main Question Text': questionData.mainQuestionText || null
-                // Note: Parent Question link will be set separately via API after both records exist
-            })
+            body: JSON.stringify(payload)
         });
         
         const data = await response.json();
