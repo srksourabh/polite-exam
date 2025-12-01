@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Polite Exam</string>
-    <string name="title_activity_main">Polite Exam</string>
-    <string name="package_name">com.politecoaching.exam</string>
-    <string name="custom_url_scheme">com.politecoaching.exam</string>
-</resources>
