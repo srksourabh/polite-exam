@@ -3876,6 +3876,46 @@
         const QUESTIONS_PER_PAGE = 100;
         let isLoadingMoreQuestions = false;
 
+        // Function to group questions hierarchically (attach sub-questions to their parent)
+        function groupQuestionsHierarchically(questions) {
+            const mainQuestions = [];
+            const subQuestionsMap = {};
+
+            // First pass: separate main questions and sub-questions
+            questions.forEach(q => {
+                const isSubQuestion = q['Is Sub Question'] === true || q['Is Sub Question'] === 'true';
+                const parentId = q['Parent Question ID'];
+
+                if (isSubQuestion && parentId) {
+                    if (!subQuestionsMap[parentId]) {
+                        subQuestionsMap[parentId] = [];
+                    }
+                    subQuestionsMap[parentId].push(q);
+                } else {
+                    mainQuestions.push(q);
+                }
+            });
+
+            // Sort sub-questions by order
+            Object.keys(subQuestionsMap).forEach(parentId => {
+                subQuestionsMap[parentId].sort((a, b) => {
+                    const orderA = parseInt(a['Sub Question Order']) || 0;
+                    const orderB = parseInt(b['Sub Question Order']) || 0;
+                    return orderA - orderB;
+                });
+            });
+
+            // Attach sub-questions to their parent
+            const groupedQuestions = mainQuestions.map(q => ({
+                ...q,
+                subQuestions: subQuestionsMap[q.ID] || [],
+                hasSubQuestions: (subQuestionsMap[q.ID] || []).length > 0,
+                totalQuestions: 1 + (subQuestionsMap[q.ID] || []).length
+            }));
+
+            return groupedQuestions;
+        }
+
         // Question Cart - stores full question objects for exam creation
         let questionCart = new Map(); // Map of question id/displayId -> question object
 
@@ -3975,12 +4015,20 @@
                 return ''; // Sub-questions are rendered as part of parent
             }
 
+            // Calculate display number (1-based position in the list)
+            const displayNum = index + 1;
+
             // Render main question with optional sub-questions
             let html = `
-            <div class="question-item ${hasSubQuestions ? 'has-sub-questions' : ''}" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" style="background: ${isSelected ? '#e3f2fd' : '#f8f9fa'}; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid ${isSelected ? '#2196f3' : hasSubQuestions ? '#9c27b0' : 'var(--secondary)'}; position: relative; padding-right: 60px; padding-left: 50px; transition: all 0.2s;">
+            <div class="question-item ${hasSubQuestions ? 'has-sub-questions' : ''}" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" style="background: ${isSelected ? '#e3f2fd' : hasSubQuestions ? '#faf5ff' : '#f8f9fa'}; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 4px solid ${isSelected ? '#2196f3' : hasSubQuestions ? '#9c27b0' : 'var(--secondary)'}; position: relative; padding-right: 60px; padding-left: 60px; transition: all 0.2s;">
+                <!-- Question Number Badge -->
+                <div style="position: absolute; top: 15px; left: 15px; background: ${hasSubQuestions ? '#9c27b0' : 'var(--secondary)'}; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">
+                    ${displayNum}
+                </div>
+
                 <!-- Checkbox for selection -->
-                <div style="position: absolute; top: 15px; left: 15px;">
-                    <input type="checkbox" class="question-select-checkbox" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" data-has-sub-questions="${hasSubQuestions}" data-sub-question-count="${subQuestionCount}" style="width: 20px; height: 20px; cursor: pointer;" ${isSelected ? 'checked' : ''}>
+                <div style="position: absolute; top: 55px; left: 20px;">
+                    <input type="checkbox" class="question-select-checkbox" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" data-has-sub-questions="${hasSubQuestions}" data-sub-question-count="${subQuestionCount}" style="width: 18px; height: 18px; cursor: pointer;" ${isSelected ? 'checked' : ''}>
                 </div>
 
                 <!-- Action buttons in top right -->
@@ -3997,7 +4045,8 @@
                 </div>
 
                 <div style="margin-bottom: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
-                    <strong style="font-size: 1.1rem;">${q.ID}</strong>
+                    <strong style="font-size: 1rem; color: #666;">Q.${displayNum}</strong>
+                    <span style="color: #999; font-size: 0.8rem;">(${q.ID})</span>
                     <span class="question-tag" style="background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject || 'Unknown'}</span>
                     <span class="difficulty-tag" style="background: ${q.Difficulty === 'Easy' ? '#27ae60' : q.Difficulty === 'Medium' ? '#f39c12' : q.Difficulty === 'Hard' ? '#e74c3c' : '#95a5a6'}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Difficulty || 'Unknown'}</span>
                     ${hasSubQuestions ? `<span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📋 ${subQuestionCount} Sub-Q</span>` : ''}
@@ -4026,9 +4075,6 @@
 
             // Render sub-questions if any
             if (hasSubQuestions) {
-                // Extract parent question number for hierarchical display (e.g., Q0020 -> 20)
-                const parentNum = q.ID ? q.ID.replace(/[^0-9]/g, '').replace(/^0+/, '') || '0' : index + 1;
-
                 html += `
                 <div class="sub-questions-container" style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #9c27b0;">
                     <div style="color: #9c27b0; font-weight: 600; margin-bottom: 10px; font-size: 0.95rem;">
@@ -4037,16 +4083,21 @@
 
                 q.subQuestions.forEach((sq, sqIndex) => {
                     const subOrder = sq['Sub Question Order'] || sqIndex + 1;
-                    const hierarchicalNum = `${parentNum}.${subOrder}`;
+                    // Use display position number for hierarchical numbering (e.g., 12.1, 12.2)
+                    const hierarchicalNum = `${displayNum}.${subOrder}`;
                     html += `
-                    <div class="sub-question-item" style="background: #f3e5f5; border-radius: 8px; padding: 12px; margin-bottom: 10px; margin-left: 20px; border-left: 3px solid #9c27b0;">
-                        <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
-                            <strong style="font-size: 1.1rem; color: #7b1fa2;">Q.${hierarchicalNum}</strong>
+                    <div class="sub-question-item" style="background: #f3e5f5; border-radius: 8px; padding: 12px; margin-bottom: 10px; margin-left: 20px; border-left: 3px solid #9c27b0; position: relative; padding-left: 50px;">
+                        <!-- Sub-question number badge -->
+                        <div style="position: absolute; top: 12px; left: 12px; background: #9c27b0; color: white; padding: 4px 10px; border-radius: 15px; font-weight: bold; font-size: 0.85rem;">
+                            ${hierarchicalNum}
+                        </div>
+                        <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                             <span style="background: #ce93d8; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">${sq.Subject || q.Subject || 'Unknown'}</span>
                             <span style="background: #4caf50; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">+1 / -0.25</span>
+                            <span style="color: #999; font-size: 0.75rem;">(${sq.ID || ''})</span>
                         </div>
                         <p style="margin-bottom: 8px; font-weight: 500; font-size: 1rem;">${sq.Question || ''}</p>
-                        <div style="margin-left: 20px; font-size: 0.95rem;">
+                        <div style="margin-left: 15px; font-size: 0.95rem; background: white; padding: 10px; border-radius: 6px;">
                             <div style="margin: 4px 0;">A) ${sq['Option A'] || ''}</div>
                             <div style="margin: 4px 0;">B) ${sq['Option B'] || ''}</div>
                             <div style="margin: 4px 0;">C) ${sq['Option C'] || ''}</div>
@@ -4316,8 +4367,13 @@
                     return numB - numA;
                 });
 
-                // Also update the global questions array for exam creation
-                questions = allQuestions;
+                // Store original flat list for exam creation
+                questions = [...allQuestions];
+
+                // Group questions hierarchically for display
+                // This attaches sub-questions to their parent questions
+                allQuestions = groupQuestionsHierarchically(allQuestions);
+                console.log(`📋 Grouped ${questions.length} questions into ${allQuestions.length} display items`);
 
                 // Reset search and filter
                 document.getElementById('question-search-input').value = '';
