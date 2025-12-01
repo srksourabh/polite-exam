@@ -6966,16 +6966,43 @@
     
     <!-- Service Worker Registration -->
     <script>
-        // Register service worker for PWA functionality
+        // Register service worker for PWA functionality with update handling
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
-                        console.log('Service Worker registered successfully:', registration.scope);
-                    })
-                    .catch((error) => {
-                        console.log('Service Worker registration failed:', error);
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('Service Worker registered successfully:', registration.scope);
+
+                    // Check for updates immediately
+                    registration.update();
+
+                    // Check for updates periodically (every 5 minutes)
+                    setInterval(() => {
+                        registration.update();
+                        console.log('Checking for service worker updates...');
+                    }, 5 * 60 * 1000);
+
+                    // Handle updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        console.log('New service worker installing...');
+
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // New content is available, refresh automatically
+                                console.log('New version available, refreshing...');
+                                window.location.reload();
+                            }
+                        });
                     });
+
+                    // Handle controller change (when new SW takes over)
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        console.log('New service worker activated');
+                    });
+                } catch (error) {
+                    console.log('Service Worker registration failed:', error);
+                }
             });
         }
     </script>
