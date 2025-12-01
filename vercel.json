@@ -4,52 +4,5 @@
     "api/index.js": {
       "maxDuration": 60
     }
-  },
-  "builds": [
-    {
-      "src": "api/index.js",
-      "use": "@vercel/node",
-      "config": {
-        "maxLambdaSize": "10mb"
-      }
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "docs/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "icons/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "manifest.json",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "sw.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api-integration.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": ".well-known/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ]
+  }
 }
