@@ -250,17 +250,6 @@
             font-weight: bold;
             flex-shrink: 0;
         }
-        .option-radio {
-            width: 20px;
-            height: 20px;
-            margin-right: 12px;
-            cursor: pointer;
-            accent-color: var(--secondary);
-            flex-shrink: 0;
-        }
-        .option.selected .option-radio {
-            accent-color: var(--secondary);
-        }
         .navigation {
             display: flex;
             justify-content: space-between;
@@ -583,8 +572,7 @@
                 padding-left: 40px !important;
             }
             .question-item .delete-question-btn,
-            .question-item .edit-question-btn,
-            .question-item .add-to-cart-btn {
+            .question-item .edit-question-btn {
                 width: 30px !important;
                 height: 30px !important;
                 font-size: 0.85rem !important;
@@ -1255,7 +1243,7 @@
                 <button id="header-logout-btn" class="nav-btn logout-btn">Logout</button>
             </div>
             <div class="logo">POLITE COACHING CENTRE</div>
-            <div class="subtitle">Complete Exam Preparation for Banking, SSC, Railways & Government Jobs</div>
+            <div class="subtitle">Reasoning, Math & GK Tests for Job Aspirants</div>
         </header>
 
         <div class="content">
@@ -1263,7 +1251,7 @@
             <div id="hero-landing" class="screen active">
                 <div class="hero-section">
                     <h1 class="hero-title">🎓 Excel in Your Exams!</h1>
-                    <p class="hero-subtitle">Comprehensive preparation for Banking, SSC, Railways & Government Jobs</p>
+                    <p class="hero-subtitle">Master Reasoning, Math & General Knowledge for competitive exams</p>
                     <button id="start-exam-hero-btn" class="hero-cta">Let's Go! Take an Exam</button>
                     <div class="auth-buttons">
                         <button id="signin-btn" class="auth-btn">Sign In</button>
@@ -1286,8 +1274,8 @@
                         <input type="email" id="signup-email" placeholder="your@email.com" required>
                     </div>
                     <div class="form-group">
-                        <label for="signup-mobile">Mobile Number (Optional)</label>
-                        <input type="tel" id="signup-mobile" placeholder="10-digit mobile number">
+                        <label for="signup-mobile">Mobile Number *</label>
+                        <input type="tel" id="signup-mobile" placeholder="10-digit mobile number" required>
                     </div>
                     <div class="form-group">
                         <label for="signup-password">Password *</label>
@@ -1298,42 +1286,8 @@
                         <input type="password" id="signup-confirm-password" placeholder="Re-enter your password" required>
                     </div>
                     <button id="signup-submit-btn" class="success-btn">Create Account</button>
-                    <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 15px;">
-                        A verification link will be sent to your email
-                    </p>
                     <div class="form-link">
                         Already have an account? <a id="goto-signin-link">Sign In</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Email Verification Success Screen -->
-            <div id="verification-success-screen" class="screen">
-                <div class="auth-form" style="text-align: center;">
-                    <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
-                    <h2 class="form-title" style="color: var(--success);">Email Verified!</h2>
-                    <p style="color: #666; margin-bottom: 25px;">
-                        Your email has been verified successfully. You can now login to your account.
-                    </p>
-                    <button id="goto-signin-after-verify" class="success-btn">Go to Sign In</button>
-                </div>
-            </div>
-
-            <!-- Verification Pending Screen -->
-            <div id="verification-pending-screen" class="screen">
-                <div class="auth-form" style="text-align: center;">
-                    <div style="font-size: 4rem; margin-bottom: 20px;">📧</div>
-                    <h2 class="form-title">Check Your Email!</h2>
-                    <p style="color: #666; margin-bottom: 15px;">
-                        We've sent a verification link to:
-                    </p>
-                    <p style="font-weight: 600; color: var(--primary); margin-bottom: 25px;" id="pending-verification-email"></p>
-                    <p style="color: #666; margin-bottom: 25px;">
-                        Click the link in the email to verify your account. Once verified, you can login.
-                    </p>
-                    <button id="resend-verification-btn" class="success-btn" style="margin-bottom: 15px;">Resend Verification Email</button>
-                    <div class="form-link">
-                        <a id="goto-signin-from-pending">Already verified? Sign In</a>
                     </div>
                 </div>
             </div>
@@ -1391,32 +1345,7 @@
                 <div class="dashboard-header">
                     <a href="#" id="candidate-logout-link" class="logout-link">Logout</a>
                     <h2 class="dashboard-title">Welcome, <span id="dashboard-name"></span>!</h2>
-                </div>
-
-                <!-- Profile Section -->
-                <div class="profile-section" style="background: white; border-radius: 15px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
-                    <div style="display: flex; align-items: center; gap: 25px; flex-wrap: wrap;">
-                        <!-- Profile Image -->
-                        <div class="profile-image-container" style="position: relative;">
-                            <div id="profile-image-display" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--primary)); display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem; font-weight: bold; overflow: hidden;">
-                                <span id="profile-initials"></span>
-                            </div>
-                            <label for="profile-image-input" style="position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 0.9rem; border: 2px solid white;">
-                                📷
-                            </label>
-                            <input type="file" id="profile-image-input" accept="image/*" style="display: none;">
-                        </div>
-                        <!-- Profile Info -->
-                        <div style="flex: 1; min-width: 200px;">
-                            <div style="font-size: 1.3rem; font-weight: 600; color: var(--primary); margin-bottom: 5px;" id="profile-name-display"></div>
-                            <div style="color: #666; margin-bottom: 3px;"><span style="font-weight: 500;">Email:</span> <span id="dashboard-email"></span></div>
-                            <div style="color: #666;"><span style="font-weight: 500;">Mobile:</span> <span id="dashboard-mobile"></span> <a href="#" id="edit-mobile-link" style="color: var(--secondary); font-size: 0.85rem; margin-left: 5px;">Edit</a></div>
-                        </div>
-                        <!-- Edit Profile Button -->
-                        <div>
-                            <button id="edit-profile-btn" style="background: var(--secondary); color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 500; cursor: pointer;">Edit Profile</button>
-                        </div>
-                    </div>
+                    <p class="dashboard-info"><span id="dashboard-email"></span> | <span id="dashboard-mobile"></span></p>
                 </div>
 
                 <div class="stats-grid">
@@ -1430,9 +1359,8 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px;">
-                    <button id="take-exam-dashboard-btn" class="success-btn" style="flex: 1; min-width: 150px;">Take a New Exam</button>
-                    <button id="change-password-btn" style="flex: 1; min-width: 150px; background: var(--accent);">Change Password</button>
+                <div style="margin-bottom: 20px;">
+                    <button id="take-exam-dashboard-btn" class="success-btn">Take a New Exam</button>
                 </div>
 
                 <h3 style="color: var(--primary); margin-bottom: 20px;">Your Exam History</h3>
@@ -1441,59 +1369,6 @@
                         <div class="empty-state-icon">📝</div>
                         <p>No exams taken yet. Start your first exam!</p>
                     </div>
-                </div>
-            </div>
-
-            <!-- Edit Profile Modal -->
-            <div id="edit-profile-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-                <div class="modal-content" style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                        <h3 style="color: var(--primary); margin: 0;">Edit Profile</h3>
-                        <button id="close-profile-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
-                    </div>
-                    <div class="form-group">
-                        <label>Profile Image</label>
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div id="modal-profile-preview" style="width: 80px; height: 80px; border-radius: 50%; background: var(--secondary); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; overflow: hidden;"></div>
-                            <div>
-                                <label for="modal-profile-image" style="display: inline-block; background: var(--secondary); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Choose Image</label>
-                                <input type="file" id="modal-profile-image" accept="image/*" style="display: none;">
-                                <p style="font-size: 0.8rem; color: #999; margin-top: 5px;">Max size: 500KB</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-profile-name">Full Name</label>
-                        <input type="text" id="edit-profile-name" placeholder="Enter your full name">
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-profile-mobile">Mobile Number</label>
-                        <input type="tel" id="edit-profile-mobile" placeholder="10-digit mobile number">
-                    </div>
-                    <button id="save-profile-btn" class="success-btn">Save Changes</button>
-                </div>
-            </div>
-
-            <!-- Change Password Modal -->
-            <div id="change-password-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-                <div class="modal-content" style="background: white; border-radius: 15px; padding: 30px; max-width: 450px; width: 90%;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                        <h3 style="color: var(--primary); margin: 0;">Change Password</h3>
-                        <button id="close-password-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
-                    </div>
-                    <div class="form-group">
-                        <label for="current-password">Current Password *</label>
-                        <input type="password" id="current-password" placeholder="Enter current password">
-                    </div>
-                    <div class="form-group">
-                        <label for="new-password">New Password *</label>
-                        <input type="password" id="new-password" placeholder="Enter new password (min 6 characters)">
-                    </div>
-                    <div class="form-group">
-                        <label for="confirm-new-password">Confirm New Password *</label>
-                        <input type="password" id="confirm-new-password" placeholder="Re-enter new password">
-                    </div>
-                    <button id="save-password-btn" class="success-btn">Change Password</button>
                 </div>
             </div>
 
@@ -1557,63 +1432,14 @@
                 <div id="question-bank-section" class="hidden">
                     <h3 style="margin: 0 0 15px 0; color: var(--secondary);">Question Bank</h3>
 
-                    <!-- Stats Bar -->
-                    <div id="question-bank-stats" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
-                        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                            <span>📊 Total: <strong id="total-questions-count">0</strong></span>
-                            <span>✅ Selected: <strong id="selected-questions-count">0</strong></span>
-                            <span>📄 Showing: <strong id="showing-questions-count">0</strong></span>
-                            <span style="background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 12px;">🛒 Cart: <strong id="cart-questions-count">0</strong></span>
-                        </div>
-                        <div style="font-size: 0.85rem; opacity: 0.9;">
-                            Scroll down to load more questions
-                        </div>
-                    </div>
-
-                    <!-- Search and Filter Row -->
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-                        <input type="text" id="question-search-input" placeholder="🔍 Search questions..." style="flex: 1; min-width: 200px; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem;">
-                        <select id="question-filter-subject" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
-                            <option value="">All Subjects</option>
-                            <option value="Quantitative Aptitude">Quantitative Aptitude</option>
-                            <option value="Reasoning Ability">Reasoning Ability</option>
-                            <option value="English Language">English Language</option>
-                            <option value="General Awareness">General Awareness</option>
-                            <option value="Current Affairs">Current Affairs</option>
-                            <option value="Banking Awareness">Banking Awareness</option>
-                            <option value="Computer Knowledge">Computer Knowledge</option>
-                            <option value="Descriptive Writing">Descriptive Writing</option>
-                            <option value="Data Interpretation">Data Interpretation</option>
-                            <option value="Logical Reasoning">Logical Reasoning</option>
-                            <option value="Analytical Ability">Analytical Ability</option>
-                            <option value="Verbal Ability">Verbal Ability</option>
-                            <option value="Technical Subjects">Technical Subjects</option>
-                            <option value="Legal Reasoning">Legal Reasoning</option>
-                            <option value="Pedagogy">Pedagogy</option>
-                            <option value="Others">Others</option>
-                        </select>
-                        <select id="question-filter-difficulty" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
-                            <option value="">All Difficulty</option>
-                            <option value="Easy">Easy</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Hard">Hard</option>
-                        </select>
-                    </div>
-
                     <!-- Action Buttons Row -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px; background: #f8f9fa; border-radius: 8px; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
                         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                             <button id="select-all-questions-btn" style="background: #3498db; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
                                 ☑️ Select All
                             </button>
                             <button id="deselect-all-questions-btn" style="background: #95a5a6; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
                                 ☐ Deselect All
-                            </button>
-                            <button id="bulk-delete-questions-btn" style="background: #e74c3c; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
-                                🗑️ Delete Selected
-                            </button>
-                            <button id="sanitize-question-bank-btn" style="background: #9b59b6; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
-                                🧹 Sanitize (Remove Duplicates)
                             </button>
                             <button id="export-questions-btn" style="background: #27ae60; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
                                 📥 Export CSV
@@ -1631,36 +1457,14 @@
                             <button id="close-add-question-btn" style="background: #e74c3c; color: white; padding: 5px 12px; border-radius: 5px; border: none; cursor: pointer; font-size: 0.85rem;">✖ Close</button>
                         </div>
 
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <div class="form-group" style="flex: 1; min-width: 150px;">
-                                <label>Subject</label>
-                                <select id="question-subject">
-                                    <option value="Quantitative Aptitude">Quantitative Aptitude</option>
-                                    <option value="Reasoning Ability">Reasoning Ability</option>
-                                    <option value="English Language">English Language</option>
-                                    <option value="General Awareness">General Awareness</option>
-                                    <option value="Current Affairs">Current Affairs</option>
-                                    <option value="Banking Awareness">Banking Awareness</option>
-                                    <option value="Computer Knowledge">Computer Knowledge</option>
-                                    <option value="Descriptive Writing">Descriptive Writing</option>
-                                    <option value="Data Interpretation">Data Interpretation</option>
-                                    <option value="Logical Reasoning">Logical Reasoning</option>
-                                    <option value="Analytical Ability">Analytical Ability</option>
-                                    <option value="Verbal Ability">Verbal Ability</option>
-                                    <option value="Technical Subjects">Technical Subjects</option>
-                                    <option value="Legal Reasoning">Legal Reasoning</option>
-                                    <option value="Pedagogy">Pedagogy</option>
-                                    <option value="Others">Others</option>
-                                </select>
-                            </div>
-                            <div class="form-group" style="flex: 1; min-width: 150px;">
-                                <label>Difficulty</label>
-                                <select id="question-difficulty">
-                                    <option value="Easy">Easy</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="Hard">Hard</option>
-                                </select>
-                            </div>
+                        <div class="form-group">
+                            <label>Subject</label>
+                            <select id="question-subject">
+                                <option value="Math">Math</option>
+                                <option value="Reasoning">Reasoning</option>
+                                <option value="GK">GK</option>
+                                <option value="Others">Others</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>Question Text</label>
@@ -1699,12 +1503,8 @@
                     <!-- Existing Questions List -->
                     <div>
                         <h4 style="margin: 20px 0 15px; color: var(--secondary);">Existing Questions</h4>
-                        <div id="questions-list" style="max-height: 70vh; overflow-y: auto; padding-right: 5px;">
+                        <div id="questions-list">
                             <p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>
-                        </div>
-                        <div id="questions-loading-more" style="display: none; text-align: center; padding: 20px;">
-                            <div style="display: inline-block; width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid var(--secondary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                            <p style="margin-top: 10px; color: #7f8c8d;">Loading more questions...</p>
                         </div>
                     </div>
                 </div>
@@ -1729,51 +1529,19 @@
                         <input type="text" id="exam-expiry" placeholder="Select or enter date (dd-mm-yyyy)">
                     </div>
                     <div class="form-group">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
                             <label style="margin: 0; color: white; font-size: 1.1rem; font-weight: 600;">Select Questions for Exam</label>
-                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
                                 <div style="display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 8px;">
                                     <input type="number" id="random-count" min="1" value="5" placeholder="#" style="width: 60px; padding: 5px; border: none; border-radius: 5px; text-align: center; font-weight: 600;">
                                     <button id="random-select-btn" style="background: #f39c12; color: white; padding: 6px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">
                                         🎲 Random
                                     </button>
                                 </div>
-                                <button id="show-cart-btn" style="background: #27ae60; color: white; padding: 6px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
-                                    🛒 Cart (<span id="exam-cart-count">0</span>)
-                                </button>
                                 <div id="selected-count" style="background: white; color: #667eea; padding: 8px 20px; border-radius: 25px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2); min-width: 120px; text-align: center;">
                                     0 Selected
                                 </div>
                             </div>
-                        </div>
-                        <!-- Filter controls for exam question selector -->
-                        <div id="exam-question-filters" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-                            <input type="text" id="exam-question-search" placeholder="🔍 Search questions..." style="flex: 1; min-width: 180px; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem;">
-                            <select id="exam-question-filter-subject" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
-                                <option value="">All Subjects</option>
-                                <option value="Quantitative Aptitude">Quantitative Aptitude</option>
-                                <option value="Reasoning Ability">Reasoning Ability</option>
-                                <option value="English Language">English Language</option>
-                                <option value="General Awareness">General Awareness</option>
-                                <option value="Current Affairs">Current Affairs</option>
-                                <option value="Banking Awareness">Banking Awareness</option>
-                                <option value="Computer Knowledge">Computer Knowledge</option>
-                                <option value="Descriptive Writing">Descriptive Writing</option>
-                                <option value="Data Interpretation">Data Interpretation</option>
-                                <option value="Logical Reasoning">Logical Reasoning</option>
-                                <option value="Analytical Ability">Analytical Ability</option>
-                                <option value="Verbal Ability">Verbal Ability</option>
-                                <option value="Technical Subjects">Technical Subjects</option>
-                                <option value="Legal Reasoning">Legal Reasoning</option>
-                                <option value="Pedagogy">Pedagogy</option>
-                                <option value="Others">Others</option>
-                            </select>
-                            <select id="exam-question-filter-difficulty" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
-                                <option value="">All Difficulty</option>
-                                <option value="Easy">Easy</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Hard">Hard</option>
-                            </select>
                         </div>
                         <div id="exam-questions-list">
                             <p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>
@@ -1782,48 +1550,6 @@
                     <button id="create-exam-submit-btn">Create Exam</button>
                     <div class="error" id="exam-error"></div>
                     <div class="success" id="exam-success"></div>
-                </div>
-
-                <!-- Cart Modal -->
-                <div id="cart-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto;">
-                    <div style="background: white; margin: 30px auto; max-width: 800px; border-radius: 12px; padding: 25px; position: relative; max-height: 90vh; overflow-y: auto;">
-                        <button id="close-cart-modal-btn" style="position: absolute; top: 15px; right: 15px; background: var(--danger); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; z-index: 10;">✖ Close</button>
-
-                        <h3 style="color: var(--secondary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 1.5rem;">🛒</span> Question Cart
-                        </h3>
-
-                        <!-- Cart Stats Summary -->
-                        <div id="cart-stats-summary" style="margin-bottom: 20px;">
-                            <!-- Stats will be populated by JavaScript -->
-                        </div>
-
-                        <!-- Cart Action Buttons -->
-                        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-                            <button id="cart-select-all-btn" style="background: #3498db; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                                ☑️ Select All
-                            </button>
-                            <button id="cart-deselect-all-btn" style="background: #95a5a6; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                                ☐ Deselect All
-                            </button>
-                            <button id="cart-clear-btn" style="background: #e74c3c; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                                🗑️ Clear Cart
-                            </button>
-                        </div>
-
-                        <!-- Cart Questions List -->
-                        <div id="cart-questions-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                            <!-- Questions will be populated by JavaScript -->
-                        </div>
-
-                        <!-- Add to Exam Button -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 2px solid #e0e0e0;">
-                            <span id="cart-selected-info" style="color: #666; font-weight: 500;">0 questions selected</span>
-                            <button id="add-cart-to-exam-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                                ➕ Add Selected to Exam
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- View Results Section -->
@@ -1937,21 +1663,14 @@
                     <div class="form-group" style="margin-top: 20px;">
                         <label>Subject Category</label>
                         <select id="ai-subject">
-                            <option value="Quantitative Aptitude">Quantitative Aptitude</option>
-                            <option value="Reasoning Ability">Reasoning Ability</option>
-                            <option value="English Language">English Language</option>
-                            <option value="General Awareness">General Awareness</option>
-                            <option value="Current Affairs">Current Affairs</option>
-                            <option value="Banking Awareness">Banking Awareness</option>
-                            <option value="Computer Knowledge">Computer Knowledge</option>
-                            <option value="Descriptive Writing">Descriptive Writing</option>
-                            <option value="Data Interpretation">Data Interpretation</option>
-                            <option value="Logical Reasoning">Logical Reasoning</option>
-                            <option value="Analytical Ability">Analytical Ability</option>
-                            <option value="Verbal Ability">Verbal Ability</option>
-                            <option value="Technical Subjects">Technical Subjects</option>
-                            <option value="Legal Reasoning">Legal Reasoning</option>
-                            <option value="Pedagogy">Pedagogy</option>
+                            <option value="Math">Math</option>
+                            <option value="Reasoning">Reasoning</option>
+                            <option value="GK">General Knowledge (GK)</option>
+                            <option value="English">English</option>
+                            <option value="Science">Science</option>
+                            <option value="History">History</option>
+                            <option value="Geography">Geography</option>
+                            <option value="Computer">Computer & IT</option>
                             <option value="Others">Others</option>
                         </select>
                     </div>
@@ -2035,22 +1754,18 @@
                     
                     <div class="options">
                         <div class="option" data-index="0">
-                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-0">
                             <span class="option-letter">A</span>
                             <span id="option-a-display">Loading...</span>
                         </div>
                         <div class="option" data-index="1">
-                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-1">
                             <span class="option-letter">B</span>
                             <span id="option-b-display">Loading...</span>
                         </div>
                         <div class="option" data-index="2">
-                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-2">
                             <span class="option-letter">C</span>
                             <span id="option-c-display">Loading...</span>
                         </div>
                         <div class="option" data-index="3">
-                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-3">
                             <span class="option-letter">D</span>
                             <span id="option-d-display">Loading...</span>
                         </div>
@@ -2127,95 +1842,6 @@
         let extractedQuestions = [];
         let candidateDetailedAnswers = null; // Store candidate's detailed results for viewing
         let currentScreen = 'hero-landing'; // Track current screen for navigation
-
-        // ========== HIERARCHICAL QUESTION AUTO-DETECTION ==========
-        /**
-         * Auto-detects hierarchical question structures and creates parent-child relationships
-         * Patterns detected:
-         * - "Directions (Q1-5):" or "Passage:" followed by text and multiple questions
-         * - "Questions 1-3 refer to the following..."
-         * - Numbered question groups with shared context
-         */
-        function detectAndStructureHierarchicalQuestions(questions) {
-            const structured = [];
-            let i = 0;
-
-            while (i < questions.length) {
-                const currentQ = questions[i];
-                const questionText = currentQ.question || '';
-
-                // Check if this looks like a main question (passage, directions, scenario)
-                const mainQuestionPatterns = [
-                    /^(?:Directions?|Passage|Read the following|Comprehension|Data|Instructions?)[\s:]/i,
-                    /^(?:Questions?\s+\d+\s*[-to]+\s*\d+|Q\d+\s*[-to]+\s*Q?\d+)\s*(?:refer to|are based on|relate to)/i,
-                    /^(?:The following|Below is|Consider the)/i
-                ];
-
-                const isMainQuestion = mainQuestionPatterns.some(pattern => pattern.test(questionText));
-
-                if (isMainQuestion && i + 1 < questions.length) {
-                    // This is a main question - create parent with sub-questions
-                    const mainQuestionId = `MAIN_${Date.now()}_${i}`;
-                    
-                    // Extract question range if mentioned (e.g., "Q1-5" or "Questions 1 to 3")
-                    const rangeMatch = questionText.match(/(?:Q|Questions?)\s*(\d+)\s*[-to]+\s*(?:Q)?(\d+)/i);
-                    let expectedSubQuestions = rangeMatch ? parseInt(rangeMatch[2]) - parseInt(rangeMatch[1]) + 1 : 3;
-                    
-                    // Create main question
-                    const mainQuestion = {
-                        ...currentQ,
-                        id: mainQuestionId,
-                        questionType: 'Main Question',
-                        mainQuestionText: questionText,
-                        // Main questions typically don't have options themselves
-                        options: ['', '', '', ''],
-                        correct: -1
-                    };
-
-                    structured.push(mainQuestion);
-
-                    // Collect sub-questions (next few questions)
-                    let subQuestionCount = 0;
-                    let j = i + 1;
-
-                    while (j < questions.length && subQuestionCount < expectedSubQuestions && subQuestionCount < 10) {
-                        const subQ = questions[j];
-                        const subQuestionText = subQ.question || '';
-
-                        // Check if this is still a sub-question or a new main question
-                        const looksLikeNewMainQuestion = mainQuestionPatterns.some(pattern => pattern.test(subQuestionText));
-                        
-                        if (looksLikeNewMainQuestion) {
-                            break; // New main question starts
-                        }
-
-                        // Create sub-question
-                        structured.push({
-                            ...subQ,
-                            id: `${mainQuestionId}_SUB_${subQuestionCount + 1}`,
-                            questionType: 'Sub Question',
-                            parentQuestionId: mainQuestionId,
-                            subQuestionNumber: subQuestionCount + 1,
-                            mainQuestionText: questionText // Reference to parent text
-                        });
-
-                        subQuestionCount++;
-                        j++;
-                    }
-
-                    i = j; // Skip processed sub-questions
-                } else {
-                    // Standalone question
-                    structured.push({
-                        ...currentQ,
-                        questionType: 'Standalone'
-                    });
-                    i++;
-                }
-            }
-
-            return structured;
-        }
 
         // ========== EXAM SESSION TRACKING FOR RESUME FUNCTIONALITY ==========
         const EXAM_STATE_KEY = 'polite_exam_in_progress';
@@ -2314,7 +1940,7 @@
             const confirmResume = confirm(
                 `You have an ongoing exam: "${savedState.examTitle}"\n\n` +
                 `Time remaining: ${Math.floor(remainingSeconds / 60)} minutes ${remainingSeconds % 60} seconds\n` +
-                `Questions answered: ${savedState.userAnswers.filter(a => typeof a === 'number' && a >= 0 && a <= 3).length}/${savedState.questions.length}\n\n` +
+                `Questions answered: ${savedState.userAnswers.filter(a => a !== null).length}/${savedState.questions.length}\n\n` +
                 `Do you want to resume this exam?`
             );
 
@@ -2523,39 +2149,18 @@
         ];
 
         // Session Management
-        // Candidates use sessionStorage (auto-logout on browser close)
-        // Admins use localStorage (persist across sessions)
-        // Exam progress stays in localStorage (allows resume after re-login)
         function saveSession(userType, userData) {
-            if (userType === 'candidate') {
-                // Use sessionStorage for candidates - clears when browser closes
-                sessionStorage.setItem('userType', userType);
-                sessionStorage.setItem('userData', JSON.stringify(userData));
-            } else {
-                // Use localStorage for admin - persists across sessions
-                localStorage.setItem('userType', userType);
-                localStorage.setItem('userData', JSON.stringify(userData));
-            }
+            localStorage.setItem('userType', userType);
+            localStorage.setItem('userData', JSON.stringify(userData));
         }
 
         function getSession() {
-            // Check sessionStorage first (for candidates)
-            let userType = sessionStorage.getItem('userType');
-            let userData = sessionStorage.getItem('userData');
-
-            // If not in sessionStorage, check localStorage (for admin)
-            if (!userType || !userData) {
-                userType = localStorage.getItem('userType');
-                userData = localStorage.getItem('userData');
-            }
-
+            const userType = localStorage.getItem('userType');
+            const userData = localStorage.getItem('userData');
             return userType && userData ? { userType, userData: JSON.parse(userData) } : null;
         }
 
         function clearSession() {
-            // Clear both storage types to ensure complete logout
-            sessionStorage.removeItem('userType');
-            sessionStorage.removeItem('userData');
             localStorage.removeItem('userType');
             localStorage.removeItem('userData');
         }
@@ -2772,55 +2377,6 @@
             // Initialize header navigation first
             updateHeaderNav('hero-landing');
 
-            // Check for email verification token in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const verifyToken = urlParams.get('verify');
-
-            if (verifyToken) {
-                // Remove the query parameter from URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-
-                // Verify the email
-                (async function() {
-                    try {
-                        const result = await window.PoliteCCAPI.verifyEmail(verifyToken);
-                        if (result && result.success) {
-                            // Show verification success screen
-                            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                            document.getElementById('verification-success-screen').classList.add('active');
-                        }
-                    } catch (error) {
-                        console.error('Verification error:', error);
-                        window.PoliteCCAPI.showNotification('Verification failed. Please try again.', 'error');
-                    }
-                })();
-            }
-
-            // Verification success - go to signin handler
-            document.getElementById('goto-signin-after-verify').addEventListener('click', function() {
-                document.getElementById('verification-success-screen').classList.remove('active');
-                document.getElementById('candidate-signin-screen').classList.add('active');
-            });
-
-            // Verification pending - resend verification handler
-            document.getElementById('resend-verification-btn').addEventListener('click', async function() {
-                const email = document.getElementById('pending-verification-email').textContent;
-                if (email) {
-                    this.disabled = true;
-                    this.textContent = 'Sending...';
-                    await window.PoliteCCAPI.resendVerification(email);
-                    this.disabled = false;
-                    this.textContent = 'Resend Verification Email';
-                }
-            });
-
-            // Verification pending - go to signin handler
-            document.getElementById('goto-signin-from-pending').addEventListener('click', function(e) {
-                e.preventDefault();
-                document.getElementById('verification-pending-screen').classList.remove('active');
-                document.getElementById('candidate-signin-screen').classList.add('active');
-            });
-
             // Header Back Button Handler
             document.getElementById('header-back-btn').addEventListener('click', function() {
                 const currentScreenId = currentScreen;
@@ -2832,9 +2388,7 @@
                     'forgot-password-screen': 'candidate-signin-screen',
                     'candidate-login-screen': 'candidate-dashboard',
                     'exam-screen': 'candidate-login-screen',
-                    'result-screen': 'candidate-dashboard',
-                    'verification-pending-screen': 'candidate-signin-screen',
-                    'verification-success-screen': 'candidate-signin-screen'
+                    'result-screen': 'candidate-dashboard'
                 };
 
                 const targetScreen = backMap[currentScreenId] || 'hero-landing';
@@ -2966,14 +2520,13 @@
                 const password = document.getElementById('signup-password').value;
                 const confirmPassword = document.getElementById('signup-confirm-password').value;
 
-                // Validation - mobile is now optional
-                if (!name || !email || !password || !confirmPassword) {
-                    window.PoliteCCAPI.showNotification('Please fill all required fields', 'error');
+                // Validation
+                if (!name || !email || !mobile || !password || !confirmPassword) {
+                    window.PoliteCCAPI.showNotification('Please fill all fields', 'error');
                     return;
                 }
 
-                // Validate mobile only if provided
-                if (mobile && (mobile.length !== 10 || isNaN(mobile))) {
+                if (mobile.length !== 10 || isNaN(mobile)) {
                     window.PoliteCCAPI.showNotification('Please enter a valid 10-digit mobile number', 'error');
                     return;
                 }
@@ -2999,10 +2552,9 @@
                     document.getElementById('signup-password').value = '';
                     document.getElementById('signup-confirm-password').value = '';
 
-                    // Show verification pending screen
-                    document.getElementById('pending-verification-email').textContent = email;
+                    // Navigate to signin
                     document.getElementById('candidate-signup-screen').classList.remove('active');
-                    document.getElementById('verification-pending-screen').classList.add('active');
+                    document.getElementById('candidate-signin-screen').classList.add('active');
                 }
             } catch (error) {
                 console.error('❌ Event handler error:', error);
@@ -3023,19 +2575,9 @@
                     return;
                 }
 
-                // Call API directly to check for verification requirement
-                const response = await fetch(`${window.PoliteCCAPI ? (window.location.hostname === 'polite-exam.vercel.app' ? '/api' : 'https://polite-exam.vercel.app/api') : '/api'}/auth/candidate/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+                const result = await window.PoliteCCAPI.candidateLogin(email, password);
 
-                const data = await response.json();
-
-                if (data.success) {
-                    // Login successful
-                    const result = data.data;
-
+                if (result) {
                     // Save session
                     saveSession('candidate', result);
 
@@ -3045,19 +2587,6 @@
 
                     // Show dashboard
                     showCandidateDashboard(result);
-                    window.PoliteCCAPI.showNotification('Welcome back!', 'success');
-
-                    // Check for any saved exam progress to resume
-                    checkAndResumeExam();
-                } else if (data.requiresVerification) {
-                    // Account not verified - show verification pending screen
-                    document.getElementById('pending-verification-email').textContent = email;
-                    document.getElementById('candidate-signin-screen').classList.remove('active');
-                    document.getElementById('verification-pending-screen').classList.add('active');
-                    window.PoliteCCAPI.showNotification('Please verify your email first', 'info');
-                } else {
-                    // Other error
-                    window.PoliteCCAPI.showNotification(data.error || 'Invalid email or password', 'error');
                 }
             } catch (error) {
                 console.error('❌ Event handler error:', error);
@@ -3087,7 +2616,7 @@
                 // Disable button while processing
                 const btn = document.getElementById('reset-password-btn');
                 btn.disabled = true;
-                btn.textContent = 'Sending...';
+                btn.textContent = 'Resetting...';
 
                 const result = await window.PoliteCCAPI.resetPassword(email);
 
@@ -3096,41 +2625,15 @@
                 btn.textContent = 'Reset Password';
 
                 if (result) {
-                    // Check if temp password is returned (dev mode only)
-                    if (result.tempPassword) {
-                        // Dev mode - show the temporary password
-                        document.getElementById('new-temp-password').textContent = result.tempPassword;
-                        document.getElementById('reset-result').style.display = 'block';
-                    } else {
-                        // Production mode - password sent via email
-                        document.getElementById('reset-result').innerHTML = `
-                            <p style="font-weight: 600; color: #27ae60; margin-bottom: 10px;">✅ Password Reset Successful!</p>
-                            <p style="color: #666; margin-bottom: 10px;">A new temporary password has been sent to:</p>
-                            <div style="background: white; padding: 15px; border-radius: 8px; font-weight: 600; color: #2c3e50; text-align: center;">${email}</div>
-                            <p style="color: #666; margin-top: 15px; font-size: 0.9rem;">
-                                Please check your email and use the temporary password to sign in. We recommend changing it after logging in.
-                            </p>
-                            <button id="goto-signin-after-reset" style="margin-top: 15px; background: var(--success);">Go to Sign In</button>
-                        `;
-                        document.getElementById('reset-result').style.display = 'block';
-
-                        // Re-attach event handler for the new button
-                        document.getElementById('goto-signin-after-reset').addEventListener('click', function() {
-                            document.getElementById('forgot-password-screen').classList.remove('active');
-                            document.getElementById('candidate-signin-screen').classList.add('active');
-                            // Reset the forgot password form
-                            document.getElementById('forgot-email').value = '';
-                            document.getElementById('forgot-email').style.display = 'block';
-                            document.getElementById('reset-password-btn').style.display = 'block';
-                            document.getElementById('reset-result').style.display = 'none';
-                        });
-                    }
+                    // Show the temporary password
+                    document.getElementById('new-temp-password').textContent = result.tempPassword;
+                    document.getElementById('reset-result').style.display = 'block';
 
                     // Hide the form elements
                     document.getElementById('forgot-email').style.display = 'none';
                     btn.style.display = 'none';
 
-                    window.PoliteCCAPI.showNotification('✅ Password reset successful! Check your email.', 'success');
+                    window.PoliteCCAPI.showNotification('✅ Password reset successful!', 'success');
                 }
             } catch (error) {
                 console.error('❌ Event handler error:', error);
@@ -3140,10 +2643,6 @@
             }
         });
 
-        // Store current user data globally for profile operations
-        let currentUserData = null;
-        let pendingProfileImage = null;
-
         // Show Candidate Dashboard
         async function showCandidateDashboard(userData) {
             document.getElementById('candidate-signin-screen').classList.remove('active');
@@ -3151,24 +2650,10 @@
             document.getElementById('candidate-dashboard').classList.add('active');
             updateHeaderNav('candidate-dashboard');
 
-            // Store user data
-            currentUserData = userData;
-
             // Populate dashboard
             document.getElementById('dashboard-name').textContent = userData.name;
             document.getElementById('dashboard-email').textContent = userData.email;
-            document.getElementById('dashboard-mobile').textContent = userData.mobile || 'Not set';
-            document.getElementById('profile-name-display').textContent = userData.name;
-
-            // Set profile initials
-            const initials = userData.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-            document.getElementById('profile-initials').textContent = initials;
-
-            // Load profile image if exists
-            if (userData.profileImage) {
-                const imgContainer = document.getElementById('profile-image-display');
-                imgContainer.innerHTML = `<img src="${userData.profileImage}" style="width: 100%; height: 100%; object-fit: cover;">`;
-            }
+            document.getElementById('dashboard-mobile').textContent = userData.mobile;
 
             // Load exam history
             const examHistory = await window.PoliteCCAPI.getCandidateExamHistory(userData.email);
@@ -3339,241 +2824,10 @@
                     examTimer = null;
                 }
                 clearSession();
-                currentUserData = null;
                 document.getElementById('candidate-dashboard').classList.remove('active');
                 document.getElementById('hero-landing').classList.add('active');
                 updateHeaderNav('hero-landing');
                 window.PoliteCCAPI.showNotification('Logged out successfully', 'success');
-            }
-        });
-
-        // =====================================================
-        // PROFILE EDITING HANDLERS
-        // =====================================================
-
-        // Open edit profile modal
-        document.getElementById('edit-profile-btn').addEventListener('click', function() {
-            if (!currentUserData) return;
-
-            // Populate form with current data
-            document.getElementById('edit-profile-name').value = currentUserData.name || '';
-            document.getElementById('edit-profile-mobile').value = currentUserData.mobile || '';
-
-            // Show current profile image or initials
-            const preview = document.getElementById('modal-profile-preview');
-            if (currentUserData.profileImage) {
-                preview.innerHTML = `<img src="${currentUserData.profileImage}" style="width: 100%; height: 100%; object-fit: cover;">`;
-            } else {
-                const initials = currentUserData.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                preview.innerHTML = initials;
-            }
-
-            pendingProfileImage = null;
-            document.getElementById('edit-profile-modal').style.display = 'flex';
-        });
-
-        // Edit mobile link
-        document.getElementById('edit-mobile-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('edit-profile-btn').click();
-        });
-
-        // Close profile modal
-        document.getElementById('close-profile-modal').addEventListener('click', function() {
-            document.getElementById('edit-profile-modal').style.display = 'none';
-            pendingProfileImage = null;
-        });
-
-        // Handle profile image selection in modal
-        document.getElementById('modal-profile-image').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            // Check file size (max 500KB)
-            if (file.size > 500 * 1024) {
-                window.PoliteCCAPI.showNotification('Image too large. Maximum size is 500KB.', 'error');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                pendingProfileImage = event.target.result;
-                document.getElementById('modal-profile-preview').innerHTML =
-                    `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
-            };
-            reader.readAsDataURL(file);
-        });
-
-        // Quick profile image upload from dashboard
-        document.getElementById('profile-image-input').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file || !currentUserData) return;
-
-            if (file.size > 500 * 1024) {
-                window.PoliteCCAPI.showNotification('Image too large. Maximum size is 500KB.', 'error');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = async function(event) {
-                const result = await window.PoliteCCAPI.updateCandidateProfile({
-                    email: currentUserData.email,
-                    profileImage: event.target.result
-                });
-
-                if (result) {
-                    currentUserData.profileImage = event.target.result;
-                    document.getElementById('profile-image-display').innerHTML =
-                        `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-
-        // Save profile changes
-        document.getElementById('save-profile-btn').addEventListener('click', async function() {
-            if (!currentUserData) return;
-
-            const name = document.getElementById('edit-profile-name').value.trim();
-            const mobile = document.getElementById('edit-profile-mobile').value.trim();
-
-            // Validation
-            if (name && (name.length < 2 || name.length > 100)) {
-                window.PoliteCCAPI.showNotification('Name must be between 2 and 100 characters', 'error');
-                return;
-            }
-
-            if (mobile && (mobile.length !== 10 || isNaN(mobile))) {
-                window.PoliteCCAPI.showNotification('Please enter a valid 10-digit mobile number', 'error');
-                return;
-            }
-
-            const btn = this;
-            btn.disabled = true;
-            btn.textContent = 'Saving...';
-
-            const updateData = {
-                email: currentUserData.email
-            };
-            if (name) updateData.name = name;
-            if (mobile !== undefined) updateData.mobile = mobile;
-            if (pendingProfileImage) updateData.profileImage = pendingProfileImage;
-
-            const result = await window.PoliteCCAPI.updateCandidateProfile(updateData);
-
-            btn.disabled = false;
-            btn.textContent = 'Save Changes';
-
-            if (result) {
-                // Update local data
-                if (name) {
-                    currentUserData.name = name;
-                    document.getElementById('dashboard-name').textContent = name;
-                    document.getElementById('profile-name-display').textContent = name;
-                    const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                    if (!currentUserData.profileImage && !pendingProfileImage) {
-                        document.getElementById('profile-initials').textContent = initials;
-                    }
-                }
-                if (mobile !== undefined) {
-                    currentUserData.mobile = mobile;
-                    document.getElementById('dashboard-mobile').textContent = mobile || 'Not set';
-                }
-                if (pendingProfileImage) {
-                    currentUserData.profileImage = pendingProfileImage;
-                    document.getElementById('profile-image-display').innerHTML =
-                        `<img src="${pendingProfileImage}" style="width: 100%; height: 100%; object-fit: cover;">`;
-                }
-
-                // Update session
-                saveSession('candidate', currentUserData);
-
-                // Close modal
-                document.getElementById('edit-profile-modal').style.display = 'none';
-                pendingProfileImage = null;
-            }
-        });
-
-        // =====================================================
-        // CHANGE PASSWORD HANDLERS
-        // =====================================================
-
-        // Open change password modal
-        document.getElementById('change-password-btn').addEventListener('click', function() {
-            // Clear form
-            document.getElementById('current-password').value = '';
-            document.getElementById('new-password').value = '';
-            document.getElementById('confirm-new-password').value = '';
-            document.getElementById('change-password-modal').style.display = 'flex';
-        });
-
-        // Close password modal
-        document.getElementById('close-password-modal').addEventListener('click', function() {
-            document.getElementById('change-password-modal').style.display = 'none';
-        });
-
-        // Save new password
-        document.getElementById('save-password-btn').addEventListener('click', async function() {
-            if (!currentUserData) return;
-
-            const currentPassword = document.getElementById('current-password').value;
-            const newPassword = document.getElementById('new-password').value;
-            const confirmPassword = document.getElementById('confirm-new-password').value;
-
-            // Validation
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                window.PoliteCCAPI.showNotification('Please fill all fields', 'error');
-                return;
-            }
-
-            if (newPassword.length < 6) {
-                window.PoliteCCAPI.showNotification('New password must be at least 6 characters', 'error');
-                return;
-            }
-
-            if (newPassword !== confirmPassword) {
-                window.PoliteCCAPI.showNotification('New passwords do not match', 'error');
-                return;
-            }
-
-            if (currentPassword === newPassword) {
-                window.PoliteCCAPI.showNotification('New password must be different from current password', 'error');
-                return;
-            }
-
-            const btn = this;
-            btn.disabled = true;
-            btn.textContent = 'Changing...';
-
-            const result = await window.PoliteCCAPI.changePassword(
-                currentUserData.email,
-                currentPassword,
-                newPassword
-            );
-
-            btn.disabled = false;
-            btn.textContent = 'Change Password';
-
-            if (result) {
-                // Clear form and close modal
-                document.getElementById('current-password').value = '';
-                document.getElementById('new-password').value = '';
-                document.getElementById('confirm-new-password').value = '';
-                document.getElementById('change-password-modal').style.display = 'none';
-            }
-        });
-
-        // Close modals on overlay click
-        document.getElementById('edit-profile-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.style.display = 'none';
-                pendingProfileImage = null;
-            }
-        });
-
-        document.getElementById('change-password-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.style.display = 'none';
             }
         });
 
@@ -3671,388 +2925,6 @@
         }
 
         // Show question bank
-        // Question Bank State Management
-        let allQuestions = []; // Full question bank from database
-        let filteredQuestions = []; // Questions after search/filter
-        let displayedQuestionsCount = 0; // How many are currently displayed
-        let selectedQuestionIds = new Set(); // Track selected questions by their database ID
-        const QUESTIONS_PER_PAGE = 100;
-        let isLoadingMoreQuestions = false;
-
-        // Question Cart - stores full question objects for exam creation
-        let questionCart = new Map(); // Map of question id/displayId -> question object
-
-        // Function to update question bank stats
-        function updateQuestionBankStats() {
-            document.getElementById('total-questions-count').textContent = allQuestions.length;
-            document.getElementById('selected-questions-count').textContent = selectedQuestionIds.size;
-            document.getElementById('showing-questions-count').textContent = Math.min(displayedQuestionsCount, filteredQuestions.length);
-            document.getElementById('cart-questions-count').textContent = questionCart.size;
-            // Also update exam cart count if it exists
-            const examCartCount = document.getElementById('exam-cart-count');
-            if (examCartCount) {
-                examCartCount.textContent = questionCart.size;
-            }
-        }
-
-        // Function to add question to cart
-        function addToCart(question) {
-            const key = question.id || question.ID;
-            if (!questionCart.has(key)) {
-                questionCart.set(key, question);
-                updateQuestionBankStats();
-                return true;
-            }
-            return false;
-        }
-
-        // Function to remove question from cart
-        function removeFromCart(questionId) {
-            if (questionCart.has(questionId)) {
-                questionCart.delete(questionId);
-                updateQuestionBankStats();
-                return true;
-            }
-            return false;
-        }
-
-        // Function to toggle cart item
-        function toggleCartItem(question) {
-            const key = question.id || question.ID;
-            if (questionCart.has(key)) {
-                questionCart.delete(key);
-                updateQuestionBankStats();
-                return false; // removed
-            } else {
-                questionCart.set(key, question);
-                updateQuestionBankStats();
-                return true; // added
-            }
-        }
-
-        // Function to clear cart
-        function clearCart() {
-            questionCart.clear();
-            updateQuestionBankStats();
-        }
-
-        // Function to get cart statistics
-        function getCartStats() {
-            const stats = {
-                total: questionCart.size,
-                subjects: {},
-                difficulties: { Easy: 0, Medium: 0, Hard: 0 }
-            };
-
-            questionCart.forEach((q) => {
-                // Count by subject
-                const subject = q.Subject || 'Unknown';
-                if (!stats.subjects[subject]) {
-                    stats.subjects[subject] = { total: 0, Easy: 0, Medium: 0, Hard: 0 };
-                }
-                stats.subjects[subject].total++;
-
-                // Count by difficulty
-                const difficulty = q.Difficulty || 'Unknown';
-                if (stats.difficulties[difficulty] !== undefined) {
-                    stats.difficulties[difficulty]++;
-                    stats.subjects[subject][difficulty]++;
-                }
-            });
-
-            return stats;
-        }
-
-        // Function to render a single question item (supports grouped questions with sub-questions)
-        function renderQuestionItem(q, index) {
-            const isSelected = selectedQuestionIds.has(q.id || q.ID);
-            const isSubQuestion = q['Is Sub Question'] === true || q['Is Sub Question'] === 'true';
-            const parentQuestionId = q['Parent Question ID'];
-            const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
-            const subQuestionCount = q.subQuestions ? q.subQuestions.length : 0;
-
-            // Skip rendering sub-questions individually (they will be rendered with their parent)
-            if (isSubQuestion && parentQuestionId) {
-                return ''; // Sub-questions are rendered as part of parent
-            }
-
-            // Render main question with optional sub-questions
-            let html = `
-            <div class="question-item ${hasSubQuestions ? 'has-sub-questions' : ''}" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" style="background: ${isSelected ? '#e3f2fd' : '#f8f9fa'}; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid ${isSelected ? '#2196f3' : hasSubQuestions ? '#9c27b0' : 'var(--secondary)'}; position: relative; padding-right: 60px; padding-left: 50px; transition: all 0.2s;">
-                <!-- Checkbox for selection -->
-                <div style="position: absolute; top: 15px; left: 15px;">
-                    <input type="checkbox" class="question-select-checkbox" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" data-has-sub-questions="${hasSubQuestions}" data-sub-question-count="${subQuestionCount}" style="width: 20px; height: 20px; cursor: pointer;" ${isSelected ? 'checked' : ''}>
-                </div>
-
-                <!-- Action buttons in top right -->
-                <div style="position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 5px;">
-                    <button class="delete-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Delete Question" style="background: var(--danger); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                        🗑️
-                    </button>
-                    <button class="edit-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Edit Question" style="background: var(--primary); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                        ✏️
-                    </button>
-                    <button class="add-to-cart-btn" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" title="${hasSubQuestions ? 'Add Group to Cart' : 'Add to Cart'}" style="background: ${questionCart.has(q.id || q.ID) ? '#27ae60' : '#f39c12'}; color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                        ${questionCart.has(q.id || q.ID) ? '✓' : '🛒'}
-                    </button>
-                </div>
-
-                <div style="margin-bottom: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
-                    <strong style="font-size: 1.1rem;">${q.ID}</strong>
-                    <span class="question-tag" style="background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject || 'Unknown'}</span>
-                    <span class="difficulty-tag" style="background: ${q.Difficulty === 'Easy' ? '#27ae60' : q.Difficulty === 'Medium' ? '#f39c12' : q.Difficulty === 'Hard' ? '#e74c3c' : '#95a5a6'}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Difficulty || 'Unknown'}</span>
-                    ${hasSubQuestions ? `<span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📋 ${subQuestionCount} Sub-Q</span>` : ''}
-                </div>
-                <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question || ''}</p>
-                <div style="margin-left: 25px; margin-bottom: 8px;">
-                    <div style="margin: 5px 0;">A) ${q['Option A'] || ''}</div>
-                    <div style="margin: 5px 0;">B) ${q['Option B'] || ''}</div>
-                    <div style="margin: 5px 0;">C) ${q['Option C'] || ''}</div>
-                    <div style="margin: 5px 0;">D) ${q['Option D'] || ''}</div>
-                </div>
-                <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 8px; border-radius: 6px; display: inline-block;">
-                    ✅ Correct Answer: ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}
-                </div>`;
-
-            // Render sub-questions if any
-            if (hasSubQuestions) {
-                html += `
-                <div class="sub-questions-container" style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #9c27b0;">
-                    <div style="color: #9c27b0; font-weight: 600; margin-bottom: 10px; font-size: 0.95rem;">
-                        📋 Sub-Questions (${subQuestionCount}) - Selected together with main question:
-                    </div>`;
-
-                q.subQuestions.forEach((sq, sqIndex) => {
-                    html += `
-                    <div class="sub-question-item" style="background: #f3e5f5; border-radius: 8px; padding: 12px; margin-bottom: 10px; margin-left: 20px; border-left: 3px solid #9c27b0;">
-                        <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
-                            <strong style="font-size: 0.95rem;">${sq.ID || `Sub-Q ${sqIndex + 1}`}</strong>
-                            <span style="background: #ce93d8; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">Sub-Question ${sq['Sub Question Order'] || sqIndex + 1}</span>
-                        </div>
-                        <p style="margin-bottom: 8px; font-weight: 500; font-size: 1rem;">${sq.Question || ''}</p>
-                        <div style="margin-left: 20px; font-size: 0.95rem;">
-                            <div style="margin: 4px 0;">A) ${sq['Option A'] || ''}</div>
-                            <div style="margin: 4px 0;">B) ${sq['Option B'] || ''}</div>
-                            <div style="margin: 4px 0;">C) ${sq['Option C'] || ''}</div>
-                            <div style="margin: 4px 0;">D) ${sq['Option D'] || ''}</div>
-                        </div>
-                        <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 6px; border-radius: 4px; display: inline-block; font-size: 0.9rem; margin-top: 6px;">
-                            ✅ Correct: ${(sq.Correct || sq['Correct Answer'] || '').toString().toUpperCase()}
-                        </div>
-                    </div>`;
-                });
-
-                html += `</div>`;
-            }
-
-            html += `</div>`;
-            return html;
-        }
-
-        // Function to apply search and filter
-        function applySearchAndFilter() {
-            const searchTerm = document.getElementById('question-search-input').value.toLowerCase().trim();
-            const subjectFilter = document.getElementById('question-filter-subject').value;
-            const difficultyFilter = document.getElementById('question-filter-difficulty').value;
-
-            filteredQuestions = allQuestions.filter(q => {
-                const matchesSearch = !searchTerm ||
-                    (q.Question && q.Question.toLowerCase().includes(searchTerm)) ||
-                    (q.ID && q.ID.toLowerCase().includes(searchTerm)) ||
-                    (q['Option A'] && q['Option A'].toLowerCase().includes(searchTerm)) ||
-                    (q['Option B'] && q['Option B'].toLowerCase().includes(searchTerm)) ||
-                    (q['Option C'] && q['Option C'].toLowerCase().includes(searchTerm)) ||
-                    (q['Option D'] && q['Option D'].toLowerCase().includes(searchTerm));
-
-                const matchesSubject = !subjectFilter || q.Subject === subjectFilter;
-                const matchesDifficulty = !difficultyFilter || q.Difficulty === difficultyFilter;
-
-                return matchesSearch && matchesSubject && matchesDifficulty;
-            });
-
-            displayedQuestionsCount = 0;
-            document.getElementById('questions-list').innerHTML = '';
-            loadMoreQuestions();
-        }
-
-        // Function to load more questions (pagination)
-        function loadMoreQuestions() {
-            if (isLoadingMoreQuestions) return;
-            if (displayedQuestionsCount >= filteredQuestions.length) return;
-
-            isLoadingMoreQuestions = true;
-            document.getElementById('questions-loading-more').style.display = 'block';
-
-            // Simulate small delay for UX (can be removed for instant loading)
-            setTimeout(() => {
-                const questionsList = document.getElementById('questions-list');
-                const startIndex = displayedQuestionsCount;
-                const endIndex = Math.min(startIndex + QUESTIONS_PER_PAGE, filteredQuestions.length);
-
-                let html = '';
-                for (let i = startIndex; i < endIndex; i++) {
-                    html += renderQuestionItem(filteredQuestions[i], i);
-                }
-
-                questionsList.insertAdjacentHTML('beforeend', html);
-                displayedQuestionsCount = endIndex;
-
-                // Attach event listeners to new elements
-                attachQuestionEventListeners(startIndex, endIndex);
-
-                document.getElementById('questions-loading-more').style.display = 'none';
-                isLoadingMoreQuestions = false;
-                updateQuestionBankStats();
-            }, 100);
-        }
-
-        // Function to attach event listeners to question items
-        function attachQuestionEventListeners(startIndex, endIndex) {
-            // Checkbox change listeners
-            document.querySelectorAll('.question-select-checkbox').forEach(cb => {
-                if (!cb.hasAttribute('data-listener-attached')) {
-                    cb.setAttribute('data-listener-attached', 'true');
-                    cb.addEventListener('change', function() {
-                        const questionId = this.getAttribute('data-question-id') || this.getAttribute('data-question-display-id');
-                        const questionItem = this.closest('.question-item');
-
-                        if (this.checked) {
-                            selectedQuestionIds.add(questionId);
-                            if (questionItem) {
-                                questionItem.style.background = '#e3f2fd';
-                                questionItem.style.borderLeftColor = '#2196f3';
-                            }
-                        } else {
-                            selectedQuestionIds.delete(questionId);
-                            if (questionItem) {
-                                questionItem.style.background = '#f8f9fa';
-                                questionItem.style.borderLeftColor = 'var(--secondary)';
-                            }
-                        }
-                        updateQuestionBankStats();
-                    });
-                }
-            });
-
-            // Delete button listeners
-            document.querySelectorAll('.delete-question-btn').forEach(btn => {
-                if (!btn.hasAttribute('data-listener-attached')) {
-                    btn.setAttribute('data-listener-attached', 'true');
-                    btn.addEventListener('click', async function(e) {
-                        try {
-                            e.stopPropagation();
-                            const questionId = this.getAttribute('data-question-id');
-                            const index = parseInt(this.getAttribute('data-index'));
-
-                            if (confirm('Are you sure you want to delete this question?')) {
-                                if (questionId && window.PoliteCCAPI && window.PoliteCCAPI.deleteQuestionFromDatabase) {
-                                    const success = await window.PoliteCCAPI.deleteQuestionFromDatabase(questionId);
-                                    if (success) {
-                                        // Remove from arrays
-                                        const q = filteredQuestions[index];
-                                        allQuestions = allQuestions.filter(aq => aq.id !== questionId);
-                                        selectedQuestionIds.delete(questionId);
-                                        // Refresh display
-                                        applySearchAndFilter();
-                                    }
-                                } else {
-                                    // Remove from local array only
-                                    allQuestions.splice(index, 1);
-                                    applySearchAndFilter();
-                                }
-                            }
-                        } catch (error) {
-                            console.error('❌ Delete error:', error);
-                            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                                window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
-                            }
-                        }
-                    });
-                }
-            });
-
-            // Edit button listeners
-            document.querySelectorAll('.edit-question-btn').forEach(btn => {
-                if (!btn.hasAttribute('data-listener-attached')) {
-                    btn.setAttribute('data-listener-attached', 'true');
-                    btn.addEventListener('click', function(e) {
-                        try {
-                            e.stopPropagation();
-                            const index = parseInt(this.getAttribute('data-index'));
-                            const question = filteredQuestions[index];
-
-                            document.getElementById('add-question-form').classList.remove('hidden');
-                            document.getElementById('question-subject').value = question.Subject || 'Others';
-                            document.getElementById('question-difficulty').value = question.Difficulty || 'Medium';
-                            document.getElementById('question-text').value = question.Question || '';
-                            document.getElementById('option-a').value = question['Option A'] || '';
-                            document.getElementById('option-b').value = question['Option B'] || '';
-                            document.getElementById('option-c').value = question['Option C'] || '';
-                            document.getElementById('option-d').value = question['Option D'] || '';
-
-                            const correctValue = question.Correct || question['Correct Answer'] || 'A';
-                            const correctLetter = String(correctValue).toUpperCase().trim();
-                            const correctIndex = correctLetter.charCodeAt(0) - 65;
-                            document.getElementById('correct-answer').value = (correctIndex >= 0 && correctIndex <= 3) ? correctIndex : 0;
-
-                            const addBtn = document.getElementById('add-question-btn');
-                            addBtn.textContent = 'Update Question';
-                            addBtn.setAttribute('data-edit-index', index);
-                            addBtn.setAttribute('data-edit-id', question.id || '');
-                            addBtn.setAttribute('data-edit-mode', 'true');
-
-                            document.getElementById('add-question-form').scrollIntoView({ behavior: 'smooth' });
-                        } catch (error) {
-                            console.error('❌ Edit error:', error);
-                            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                                window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
-                            }
-                        }
-                    });
-                }
-            });
-
-            // Cart button listeners
-            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-                if (!btn.hasAttribute('data-listener-attached')) {
-                    btn.setAttribute('data-listener-attached', 'true');
-                    btn.addEventListener('click', function(e) {
-                        try {
-                            e.stopPropagation();
-                            const index = parseInt(this.getAttribute('data-index'));
-                            const question = filteredQuestions[index];
-                            const key = question.id || question.ID;
-
-                            const added = toggleCartItem(question);
-
-                            // Update button appearance
-                            if (added) {
-                                this.style.background = '#27ae60';
-                                this.innerHTML = '✓';
-                                this.title = 'Remove from Cart';
-                                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                                    window.PoliteCCAPI.showNotification(`Added ${question.ID} to cart`, 'success');
-                                }
-                            } else {
-                                this.style.background = '#f39c12';
-                                this.innerHTML = '🛒';
-                                this.title = 'Add to Cart';
-                                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                                    window.PoliteCCAPI.showNotification(`Removed ${question.ID} from cart`, 'info');
-                                }
-                            }
-                        } catch (error) {
-                            console.error('❌ Cart error:', error);
-                            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                                window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
-                            }
-                        }
-                    });
-                }
-            });
-        }
-
-        // Main question bank button click handler
         document.getElementById('question-bank-btn').addEventListener('click', async function() {
             try {
                 document.getElementById('question-bank-section').classList.remove('hidden');
@@ -4060,272 +2932,209 @@
                 document.getElementById('view-results-section').classList.add('hidden');
                 document.getElementById('upload-section').classList.add('hidden');
                 document.getElementById('ai-generator-section').classList.add('hidden');
-
+            
+                // Load questions from database
                 const questionsList = document.getElementById('questions-list');
                 questionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>';
-
-                // Load questions via API
+            
+                // Load questions via API if available
                 if (window.PoliteCCAPI && window.PoliteCCAPI.loadQuestions) {
-                    allQuestions = await window.PoliteCCAPI.loadQuestions() || [];
+                    questions = await window.PoliteCCAPI.loadQuestions() || questions;
                 }
-
-                // Generate unique IDs and sort
+            
+                // Remove duplicates and generate unique simple IDs
                 const seenIds = new Set();
+                const uniqueQuestions = [];
+
+                // Find the highest existing question number
                 let maxNum = 0;
-                allQuestions.forEach(q => {
+                questions.forEach(q => {
                     if (q.ID) {
+                        // Support both old format (q1, q2) and new format (Q0001, Q0002)
                         const match = q.ID.match(/^[qQ](\d+)$/);
                         if (match) {
                             const num = parseInt(match[1]);
-                            if (!isNaN(num) && num > maxNum) maxNum = num;
+                            if (!isNaN(num) && num > maxNum) {
+                                maxNum = num;
+                            }
                         }
                     }
                 });
-
                 let idCounter = maxNum + 1;
-                allQuestions.forEach(q => {
+
+                questions.forEach(q => {
+                    // Generate unique ID if needed (Q0001, Q0002, etc.)
                     if (!q.ID || seenIds.has(q.ID)) {
                         q.ID = 'Q' + String(idCounter).padStart(4, '0');
                         idCounter++;
                     }
-                    seenIds.add(q.ID);
+
+                    // Check if this question content is duplicate
+                    const isDuplicate = uniqueQuestions.some(uq =>
+                        uq.Question === q.Question &&
+                        uq['Option A'] === q['Option A'] &&
+                        uq['Option B'] === q['Option B']
+                    );
+
+                    if (!isDuplicate) {
+                        seenIds.add(q.ID);
+                        uniqueQuestions.push(q);
+                    }
                 });
 
-                // Sort by ID descending (newest first)
-                allQuestions.sort((a, b) => {
+                // Update questions array and sort (newest first - descending by ID number)
+                questions = uniqueQuestions;
+                questions.sort((a, b) => {
                     const matchA = a.ID.match(/^[qQ](\d+)$/);
                     const matchB = b.ID.match(/^[qQ](\d+)$/);
                     const numA = matchA ? parseInt(matchA[1]) : 0;
                     const numB = matchB ? parseInt(matchB[1]) : 0;
-                    return numB - numA;
+                    return numB - numA; // Descending order (newest first)
+                });
+            
+                // Render questions with Delete buttons
+                let html = '';
+            
+                if (questions.length === 0) {
+                    html = '<p style="text-align: center; color: #7f8c8d;">No questions found. Click "Add New Question" button above to add your first question!</p>';
+                } else {
+                    questions.forEach((q, index) => {
+                        html += `
+                        <div class="question-item" data-question-id="${q.id || ''}" data-index="${index}" style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary); position: relative; padding-right: 60px; padding-left: 50px;">
+                            <!-- Checkbox for selection -->
+                            <div style="position: absolute; top: 15px; left: 15px;">
+                                <input type="checkbox" class="question-select-checkbox" data-index="${index}" style="width: 20px; height: 20px; cursor: pointer;" checked>
+                            </div>
+
+                            <!-- Action buttons in top right -->
+                            <div style="position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 5px;">
+                                <button class="delete-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Delete Question" style="background: var(--danger); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                    🗑️
+                                </button>
+                                <button class="edit-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Edit Question" style="background: var(--primary); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                    ✏️
+                                </button>
+                            </div>
+
+                            <div style="margin-bottom: 8px;">
+                                <strong style="font-size: 1.1rem;">${q.ID}</strong>
+                                <span class="question-tag" style="margin-left: 10px; background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject}</span>
+                            </div>
+                            <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question}</p>
+                            <div style="margin-left: 25px; margin-bottom: 8px;">
+                                <div style="margin: 5px 0;">A) ${q['Option A']}</div>
+                                <div style="margin: 5px 0;">B) ${q['Option B']}</div>
+                                <div style="margin: 5px 0;">C) ${q['Option C']}</div>
+                                <div style="margin: 5px 0;">D) ${q['Option D']}</div>
+                            </div>
+                            <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 8px; border-radius: 6px; display: inline-block;">
+                                ✅ Correct Answer: ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}
+                            </div>
+                        </div>
+                        `;
+                    });
+                }
+            
+                questionsList.innerHTML = html;
+            
+                // Add delete button event listeners
+                document.querySelectorAll('.delete-question-btn').forEach(btn => {
+                    btn.addEventListener('click', async function(e) {
+                        try {
+                            e.stopPropagation();
+                            const questionId = this.getAttribute('data-question-id');
+                            const index = parseInt(this.getAttribute('data-index'));
+
+                            if (confirm('Are you sure you want to delete this question?')) {
+                                // Delete from database if ID exists
+                                if (questionId && window.PoliteCCAPI && window.PoliteCCAPI.deleteQuestionFromDatabase) {
+                                    const success = await window.PoliteCCAPI.deleteQuestionFromDatabase(questionId);
+                                    if (success) {
+                                        // Remove from local array
+                                        questions.splice(index, 1);
+                                        // Refresh display
+                                        document.getElementById('question-bank-btn').click();
+                                    }
+                                } else {
+                                    // Remove from local array only
+                                    questions.splice(index, 1);
+                                    // Refresh display
+                                    document.getElementById('question-bank-btn').click();
+                                }
+                            }
+                        } catch (error) {
+                        console.error('❌ Event handler error:', error);
+                        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                            window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
+                        }
+                    }
+                    });
                 });
 
-                // Also update the global questions array for exam creation
-                questions = allQuestions;
+                // Add edit button event listeners
+                document.querySelectorAll('.edit-question-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        try {
+                            e.stopPropagation();
+                            const index = parseInt(this.getAttribute('data-index'));
+                            const question = questions[index];
 
-                // Reset search and filter
-                document.getElementById('question-search-input').value = '';
-                document.getElementById('question-filter-subject').value = '';
+                            // Show the add question form
+                            document.getElementById('add-question-form').classList.remove('hidden');
 
-                // Apply filter and load first batch
-                applySearchAndFilter();
+                            // Populate form with existing question data
+                            document.getElementById('question-subject').value = question.Subject;
+                            document.getElementById('question-text').value = question.Question;
+                            document.getElementById('option-a').value = question['Option A'];
+                            document.getElementById('option-b').value = question['Option B'];
+                            document.getElementById('option-c').value = question['Option C'];
+                            document.getElementById('option-d').value = question['Option D'];
 
-                if (allQuestions.length === 0) {
-                    questionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No questions found. Click "Add New Question" button above to add your first question!</p>';
-                }
+                            // Set correct answer - support both 'Correct' and 'Correct Answer' field names
+                            const correctValue = question.Correct || question['Correct Answer'] || 'A';
+                            const correctLetter = String(correctValue).toUpperCase().trim();
+                            const correctIndex = correctLetter.charCodeAt(0) - 65; // A=0, B=1, C=2, D=3
+                            document.getElementById('correct-answer').value = (correctIndex >= 0 && correctIndex <= 3) ? correctIndex : 0;
+
+                            // Change button text to "Update Question"
+                            const addBtn = document.getElementById('add-question-btn');
+                            addBtn.textContent = 'Update Question';
+                            addBtn.setAttribute('data-edit-index', index);
+                            addBtn.setAttribute('data-edit-id', question.id || '');
+                            addBtn.setAttribute('data-edit-mode', 'true');
+
+                            // Scroll to form
+                            document.getElementById('add-question-form').scrollIntoView({ behavior: 'smooth' });
+                        } catch (error) {
+                            console.error('❌ Event handler error:', error);
+                            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                                window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
+                            }
+                        }
+                    });
+                });
             } catch (error) {
-                console.error('❌ Question bank error:', error);
+                console.error('❌ Event handler error:', error);
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                     window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
                 }
             }
         });
 
-        // Infinite scroll for questions list
-        document.getElementById('questions-list').addEventListener('scroll', function() {
-            const { scrollTop, scrollHeight, clientHeight } = this;
-            if (scrollTop + clientHeight >= scrollHeight - 100) {
-                loadMoreQuestions();
-            }
-        });
-
-        // Search input handler with debounce
-        let searchDebounceTimer;
-        document.getElementById('question-search-input').addEventListener('input', function() {
-            clearTimeout(searchDebounceTimer);
-            searchDebounceTimer = setTimeout(() => {
-                applySearchAndFilter();
-            }, 300);
-        });
-
-        // Subject filter handler
-        document.getElementById('question-filter-subject').addEventListener('change', function() {
-            applySearchAndFilter();
-        });
-
-        // Difficulty filter handler
-        document.getElementById('question-filter-difficulty').addEventListener('change', function() {
-            applySearchAndFilter();
-        });
-
-        // Select All questions (selects ALL questions in current filter, not just displayed ones)
+        // Select All questions
         document.getElementById('select-all-questions-btn').addEventListener('click', function() {
-            // Add all filtered questions to selection
-            filteredQuestions.forEach(q => {
-                const id = q.id || q.ID;
-                selectedQuestionIds.add(id);
-            });
-            // Update displayed checkboxes
             document.querySelectorAll('.question-select-checkbox').forEach(cb => {
                 cb.checked = true;
-                const questionItem = cb.closest('.question-item');
-                if (questionItem) {
-                    questionItem.style.background = '#e3f2fd';
-                    questionItem.style.borderLeftColor = '#2196f3';
-                }
             });
-            updateQuestionBankStats();
-            window.PoliteCCAPI.showNotification(`✅ Selected ${filteredQuestions.length} questions`, 'success');
+            window.PoliteCCAPI.showNotification('✅ All questions selected', 'success');
         });
 
         // Deselect All questions
         document.getElementById('deselect-all-questions-btn').addEventListener('click', function() {
-            // Clear all selections
-            selectedQuestionIds.clear();
-            // Update displayed checkboxes
             document.querySelectorAll('.question-select-checkbox').forEach(cb => {
                 cb.checked = false;
-                const questionItem = cb.closest('.question-item');
-                if (questionItem) {
-                    questionItem.style.background = '#f8f9fa';
-                    questionItem.style.borderLeftColor = 'var(--secondary)';
-                }
             });
-            updateQuestionBankStats();
             window.PoliteCCAPI.showNotification('✅ All questions deselected', 'info');
-        });
-
-        // Bulk Delete Selected Questions
-        document.getElementById('bulk-delete-questions-btn').addEventListener('click', async function() {
-            if (selectedQuestionIds.size === 0) {
-                window.PoliteCCAPI.showNotification('⚠️ Please select at least one question to delete', 'error');
-                return;
-            }
-
-            const confirmDelete = confirm(`Are you sure you want to delete ${selectedQuestionIds.size} selected questions?\n\nThis action cannot be undone!`);
-            if (!confirmDelete) return;
-
-            const btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '⏳ Deleting...';
-
-            let successCount = 0;
-            let failCount = 0;
-
-            // Convert Set to Array for iteration
-            const idsToDelete = Array.from(selectedQuestionIds);
-
-            for (const questionId of idsToDelete) {
-                try {
-                    if (questionId && window.PoliteCCAPI && window.PoliteCCAPI.deleteQuestionFromDatabase) {
-                        const success = await window.PoliteCCAPI.deleteQuestionFromDatabase(questionId);
-                        if (success) {
-                            successCount++;
-                            allQuestions = allQuestions.filter(q => q.id !== questionId);
-                        } else {
-                            failCount++;
-                        }
-                    }
-                } catch (error) {
-                    console.error('Delete error:', error);
-                    failCount++;
-                }
-            }
-
-            // Clear selections and refresh
-            selectedQuestionIds.clear();
-            questions = allQuestions;
-            applySearchAndFilter();
-
-            btn.disabled = false;
-            btn.innerHTML = '🗑️ Delete Selected';
-
-            if (failCount > 0) {
-                window.PoliteCCAPI.showNotification(`✅ Deleted ${successCount} questions. ❌ ${failCount} failed.`, 'warning');
-            } else {
-                window.PoliteCCAPI.showNotification(`✅ Successfully deleted ${successCount} questions!`, 'success');
-            }
-        });
-
-        // Sanitize Question Bank (Remove Duplicates)
-        document.getElementById('sanitize-question-bank-btn').addEventListener('click', async function() {
-            const btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '⏳ Scanning...';
-
-            try {
-                // Find duplicates based on question text and options
-                const seen = new Map();
-                const duplicates = [];
-
-                allQuestions.forEach(q => {
-                    // Create a unique key based on question content
-                    const key = `${(q.Question || '').toLowerCase().trim()}|${(q['Option A'] || '').toLowerCase().trim()}|${(q['Option B'] || '').toLowerCase().trim()}`;
-
-                    if (seen.has(key)) {
-                        // This is a duplicate - keep the first one (with lower ID number), delete the later one
-                        const existing = seen.get(key);
-                        const existingNum = parseInt((existing.ID || '').replace(/\D/g, '')) || 0;
-                        const currentNum = parseInt((q.ID || '').replace(/\D/g, '')) || 0;
-
-                        if (currentNum > existingNum) {
-                            // Current question has higher ID, so it's the duplicate to delete
-                            duplicates.push(q);
-                        } else {
-                            // Existing has higher ID, replace it and mark existing as duplicate
-                            duplicates.push(existing);
-                            seen.set(key, q);
-                        }
-                    } else {
-                        seen.set(key, q);
-                    }
-                });
-
-                if (duplicates.length === 0) {
-                    btn.disabled = false;
-                    btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
-                    window.PoliteCCAPI.showNotification('✅ No duplicates found! Question bank is clean.', 'success');
-                    return;
-                }
-
-                const confirmDelete = confirm(`Found ${duplicates.length} duplicate questions.\n\nDo you want to remove them from the database?\n\nThis action cannot be undone!`);
-                if (!confirmDelete) {
-                    btn.disabled = false;
-                    btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
-                    return;
-                }
-
-                btn.innerHTML = `⏳ Removing ${duplicates.length} duplicates...`;
-
-                let successCount = 0;
-                let failCount = 0;
-
-                for (const dup of duplicates) {
-                    try {
-                        if (dup.id && window.PoliteCCAPI && window.PoliteCCAPI.deleteQuestionFromDatabase) {
-                            const success = await window.PoliteCCAPI.deleteQuestionFromDatabase(dup.id);
-                            if (success) {
-                                successCount++;
-                                allQuestions = allQuestions.filter(q => q.id !== dup.id);
-                            } else {
-                                failCount++;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Sanitize delete error:', error);
-                        failCount++;
-                    }
-                }
-
-                // Refresh display
-                questions = allQuestions;
-                selectedQuestionIds.clear();
-                applySearchAndFilter();
-
-                btn.disabled = false;
-                btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
-
-                if (failCount > 0) {
-                    window.PoliteCCAPI.showNotification(`✅ Removed ${successCount} duplicates. ❌ ${failCount} failed.`, 'warning');
-                } else {
-                    window.PoliteCCAPI.showNotification(`✅ Successfully removed ${successCount} duplicate questions!`, 'success');
-                }
-            } catch (error) {
-                console.error('Sanitize error:', error);
-                btn.disabled = false;
-                btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
-                window.PoliteCCAPI.showNotification('❌ Error during sanitization: ' + error.message, 'error');
-            }
         });
 
         // Export questions to CSV
@@ -4335,29 +3144,33 @@
 
         // Function to export questions to CSV (only selected ones)
         function exportQuestionsToCSV() {
-            if (!allQuestions || allQuestions.length === 0) {
+            if (!questions || questions.length === 0) {
                 window.PoliteCCAPI.showNotification('No questions to export', 'error');
                 return;
             }
 
-            if (selectedQuestionIds.size === 0) {
+            // Get selected question indices
+            const selectedIndices = [];
+            document.querySelectorAll('.question-select-checkbox').forEach(cb => {
+                if (cb.checked) {
+                    selectedIndices.push(parseInt(cb.getAttribute('data-index')));
+                }
+            });
+
+            if (selectedIndices.length === 0) {
                 window.PoliteCCAPI.showNotification('⚠️ Please select at least one question to export', 'error');
                 return;
             }
 
-            // Filter questions to only selected ones using the Set
-            const selectedQuestions = allQuestions.filter(q => {
-                const id = q.id || q.ID;
-                return selectedQuestionIds.has(id);
-            });
+            // Filter questions to only selected ones
+            const selectedQuestions = questions.filter((q, index) => selectedIndices.includes(index));
 
             // Prepare CSV content with all question details
-            const headers = ['ID', 'Subject', 'Difficulty', 'Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer'];
+            const headers = ['ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer'];
             const rows = selectedQuestions.map(q => {
                 return [
                     q.ID || '',
                     q.Subject || '',
-                    q.Difficulty || 'Medium',
                     q.Question || '',
                     q['Option A'] || '',
                     q['Option B'] || '',
@@ -4410,7 +3223,6 @@
         document.getElementById('add-question-btn').addEventListener('click', async function() {
             try {
                 const subject = document.getElementById('question-subject').value;
-                const difficulty = document.getElementById('question-difficulty').value;
                 const question = document.getElementById('question-text').value.trim();
                 const optionA = document.getElementById('option-a').value.trim();
                 const optionB = document.getElementById('option-b').value.trim();
@@ -4446,7 +3258,6 @@
                     if (window.PoliteCCAPI && window.PoliteCCAPI.updateQuestionInDatabase && editId) {
                         const success = await window.PoliteCCAPI.updateQuestionInDatabase(editId, {
                             subject: subject,
-                            difficulty: difficulty,
                             question: question,
                             optionA: optionA,
                             optionB: optionB,
@@ -4466,7 +3277,6 @@
                     } else {
                         // Update in local array
                         questions[editIndex].Subject = subject;
-                        questions[editIndex].Difficulty = difficulty;
                         questions[editIndex].Question = question;
                         questions[editIndex]['Option A'] = optionA;
                         questions[editIndex]['Option B'] = optionB;
@@ -4492,7 +3302,6 @@
                     if (window.PoliteCCAPI && window.PoliteCCAPI.addQuestionToDatabase) {
                         const success = await window.PoliteCCAPI.addQuestionToDatabase({
                             subject: subject,
-                            difficulty: difficulty,
                             question: question,
                             optionA: optionA,
                             optionB: optionB,
@@ -4514,7 +3323,6 @@
                         questions.push({
                             ID: questionId,
                             Subject: subject,
-                            Difficulty: difficulty,
                             Question: question,
                             'Option A': optionA,
                             'Option B': optionB,
@@ -4552,7 +3360,7 @@
         });
 
         // Show create exam
-        document.getElementById('create-exam-btn').addEventListener('click', async function() {
+        document.getElementById('create-exam-btn').addEventListener('click', function() {
             document.getElementById('question-bank-section').classList.add('hidden');
             document.getElementById('create-exam-section').classList.remove('hidden');
             document.getElementById('view-results-section').classList.add('hidden');
@@ -4561,97 +3369,47 @@
 
             // Render exam questions list
             const examQuestionsList = document.getElementById('exam-questions-list');
-            examQuestionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">Loading questions from database...</p>';
-
-            // Ensure we have ALL questions from database for random selection
-            if (window.PoliteCCAPI && window.PoliteCCAPI.loadQuestions) {
-                const loadedQuestions = await window.PoliteCCAPI.loadQuestions() || [];
-                if (loadedQuestions.length > 0) {
-                    allQuestions = loadedQuestions;
-                    // Generate unique IDs
-                    const seenIds = new Set();
-                    let maxNum = 0;
-                    allQuestions.forEach(q => {
-                        if (q.ID) {
-                            const match = q.ID.match(/^[qQ](\d+)$/);
-                            if (match) {
-                                const num = parseInt(match[1]);
-                                if (!isNaN(num) && num > maxNum) maxNum = num;
-                            }
-                        }
-                    });
-                    let idCounter = maxNum + 1;
-                    allQuestions.forEach(q => {
-                        if (!q.ID || seenIds.has(q.ID)) {
-                            q.ID = 'Q' + String(idCounter).padStart(4, '0');
-                            idCounter++;
-                        }
-                        seenIds.add(q.ID);
-                    });
-                    questions = allQuestions;
-                }
-            }
 
             if (questions.length === 0) {
                 examQuestionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No questions available. Please add questions first!</p>';
             } else {
-                // Store all questions for filtering
-                let examFilteredQuestions = [...questions];
+                let html = '<div style="max-height: 450px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">';
 
-                // Function to render exam questions list
-                function renderExamQuestionsList() {
-                    let html = '<div id="exam-questions-container" style="max-height: 450px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">';
+                questions.forEach(q => {
+                    const subjectColors = {
+                        'Math': '#3498db',
+                        'Reasoning': '#9b59b6',
+                        'GK': '#e67e22',
+                        'Others': '#95a5a6'
+                    };
+                    const color = subjectColors[q.Subject] || '#95a5a6';
 
-                    if (examFilteredQuestions.length === 0) {
-                        html += '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No questions match the current filters.</p>';
-                    } else {
-                        examFilteredQuestions.forEach(q => {
-                            const subjectColors = {
-                                'Math': '#3498db',
-                                'Reasoning': '#9b59b6',
-                                'GK': '#e67e22',
-                                'General Knowledge': '#e67e22',
-                                'English': '#1abc9c',
-                                'Others': '#95a5a6'
-                            };
-                            const difficultyColors = {
-                                'Easy': '#27ae60',
-                                'Medium': '#f39c12',
-                                'Hard': '#e74c3c'
-                            };
-                            const subjectColor = subjectColors[q.Subject] || '#95a5a6';
-                            const difficultyColor = difficultyColors[q.Difficulty] || '#95a5a6';
-
-                            html += `
-                            <label class="exam-question-item" data-subject="${q.Subject || ''}" data-difficulty="${q.Difficulty || ''}" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;">
-                                <input type="checkbox" class="question-checkbox" value="${q.id}" data-question-id="${q.ID}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
-                                        <strong style="font-size: 1rem; color: var(--secondary);">${q.ID}</strong>
-                                        <span style="background: ${subjectColor}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Subject}</span>
-                                        <span style="background: ${difficultyColor}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Difficulty || 'Unknown'}</span>
-                                    </div>
-                                    <div style="color: #2c3e50; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-size: 0.95rem; margin-bottom: 8px;"><strong>Q:</strong> ${q.Question}</div>
-                                    <details style="margin-top: 8px; cursor: pointer;">
-                                        <summary style="color: #3498db; font-weight: 600; font-size: 0.85rem; user-select: none; padding: 4px 0;">Show Options</summary>
-                                        <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px; border: 1px solid #e0e0e0;">
-                                            <div style="margin: 4px 0; color: #555;"><strong>A)</strong> ${q['Option A']}</div>
-                                            <div style="margin: 4px 0; color: #555;"><strong>B)</strong> ${q['Option B']}</div>
-                                            <div style="margin: 4px 0; color: #555;"><strong>C)</strong> ${q['Option C']}</div>
-                                            <div style="margin: 4px 0; color: #555;"><strong>D)</strong> ${q['Option D']}</div>
-                                            <div style="margin-top: 8px; padding: 6px; background: #d4edda; border-radius: 4px; color: #155724; font-weight: 600;"><strong>✓ Correct:</strong> ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}</div>
-                                        </div>
-                                    </details>
+                    html += `
+                    <label class="exam-question-item" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;">
+                        <input type="checkbox" class="question-checkbox" value="${q.id}" data-question-id="${q.ID}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+                                <strong style="font-size: 1rem; color: var(--secondary);">${q.ID}</strong>
+                                <span style="background: ${color}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Subject}</span>
+                            </div>
+                            <div style="color: #2c3e50; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-size: 0.95rem; margin-bottom: 8px;"><strong>Q:</strong> ${q.Question}</div>
+                            <details style="margin-top: 8px; cursor: pointer;">
+                                <summary style="color: #3498db; font-weight: 600; font-size: 0.85rem; user-select: none; padding: 4px 0;">Show Options</summary>
+                                <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px; border: 1px solid #e0e0e0;">
+                                    <div style="margin: 4px 0; color: #555;"><strong>A)</strong> ${q['Option A']}</div>
+                                    <div style="margin: 4px 0; color: #555;"><strong>B)</strong> ${q['Option B']}</div>
+                                    <div style="margin: 4px 0; color: #555;"><strong>C)</strong> ${q['Option C']}</div>
+                                    <div style="margin: 4px 0; color: #555;"><strong>D)</strong> ${q['Option D']}</div>
+                                    <div style="margin-top: 8px; padding: 6px; background: #d4edda; border-radius: 4px; color: #155724; font-weight: 600;"><strong>✓ Correct:</strong> ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}</div>
                                 </div>
-                            </label>
-                            `;
-                        });
-                    }
+                            </details>
+                        </div>
+                    </label>
+                    `;
+                });
 
-                    html += '</div>';
-                    examQuestionsList.innerHTML = html;
-                    attachExamQuestionEventListeners();
-                }
+                html += '</div>';
+                examQuestionsList.innerHTML = html;
 
                 // Update counter when checkboxes change
                 function updateSelectedCount() {
@@ -4659,88 +3417,28 @@
                     document.getElementById('selected-count').textContent = checkedCount + ' Selected';
                 }
 
-                // Function to attach event listeners
-                function attachExamQuestionEventListeners() {
-                    // Add event listeners to checkboxes
-                    document.querySelectorAll('.question-checkbox').forEach(checkbox => {
-                        checkbox.addEventListener('change', updateSelectedCount);
+                // Add event listeners to checkboxes
+                document.querySelectorAll('.question-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', updateSelectedCount);
+                });
+
+                // Add hover effect to question items
+                document.querySelectorAll('.exam-question-item').forEach(item => {
+                    item.addEventListener('mouseenter', function() {
+                        this.style.borderColor = 'var(--primary)';
+                        this.style.background = '#e8f4fd';
                     });
-
-                    // Add hover effect to question items
-                    document.querySelectorAll('.exam-question-item').forEach(item => {
-                        item.addEventListener('mouseenter', function() {
-                            this.style.borderColor = 'var(--primary)';
-                            this.style.background = '#e8f4fd';
-                        });
-                        item.addEventListener('mouseleave', function() {
-                            const checkbox = this.querySelector('.question-checkbox');
-                            if (!checkbox.checked) {
-                                this.style.borderColor = 'transparent';
-                                this.style.background = '#f8f9fa';
-                            }
-                        });
-                    });
-                }
-
-                // Function to apply exam question filters
-                function applyExamQuestionFilters() {
-                    const searchTerm = document.getElementById('exam-question-search').value.toLowerCase().trim();
-                    const subjectFilter = document.getElementById('exam-question-filter-subject').value;
-                    const difficultyFilter = document.getElementById('exam-question-filter-difficulty').value;
-
-                    // Store currently checked question IDs before re-rendering
-                    const checkedIds = new Set();
-                    document.querySelectorAll('.question-checkbox:checked').forEach(cb => {
-                        checkedIds.add(cb.value);
-                    });
-
-                    examFilteredQuestions = questions.filter(q => {
-                        const matchesSearch = !searchTerm ||
-                            (q.Question && q.Question.toLowerCase().includes(searchTerm)) ||
-                            (q.ID && q.ID.toLowerCase().includes(searchTerm)) ||
-                            (q['Option A'] && q['Option A'].toLowerCase().includes(searchTerm)) ||
-                            (q['Option B'] && q['Option B'].toLowerCase().includes(searchTerm)) ||
-                            (q['Option C'] && q['Option C'].toLowerCase().includes(searchTerm)) ||
-                            (q['Option D'] && q['Option D'].toLowerCase().includes(searchTerm));
-
-                        const matchesSubject = !subjectFilter || q.Subject === subjectFilter;
-                        const matchesDifficulty = !difficultyFilter || q.Difficulty === difficultyFilter;
-
-                        return matchesSearch && matchesSubject && matchesDifficulty;
-                    });
-
-                    renderExamQuestionsList();
-
-                    // Restore checked state
-                    document.querySelectorAll('.question-checkbox').forEach(cb => {
-                        if (checkedIds.has(cb.value)) {
-                            cb.checked = true;
+                    item.addEventListener('mouseleave', function() {
+                        const checkbox = this.querySelector('.question-checkbox');
+                        if (!checkbox.checked) {
+                            this.style.borderColor = 'transparent';
+                            this.style.background = '#f8f9fa';
                         }
                     });
+                });
 
-                    updateSelectedCount();
-                }
-
-                // Initial render
-                renderExamQuestionsList();
+                // Reset counter
                 updateSelectedCount();
-
-                // Add filter event listeners
-                let examSearchTimeout;
-                document.getElementById('exam-question-search').addEventListener('input', function() {
-                    clearTimeout(examSearchTimeout);
-                    examSearchTimeout = setTimeout(() => {
-                        applyExamQuestionFilters();
-                    }, 300);
-                });
-
-                document.getElementById('exam-question-filter-subject').addEventListener('change', function() {
-                    applyExamQuestionFilters();
-                });
-
-                document.getElementById('exam-question-filter-difficulty').addEventListener('change', function() {
-                    applyExamQuestionFilters();
-                });
 
                 // Random selection button
                 document.getElementById('random-select-btn').addEventListener('click', function() {
@@ -4751,21 +3449,21 @@
                         return;
                     }
 
-                    // Get visible checkboxes (from filtered questions)
-                    const visibleCheckboxes = Array.from(document.querySelectorAll('.question-checkbox'));
-
-                    if (randomCount > visibleCheckboxes.length) {
-                        alert(`You can only select up to ${visibleCheckboxes.length} questions from the current filtered view.`);
+                    if (randomCount > questions.length) {
+                        alert(`You can only select up to ${questions.length} questions from the bank.`);
                         return;
                     }
 
                     // Uncheck all first
-                    visibleCheckboxes.forEach(cb => {
+                    document.querySelectorAll('.question-checkbox').forEach(cb => {
                         cb.checked = false;
                     });
 
+                    // Get all checkboxes
+                    const allCheckboxes = Array.from(document.querySelectorAll('.question-checkbox'));
+
                     // Shuffle and select random questions
-                    const shuffled = visibleCheckboxes.sort(() => Math.random() - 0.5);
+                    const shuffled = allCheckboxes.sort(() => Math.random() - 0.5);
                     const selectedCheckboxes = shuffled.slice(0, randomCount);
 
                     // Check the randomly selected checkboxes
@@ -4779,267 +3477,6 @@
                     // Show notification
                     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                         window.PoliteCCAPI.showNotification(`🎲 Randomly selected ${randomCount} questions!`, 'success');
-                    }
-                });
-
-                // Cart Modal Functions
-                const cartModal = document.getElementById('cart-modal');
-                const cartStatsSummary = document.getElementById('cart-stats-summary');
-                const cartQuestionsList = document.getElementById('cart-questions-list');
-                const cartSelectedInfo = document.getElementById('cart-selected-info');
-
-                // Function to render cart stats summary
-                function renderCartStats() {
-                    const stats = getCartStats();
-
-                    if (stats.total === 0) {
-                        cartStatsSummary.innerHTML = `
-                            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; color: #666;">
-                                <span style="font-size: 2rem;">🛒</span>
-                                <p style="margin-top: 10px;">Your cart is empty. Add questions from the Question Bank!</p>
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    // Subject colors
-                    const subjectColors = {
-                        'Math': '#3498db',
-                        'Reasoning': '#9b59b6',
-                        'GK': '#e67e22',
-                        'General Knowledge': '#e67e22',
-                        'English': '#1abc9c',
-                        'Others': '#95a5a6'
-                    };
-
-                    let html = `
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px; border-radius: 10px; text-align: center;">
-                                <div style="font-size: 1.8rem; font-weight: 700;">${stats.total}</div>
-                                <div style="font-size: 0.85rem; opacity: 0.9;">Total Questions</div>
-                            </div>
-                            <div style="background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; padding: 15px; border-radius: 10px; text-align: center;">
-                                <div style="font-size: 1.8rem; font-weight: 700;">${stats.difficulties.Easy}</div>
-                                <div style="font-size: 0.85rem; opacity: 0.9;">Easy</div>
-                            </div>
-                            <div style="background: linear-gradient(135deg, #f39c12, #f1c40f); color: white; padding: 15px; border-radius: 10px; text-align: center;">
-                                <div style="font-size: 1.8rem; font-weight: 700;">${stats.difficulties.Medium}</div>
-                                <div style="font-size: 0.85rem; opacity: 0.9;">Medium</div>
-                            </div>
-                            <div style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; padding: 15px; border-radius: 10px; text-align: center;">
-                                <div style="font-size: 1.8rem; font-weight: 700;">${stats.difficulties.Hard}</div>
-                                <div style="font-size: 0.85rem; opacity: 0.9;">Hard</div>
-                            </div>
-                        </div>
-                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Questions by Subject</h4>
-                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                    `;
-
-                    for (const [subject, data] of Object.entries(stats.subjects)) {
-                        const color = subjectColors[subject] || '#95a5a6';
-                        html += `
-                            <div style="background: ${color}; color: white; padding: 10px 15px; border-radius: 8px; min-width: 150px;">
-                                <div style="font-weight: 700; margin-bottom: 5px;">${subject}</div>
-                                <div style="font-size: 0.85rem; display: flex; gap: 8px; flex-wrap: wrap;">
-                                    <span>Total: ${data.total}</span>
-                                    <span style="opacity: 0.8;">E:${data.Easy} M:${data.Medium} H:${data.Hard}</span>
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    html += '</div>';
-                    cartStatsSummary.innerHTML = html;
-                }
-
-                // Function to render cart questions list
-                function renderCartQuestions() {
-                    if (questionCart.size === 0) {
-                        cartQuestionsList.innerHTML = `
-                            <div style="text-align: center; padding: 30px; color: #999;">
-                                No questions in cart
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    const subjectColors = {
-                        'Math': '#3498db',
-                        'Reasoning': '#9b59b6',
-                        'GK': '#e67e22',
-                        'General Knowledge': '#e67e22',
-                        'English': '#1abc9c',
-                        'Others': '#95a5a6'
-                    };
-
-                    const difficultyColors = {
-                        'Easy': '#27ae60',
-                        'Medium': '#f39c12',
-                        'Hard': '#e74c3c'
-                    };
-
-                    let html = '';
-                    questionCart.forEach((q, key) => {
-                        const subjectColor = subjectColors[q.Subject] || '#95a5a6';
-                        const difficultyColor = difficultyColors[q.Difficulty] || '#95a5a6';
-
-                        html += `
-                            <label class="cart-question-item" data-question-key="${key}" style="display: flex; align-items: flex-start; padding: 12px; border-bottom: 1px solid #e0e0e0; cursor: pointer; transition: background 0.2s;">
-                                <input type="checkbox" class="cart-item-checkbox" value="${key}" data-question-id="${q.id || ''}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;" checked>
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap;">
-                                        <strong style="color: var(--secondary);">${q.ID}</strong>
-                                        <span style="background: ${subjectColor}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">${q.Subject}</span>
-                                        <span style="background: ${difficultyColor}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">${q.Difficulty}</span>
-                                        <button class="remove-from-cart-btn" data-question-key="${key}" style="background: #e74c3c; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; margin-left: auto;">Remove</button>
-                                    </div>
-                                    <div style="color: #555; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${q.Question}</div>
-                                </div>
-                            </label>
-                        `;
-                    });
-
-                    cartQuestionsList.innerHTML = html;
-
-                    // Add hover effects
-                    document.querySelectorAll('.cart-question-item').forEach(item => {
-                        item.addEventListener('mouseenter', function() {
-                            this.style.background = '#f0f8ff';
-                        });
-                        item.addEventListener('mouseleave', function() {
-                            this.style.background = 'transparent';
-                        });
-                    });
-
-                    // Add remove button handlers
-                    document.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
-                        btn.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const key = this.getAttribute('data-question-key');
-                            questionCart.delete(key);
-                            updateQuestionBankStats();
-                            renderCartStats();
-                            renderCartQuestions();
-                            updateCartSelectedInfo();
-                            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                                window.PoliteCCAPI.showNotification('Removed from cart', 'info');
-                            }
-                        });
-                    });
-
-                    // Add checkbox change handlers
-                    document.querySelectorAll('.cart-item-checkbox').forEach(cb => {
-                        cb.addEventListener('change', updateCartSelectedInfo);
-                    });
-
-                    updateCartSelectedInfo();
-                }
-
-                // Function to update cart selected info
-                function updateCartSelectedInfo() {
-                    const checkedCount = document.querySelectorAll('.cart-item-checkbox:checked').length;
-                    cartSelectedInfo.textContent = `${checkedCount} questions selected`;
-                }
-
-                // Show cart modal
-                document.getElementById('show-cart-btn').addEventListener('click', function() {
-                    renderCartStats();
-                    renderCartQuestions();
-                    cartModal.style.display = 'block';
-                    document.body.style.overflow = 'hidden';
-                });
-
-                // Close cart modal
-                document.getElementById('close-cart-modal-btn').addEventListener('click', function() {
-                    cartModal.style.display = 'none';
-                    document.body.style.overflow = 'auto';
-                });
-
-                // Close modal when clicking outside
-                cartModal.addEventListener('click', function(e) {
-                    if (e.target === cartModal) {
-                        cartModal.style.display = 'none';
-                        document.body.style.overflow = 'auto';
-                    }
-                });
-
-                // Select all in cart
-                document.getElementById('cart-select-all-btn').addEventListener('click', function() {
-                    document.querySelectorAll('.cart-item-checkbox').forEach(cb => {
-                        cb.checked = true;
-                    });
-                    updateCartSelectedInfo();
-                });
-
-                // Deselect all in cart
-                document.getElementById('cart-deselect-all-btn').addEventListener('click', function() {
-                    document.querySelectorAll('.cart-item-checkbox').forEach(cb => {
-                        cb.checked = false;
-                    });
-                    updateCartSelectedInfo();
-                });
-
-                // Clear cart
-                document.getElementById('cart-clear-btn').addEventListener('click', function() {
-                    if (questionCart.size === 0) {
-                        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                            window.PoliteCCAPI.showNotification('Cart is already empty', 'info');
-                        }
-                        return;
-                    }
-
-                    if (confirm(`Are you sure you want to clear all ${questionCart.size} questions from cart?`)) {
-                        clearCart();
-                        renderCartStats();
-                        renderCartQuestions();
-                        // Also refresh the question bank display to update cart button states
-                        if (filteredQuestions.length > 0) {
-                            applySearchAndFilter();
-                        }
-                        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                            window.PoliteCCAPI.showNotification('Cart cleared', 'success');
-                        }
-                    }
-                });
-
-                // Add selected cart items to exam
-                document.getElementById('add-cart-to-exam-btn').addEventListener('click', function() {
-                    const selectedKeys = [];
-                    document.querySelectorAll('.cart-item-checkbox:checked').forEach(cb => {
-                        selectedKeys.push(cb.value);
-                    });
-
-                    if (selectedKeys.length === 0) {
-                        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                            window.PoliteCCAPI.showNotification('Please select at least one question to add', 'warning');
-                        }
-                        return;
-                    }
-
-                    // Find and check the corresponding question checkboxes in the exam questions list
-                    let addedCount = 0;
-                    selectedKeys.forEach(key => {
-                        const q = questionCart.get(key);
-                        if (q) {
-                            // Find the checkbox with matching question id
-                            const examCheckbox = document.querySelector(`.question-checkbox[value="${q.id}"]`);
-                            if (examCheckbox && !examCheckbox.checked) {
-                                examCheckbox.checked = true;
-                                addedCount++;
-                            }
-                        }
-                    });
-
-                    // Update counter
-                    updateSelectedCount();
-
-                    // Close modal
-                    cartModal.style.display = 'none';
-                    document.body.style.overflow = 'auto';
-
-                    if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                        window.PoliteCCAPI.showNotification(`Added ${addedCount} questions to exam selection`, 'success');
                     }
                 });
             }
@@ -5537,38 +3974,19 @@
                     const userAnswerLetter = answer.userAnswer;
                     const correctAnswerLetter = answer.correctAnswer;
 
-                    // Check if this is a sub-question
-                    const isSubQuestion = answer.isSubQuestion;
-                    const parentQuestionId = answer.parentQuestionId;
-                    const subQuestionOrder = answer.subQuestionOrder;
-
                     const bgColor = isCorrect ? '#e8f5e9' : (userAnswered ? '#ffebee' : '#f5f5f5');
                     const borderColor = isCorrect ? '#27ae60' : (userAnswered ? '#e74c3c' : '#95a5a6');
 
-                    // Find parent question for context if this is a sub-question
-                    let parentQuestion = null;
-                    if (isSubQuestion && parentQuestionId) {
-                        parentQuestion = userAnswers.find(a => a.questionId === parentQuestionId);
-                    }
-
                     html += `
-                        <div style="background: ${bgColor}; border-left: 5px solid ${isSubQuestion ? '#9c27b0' : borderColor}; padding: 20px; margin-bottom: 15px; border-radius: 8px; ${isSubQuestion ? 'margin-left: 25px;' : ''}">
+                        <div style="background: ${bgColor}; border-left: 5px solid ${borderColor}; padding: 20px; margin-bottom: 15px; border-radius: 8px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                 <div style="font-weight: 700; color: var(--secondary); font-size: 1rem;">
-                                    Q${index + 1}. ${answer.questionId || ''}
-                                    ${isSubQuestion ? `<span style="background: #e1bee7; color: #7b1fa2; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">📋 Sub-Q${subQuestionOrder ? ' #' + subQuestionOrder : ''}</span>` : ''}
-                                    <span style="background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">${answer.subject || ''}</span>
+                                    Q${index + 1}. ${answer.questionId || ''} <span style="background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">${answer.subject || ''}</span>
                                 </div>
                                 <div style="font-weight: 600; font-size: 0.9rem; padding: 5px 12px; border-radius: 6px; background: ${isCorrect ? '#c8e6c9' : (userAnswered ? '#ffcdd2' : '#e0e0e0')}; color: ${isCorrect ? '#388e3c' : (userAnswered ? '#c62828' : '#666')};">
                                     ${isCorrect ? '+1' : (userAnswered ? '-0.25' : '0')}
                                 </div>
                             </div>
-                            ${isSubQuestion && parentQuestion ? `
-                            <div style="background: #f3e5f5; padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #9c27b0;">
-                                <div style="color: #9c27b0; font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">📖 Reference (${parentQuestionId}):</div>
-                                <div style="color: #333; font-size: 0.95rem;">${parentQuestion.question || ''}</div>
-                            </div>
-                            ` : ''}
                             <div style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 15px; color: #333; background: white; padding: 15px; border-radius: 8px;">
                                 ${answer.question || 'Question not available'}
                             </div>
@@ -5815,25 +4233,23 @@
                 } else {
                     examQuestions.forEach((q, index) => {
                     const userAnswerIndex = userAnswers[index];
-                    // Check if user actually answered (valid answer is number 0-3)
-                    const hasAnswered = typeof userAnswerIndex === 'number' && userAnswerIndex >= 0 && userAnswerIndex <= 3;
-                    const userAnswerLetter = hasAnswered ? String.fromCharCode(65 + userAnswerIndex) : 'Not Answered';
+                    const userAnswerLetter = userAnswerIndex !== null && userAnswerIndex !== undefined ? String.fromCharCode(65 + userAnswerIndex) : 'Not Answered';
                     // Support both 'Correct' and 'Correct Answer' field names, handle lowercase
                     const correctValue = q.Correct || q['Correct Answer'] || '';
                     const correctAnswerLetter = String(correctValue).toUpperCase().trim();
-                    const isCorrect = hasAnswered && userAnswerLetter === correctAnswerLetter;
-                    const userAnswerText = hasAnswered ? q[`Option ${userAnswerLetter}`] : 'Not Answered';
+                    const isCorrect = userAnswerLetter === correctAnswerLetter;
+                    const userAnswerText = userAnswerIndex !== null && userAnswerIndex !== undefined ? q[`Option ${userAnswerLetter}`] : 'Not Answered';
                     const correctAnswerText = q[`Option ${correctAnswerLetter}`];
 
                     html += `
-                        <div style="background: ${isCorrect ? '#e8f5e9' : (hasAnswered ? '#ffebee' : '#f5f5f5')}; border-left: 4px solid ${isCorrect ? '#27ae60' : (hasAnswered ? '#e74c3c' : '#95a5a6')}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                        <div style="background: ${isCorrect ? '#e8f5e9' : (userAnswerIndex !== null ? '#ffebee' : '#f5f5f5')}; border-left: 4px solid ${isCorrect ? '#27ae60' : (userAnswerIndex !== null ? '#e74c3c' : '#95a5a6')}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
                             <div style="font-weight: 600; margin-bottom: 8px; color: var(--secondary);">Question ${index + 1} (${q.ID} - ${q.Subject})</div>
                             <div style="margin-bottom: 12px; font-size: 1.05rem;">${q.Question}</div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
                                 <div>
                                     <strong>Your Answer:</strong>
-                                    <span style="color: ${isCorrect ? '#27ae60' : (hasAnswered ? '#e74c3c' : '#7f8c8d')}; font-weight: 600;">
-                                        ${userAnswerLetter}${hasAnswered ? ' - ' + userAnswerText : ''}
+                                    <span style="color: ${isCorrect ? '#27ae60' : (userAnswerIndex !== null ? '#e74c3c' : '#7f8c8d')}; font-weight: 600;">
+                                        ${userAnswerLetter}${userAnswerIndex !== null && userAnswerIndex !== undefined ? ' - ' + userAnswerText : ''}
                                     </span>
                                 </div>
                                 <div>
@@ -5844,7 +4260,7 @@
                                 </div>
                             </div>
                             <div style="font-weight: 600; font-size: 1.1rem;">
-                                ${isCorrect ? '✅ Correct (+1)' : (hasAnswered ? '❌ Incorrect (-0.25)' : '⚪ Not Answered (0)')}
+                                ${isCorrect ? '✅ Correct (+1)' : (userAnswerIndex !== null ? '❌ Incorrect (-0.25)' : '⚪ Not Answered (0)')}
                             </div>
                         </div>
                     `;
@@ -5964,16 +4380,13 @@
                         }, 500);
 
                         // Store extracted questions
-                        let rawQuestions = data.data.questions.map((q, index) => ({
+                        extractedQuestions = data.data.questions.map((q, index) => ({
                             id: `Q${Date.now()}_${index}`,
                             subject: q.subject || 'Others',
                             question: q.question,
                             options: [q.optionA, q.optionB, q.optionC, q.optionD],
                             correct: ['A', 'B', 'C', 'D'].indexOf(q.correct.toUpperCase())
                         }));
-
-                        // Auto-detect and structure hierarchical questions
-                        extractedQuestions = detectAndStructureHierarchicalQuestions(rawQuestions);
 
                         if (extractedQuestions.length === 0) {
                             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
@@ -6113,25 +4526,18 @@
                     return;
                 }
 
-                // Add questions to database with parent-child relationships
+                // Add questions to database
                 let successCount = 0;
-                const savedQuestionIds = {}; // Map temp IDs to actual Airtable record IDs
-
                 for (const q of extractedQuestions) {
-                    const questionData = {
+                    const success = await window.PoliteCCAPI.addQuestionToDatabase({
                         subject: q.subject,
                         question: q.question,
                         optionA: q.options[0],
                         optionB: q.options[1],
                         optionC: q.options[2],
                         optionD: q.options[3],
-                        correct: ['A', 'B', 'C', 'D'][q.correct],
-                        questionType: q.questionType || 'Standalone',
-                        subQuestionNumber: q.subQuestionNumber || null,
-                        mainQuestionText: q.mainQuestionText || null
-                    };
-
-                    const success = await window.PoliteCCAPI.addQuestionToDatabase(questionData);
+                        correct: String.fromCharCode(65 + q.correct)
+                    });
 
                     if (success) successCount++;
                 }
@@ -6182,20 +4588,15 @@
                     const index = parseInt(checkbox.value);
                     const q = extractedQuestions[index];
 
-                    const questionData = {
+                    const success = await window.PoliteCCAPI.addQuestionToDatabase({
                         subject: q.subject,
                         question: q.question,
                         optionA: q.options[0],
                         optionB: q.options[1],
                         optionC: q.options[2],
                         optionD: q.options[3],
-                        correct: ['A', 'B', 'C', 'D'][q.correct],
-                        questionType: q.questionType || 'Standalone',
-                        subQuestionNumber: q.subQuestionNumber || null,
-                        mainQuestionText: q.mainQuestionText || null
-                    };
-
-                    const success = await window.PoliteCCAPI.addQuestionToDatabase(questionData);
+                        correct: String.fromCharCode(65 + q.correct)
+                    });
 
                     if (success) successCount++;
                 }
@@ -6526,39 +4927,24 @@
             }
         });
 
-        // Option selection - handle clicks on option div, radio button, or child elements
+        // Option selection
         document.addEventListener('click', function(e) {
-            // Find the parent option element
-            const optionElement = e.target.closest('.option');
-            if (optionElement && optionElement.closest('#exam-screen')) {
-                const optionIndex = parseInt(optionElement.getAttribute('data-index'));
+            if (e.target.classList.contains('option')) {
+                const optionIndex = parseInt(e.target.getAttribute('data-index'));
                 selectOption(optionIndex);
             }
         });
 
         function selectOption(index) {
-            const options = document.querySelectorAll('#exam-screen .option');
-            const radios = document.querySelectorAll('#exam-screen .option-radio');
-
-            // Check if clicking the same option again (toggle off)
-            if (userAnswers[currentQuestionIndex] === index) {
-                // Deselect - user wants to not answer this question
-                userAnswers[currentQuestionIndex] = undefined;
-                options[index].classList.remove('selected');
-                radios[index].checked = false;
-            } else {
-                // Select new option
-                userAnswers[currentQuestionIndex] = index;
-                options.forEach((option, i) => {
-                    if (i === index) {
-                        option.classList.add('selected');
-                        radios[i].checked = true;
-                    } else {
-                        option.classList.remove('selected');
-                        radios[i].checked = false;
-                    }
-                });
-            }
+            userAnswers[currentQuestionIndex] = index;
+            const options = document.querySelectorAll('.option');
+            options.forEach((option, i) => {
+                if (i === index) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
             // Save exam state after answer selection for resume functionality
             saveExamState();
         }
@@ -6721,9 +5107,6 @@
             currentExam.questions.forEach((question, index) => {
                 const userAnswer = userAnswers[index];
 
-                // Check if user actually answered this question (valid answer is 0, 1, 2, or 3)
-                const hasAnswered = typeof userAnswer === 'number' && userAnswer >= 0 && userAnswer <= 3;
-
                 // Get correct answer - support both 'Correct' and 'Correct Answer' field names
                 // Also handle lowercase and ensure it's a valid letter (A, B, C, D)
                 const correctValue = question.Correct || question['Correct Answer'] || '';
@@ -6732,17 +5115,11 @@
 
                 // Validate that correctAnswerIndex is valid (0-3)
                 const isValidCorrectAnswer = correctAnswerIndex >= 0 && correctAnswerIndex <= 3;
-                const isCorrect = hasAnswered && isValidCorrectAnswer && (userAnswer === correctAnswerIndex);
+                const isCorrect = isValidCorrectAnswer && (userAnswer === correctAnswerIndex);
 
-                // Score calculation: +1 correct, -0.25 wrong, 0 unanswered
-                if (hasAnswered) {
+                if (userAnswer !== null) {
                     score += isCorrect ? 1 : -0.25;
                 }
-                // If not answered, score += 0 (no change)
-
-                // Check if this is a sub-question
-                const isSubQuestion = question['Is Sub Question'] === true || question['Is Sub Question'] === 'true';
-                const parentQuestionId = question['Parent Question ID'];
 
                 // Store detailed answer info
                 detailedAnswers.push({
@@ -6753,13 +5130,10 @@
                     optionB: question['Option B'],
                     optionC: question['Option C'],
                     optionD: question['Option D'],
-                    userAnswer: hasAnswered ? ['A', 'B', 'C', 'D'][userAnswer] : 'Not Answered',
+                    userAnswer: userAnswer !== null ? ['A', 'B', 'C', 'D'][userAnswer] : 'Not Answered',
                     correctAnswer: correctLetter || question.Correct,
                     isCorrect: isCorrect,
-                    points: hasAnswered ? (isCorrect ? 1 : -0.25) : 0,
-                    isSubQuestion: isSubQuestion,
-                    parentQuestionId: parentQuestionId || null,
-                    subQuestionOrder: question['Sub Question Order'] || null
+                    points: userAnswer !== null ? (isCorrect ? 1 : -0.25) : 0
                 });
             });
 
@@ -6834,70 +5208,31 @@
         // Question loading
         function loadQuestion() {
             if (!currentExam || currentQuestionIndex >= currentExam.questions.length) return;
-
+            
             const question = currentExam.questions[currentQuestionIndex];
-            const isSubQuestion = question['Is Sub Question'] === true || question['Is Sub Question'] === 'true';
-            const parentQuestionId = question['Parent Question ID'];
-
-            // Find parent question if this is a sub-question
-            let parentQuestion = null;
-            if (isSubQuestion && parentQuestionId) {
-                parentQuestion = currentExam.questions.find(q => q.ID === parentQuestionId);
-            }
-
+            
             // Update UI
             document.getElementById('current-q-num').textContent = currentQuestionIndex + 1;
             document.getElementById('total-questions').textContent = currentExam.questions.length;
             document.getElementById('progress-num').textContent = currentQuestionIndex + 1;
             document.getElementById('progress-total').textContent = currentExam.questions.length;
-
-            // Show subject with sub-question indicator if applicable
-            let subjectDisplay = question.Subject || 'Unknown';
-            if (isSubQuestion) {
-                subjectDisplay = `📋 Sub-Q of ${parentQuestionId}`;
-            }
-            document.getElementById('question-subject-display').textContent = subjectDisplay;
-
-            // Build question text with parent context for sub-questions
-            let questionTextDisplay = question.Question || 'Loading question...';
-            const questionTextElement = document.getElementById('question-text-display');
-
-            if (isSubQuestion && parentQuestion) {
-                // Show parent question context for sub-questions
-                questionTextElement.innerHTML = `
-                    <div style="background: #f3e5f5; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #9c27b0;">
-                        <div style="color: #9c27b0; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">
-                            📖 Reference (${parentQuestionId}):
-                        </div>
-                        <div style="color: #333; font-size: 0.95rem;">${parentQuestion.Question || ''}</div>
-                    </div>
-                    <div style="color: #9c27b0; font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">
-                        Sub-Question ${question['Sub Question Order'] || ''}:
-                    </div>
-                    <div>${questionTextDisplay}</div>
-                `;
-            } else {
-                questionTextElement.textContent = questionTextDisplay;
-            }
-
+            document.getElementById('question-subject-display').textContent = question.Subject || 'Unknown';
+            document.getElementById('question-text-display').textContent = question.Question || 'Loading question...';
             document.getElementById('option-a-display').textContent = question['Option A'] || 'Option A';
             document.getElementById('option-b-display').textContent = question['Option B'] || 'Option B';
             document.getElementById('option-c-display').textContent = question['Option C'] || 'Option C';
             document.getElementById('option-d-display').textContent = question['Option D'] || 'Option D';
-
-            // Update selected option and radio buttons
-            const options = document.querySelectorAll('#exam-screen .option');
-            const radios = document.querySelectorAll('#exam-screen .option-radio');
+            
+            // Update selected option
+            const options = document.querySelectorAll('.option');
             options.forEach((option, index) => {
                 if (userAnswers[currentQuestionIndex] === index) {
                     option.classList.add('selected');
-                    radios[index].checked = true;
                 } else {
                     option.classList.remove('selected');
-                    radios[index].checked = false;
                 }
             });
-
+            
             // Update navigation buttons
             document.getElementById('prev-btn').disabled = (currentQuestionIndex === 0);
             if (currentQuestionIndex === currentExam.questions.length - 1) {
@@ -6951,18 +5286,6 @@
             }
         }); // End of DOMContentLoaded
     </script>
-    
-    <!-- Footer -->
-    <footer style="background-color: var(--primary); color: white; padding: 20px; text-align: center; margin-top: 40px;">
-        <div style="max-width: 900px; margin: 0 auto;">
-            <p style="margin-bottom: 10px;">&copy; 2025 Polite Coaching Centre. All rights reserved.</p>
-            <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-                <a href="/docs/privacy-policy.html" style="color: #3498db; text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='#2980b9'" onmouseout="this.style.color='#3498db'">Privacy Policy</a>
-                <span style="color: #95a5a6;">|</span>
-                <a href="/docs/delete-account.html" style="color: #3498db; text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='#2980b9'" onmouseout="this.style.color='#3498db'">Delete Account</a>
-            </div>
-        </div>
-    </footer>
     
     <!-- Service Worker Registration -->
     <script>

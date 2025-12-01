@@ -182,18 +182,12 @@ async function addQuestionToDatabase(questionData) {
             body: JSON.stringify({
                 ID: nextId,
                 Subject: questionData.subject,
-                Difficulty: questionData.difficulty || 'Medium',
                 Question: questionData.question,
                 'Option A': questionData.optionA,
                 'Option B': questionData.optionB,
                 'Option C': questionData.optionC,
                 'Option D': questionData.optionD,
-                Correct: questionData.correct,
-                // Hierarchical question fields
-                'Question Type': questionData.questionType || 'Standalone',
-                'Sub Question Number': questionData.subQuestionNumber || null,
-                'Main Question Text': questionData.mainQuestionText || null
-                // Note: Parent Question link will be set separately via API after both records exist
+                Correct: questionData.correct
             })
         });
         
@@ -226,7 +220,6 @@ async function updateQuestionInDatabase(questionId, questionData) {
             },
             body: JSON.stringify({
                 Subject: questionData.subject,
-                Difficulty: questionData.difficulty || 'Medium',
                 Question: questionData.question,
                 'Option A': questionData.optionA,
                 'Option B': questionData.optionB,
@@ -648,11 +641,7 @@ async function resetPassword(email) {
 
         if (data.success) {
             console.log('✅ Password reset successful');
-            return {
-                success: true,
-                message: data.message,
-                tempPassword: data.data?.tempPassword // Only in dev mode
-            };
+            return data.data;
         } else {
             throw new Error(data.error || 'Failed to reset password');
         }
@@ -660,107 +649,6 @@ async function resetPassword(email) {
         console.error('❌ Error resetting password:', error);
         showNotification(`❌ ${error.message}`, 'error');
         return null;
-    }
-}
-
-// Verify email
-async function verifyEmail(token) {
-    try {
-        const response = await fetch(`${API_URL}/auth/verify/${token}`);
-        const data = await response.json();
-
-        if (data.success) {
-            console.log('✅ Email verified successfully');
-            showNotification('✅ Email verified! You can now login.', 'success');
-            return data;
-        } else {
-            throw new Error(data.error || 'Failed to verify email');
-        }
-    } catch (error) {
-        console.error('❌ Error verifying email:', error);
-        showNotification(`❌ ${error.message}`, 'error');
-        return null;
-    }
-}
-
-// Resend verification email
-async function resendVerification(email) {
-    try {
-        const response = await fetch(`${API_URL}/auth/resend-verification`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            console.log('✅ Verification email sent');
-            showNotification('✅ Verification email sent. Please check your inbox.', 'success');
-            return data;
-        } else {
-            throw new Error(data.error || 'Failed to send verification email');
-        }
-    } catch (error) {
-        console.error('❌ Error sending verification email:', error);
-        showNotification(`❌ ${error.message}`, 'error');
-        return null;
-    }
-}
-
-// Update candidate profile
-async function updateCandidateProfile(profileData) {
-    try {
-        const response = await fetch(`${API_URL}/candidates/profile`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(profileData)
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            console.log('✅ Profile updated successfully');
-            showNotification('✅ Profile updated successfully!', 'success');
-            return data.data;
-        } else {
-            throw new Error(data.error || 'Failed to update profile');
-        }
-    } catch (error) {
-        console.error('❌ Error updating profile:', error);
-        showNotification(`❌ ${error.message}`, 'error');
-        return null;
-    }
-}
-
-// Change candidate password
-async function changePassword(email, currentPassword, newPassword) {
-    try {
-        const response = await fetch(`${API_URL}/candidates/password`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, currentPassword, newPassword })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            console.log('✅ Password changed successfully');
-            showNotification('✅ Password changed successfully!', 'success');
-            return true;
-        } else {
-            throw new Error(data.error || 'Failed to change password');
-        }
-    } catch (error) {
-        console.error('❌ Error changing password:', error);
-        showNotification(`❌ ${error.message}`, 'error');
-        return false;
     }
 }
 
@@ -785,10 +673,6 @@ window.PoliteCCAPI = {
     getCandidateProfile,
     getCandidateExamHistory,
     resetPassword,
-    verifyEmail,
-    resendVerification,
-    updateCandidateProfile,
-    changePassword,
     // Security utilities
     escapeHtml,
     sanitizeData,
