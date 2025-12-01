@@ -486,7 +486,7 @@ module.exports = async (req, res) => {
             const validQuestionFields = [
                 'ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D',
                 'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation',
-                'Parent Question ID', 'Is Sub Question', 'Sub Question Order'
+                'Parent Question ID', 'Is Sub Question', 'Sub Question Order', 'Is Main Question'
             ];
 
             // Filter out unknown fields to prevent Airtable errors
@@ -516,7 +516,7 @@ module.exports = async (req, res) => {
             const validQuestionFields = [
                 'ID', 'Subject', 'Question', 'Option A', 'Option B', 'Option C', 'Option D',
                 'Correct', 'Correct Answer', 'Difficulty', 'Level', 'Tags', 'Explanation',
-                'Parent Question ID', 'Is Sub Question', 'Sub Question Order'
+                'Parent Question ID', 'Is Sub Question', 'Sub Question Order', 'Is Main Question'
             ];
 
             // Filter out unknown fields to prevent Airtable errors
