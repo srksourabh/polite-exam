@@ -352,7 +352,12 @@ module.exports = async (req, res) => {
         res.setHeader(key, value);
     });
 
-    const { url, method } = req;
+    const { method } = req;
+    // Parse URL to handle query strings and normalize path
+    const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const url = parsedUrl.pathname.replace(/\/$/, '') || '/'; // Strip trailing slash
+
+    console.log('[API] Request:', method, url); // Debug logging
 
     // Check rate limiting for auth routes
     const isAuthRoute = url.includes('/auth/');
