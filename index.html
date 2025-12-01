@@ -2627,60 +2627,116 @@
             const modal = document.getElementById('ocr-review-modal');
             const container = document.getElementById('ocr-review-questions');
 
+            // Count hierarchical summary
+            const passages = questions.filter(q => q.questionType === 'Main Question').length;
+            const subQs = questions.filter(q => q.questionType === 'Sub Question').length;
+
             let html = '';
-            questions.forEach((q, index) => {
-                const correctLetter = String.fromCharCode(65 + q.correct);
+
+            // Add summary header if hierarchical questions detected
+            if (passages > 0) {
                 html += `
-                    <div class="ocr-question-card" data-index="${index}">
-                        <div class="ocr-question-header">
-                            <span class="ocr-question-number">Question ${index + 1}</span>
-                            <button class="ocr-delete-btn" onclick="deleteOCRQuestion(${index})">🗑️ Delete</button>
+                    <div style="background: linear-gradient(135deg, #9c27b0, #7b1fa2); color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0;">📋 AI Detected Hierarchical Structure</h4>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px;">📖 ${passages} Passage(s)</span>
+                            <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px;">📝 ${subQs} Sub-Question(s)</span>
+                            <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px;">✅ ${questions.length - passages - subQs} Standalone</span>
                         </div>
-                        <div class="ocr-form-group">
-                            <label>Subject Category</label>
-                            <select id="ocr-subject-${index}">
-                                <option value="Math" ${q.subject === 'Math' ? 'selected' : ''}>Math</option>
-                                <option value="Reasoning" ${q.subject === 'Reasoning' ? 'selected' : ''}>Reasoning</option>
-                                <option value="GK" ${q.subject === 'GK' ? 'selected' : ''}>GK</option>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9rem; opacity: 0.9;">Passages have no marks. Sub-questions: +1 correct, -0.25 wrong, 0 unanswered</p>
+                    </div>
+                `;
+            }
+
+            questions.forEach((q, index) => {
+                const isPassage = q.questionType === 'Main Question';
+                const isSubQuestion = q.questionType === 'Sub Question';
+                const correctLetter = q.correct >= 0 ? String.fromCharCode(65 + q.correct) : '';
+
+                // Styling based on question type
+                const cardStyle = isPassage ? 'background: #fff3e0; border-left: 4px solid #ff9800;' :
+                                  isSubQuestion ? 'background: #f3e5f5; border-left: 4px solid #9c27b0; margin-left: 30px;' :
+                                  'background: #f8f9fa; border-left: 4px solid var(--secondary);';
+
+                const typeLabel = isPassage ? '<span style="background: #ff9800; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">📖 Passage (No Marks)</span>' :
+                                  isSubQuestion ? `<span style="background: #9c27b0; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">📝 Sub-Q #${q.subQuestionNumber || '?'} (+1/-0.25)</span>` :
+                                  '<span style="background: var(--secondary); color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">Standalone</span>';
+
+                html += `
+                    <div class="ocr-question-card" data-index="${index}" data-question-type="${q.questionType || 'Standalone'}" data-parent-id="${q.parentQuestionId || ''}" style="${cardStyle} border-radius: 10px; padding: 15px; margin-bottom: 12px;">
+                        <div class="ocr-question-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="ocr-question-number" style="font-weight: 600;">Q${index + 1}</span>
+                                ${typeLabel}
+                            </div>
+                            <button class="ocr-delete-btn" onclick="deleteOCRQuestion(${index})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">🗑️</button>
+                        </div>
+                        <div class="ocr-form-group" style="margin-bottom: 10px;">
+                            <label style="font-weight: 600; margin-bottom: 5px; display: block;">Subject Category</label>
+                            <select id="ocr-subject-${index}" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                                <option value="Quantitative Aptitude" ${q.subject === 'Quantitative Aptitude' || q.subject === 'Math' ? 'selected' : ''}>Quantitative Aptitude</option>
+                                <option value="Reasoning Ability" ${q.subject === 'Reasoning Ability' || q.subject === 'Reasoning' ? 'selected' : ''}>Reasoning Ability</option>
+                                <option value="English Language" ${q.subject === 'English Language' || q.subject === 'English' ? 'selected' : ''}>English Language</option>
+                                <option value="General Awareness" ${q.subject === 'General Awareness' || q.subject === 'GK' ? 'selected' : ''}>General Awareness</option>
+                                <option value="Current Affairs" ${q.subject === 'Current Affairs' ? 'selected' : ''}>Current Affairs</option>
+                                <option value="Banking Awareness" ${q.subject === 'Banking Awareness' ? 'selected' : ''}>Banking Awareness</option>
+                                <option value="Computer Knowledge" ${q.subject === 'Computer Knowledge' ? 'selected' : ''}>Computer Knowledge</option>
+                                <option value="Data Interpretation" ${q.subject === 'Data Interpretation' ? 'selected' : ''}>Data Interpretation</option>
                                 <option value="Others" ${q.subject === 'Others' ? 'selected' : ''}>Others</option>
                             </select>
                         </div>
-                        <div class="ocr-form-group">
-                            <label>Question Text</label>
-                            <textarea id="ocr-question-${index}" rows="2">${q.question}</textarea>
-                        </div>
-                        <div class="ocr-form-group">
-                            <label>Options</label>
-                            <div class="ocr-options-grid">
+                        <div class="ocr-form-group" style="margin-bottom: 10px;">
+                            <label style="font-weight: 600; margin-bottom: 5px; display: block;">${isPassage ? 'Passage/Comprehension Text' : 'Question Text'}</label>
+                            <textarea id="ocr-question-${index}" rows="${isPassage ? 4 : 2}" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">${q.question || ''}</textarea>
+                        </div>`;
+
+                // Only show options and correct answer for non-passage questions
+                if (!isPassage) {
+                    html += `
+                        <div class="ocr-form-group" style="margin-bottom: 10px;">
+                            <label style="font-weight: 600; margin-bottom: 5px; display: block;">Options</label>
+                            <div class="ocr-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <div class="ocr-option-group">
-                                    <label>A:</label>
-                                    <input type="text" id="ocr-optionA-${index}" value="${q.options[0] || ''}">
+                                    <label style="font-weight: 500;">A:</label>
+                                    <input type="text" id="ocr-optionA-${index}" value="${q.options ? q.options[0] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
                                 </div>
                                 <div class="ocr-option-group">
-                                    <label>B:</label>
-                                    <input type="text" id="ocr-optionB-${index}" value="${q.options[1] || ''}">
+                                    <label style="font-weight: 500;">B:</label>
+                                    <input type="text" id="ocr-optionB-${index}" value="${q.options ? q.options[1] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
                                 </div>
                                 <div class="ocr-option-group">
-                                    <label>C:</label>
-                                    <input type="text" id="ocr-optionC-${index}" value="${q.options[2] || ''}">
+                                    <label style="font-weight: 500;">C:</label>
+                                    <input type="text" id="ocr-optionC-${index}" value="${q.options ? q.options[2] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
                                 </div>
                                 <div class="ocr-option-group">
-                                    <label>D:</label>
-                                    <input type="text" id="ocr-optionD-${index}" value="${q.options[3] || ''}">
+                                    <label style="font-weight: 500;">D:</label>
+                                    <input type="text" id="ocr-optionD-${index}" value="${q.options ? q.options[3] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
                                 </div>
                             </div>
                         </div>
-                        <div class="ocr-correct-answer">
-                            <label>✓ Correct Answer:</label>
-                            <select id="ocr-correct-${index}">
+                        <div class="ocr-correct-answer" style="display: flex; align-items: center; gap: 10px;">
+                            <label style="font-weight: 600;">✓ Correct Answer:</label>
+                            <select id="ocr-correct-${index}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #ddd;">
                                 <option value="0" ${q.correct === 0 ? 'selected' : ''}>A</option>
                                 <option value="1" ${q.correct === 1 ? 'selected' : ''}>B</option>
                                 <option value="2" ${q.correct === 2 ? 'selected' : ''}>C</option>
                                 <option value="3" ${q.correct === 3 ? 'selected' : ''}>D</option>
                             </select>
-                        </div>
-                    </div>
-                `;
+                        </div>`;
+                } else {
+                    // Hidden fields for passage questions
+                    html += `
+                        <input type="hidden" id="ocr-optionA-${index}" value="">
+                        <input type="hidden" id="ocr-optionB-${index}" value="">
+                        <input type="hidden" id="ocr-optionC-${index}" value="">
+                        <input type="hidden" id="ocr-optionD-${index}" value="">
+                        <input type="hidden" id="ocr-correct-${index}" value="-1">
+                        <div style="color: #ff9800; font-weight: 500; margin-top: 10px;">
+                            📖 This passage has no marks - marks are in sub-questions below
+                        </div>`;
+                }
+
+                html += `</div>`;
             });
 
             container.innerHTML = html;
@@ -2707,24 +2763,58 @@
             // Collect all edited values from the modal
             const questionCards = document.querySelectorAll('.ocr-question-card');
             const updatedQuestions = [];
+            const passageIdMap = new Map(); // Map old passage IDs to new ones
 
+            // First pass: Collect all questions and create new IDs for passages
+            const timestamp = Date.now();
             questionCards.forEach((card, index) => {
+                const questionType = card.getAttribute('data-question-type') || 'Standalone';
+                const oldParentId = card.getAttribute('data-parent-id') || '';
+
                 const subject = document.getElementById(`ocr-subject-${index}`).value;
                 const question = document.getElementById(`ocr-question-${index}`).value.trim();
-                const optionA = document.getElementById(`ocr-optionA-${index}`).value.trim();
-                const optionB = document.getElementById(`ocr-optionB-${index}`).value.trim();
-                const optionC = document.getElementById(`ocr-optionC-${index}`).value.trim();
-                const optionD = document.getElementById(`ocr-optionD-${index}`).value.trim();
-                const correct = parseInt(document.getElementById(`ocr-correct-${index}`).value);
+                const optionA = document.getElementById(`ocr-optionA-${index}`)?.value?.trim() || '';
+                const optionB = document.getElementById(`ocr-optionB-${index}`)?.value?.trim() || '';
+                const optionC = document.getElementById(`ocr-optionC-${index}`)?.value?.trim() || '';
+                const optionD = document.getElementById(`ocr-optionD-${index}`)?.value?.trim() || '';
+                const correct = parseInt(document.getElementById(`ocr-correct-${index}`)?.value || '-1');
 
                 if (question) {
+                    const isPassage = questionType === 'Main Question';
+                    const isSubQuestion = questionType === 'Sub Question';
+                    const newId = isPassage ? `PASSAGE_${timestamp}_${index}` : `Q${timestamp}_${index}`;
+
+                    // Map old passage ID to new one
+                    if (isPassage && extractedQuestions[index]) {
+                        passageIdMap.set(extractedQuestions[index].id, newId);
+                    }
+
                     updatedQuestions.push({
-                        id: `Q${Date.now()}_${index}`,
+                        id: newId,
                         subject: subject,
                         question: question,
-                        options: [optionA, optionB, optionC, optionD],
-                        correct: correct
+                        options: isPassage ? ['', '', '', ''] : [optionA, optionB, optionC, optionD],
+                        correct: isPassage ? -1 : correct,
+                        questionType: questionType,
+                        parentQuestionId: oldParentId,
+                        subQuestionNumber: extractedQuestions[index]?.subQuestionNumber || null,
+                        mainQuestionText: extractedQuestions[index]?.mainQuestionText || null
                     });
+                }
+            });
+
+            // Second pass: Update parent IDs for sub-questions
+            updatedQuestions.forEach(q => {
+                if (q.questionType === 'Sub Question' && q.parentQuestionId) {
+                    const newParentId = passageIdMap.get(q.parentQuestionId);
+                    if (newParentId) {
+                        q.parentQuestionId = newParentId;
+                        // Update mainQuestionText from the parent
+                        const parent = updatedQuestions.find(p => p.id === newParentId);
+                        if (parent) {
+                            q.mainQuestionText = parent.question;
+                        }
+                    }
                 }
             });
 
@@ -2742,8 +2832,16 @@
             closeOCRReviewModal();
             displayReadyQuestions(extractedQuestions);
 
+            // Generate summary message
+            const passages = updatedQuestions.filter(q => q.questionType === 'Main Question').length;
+            const subQs = updatedQuestions.filter(q => q.questionType === 'Sub Question').length;
+            let message = `✅ ${updatedQuestions.length} questions reviewed and ready to add!`;
+            if (passages > 0) {
+                message = `✅ ${updatedQuestions.length} questions ready! (${passages} passages, ${subQs} sub-questions)`;
+            }
+
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                window.PoliteCCAPI.showNotification(`✅ ${updatedQuestions.length} questions reviewed and ready to add!`, 'success');
+                window.PoliteCCAPI.showNotification(message, 'success');
             }
         }
 
@@ -2753,25 +2851,63 @@
 
             if (!readyQuestions) return;
 
+            // Count hierarchical summary
+            const passages = questions.filter(q => q.questionType === 'Main Question').length;
+            const subQs = questions.filter(q => q.questionType === 'Sub Question').length;
+
             let html = '<div style="max-height: 400px; overflow-y: auto;">';
-            questions.forEach((q, index) => {
+
+            // Add summary if hierarchical questions present
+            if (passages > 0) {
                 html += `
-                    <label class="extracted-question-item" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary); cursor: pointer; transition: all 0.2s;">
+                    <div style="background: linear-gradient(135deg, #9c27b0, #7b1fa2); color: white; padding: 12px; border-radius: 10px; margin-bottom: 15px;">
+                        <strong>📋 Hierarchical Structure Detected:</strong> ${passages} passage(s) with ${subQs} sub-question(s)
+                    </div>
+                `;
+            }
+
+            questions.forEach((q, index) => {
+                const isPassage = q.questionType === 'Main Question';
+                const isSubQuestion = q.questionType === 'Sub Question';
+
+                // Styling based on question type
+                const bgColor = isPassage ? '#fff3e0' : isSubQuestion ? '#f3e5f5' : '#f8f9fa';
+                const borderColor = isPassage ? '#ff9800' : isSubQuestion ? '#9c27b0' : 'var(--secondary)';
+                const marginLeft = isSubQuestion ? 'margin-left: 25px;' : '';
+
+                const typeLabel = isPassage ? '<span style="background: #ff9800; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-right: 8px;">📖 Passage</span>' :
+                                  isSubQuestion ? `<span style="background: #9c27b0; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-right: 8px;">📝 Sub-Q #${q.subQuestionNumber || '?'}</span>` : '';
+
+                html += `
+                    <label class="extracted-question-item" data-question-type="${q.questionType || 'Standalone'}" style="display: flex; align-items: flex-start; background: ${bgColor}; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid ${borderColor}; cursor: pointer; transition: all 0.2s; ${marginLeft}">
                         <input type="checkbox" class="extracted-question-checkbox" value="${index}" checked style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
                         <div style="flex: 1;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                <span class="question-tag">${q.subject}</span>
+                            <div style="display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 8px; gap: 8px;">
+                                ${typeLabel}
+                                <span class="question-tag" style="background: var(--secondary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">${q.subject}</span>
                             </div>
-                            <p style="margin-bottom: 10px; font-weight: 500;">${q.question}</p>
+                            <p style="margin-bottom: 10px; font-weight: 500;">${q.question}</p>`;
+
+                // Only show options for non-passage questions
+                if (!isPassage) {
+                    html += `
                             <div style="margin-left: 25px; margin-bottom: 8px;">
-                                <div>A) ${q.options[0]}</div>
-                                <div>B) ${q.options[1]}</div>
-                                <div>C) ${q.options[2]}</div>
-                                <div>D) ${q.options[3]}</div>
+                                <div>A) ${q.options ? q.options[0] : ''}</div>
+                                <div>B) ${q.options ? q.options[1] : ''}</div>
+                                <div>C) ${q.options ? q.options[2] : ''}</div>
+                                <div>D) ${q.options ? q.options[3] : ''}</div>
                             </div>
                             <div style="color: var(--success); font-weight: 500;">
-                                ✓ Correct Answer: ${String.fromCharCode(65 + q.correct)}
-                            </div>
+                                ✓ Correct Answer: ${q.correct >= 0 ? String.fromCharCode(65 + q.correct) : 'N/A'}
+                            </div>`;
+                } else {
+                    html += `
+                            <div style="color: #ff9800; font-weight: 500; margin-top: 5px;">
+                                📖 Reference passage - No marks (marks in sub-questions)
+                            </div>`;
+                }
+
+                html += `
                         </div>
                     </label>
                 `;
@@ -2779,13 +2915,16 @@
             html += '</div>';
             readyQuestions.innerHTML = html;
 
-            // Add hover effects
+            // Add hover effects with type-aware colors
             document.querySelectorAll('.extracted-question-item').forEach(item => {
+                const originalBg = item.style.background;
                 item.addEventListener('mouseenter', function() {
-                    this.style.background = '#e8f4fd';
+                    const qType = this.getAttribute('data-question-type');
+                    this.style.background = qType === 'Main Question' ? '#ffe0b2' :
+                                           qType === 'Sub Question' ? '#e1bee7' : '#e8f4fd';
                 });
                 item.addEventListener('mouseleave', function() {
-                    this.style.background = '#f8f9fa';
+                    this.style.background = originalBg;
                 });
             });
 
@@ -6193,17 +6332,82 @@
                             ocrProgress.classList.add('hidden');
                         }, 500);
 
-                        // Store extracted questions
-                        let rawQuestions = data.data.questions.map((q, index) => ({
-                            id: `Q${Date.now()}_${index}`,
-                            subject: q.subject || 'Others',
-                            question: q.question,
-                            options: [q.optionA, q.optionB, q.optionC, q.optionD],
-                            correct: ['A', 'B', 'C', 'D'].indexOf(q.correct.toUpperCase())
-                        }));
+                        // Process AI-detected hierarchical questions
+                        const timestamp = Date.now();
+                        const passageIdMap = new Map(); // Map AI parentId to our generated IDs
 
-                        // Auto-detect and structure hierarchical questions
-                        extractedQuestions = detectAndStructureHierarchicalQuestions(rawQuestions);
+                        // First pass: Create passage ID mapping and process questions
+                        let rawQuestions = data.data.questions.map((q, index) => {
+                            const questionType = q.questionType || 'standalone';
+                            const isPassage = questionType === 'passage';
+                            const isSubQuestion = questionType === 'sub-question';
+
+                            // Generate unique ID
+                            const generatedId = isPassage ? `PASSAGE_${timestamp}_${index}` : `Q${timestamp}_${index}`;
+
+                            // Map AI's parentId to our generated ID
+                            if (isPassage && q.parentId === null) {
+                                // Use the question's position or AI-generated passageId
+                                const aiPassageId = `passage_${Math.floor(index / 6) + 1}`; // Approximate grouping
+                                passageIdMap.set(aiPassageId, generatedId);
+                            }
+
+                            return {
+                                id: generatedId,
+                                subject: q.subject || 'Others',
+                                question: q.question,
+                                options: isPassage ? ['', '', '', ''] : [q.optionA || '', q.optionB || '', q.optionC || '', q.optionD || ''],
+                                correct: isPassage ? -1 : ['A', 'B', 'C', 'D'].indexOf((q.correct || 'A').toUpperCase()),
+                                questionType: isPassage ? 'Main Question' : (isSubQuestion ? 'Sub Question' : 'Standalone'),
+                                parentQuestionId: q.parentId || null,
+                                subQuestionNumber: q.subQuestionOrder || null,
+                                mainQuestionText: null, // Will be filled in second pass
+                                aiDetected: true // Flag to indicate AI detected this structure
+                            };
+                        });
+
+                        // Second pass: Link sub-questions to their parents and fill mainQuestionText
+                        rawQuestions = rawQuestions.map((q, index) => {
+                            if (q.questionType === 'Sub Question' && q.parentQuestionId) {
+                                // Find the parent passage
+                                const parentId = passageIdMap.get(q.parentQuestionId);
+                                if (parentId) {
+                                    const parent = rawQuestions.find(p => p.id === parentId);
+                                    if (parent) {
+                                        q.parentQuestionId = parentId;
+                                        q.mainQuestionText = parent.question;
+                                    }
+                                } else {
+                                    // Try to find parent by looking at previous questions
+                                    for (let i = index - 1; i >= 0; i--) {
+                                        if (rawQuestions[i].questionType === 'Main Question') {
+                                            q.parentQuestionId = rawQuestions[i].id;
+                                            q.mainQuestionText = rawQuestions[i].question;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            return q;
+                        });
+
+                        // Check if AI detected any hierarchical structure
+                        const hasAIHierarchy = rawQuestions.some(q => q.questionType !== 'Standalone');
+
+                        // If AI didn't detect hierarchy, fall back to pattern detection
+                        if (!hasAIHierarchy) {
+                            console.log('AI did not detect hierarchical structure, using pattern detection...');
+                            extractedQuestions = detectAndStructureHierarchicalQuestions(rawQuestions);
+                        } else {
+                            console.log('Using AI-detected hierarchical structure');
+                            extractedQuestions = rawQuestions;
+                        }
+
+                        // Log summary of detected structure
+                        const passages = extractedQuestions.filter(q => q.questionType === 'Main Question').length;
+                        const subQs = extractedQuestions.filter(q => q.questionType === 'Sub Question').length;
+                        const standalone = extractedQuestions.filter(q => q.questionType === 'Standalone').length;
+                        console.log(`Detected: ${passages} passages, ${subQs} sub-questions, ${standalone} standalone questions`);
 
                         if (extractedQuestions.length === 0) {
                             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
@@ -6216,7 +6420,12 @@
                         openOCRReviewModal(extractedQuestions);
 
                         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                            window.PoliteCCAPI.showNotification(`✅ Extracted ${extractedQuestions.length} questions. Please review and edit.`, 'success');
+                            let message = `✅ Extracted ${extractedQuestions.length} questions.`;
+                            if (passages > 0) {
+                                message += ` (${passages} passages with ${subQs} sub-questions detected)`;
+                            }
+                            message += ' Please review and edit.';
+                            window.PoliteCCAPI.showNotification(message, 'success');
                         }
 
                     } catch (error) {
@@ -6406,28 +6615,71 @@
                     return;
                 }
 
-                // Add selected questions to database
+                // Map to track old IDs to new database IDs for parent-child linking
+                const idMap = new Map();
                 let successCount = 0;
+                let passageCount = 0;
+                let subQuestionCount = 0;
+
+                // First pass: Add all passages/main questions first to get their database IDs
                 for (const checkbox of selectedCheckboxes) {
                     const index = parseInt(checkbox.value);
                     const q = extractedQuestions[index];
 
-                    const questionData = {
-                        subject: q.subject,
-                        question: q.question,
-                        optionA: q.options[0],
-                        optionB: q.options[1],
-                        optionC: q.options[2],
-                        optionD: q.options[3],
-                        correct: ['A', 'B', 'C', 'D'][q.correct],
-                        questionType: q.questionType || 'Standalone',
-                        subQuestionNumber: q.subQuestionNumber || null,
-                        mainQuestionText: q.mainQuestionText || null
-                    };
+                    if (q.questionType === 'Main Question') {
+                        const questionData = {
+                            subject: q.subject,
+                            question: q.question,
+                            optionA: '',
+                            optionB: '',
+                            optionC: '',
+                            optionD: '',
+                            correct: '',
+                            isMainQuestion: true
+                        };
 
-                    const success = await window.PoliteCCAPI.addQuestionToDatabase(questionData);
+                        const success = await window.PoliteCCAPI.addQuestionToDatabase(questionData);
+                        if (success) {
+                            successCount++;
+                            passageCount++;
+                            // Store mapping of old ID to indicate this passage was added
+                            idMap.set(q.id, true);
+                        }
+                    }
+                }
 
-                    if (success) successCount++;
+                // Second pass: Add sub-questions and standalone questions
+                for (const checkbox of selectedCheckboxes) {
+                    const index = parseInt(checkbox.value);
+                    const q = extractedQuestions[index];
+
+                    if (q.questionType !== 'Main Question') {
+                        const isSubQuestion = q.questionType === 'Sub Question';
+
+                        const questionData = {
+                            subject: q.subject,
+                            question: q.question,
+                            optionA: q.options ? q.options[0] : '',
+                            optionB: q.options ? q.options[1] : '',
+                            optionC: q.options ? q.options[2] : '',
+                            optionD: q.options ? q.options[3] : '',
+                            correct: q.correct >= 0 ? ['A', 'B', 'C', 'D'][q.correct] : ''
+                        };
+
+                        // Add hierarchical fields for sub-questions
+                        if (isSubQuestion) {
+                            questionData.isSubQuestion = true;
+                            questionData.subQuestionOrder = q.subQuestionNumber || 1;
+                            // Note: parentQuestionId will be linked via mainQuestionText matching
+                            // The API will need to find the parent by matching the mainQuestionText
+                        }
+
+                        const success = await window.PoliteCCAPI.addQuestionToDatabase(questionData);
+                        if (success) {
+                            successCount++;
+                            if (isSubQuestion) subQuestionCount++;
+                        }
+                    }
                 }
 
                 // Hide upload result and show question bank
@@ -6436,8 +6688,14 @@
                     uploadResultContainer.classList.add('hidden');
                 }
 
+                // Generate appropriate success message
+                let message = `✅ ${successCount} questions added to bank!`;
+                if (passageCount > 0) {
+                    message = `✅ Added ${successCount} questions (${passageCount} passages, ${subQuestionCount} sub-questions)`;
+                }
+
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                    window.PoliteCCAPI.showNotification(`✅ ${successCount} selected questions added to bank!`, 'success');
+                    window.PoliteCCAPI.showNotification(message, 'success');
                 }
 
                 // Refresh question bank
