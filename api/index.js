@@ -536,13 +536,64 @@ module.exports = async (req, res) => {
             });
         }
 
-        // DELETE /api/questions/:id - Delete question
+        // DELETE /api/questions/:id - Delete question (with cascade delete for sub-questions)
         if (url.startsWith('/api/questions/') && method === 'DELETE') {
             const questionId = url.split('/api/questions/')[1];
-            await base(QUESTIONS_TABLE).destroy(questionId);
+
+            // First, get the question to check if it's a main question (passage)
+            let questionRecord;
+            try {
+                questionRecord = await base(QUESTIONS_TABLE).find(questionId);
+            } catch (e) {
+                // Try finding by field ID instead of Airtable record ID
+                const records = await base(QUESTIONS_TABLE).select({
+                    filterByFormula: `{ID} = '${sanitizeForFormula(questionId)}'`
+                }).all();
+                if (records.length > 0) {
+                    questionRecord = records[0];
+                }
+            }
+
+            if (!questionRecord) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Question not found'
+                });
+            }
+
+            const questionFieldId = questionRecord.fields.ID;
+            const isMainQuestion = questionRecord.fields['Is Main Question'] === true ||
+                                   (!questionRecord.fields['Option A'] && !questionRecord.fields['Option B']);
+
+            let deletedSubQuestions = 0;
+
+            // If this is a main question (passage), cascade delete all sub-questions
+            if (isMainQuestion && questionFieldId) {
+                const subQuestions = await base(QUESTIONS_TABLE).select({
+                    filterByFormula: `{Parent Question ID} = '${sanitizeForFormula(questionFieldId)}'`
+                }).all();
+
+                if (subQuestions.length > 0) {
+                    const subQuestionIds = subQuestions.map(sq => sq.id);
+                    // Airtable allows max 10 records per destroy call
+                    for (let i = 0; i < subQuestionIds.length; i += 10) {
+                        const batch = subQuestionIds.slice(i, i + 10);
+                        await base(QUESTIONS_TABLE).destroy(batch);
+                    }
+                    deletedSubQuestions = subQuestions.length;
+                    console.log(`Cascade deleted ${deletedSubQuestions} sub-questions for parent ${questionFieldId}`);
+                }
+            }
+
+            // Delete the main question
+            await base(QUESTIONS_TABLE).destroy(questionRecord.id);
+
             return res.status(200).json({
                 success: true,
-                message: 'Question deleted successfully'
+                message: deletedSubQuestions > 0
+                    ? `Question and ${deletedSubQuestions} sub-question(s) deleted successfully`
+                    : 'Question deleted successfully',
+                deletedSubQuestions: deletedSubQuestions
             });
         }
 
