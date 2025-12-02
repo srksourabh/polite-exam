@@ -177,38 +177,70 @@ async function addQuestionToDatabase(questionData) {
         // Build question payload
         const payload = {
             ID: nextId,
-            Subject: questionData.subject,
-            Difficulty: questionData.difficulty || 'Medium',
-            Question: questionData.question
+            Subject: questionData.subject || questionData.Subject,
+            Difficulty: questionData.difficulty || questionData.Difficulty || 'Medium',
+            Question: questionData.question || questionData.Question
         };
 
-        // Add options only for non-main questions (sub-questions and standalone)
-        if (!questionData.isMainQuestion) {
+        // Check if this is a parent question (passage) - no options needed
+        const isParentQuestion = (questionData['Question Type'] === 'Parent-child' && !questionData['Parent Question']) ||
+                                questionData.isMainQuestion ||
+                                questionData['Main Question Text'];
+
+        // Add options only for non-parent questions (children and standalone)
+        if (!isParentQuestion) {
             // Support both array format (options[]) and individual format (optionA, optionB, etc.)
-            const optA = questionData.optionA || (questionData.options && questionData.options[0]) || '';
-            const optB = questionData.optionB || (questionData.options && questionData.options[1]) || '';
-            const optC = questionData.optionC || (questionData.options && questionData.options[2]) || '';
-            const optD = questionData.optionD || (questionData.options && questionData.options[3]) || '';
+            const optA = questionData.optionA || questionData['Option A'] || (questionData.options && questionData.options[0]) || '';
+            const optB = questionData.optionB || questionData['Option B'] || (questionData.options && questionData.options[1]) || '';
+            const optC = questionData.optionC || questionData['Option C'] || (questionData.options && questionData.options[2]) || '';
+            const optD = questionData.optionD || questionData['Option D'] || (questionData.options && questionData.options[3]) || '';
 
             payload['Option A'] = optA;
             payload['Option B'] = optB;
             payload['Option C'] = optC;
             payload['Option D'] = optD;
-            payload['Correct'] = questionData.correct || '';
+            payload['Correct'] = questionData.correct || questionData.Correct || '';
 
             console.log('📝 Adding question with options:', { optA, optB, optC, optD, correct: questionData.correct });
         }
 
-        // Add hierarchical question fields
+        // Handle NEW hierarchical fields (Question Type, Parent Question, Sub Question Number, Main Question Text)
+        if (questionData['Question Type']) {
+            payload['Question Type'] = questionData['Question Type'];
+        }
+
+        if (questionData['Parent Question']) {
+            payload['Parent Question'] = questionData['Parent Question']; // Array of record IDs
+        }
+
+        if (questionData['Sub Question Number']) {
+            payload['Sub Question Number'] = questionData['Sub Question Number'];
+        }
+
+        if (questionData['Main Question Text']) {
+            payload['Main Question Text'] = questionData['Main Question Text'];
+        }
+
+        // Handle OLD hierarchical fields for backward compatibility
         if (questionData.isSubQuestion) {
-            payload['Is Sub Question'] = true;
-            payload['Parent Question ID'] = questionData.parentQuestionId || '';
-            payload['Sub Question Order'] = questionData.subQuestionOrder || 1;
+            payload['Question Type'] = 'Parent-child';
+            // Old format used Parent Question ID (string), new format uses Parent Question (array)
+            if (questionData.parentQuestionId && !payload['Parent Question']) {
+                // Need to find the record ID for this display ID
+                const parentQ = existingQuestions.find(q => q.ID === questionData.parentQuestionId);
+                if (parentQ && parentQ.id) {
+                    payload['Parent Question'] = [parentQ.id];
+                }
+            }
+            payload['Sub Question Number'] = questionData.subQuestionOrder || 1;
         }
 
         if (questionData.isMainQuestion) {
-            payload['Is Main Question'] = true;
+            payload['Question Type'] = 'Parent-child';
+            payload['Main Question Text'] = questionData.question || questionData.Question;
         }
+
+        console.log('📤 Sending question payload:', payload);
 
         const response = await fetch(`${API_URL}/questions`, {
             method: 'POST',
@@ -217,16 +249,17 @@ async function addQuestionToDatabase(questionData) {
             },
             body: JSON.stringify(payload)
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
-            console.log('✅ Question added to database');
+            console.log('✅ Question added to database:', data.data);
             showNotification('✅ Question added successfully!', 'success');
-            
+
             // Reload questions
             await loadQuestions();
-            return true;
+            // Return the full question data including the record ID
+            return data.data;
         } else {
             throw new Error(data.error || 'Failed to add question');
         }
