@@ -2301,37 +2301,46 @@ Artificial Intelligence has revolutionized..."></textarea>
                 <!-- Floating Timer -->
                 <div class="timer" id="timer-display">⏱️ Time Remaining: 10:00</div>
 
-                <div class="question-container">
-                    <div class="question-tag" id="question-subject-display">Reasoning</div>
-                    <div class="question-number">Question <span id="current-q-num">1</span> of <span id="total-questions">5</span></div>
-                    <div class="question-text" id="question-text-display">Loading question...</div>
-                    
-                    <div class="options">
-                        <div class="option" data-index="0">
-                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-0">
-                            <span class="option-letter">A</span>
-                            <span id="option-a-display">Loading...</span>
-                        </div>
-                        <div class="option" data-index="1">
-                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-1">
-                            <span class="option-letter">B</span>
-                            <span id="option-b-display">Loading...</span>
-                        </div>
-                        <div class="option" data-index="2">
-                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-2">
-                            <span class="option-letter">C</span>
-                            <span id="option-c-display">Loading...</span>
-                        </div>
-                        <div class="option" data-index="3">
-                            <input type="radio" name="exam-answer" class="option-radio" id="option-radio-3">
-                            <span class="option-letter">D</span>
-                            <span id="option-d-display">Loading...</span>
+                <!-- Dynamic Question Container - supports both standalone and parent-child groups -->
+                <div id="exam-question-container">
+                    <!-- Standalone question template (default) -->
+                    <div class="question-container" id="standalone-question-container">
+                        <div class="question-tag" id="question-subject-display">Reasoning</div>
+                        <div class="question-number">Question <span id="current-q-num">1</span> of <span id="total-questions">5</span></div>
+                        <div class="question-text" id="question-text-display">Loading question...</div>
+
+                        <div class="options" id="standalone-options">
+                            <div class="option" data-index="0">
+                                <input type="radio" name="exam-answer" class="option-radio" id="option-radio-0">
+                                <span class="option-letter">A</span>
+                                <span id="option-a-display">Loading...</span>
+                            </div>
+                            <div class="option" data-index="1">
+                                <input type="radio" name="exam-answer" class="option-radio" id="option-radio-1">
+                                <span class="option-letter">B</span>
+                                <span id="option-b-display">Loading...</span>
+                            </div>
+                            <div class="option" data-index="2">
+                                <input type="radio" name="exam-answer" class="option-radio" id="option-radio-2">
+                                <span class="option-letter">C</span>
+                                <span id="option-c-display">Loading...</span>
+                            </div>
+                            <div class="option" data-index="3">
+                                <input type="radio" name="exam-answer" class="option-radio" id="option-radio-3">
+                                <span class="option-letter">D</span>
+                                <span id="option-d-display">Loading...</span>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Parent-Child Group Container (hidden by default, shown for grouped questions) -->
+                    <div id="parent-child-question-container" style="display: none;">
+                        <!-- Will be dynamically populated with passage + all sub-questions -->
+                    </div>
                 </div>
-                
+
                 <div class="progress">Question <span id="progress-num">1</span> of <span id="progress-total">5</span></div>
-                
+
                 <div class="navigation">
                     <button id="prev-btn" disabled>← Previous</button>
                     <button id="next-btn">Next →</button>
@@ -5518,20 +5527,33 @@ Artificial Intelligence has revolutionized..."></textarea>
                 // Store all questions for filtering
                 let examFilteredQuestions = [...questions];
 
-                // Function to render exam questions list
+                // Function to render exam questions list with hierarchical grouping
                 function renderExamQuestionsList() {
+                    // Group questions hierarchically - parents with their children
+                    const groupedQuestions = groupQuestionsHierarchically(examFilteredQuestions);
+
                     let html = '<div id="exam-questions-container" style="max-height: 450px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">';
 
-                    if (examFilteredQuestions.length === 0) {
+                    if (groupedQuestions.length === 0) {
                         html += '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No questions match the current filters.</p>';
                     } else {
-                        examFilteredQuestions.forEach(q => {
+                        groupedQuestions.forEach(q => {
+                            const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
+                            const subQuestionCount = q.subQuestions ? q.subQuestions.length : 0;
+                            const isParentQuestion = hasSubQuestions || q['Main Question Text'];
+
                             const subjectColors = {
                                 'Math': '#3498db',
                                 'Reasoning': '#9b59b6',
                                 'GK': '#e67e22',
                                 'General Knowledge': '#e67e22',
                                 'English': '#1abc9c',
+                                'Quantitative Aptitude': '#3498db',
+                                'Reasoning Ability': '#9b59b6',
+                                'English Language': '#1abc9c',
+                                'General Awareness': '#e67e22',
+                                'Current Affairs': '#e74c3c',
+                                'Banking Awareness': '#27ae60',
                                 'Others': '#95a5a6'
                             };
                             const difficultyColors = {
@@ -5542,26 +5564,75 @@ Artificial Intelligence has revolutionized..."></textarea>
                             const subjectColor = subjectColors[q.Subject] || '#95a5a6';
                             const difficultyColor = difficultyColors[q.Difficulty] || '#95a5a6';
 
+                            // Store child IDs as data attribute for group selection
+                            const childIds = hasSubQuestions ? q.subQuestions.map(sq => sq.id).join(',') : '';
+
                             html += `
-                            <label class="exam-question-item" data-subject="${q.Subject || ''}" data-difficulty="${q.Difficulty || ''}" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;">
-                                <input type="checkbox" class="question-checkbox" value="${q.id}" data-question-id="${q.ID}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+                            <label class="exam-question-item ${hasSubQuestions ? 'parent-child-group' : ''}" data-subject="${q.Subject || ''}" data-difficulty="${q.Difficulty || ''}" data-child-ids="${childIds}" data-has-children="${hasSubQuestions}" style="display: flex; align-items: flex-start; background: ${hasSubQuestions ? '#faf5ff' : '#f8f9fa'}; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid ${hasSubQuestions ? '#9c27b0' : 'transparent'};">
+                                <input type="checkbox" class="question-checkbox" value="${q.id}" data-question-id="${q.ID}" data-child-ids="${childIds}" data-sub-count="${subQuestionCount}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
-                                        <strong style="font-size: 1rem; color: var(--secondary);">${q.ID}</strong>
+                                        <strong style="font-size: 1rem; color: ${hasSubQuestions ? '#9c27b0' : 'var(--secondary)'};">${q.ID}</strong>
                                         <span style="background: ${subjectColor}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Subject}</span>
                                         <span style="background: ${difficultyColor}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Difficulty || 'Unknown'}</span>
+                                        ${hasSubQuestions ? `
+                                            <span style="background: #9c27b0; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">📋 ${subQuestionCount} Sub-Questions</span>
+                                            <span style="background: #4caf50; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⚖️ ${subQuestionCount} marks</span>
+                                        ` : `
+                                            <span style="background: #4caf50; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⚖️ 1 mark</span>
+                                        `}
                                     </div>
-                                    <div style="color: #2c3e50; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-size: 0.95rem; margin-bottom: 8px;"><strong>Q:</strong> ${q.Question}</div>
+                                    <div style="color: #2c3e50; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-size: 0.95rem; margin-bottom: 8px;">
+                                        ${isParentQuestion ? '<strong>📖 Passage:</strong>' : '<strong>Q:</strong>'} ${q.Question}
+                                    </div>`;
+
+                            // Show options only for standalone questions (not parent questions)
+                            if (!isParentQuestion) {
+                                html += `
                                     <details style="margin-top: 8px; cursor: pointer;">
                                         <summary style="color: #3498db; font-weight: 600; font-size: 0.85rem; user-select: none; padding: 4px 0;">Show Options</summary>
                                         <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px; border: 1px solid #e0e0e0;">
-                                            <div style="margin: 4px 0; color: #555;"><strong>A)</strong> ${q['Option A']}</div>
-                                            <div style="margin: 4px 0; color: #555;"><strong>B)</strong> ${q['Option B']}</div>
-                                            <div style="margin: 4px 0; color: #555;"><strong>C)</strong> ${q['Option C']}</div>
-                                            <div style="margin: 4px 0; color: #555;"><strong>D)</strong> ${q['Option D']}</div>
+                                            <div style="margin: 4px 0; color: #555;"><strong>A)</strong> ${q['Option A'] || ''}</div>
+                                            <div style="margin: 4px 0; color: #555;"><strong>B)</strong> ${q['Option B'] || ''}</div>
+                                            <div style="margin: 4px 0; color: #555;"><strong>C)</strong> ${q['Option C'] || ''}</div>
+                                            <div style="margin: 4px 0; color: #555;"><strong>D)</strong> ${q['Option D'] || ''}</div>
                                             <div style="margin-top: 8px; padding: 6px; background: #d4edda; border-radius: 4px; color: #155724; font-weight: 600;"><strong>✓ Correct:</strong> ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}</div>
                                         </div>
-                                    </details>
+                                    </details>`;
+                            }
+
+                            // Show sub-questions for parent-child groups
+                            if (hasSubQuestions) {
+                                html += `
+                                    <details style="margin-top: 10px; cursor: pointer;" open>
+                                        <summary style="color: #9c27b0; font-weight: 600; font-size: 0.85rem; user-select: none; padding: 4px 0;">📋 View ${subQuestionCount} Sub-Questions (All included when selected)</summary>
+                                        <div style="margin-top: 8px; padding: 10px; background: #f3e5f5; border-radius: 6px; border: 1px solid #ce93d8;">`;
+
+                                q.subQuestions.forEach((sq, idx) => {
+                                    const sqId = sq.ID || `${q.ID}.${idx + 1}`;
+                                    html += `
+                                            <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #9c27b0;">
+                                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                                    <strong style="color: #9c27b0;">${sqId}</strong>
+                                                    <span style="background: #4caf50; color: white; padding: 1px 8px; border-radius: 10px; font-size: 0.7rem;">+1/-0.25</span>
+                                                </div>
+                                                <div style="color: #2c3e50; font-size: 0.9rem; margin-bottom: 6px;"><strong>Q:</strong> ${sq.Question || ''}</div>
+                                                <div style="font-size: 0.85rem; color: #666;">
+                                                    <span style="margin-right: 10px;">A) ${sq['Option A'] || ''}</span>
+                                                    <span style="margin-right: 10px;">B) ${sq['Option B'] || ''}</span>
+                                                    <span style="margin-right: 10px;">C) ${sq['Option C'] || ''}</span>
+                                                    <span>D) ${sq['Option D'] || ''}</span>
+                                                </div>
+                                                <div style="color: #27ae60; font-size: 0.8rem; margin-top: 4px;"><strong>✓ Answer:</strong> ${(sq.Correct || sq['Correct Answer'] || '').toString().toUpperCase()}</div>
+                                            </div>`;
+                                });
+
+                                html += `
+                                        </div>
+                                    </details>`;
+                            }
+
+                            html += `
                                 </div>
                             </label>
                             `;
@@ -5573,10 +5644,20 @@ Artificial Intelligence has revolutionized..."></textarea>
                     attachExamQuestionEventListeners();
                 }
 
-                // Update counter when checkboxes change
+                // Update counter when checkboxes change - count actual questions (children count for parent-child)
                 function updateSelectedCount() {
-                    const checkedCount = document.querySelectorAll('.question-checkbox:checked').length;
-                    document.getElementById('selected-count').textContent = checkedCount + ' Selected';
+                    let totalQuestions = 0;
+                    document.querySelectorAll('.question-checkbox:checked').forEach(checkbox => {
+                        const subCount = parseInt(checkbox.dataset.subCount) || 0;
+                        if (subCount > 0) {
+                            // Parent-child: count the children (they are the actual questions)
+                            totalQuestions += subCount;
+                        } else {
+                            // Standalone: count as 1
+                            totalQuestions += 1;
+                        }
+                    });
+                    document.getElementById('selected-count').textContent = totalQuestions + ' Questions Selected';
                 }
 
                 // Function to attach event listeners
@@ -5588,15 +5669,16 @@ Artificial Intelligence has revolutionized..."></textarea>
 
                     // Add hover effect to question items
                     document.querySelectorAll('.exam-question-item').forEach(item => {
+                        const hasChildren = item.dataset.hasChildren === 'true';
                         item.addEventListener('mouseenter', function() {
-                            this.style.borderColor = 'var(--primary)';
-                            this.style.background = '#e8f4fd';
+                            this.style.borderColor = hasChildren ? '#9c27b0' : 'var(--primary)';
+                            this.style.background = hasChildren ? '#f3e5f5' : '#e8f4fd';
                         });
                         item.addEventListener('mouseleave', function() {
                             const checkbox = this.querySelector('.question-checkbox');
                             if (!checkbox.checked) {
-                                this.style.borderColor = 'transparent';
-                                this.style.background = '#f8f9fa';
+                                this.style.borderColor = hasChildren ? '#9c27b0' : 'transparent';
+                                this.style.background = hasChildren ? '#faf5ff' : '#f8f9fa';
                             }
                         });
                     });
@@ -6449,76 +6531,161 @@ Artificial Intelligence has revolutionized..."></textarea>
                 <div style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
             `;
 
-            // Display questions with full details and all options
+            // Display questions with full details and all options - GROUP parent-child questions together
             if (isDetailedFormat) {
+                // First, group questions: separate parents/standalone from children
+                const parentChildMap = new Map(); // parentId -> {parent, children}
+                const standaloneQuestions = [];
+
                 userAnswers.forEach((answer, index) => {
+                    answer._originalIndex = index; // Store original index for numbering
+                    const isSubQuestion = answer.isSubQuestion;
+                    const parentQuestionId = answer.parentQuestionId;
+
+                    if (isSubQuestion && parentQuestionId) {
+                        // This is a child question
+                        if (!parentChildMap.has(parentQuestionId)) {
+                            parentChildMap.set(parentQuestionId, { parent: null, children: [] });
+                        }
+                        parentChildMap.get(parentQuestionId).children.push(answer);
+                    } else if (answer.isParentQuestion || answer.hasSubQuestions) {
+                        // This is a parent/passage question
+                        const qId = answer.questionId;
+                        if (!parentChildMap.has(qId)) {
+                            parentChildMap.set(qId, { parent: answer, children: [] });
+                        } else {
+                            parentChildMap.get(qId).parent = answer;
+                        }
+                    } else {
+                        // Standalone question
+                        standaloneQuestions.push(answer);
+                    }
+                });
+
+                // Also check if any children don't have their parent in the map (parent might be identified differently)
+                userAnswers.forEach(answer => {
+                    if (!answer.isSubQuestion && !answer.isParentQuestion && !answer.hasSubQuestions) {
+                        // Check if this might be a parent based on ID matching
+                        const qId = answer.questionId;
+                        if (parentChildMap.has(qId) && !parentChildMap.get(qId).parent) {
+                            parentChildMap.get(qId).parent = answer;
+                            // Remove from standalone
+                            const idx = standaloneQuestions.indexOf(answer);
+                            if (idx > -1) standaloneQuestions.splice(idx, 1);
+                        }
+                    }
+                });
+
+                // Helper function to render a single question's answer
+                function renderQuestionAnswer(answer, qNumber, isChild = false) {
                     const isCorrect = answer.isCorrect;
                     const userAnswered = answer.userAnswer !== 'Not Answered';
                     const userAnswerLetter = answer.userAnswer;
                     const correctAnswerLetter = answer.correctAnswer;
-
-                    // Check if this is a sub-question
-                    const isSubQuestion = answer.isSubQuestion;
-                    const parentQuestionId = answer.parentQuestionId;
-                    const subQuestionOrder = answer.subQuestionOrder;
-
                     const bgColor = isCorrect ? '#e8f5e9' : (userAnswered ? '#ffebee' : '#f5f5f5');
                     const borderColor = isCorrect ? '#27ae60' : (userAnswered ? '#e74c3c' : '#95a5a6');
 
-                    // Find parent question for context if this is a sub-question
-                    let parentQuestion = null;
-                    if (isSubQuestion && parentQuestionId) {
-                        parentQuestion = userAnswers.find(a => a.questionId === parentQuestionId);
-                    }
-
-                    html += `
-                        <div style="background: ${bgColor}; border-left: 5px solid ${isSubQuestion ? '#9c27b0' : borderColor}; padding: 20px; margin-bottom: 15px; border-radius: 8px; ${isSubQuestion ? 'margin-left: 25px;' : ''}">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                <div style="font-weight: 700; color: var(--secondary); font-size: 1rem;">
-                                    Q${index + 1}. ${answer.questionId || ''}
-                                    ${isSubQuestion ? `<span style="background: #e1bee7; color: #7b1fa2; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">📋 Sub-Q${subQuestionOrder ? ' #' + subQuestionOrder : ''}</span>` : ''}
-                                    <span style="background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">${answer.subject || ''}</span>
+                    return `
+                        <div style="background: ${bgColor}; border-left: 5px solid ${isChild ? '#9c27b0' : borderColor}; padding: 15px; margin-bottom: 10px; border-radius: 8px; ${isChild ? 'margin-left: 20px;' : ''}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div style="font-weight: 700; color: ${isChild ? '#9c27b0' : 'var(--secondary)'}; font-size: 0.95rem;">
+                                    ${qNumber}. ${answer.questionId || ''}
+                                    ${isChild ? `<span style="background: #e1bee7; color: #7b1fa2; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-left: 6px;">Sub-Q</span>` : ''}
+                                    <span style="background: #e3f2fd; color: #1976d2; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-left: 6px;">${answer.subject || ''}</span>
                                 </div>
-                                <div style="font-weight: 600; font-size: 0.9rem; padding: 5px 12px; border-radius: 6px; background: ${isCorrect ? '#c8e6c9' : (userAnswered ? '#ffcdd2' : '#e0e0e0')}; color: ${isCorrect ? '#388e3c' : (userAnswered ? '#c62828' : '#666')};">
+                                <div style="font-weight: 600; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; background: ${isCorrect ? '#c8e6c9' : (userAnswered ? '#ffcdd2' : '#e0e0e0')}; color: ${isCorrect ? '#388e3c' : (userAnswered ? '#c62828' : '#666')};">
                                     ${isCorrect ? '+1' : (userAnswered ? '-0.25' : '0')}
                                 </div>
                             </div>
-                            ${isSubQuestion && parentQuestion ? `
-                            <div style="background: #f3e5f5; padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #9c27b0;">
-                                <div style="color: #9c27b0; font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">📖 Reference (${parentQuestionId}):</div>
-                                <div style="color: #333; font-size: 0.95rem;">${parentQuestion.question || ''}</div>
-                            </div>
-                            ` : ''}
-                            <div style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 15px; color: #333; background: white; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 1rem; line-height: 1.6; margin-bottom: 12px; color: #333; background: white; padding: 12px; border-radius: 6px;">
                                 ${answer.question || 'Question not available'}
                             </div>
-                            <div style="display: grid; gap: 8px;">
-                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'A' ? (correctAnswerLetter === 'A' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'A' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'A' ? '#27ae60' : (userAnswerLetter === 'A' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong style="color: #1976d2;">A:</strong> ${answer.optionA || ''}
-                                    ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
-                                    ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                            <div style="display: grid; gap: 6px; font-size: 0.95rem;">
+                                <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'A' ? (correctAnswerLetter === 'A' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'A' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'A' ? '#27ae60' : (userAnswerLetter === 'A' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong>A:</strong> ${answer.optionA || ''} ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
-                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'B' ? (correctAnswerLetter === 'B' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'B' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'B' ? '#27ae60' : (userAnswerLetter === 'B' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong style="color: #1976d2;">B:</strong> ${answer.optionB || ''}
-                                    ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
-                                    ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                                <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'B' ? (correctAnswerLetter === 'B' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'B' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'B' ? '#27ae60' : (userAnswerLetter === 'B' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong>B:</strong> ${answer.optionB || ''} ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
-                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'C' ? (correctAnswerLetter === 'C' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'C' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'C' ? '#27ae60' : (userAnswerLetter === 'C' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong style="color: #1976d2;">C:</strong> ${answer.optionC || ''}
-                                    ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
-                                    ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                                <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'C' ? (correctAnswerLetter === 'C' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'C' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'C' ? '#27ae60' : (userAnswerLetter === 'C' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong>C:</strong> ${answer.optionC || ''} ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
-                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'D' ? (correctAnswerLetter === 'D' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'D' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'D' ? '#27ae60' : (userAnswerLetter === 'D' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong style="color: #1976d2;">D:</strong> ${answer.optionD || ''}
-                                    ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
-                                    ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                                <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'D' ? (correctAnswerLetter === 'D' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'D' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'D' ? '#27ae60' : (userAnswerLetter === 'D' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong>D:</strong> ${answer.optionD || ''} ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
                             </div>
-                            <div style="margin-top: 12px; font-weight: 600; font-size: 1rem; text-align: right;">
-                                ${isCorrect ? '✅ Correct Answer' : (userAnswered ? '❌ Incorrect Answer' : '⚪ Not Answered')}
+                            <div style="margin-top: 10px; font-weight: 600; font-size: 0.9rem; text-align: right;">
+                                ${isCorrect ? '✅ Correct' : (userAnswered ? '❌ Incorrect' : '⚪ Unanswered')}
                             </div>
                         </div>
                     `;
+                }
+
+                let questionNumber = 1;
+
+                // Render parent-child groups first
+                parentChildMap.forEach((group, parentId) => {
+                    const parent = group.parent;
+                    const children = group.children;
+
+                    if (children.length > 0) {
+                        // Calculate group score
+                        let groupCorrect = 0, groupIncorrect = 0, groupUnanswered = 0;
+                        children.forEach(child => {
+                            if (child.isCorrect) groupCorrect++;
+                            else if (child.userAnswer !== 'Not Answered') groupIncorrect++;
+                            else groupUnanswered++;
+                        });
+                        const groupScore = groupCorrect - (groupIncorrect * 0.25);
+
+                        // Render group container
+                        html += `
+                            <div style="background: #faf5ff; border: 2px solid #9c27b0; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                                <!-- Group Header -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                                    <div style="font-weight: 700; color: #9c27b0; font-size: 1.1rem;">
+                                        📋 Q${questionNumber}. ${parentId || 'Parent-Child Group'}
+                                        <span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">${children.length} Sub-Questions</span>
+                                    </div>
+                                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                        <span style="background: #c8e6c9; color: #388e3c; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">✓ ${groupCorrect}</span>
+                                        <span style="background: #ffcdd2; color: #c62828; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">✗ ${groupIncorrect}</span>
+                                        <span style="background: #e0e0e0; color: #666; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">○ ${groupUnanswered}</span>
+                                        <span style="background: ${groupScore >= 0 ? '#4caf50' : '#f44336'}; color: white; padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;">Score: ${groupScore.toFixed(2)}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Parent Passage -->
+                                ${parent ? `
+                                <div style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                    <div style="color: #9c27b0; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">📖 Passage/Context:</div>
+                                    <div style="color: #333; font-size: 1rem; line-height: 1.7;">${parent.question || 'Passage not available'}</div>
+                                </div>
+                                ` : ''}
+
+                                <!-- Child Questions -->
+                                <div style="border-top: 2px dashed #ce93d8; padding-top: 15px;">
+                                    <div style="color: #7b1fa2; font-weight: 600; margin-bottom: 12px; font-size: 0.9rem;">Sub-Questions:</div>
+                        `;
+
+                        // Render each child
+                        children.sort((a, b) => (a.subQuestionOrder || 0) - (b.subQuestionOrder || 0));
+                        children.forEach((child, childIdx) => {
+                            html += renderQuestionAnswer(child, `${questionNumber}.${childIdx + 1}`, true);
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                        questionNumber++;
+                    }
+                });
+
+                // Render standalone questions
+                standaloneQuestions.forEach(answer => {
+                    html += renderQuestionAnswer(answer, `Q${questionNumber}`, false);
+                    questionNumber++;
                 });
             } else {
                 html += `
@@ -7618,21 +7785,41 @@ Artificial Intelligence has revolutionized..."></textarea>
             saveExamState();
         }
 
-        // Previous question
+        // Helper function to check if a question is a child
+        function isChildQuestionCheck(q) {
+            const hasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
+            return hasParentLink || q.isSubQuestion || q['Is Sub Question'];
+        }
+
+        // Previous question - skip child questions (they're shown with parent)
         document.getElementById('prev-btn').addEventListener('click', function() {
             if (currentQuestionIndex > 0) {
                 currentQuestionIndex--;
+                // Skip child questions - find previous non-child
+                while (currentQuestionIndex > 0 && isChildQuestionCheck(currentExam.questions[currentQuestionIndex])) {
+                    currentQuestionIndex--;
+                }
                 loadQuestion();
-                saveExamState(); // Save state on navigation
+                saveExamState();
             }
         });
 
-        // Next question
+        // Next question - skip child questions (they're shown with parent)
         document.getElementById('next-btn').addEventListener('click', function() {
             if (currentQuestionIndex < currentExam.questions.length - 1) {
                 currentQuestionIndex++;
+                // Skip child questions - find next non-child
+                while (currentQuestionIndex < currentExam.questions.length - 1 && isChildQuestionCheck(currentExam.questions[currentQuestionIndex])) {
+                    currentQuestionIndex++;
+                }
+                // If we landed on a child at the end, we're done
+                if (isChildQuestionCheck(currentExam.questions[currentQuestionIndex])) {
+                    // This shouldn't happen normally, but handle edge case
+                    document.getElementById('next-btn').style.display = 'none';
+                    document.getElementById('submit-btn').style.display = 'block';
+                }
                 loadQuestion();
-                saveExamState(); // Save state on navigation
+                saveExamState();
             }
         });
 
@@ -7918,82 +8105,220 @@ Artificial Intelligence has revolutionized..."></textarea>
             return { display: questionIndex + 1, isSubQ: false };
         }
 
-        // Question loading
+        // Question loading - supports both standalone and parent-child grouped questions
         function loadQuestion() {
             if (!currentExam || currentQuestionIndex >= currentExam.questions.length) return;
 
             const question = currentExam.questions[currentQuestionIndex];
-            const isSubQuestion = question['Is Sub Question'] === true || question['Is Sub Question'] === 'true';
-            const parentQuestionId = question['Parent Question ID'];
-            const isMainPassage = !question['Option A'] && !question['Option B'] && question.Question;
 
-            // Find parent question if this is a sub-question
-            let parentQuestion = null;
-            if (isSubQuestion && parentQuestionId) {
-                parentQuestion = currentExam.questions.find(q => q.ID === parentQuestionId);
+            // Check if this is a parent question with children
+            const questionType = question['Question Type'];
+            const hasParentLink = question['Parent Question'] && question['Parent Question'].length > 0;
+            const isParentQuestion = (questionType === 'Parent-child' && !hasParentLink) ||
+                                    question['Main Question Text'] ||
+                                    question.hasSubQuestions;
+
+            // Find children for this parent
+            let childQuestions = [];
+            if (isParentQuestion) {
+                const parentId = question.id || question.ID;
+                childQuestions = currentExam.questions.filter(q => {
+                    const qParentLink = q['Parent Question'];
+                    return (qParentLink && qParentLink.length > 0 && qParentLink[0] === parentId) ||
+                           (q.parentQuestionId === question.ID) ||
+                           (q['Parent Question ID'] === question.ID);
+                });
             }
 
-            // Calculate hierarchical question number
-            const hierarchicalNum = getHierarchicalQuestionNumber(currentQuestionIndex);
-
-            // Update UI with hierarchical numbering
-            document.getElementById('current-q-num').textContent = hierarchicalNum.display;
-            document.getElementById('total-questions').textContent = currentExam.questions.length;
-            document.getElementById('progress-num').textContent = currentQuestionIndex + 1;
-            document.getElementById('progress-total').textContent = currentExam.questions.length;
-
-            // Show subject with sub-question indicator and marks if applicable
-            let subjectDisplay = question.Subject || 'Unknown';
-            if (isSubQuestion) {
-                subjectDisplay = `📋 Q.${hierarchicalNum.display} | ${question.Subject || 'Unknown'} | +1 / -0.25`;
-            } else if (isMainPassage) {
-                subjectDisplay = `📖 Passage | ${question.Subject || 'Unknown'} | No Marks`;
-            }
-            document.getElementById('question-subject-display').textContent = subjectDisplay;
-
-            // Build question text with parent context for sub-questions
-            let questionTextDisplay = question.Question || 'Loading question...';
-            const questionTextElement = document.getElementById('question-text-display');
-
-            if (isSubQuestion && parentQuestion) {
-                // Show parent question context for sub-questions
-                questionTextElement.innerHTML = `
-                    <div style="background: #f3e5f5; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #9c27b0;">
-                        <div style="color: #9c27b0; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">
-                            📖 Reference Passage:
-                        </div>
-                        <div style="color: #333; font-size: 0.95rem;">${parentQuestion.Question || ''}</div>
-                    </div>
-                    <div style="color: #9c27b0; font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">
-                        Sub-Question ${question['Sub Question Order'] || ''}:
-                    </div>
-                    <div>${questionTextDisplay}</div>
-                `;
-            } else {
-                questionTextElement.textContent = questionTextDisplay;
+            // Check if this question is a child (skip it - it's shown with parent)
+            const isChildQuestion = hasParentLink || question.isSubQuestion || question['Is Sub Question'];
+            if (isChildQuestion) {
+                // Skip to next/previous non-child question
+                return;
             }
 
-            document.getElementById('option-a-display').textContent = question['Option A'] || 'Option A';
-            document.getElementById('option-b-display').textContent = question['Option B'] || 'Option B';
-            document.getElementById('option-c-display').textContent = question['Option C'] || 'Option C';
-            document.getElementById('option-d-display').textContent = question['Option D'] || 'Option D';
+            const standaloneContainer = document.getElementById('standalone-question-container');
+            const parentChildContainer = document.getElementById('parent-child-question-container');
 
-            // Update selected option and radio buttons
-            const options = document.querySelectorAll('#exam-screen .option');
-            const radios = document.querySelectorAll('#exam-screen .option-radio');
-            options.forEach((option, index) => {
-                if (userAnswers[currentQuestionIndex] === index) {
-                    option.classList.add('selected');
-                    radios[index].checked = true;
-                } else {
-                    option.classList.remove('selected');
-                    radios[index].checked = false;
+            // Calculate display question number (excluding children from count)
+            let displayQuestionNum = 1;
+            let totalDisplayQuestions = 0;
+            const processedParents = new Set();
+
+            for (let i = 0; i < currentExam.questions.length; i++) {
+                const q = currentExam.questions[i];
+                const qHasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
+                const qIsChild = qHasParentLink || q.isSubQuestion || q['Is Sub Question'];
+
+                if (!qIsChild) {
+                    totalDisplayQuestions++;
+                    if (i < currentQuestionIndex) {
+                        displayQuestionNum++;
+                    }
                 }
-            });
+            }
+
+            document.getElementById('current-q-num').textContent = displayQuestionNum;
+            document.getElementById('total-questions').textContent = totalDisplayQuestions;
+            document.getElementById('progress-num').textContent = displayQuestionNum;
+            document.getElementById('progress-total').textContent = totalDisplayQuestions;
+
+            if (isParentQuestion && childQuestions.length > 0) {
+                // Display parent-child group
+                standaloneContainer.style.display = 'none';
+                parentChildContainer.style.display = 'block';
+
+                let groupHtml = `
+                    <div class="question-container" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e5f5 100%); border: 2px solid #9c27b0; max-height: 65vh; overflow-y: auto;">
+                        <!-- Group Header -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; position: sticky; top: 0; background: #f3e5f5; padding: 10px; margin: -20px -20px 15px -20px; border-radius: 10px 10px 0 0;">
+                            <div class="question-tag" style="background: #9c27b0;">📋 Question ${displayQuestionNum} - Parent-Child Group</div>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <span style="background: #9c27b0; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 600;">${childQuestions.length} Sub-Questions</span>
+                                <span style="background: #4caf50; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 600;">Max: ${childQuestions.length} marks</span>
+                            </div>
+                        </div>
+
+                        <!-- Parent Passage -->
+                        <div style="background: white; border-left: 4px solid #9c27b0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="color: #9c27b0; font-weight: 700; margin-bottom: 10px; font-size: 1rem;">📖 Passage / Context:</div>
+                            <div style="color: #333; font-size: 1.05rem; line-height: 1.8;">${question.Question || question['Main Question Text'] || ''}</div>
+                        </div>
+
+                        <!-- Sub-Questions -->
+                        <div style="color: #7b1fa2; font-weight: 700; margin-bottom: 15px; font-size: 0.95rem; border-top: 2px dashed #ce93d8; padding-top: 15px;">
+                            Answer all ${childQuestions.length} sub-questions below:
+                        </div>
+                `;
+
+                // Sort children by order
+                childQuestions.sort((a, b) => {
+                    const orderA = parseInt(a['Sub Question Number']) || parseInt(a['Sub Question Order']) || 0;
+                    const orderB = parseInt(b['Sub Question Number']) || parseInt(b['Sub Question Order']) || 0;
+                    return orderA - orderB;
+                });
+
+                // Render each child question with its options
+                childQuestions.forEach((child, childIdx) => {
+                    const childIndex = currentExam.questions.indexOf(child);
+                    const childAnswer = userAnswers[childIndex];
+                    const childNum = childIdx + 1;
+                    const childId = child.ID || `${question.ID}.${childNum}`;
+
+                    groupHtml += `
+                        <div class="sub-question-block" style="background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #9c27b0;" data-child-index="${childIndex}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div style="font-weight: 700; color: #9c27b0; font-size: 1rem;">
+                                    ${displayQuestionNum}.${childNum} ${childId}
+                                </div>
+                                <div style="display: flex; gap: 5px;">
+                                    <span style="background: #e8f5e9; color: #388e3c; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">+1</span>
+                                    <span style="background: #ffebee; color: #c62828; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">-0.25</span>
+                                </div>
+                            </div>
+                            <div style="font-size: 1rem; line-height: 1.6; margin-bottom: 12px; color: #333;">${child.Question || ''}</div>
+                            <div class="options child-options" data-child-index="${childIndex}">
+                                <div class="option child-option ${childAnswer === 0 ? 'selected' : ''}" data-index="0" data-child-index="${childIndex}">
+                                    <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 0 ? 'checked' : ''}>
+                                    <span class="option-letter">A</span>
+                                    <span>${child['Option A'] || ''}</span>
+                                </div>
+                                <div class="option child-option ${childAnswer === 1 ? 'selected' : ''}" data-index="1" data-child-index="${childIndex}">
+                                    <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 1 ? 'checked' : ''}>
+                                    <span class="option-letter">B</span>
+                                    <span>${child['Option B'] || ''}</span>
+                                </div>
+                                <div class="option child-option ${childAnswer === 2 ? 'selected' : ''}" data-index="2" data-child-index="${childIndex}">
+                                    <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 2 ? 'checked' : ''}>
+                                    <span class="option-letter">C</span>
+                                    <span>${child['Option C'] || ''}</span>
+                                </div>
+                                <div class="option child-option ${childAnswer === 3 ? 'selected' : ''}" data-index="3" data-child-index="${childIndex}">
+                                    <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 3 ? 'checked' : ''}>
+                                    <span class="option-letter">D</span>
+                                    <span>${child['Option D'] || ''}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                groupHtml += `</div>`;
+                parentChildContainer.innerHTML = groupHtml;
+
+                // Add click handlers for child options
+                parentChildContainer.querySelectorAll('.child-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        const childIndex = parseInt(this.dataset.childIndex);
+                        const optionIndex = parseInt(this.dataset.index);
+
+                        // Toggle selection
+                        const siblings = parentChildContainer.querySelectorAll(`.child-option[data-child-index="${childIndex}"]`);
+                        const radios = parentChildContainer.querySelectorAll(`input[name="child-answer-${childIndex}"]`);
+
+                        if (userAnswers[childIndex] === optionIndex) {
+                            // Deselect
+                            userAnswers[childIndex] = undefined;
+                            siblings.forEach(s => s.classList.remove('selected'));
+                            radios.forEach(r => r.checked = false);
+                        } else {
+                            // Select
+                            userAnswers[childIndex] = optionIndex;
+                            siblings.forEach(s => s.classList.remove('selected'));
+                            this.classList.add('selected');
+                            radios[optionIndex].checked = true;
+                        }
+
+                        // Save state
+                        if (typeof saveExamState === 'function') {
+                            saveExamState();
+                        }
+                    });
+                });
+
+            } else {
+                // Display standalone question
+                standaloneContainer.style.display = 'block';
+                parentChildContainer.style.display = 'none';
+
+                document.getElementById('question-subject-display').textContent = question.Subject || 'Unknown';
+                document.getElementById('question-text-display').textContent = question.Question || 'Loading question...';
+
+                document.getElementById('option-a-display').textContent = question['Option A'] || 'Option A';
+                document.getElementById('option-b-display').textContent = question['Option B'] || 'Option B';
+                document.getElementById('option-c-display').textContent = question['Option C'] || 'Option C';
+                document.getElementById('option-d-display').textContent = question['Option D'] || 'Option D';
+
+                // Update selected option
+                const options = document.querySelectorAll('#standalone-options .option');
+                const radios = document.querySelectorAll('#standalone-options .option-radio');
+                options.forEach((option, index) => {
+                    if (userAnswers[currentQuestionIndex] === index) {
+                        option.classList.add('selected');
+                        radios[index].checked = true;
+                    } else {
+                        option.classList.remove('selected');
+                        radios[index].checked = false;
+                    }
+                });
+            }
 
             // Update navigation buttons
             document.getElementById('prev-btn').disabled = (currentQuestionIndex === 0);
-            if (currentQuestionIndex === currentExam.questions.length - 1) {
+
+            // Check if this is the last displayable question
+            let isLastQuestion = true;
+            for (let i = currentQuestionIndex + 1; i < currentExam.questions.length; i++) {
+                const q = currentExam.questions[i];
+                const qHasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
+                const qIsChild = qHasParentLink || q.isSubQuestion || q['Is Sub Question'];
+                if (!qIsChild) {
+                    isLastQuestion = false;
+                    break;
+                }
+            }
+
+            if (isLastQuestion) {
                 document.getElementById('next-btn').style.display = 'none';
                 document.getElementById('submit-btn').style.display = 'block';
             } else {
