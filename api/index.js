@@ -576,6 +576,84 @@ module.exports = async (req, res) => {
         }
 
         // =====================================================
+        // AUTHENTICATION ENDPOINTS
+        // =====================================================
+
+        // POST /api/auth/admin/login - Admin login
+        if (url === '/api/auth/admin/login' && method === 'POST') {
+            const { username, password } = req.body;
+
+            // Simple admin authentication using environment variables
+            const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+            const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
+
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        role: 'admin',
+                        username: username,
+                        token: 'admin_' + Date.now() // Simple token
+                    },
+                    message: 'Login successful'
+                });
+            } else {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Invalid credentials'
+                });
+            }
+        }
+
+        // POST /api/auth/student/login - Student login
+        if (url === '/api/auth/student/login' && method === 'POST') {
+            const { mobile } = req.body;
+
+            if (!mobile || mobile.length !== 10) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid mobile number'
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                data: {
+                    role: 'student',
+                    mobile: mobile,
+                    token: 'student_' + Date.now()
+                },
+                message: 'Login successful'
+            });
+        }
+
+        // POST /api/auth/examiner/login - Examiner login
+        if (url === '/api/auth/examiner/login' && method === 'POST') {
+            const { username, password } = req.body;
+
+            // Simple examiner authentication
+            const EXAMINER_USERNAME = process.env.EXAMINER_USERNAME || 'examiner';
+            const EXAMINER_PASSWORD = process.env.EXAMINER_PASSWORD || 'examiner';
+
+            if (username === EXAMINER_USERNAME && password === EXAMINER_PASSWORD) {
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        role: 'examiner',
+                        username: username,
+                        token: 'examiner_' + Date.now()
+                    },
+                    message: 'Login successful'
+                });
+            } else {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Invalid credentials'
+                });
+            }
+        }
+
+        // =====================================================
         // DEFAULT - 404
         // =====================================================
         return res.status(404).json({
