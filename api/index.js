@@ -592,33 +592,41 @@ module.exports = async (req, res) => {
 
             // Calculate score (handles parent-child questions)
             let totalScore = 0;
-            
+            let examRecord = null;
+            let examCode = resultData.examCode || '';
+            let examTitle = resultData.examTitle || '';
+
             if (resultData.answers) {
                 const answers = JSON.parse(resultData.answers);
-                
+
                 // Get all questions for this exam
                 const examRecords = await base(EXAMS_TABLE).select({
                     filterByFormula: `{Exam Code} = '${sanitizeForFormula(resultData.examCode)}'`
                 }).all();
 
                 if (examRecords.length > 0) {
-                    const exam = examRecords[0];
-                    
-                    if (exam.fields.Questions) {
+                    examRecord = examRecords[0];
+                    examCode = examRecord.fields['Exam Code'] || resultData.examCode;
+                    // Use provided title or fall back to record
+                    if (!examTitle) {
+                        examTitle = examRecord.fields['Exam Title'] || examRecord.fields['Title'] || examCode;
+                    }
+
+                    if (examRecord.fields.Questions) {
                         const questionRecords = await Promise.all(
-                            exam.fields.Questions.map(qId => base(QUESTIONS_TABLE).find(qId))
+                            examRecord.fields.Questions.map(qId => base(QUESTIONS_TABLE).find(qId))
                         );
 
                         questionRecords.forEach(qRecord => {
                             const q = qRecord.fields;
                             const questionType = q['Question Type'];
                             const hasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
-                            
+
                             // Only score actual questions with options
                             // Standalone questions OR child questions in parent-child relationship
-                            const shouldScore = questionType === QUESTION_TYPES.STANDALONE || 
+                            const shouldScore = questionType === QUESTION_TYPES.STANDALONE ||
                                               (questionType === QUESTION_TYPES.PARENT_CHILD && hasParentLink);
-                            
+
                             if (shouldScore) {
                                 const userAnswer = answers[q.ID];
                                 const correctAnswer = q.Correct || q['Correct Answer'];
@@ -635,11 +643,13 @@ module.exports = async (req, res) => {
                 }
             }
 
-            // Create result record
+            // Create result record with exam code and title for easy retrieval
             // Build fields object - handle Timestamp field type variations
             const now = new Date();
             const resultFields = {
-                'Exam': resultData.examId ? [resultData.examId] : undefined,
+                'Exam': resultData.examId ? [resultData.examId] : (examRecord ? [examRecord.id] : undefined),
+                'Exam Code': examCode,
+                'Exam Title': examTitle,
                 'Name': resultData.name,
                 'Mobile': resultData.mobile,
                 'Score': totalScore,
@@ -1104,13 +1114,32 @@ module.exports = async (req, res) => {
                     sort: [{ field: 'Timestamp', direction: 'desc' }]
                 }).all();
 
-                const examHistory = resultRecords.map(record => ({
-                    id: record.id,
-                    examCode: record.fields['Exam Code'] || 'Unknown',
-                    examTitle: record.fields['Exam Title'] || record.fields['Exam Code'] || 'Exam',
-                    score: record.fields.Score || 0,
-                    timestamp: record.fields.Timestamp,
-                    answers: record.fields.Answers
+                // Process results, looking up exam details from linked record if needed
+                const examHistory = await Promise.all(resultRecords.map(async (record) => {
+                    let examCode = record.fields['Exam Code'];
+                    let examTitle = record.fields['Exam Title'];
+
+                    // If no exam code stored, try to get from linked Exam record
+                    if (!examCode && record.fields.Exam && record.fields.Exam.length > 0) {
+                        try {
+                            const linkedExam = await base(EXAMS_TABLE).find(record.fields.Exam[0]);
+                            examCode = linkedExam.fields['Exam Code'] || 'Unknown';
+                            examTitle = linkedExam.fields['Exam Title'] || linkedExam.fields['Title'] || examCode;
+                        } catch (e) {
+                            examCode = 'Unknown';
+                            examTitle = 'Exam';
+                        }
+                    }
+
+                    return {
+                        id: record.id,
+                        examId: record.fields.Exam ? record.fields.Exam[0] : null,
+                        examCode: examCode || 'Unknown',
+                        examTitle: examTitle || examCode || 'Exam',
+                        score: record.fields.Score || 0,
+                        timestamp: record.fields.Timestamp,
+                        answers: record.fields.Answers
+                    };
                 }));
 
                 // Calculate stats
