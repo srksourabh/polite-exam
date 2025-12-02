@@ -6522,76 +6522,161 @@ Artificial Intelligence has revolutionized..."></textarea>
                 <div style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
             `;
 
-            // Display questions with full details and all options
+            // Display questions with full details and all options - GROUP parent-child questions together
             if (isDetailedFormat) {
+                // First, group questions: separate parents/standalone from children
+                const parentChildMap = new Map(); // parentId -> {parent, children}
+                const standaloneQuestions = [];
+
                 userAnswers.forEach((answer, index) => {
+                    answer._originalIndex = index; // Store original index for numbering
+                    const isSubQuestion = answer.isSubQuestion;
+                    const parentQuestionId = answer.parentQuestionId;
+
+                    if (isSubQuestion && parentQuestionId) {
+                        // This is a child question
+                        if (!parentChildMap.has(parentQuestionId)) {
+                            parentChildMap.set(parentQuestionId, { parent: null, children: [] });
+                        }
+                        parentChildMap.get(parentQuestionId).children.push(answer);
+                    } else if (answer.isParentQuestion || answer.hasSubQuestions) {
+                        // This is a parent/passage question
+                        const qId = answer.questionId;
+                        if (!parentChildMap.has(qId)) {
+                            parentChildMap.set(qId, { parent: answer, children: [] });
+                        } else {
+                            parentChildMap.get(qId).parent = answer;
+                        }
+                    } else {
+                        // Standalone question
+                        standaloneQuestions.push(answer);
+                    }
+                });
+
+                // Also check if any children don't have their parent in the map (parent might be identified differently)
+                userAnswers.forEach(answer => {
+                    if (!answer.isSubQuestion && !answer.isParentQuestion && !answer.hasSubQuestions) {
+                        // Check if this might be a parent based on ID matching
+                        const qId = answer.questionId;
+                        if (parentChildMap.has(qId) && !parentChildMap.get(qId).parent) {
+                            parentChildMap.get(qId).parent = answer;
+                            // Remove from standalone
+                            const idx = standaloneQuestions.indexOf(answer);
+                            if (idx > -1) standaloneQuestions.splice(idx, 1);
+                        }
+                    }
+                });
+
+                // Helper function to render a single question's answer
+                function renderQuestionAnswer(answer, qNumber, isChild = false) {
                     const isCorrect = answer.isCorrect;
                     const userAnswered = answer.userAnswer !== 'Not Answered';
                     const userAnswerLetter = answer.userAnswer;
                     const correctAnswerLetter = answer.correctAnswer;
-
-                    // Check if this is a sub-question
-                    const isSubQuestion = answer.isSubQuestion;
-                    const parentQuestionId = answer.parentQuestionId;
-                    const subQuestionOrder = answer.subQuestionOrder;
-
                     const bgColor = isCorrect ? '#e8f5e9' : (userAnswered ? '#ffebee' : '#f5f5f5');
                     const borderColor = isCorrect ? '#27ae60' : (userAnswered ? '#e74c3c' : '#95a5a6');
 
-                    // Find parent question for context if this is a sub-question
-                    let parentQuestion = null;
-                    if (isSubQuestion && parentQuestionId) {
-                        parentQuestion = userAnswers.find(a => a.questionId === parentQuestionId);
-                    }
-
-                    html += `
-                        <div style="background: ${bgColor}; border-left: 5px solid ${isSubQuestion ? '#9c27b0' : borderColor}; padding: 20px; margin-bottom: 15px; border-radius: 8px; ${isSubQuestion ? 'margin-left: 25px;' : ''}">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                <div style="font-weight: 700; color: var(--secondary); font-size: 1rem;">
-                                    Q${index + 1}. ${answer.questionId || ''}
-                                    ${isSubQuestion ? `<span style="background: #e1bee7; color: #7b1fa2; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">📋 Sub-Q${subQuestionOrder ? ' #' + subQuestionOrder : ''}</span>` : ''}
-                                    <span style="background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">${answer.subject || ''}</span>
+                    return `
+                        <div style="background: ${bgColor}; border-left: 5px solid ${isChild ? '#9c27b0' : borderColor}; padding: 15px; margin-bottom: 10px; border-radius: 8px; ${isChild ? 'margin-left: 20px;' : ''}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div style="font-weight: 700; color: ${isChild ? '#9c27b0' : 'var(--secondary)'}; font-size: 0.95rem;">
+                                    ${qNumber}. ${answer.questionId || ''}
+                                    ${isChild ? `<span style="background: #e1bee7; color: #7b1fa2; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-left: 6px;">Sub-Q</span>` : ''}
+                                    <span style="background: #e3f2fd; color: #1976d2; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-left: 6px;">${answer.subject || ''}</span>
                                 </div>
-                                <div style="font-weight: 600; font-size: 0.9rem; padding: 5px 12px; border-radius: 6px; background: ${isCorrect ? '#c8e6c9' : (userAnswered ? '#ffcdd2' : '#e0e0e0')}; color: ${isCorrect ? '#388e3c' : (userAnswered ? '#c62828' : '#666')};">
+                                <div style="font-weight: 600; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; background: ${isCorrect ? '#c8e6c9' : (userAnswered ? '#ffcdd2' : '#e0e0e0')}; color: ${isCorrect ? '#388e3c' : (userAnswered ? '#c62828' : '#666')};">
                                     ${isCorrect ? '+1' : (userAnswered ? '-0.25' : '0')}
                                 </div>
                             </div>
-                            ${isSubQuestion && parentQuestion ? `
-                            <div style="background: #f3e5f5; padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #9c27b0;">
-                                <div style="color: #9c27b0; font-weight: 600; margin-bottom: 5px; font-size: 0.85rem;">📖 Reference (${parentQuestionId}):</div>
-                                <div style="color: #333; font-size: 0.95rem;">${parentQuestion.question || ''}</div>
-                            </div>
-                            ` : ''}
-                            <div style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 15px; color: #333; background: white; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 1rem; line-height: 1.6; margin-bottom: 12px; color: #333; background: white; padding: 12px; border-radius: 6px;">
                                 ${answer.question || 'Question not available'}
                             </div>
-                            <div style="display: grid; gap: 8px;">
-                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'A' ? (correctAnswerLetter === 'A' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'A' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'A' ? '#27ae60' : (userAnswerLetter === 'A' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong style="color: #1976d2;">A:</strong> ${answer.optionA || ''}
-                                    ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
-                                    ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                            <div style="display: grid; gap: 6px; font-size: 0.95rem;">
+                                <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'A' ? (correctAnswerLetter === 'A' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'A' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'A' ? '#27ae60' : (userAnswerLetter === 'A' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong>A:</strong> ${answer.optionA || ''} ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
-                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'B' ? (correctAnswerLetter === 'B' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'B' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'B' ? '#27ae60' : (userAnswerLetter === 'B' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong style="color: #1976d2;">B:</strong> ${answer.optionB || ''}
-                                    ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
-                                    ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                                <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'B' ? (correctAnswerLetter === 'B' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'B' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'B' ? '#27ae60' : (userAnswerLetter === 'B' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong>B:</strong> ${answer.optionB || ''} ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
-                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'C' ? (correctAnswerLetter === 'C' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'C' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'C' ? '#27ae60' : (userAnswerLetter === 'C' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong style="color: #1976d2;">C:</strong> ${answer.optionC || ''}
-                                    ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
-                                    ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                                <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'C' ? (correctAnswerLetter === 'C' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'C' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'C' ? '#27ae60' : (userAnswerLetter === 'C' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong>C:</strong> ${answer.optionC || ''} ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
-                                <div style="padding: 12px 15px; border-radius: 8px; background: ${userAnswerLetter === 'D' ? (correctAnswerLetter === 'D' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'D' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'D' ? '#27ae60' : (userAnswerLetter === 'D' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong style="color: #1976d2;">D:</strong> ${answer.optionD || ''}
-                                    ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 10px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">Your Answer</span>' : ''}
-                                    ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 10px; background: #c8e6c9; padding: 2px 8px; border-radius: 4px;">✓ Correct</span>' : ''}
+                                <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'D' ? (correctAnswerLetter === 'D' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'D' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'D' ? '#27ae60' : (userAnswerLetter === 'D' ? '#e74c3c' : '#e0e0e0')};">
+                                    <strong>D:</strong> ${answer.optionD || ''} ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
                             </div>
-                            <div style="margin-top: 12px; font-weight: 600; font-size: 1rem; text-align: right;">
-                                ${isCorrect ? '✅ Correct Answer' : (userAnswered ? '❌ Incorrect Answer' : '⚪ Not Answered')}
+                            <div style="margin-top: 10px; font-weight: 600; font-size: 0.9rem; text-align: right;">
+                                ${isCorrect ? '✅ Correct' : (userAnswered ? '❌ Incorrect' : '⚪ Unanswered')}
                             </div>
                         </div>
                     `;
+                }
+
+                let questionNumber = 1;
+
+                // Render parent-child groups first
+                parentChildMap.forEach((group, parentId) => {
+                    const parent = group.parent;
+                    const children = group.children;
+
+                    if (children.length > 0) {
+                        // Calculate group score
+                        let groupCorrect = 0, groupIncorrect = 0, groupUnanswered = 0;
+                        children.forEach(child => {
+                            if (child.isCorrect) groupCorrect++;
+                            else if (child.userAnswer !== 'Not Answered') groupIncorrect++;
+                            else groupUnanswered++;
+                        });
+                        const groupScore = groupCorrect - (groupIncorrect * 0.25);
+
+                        // Render group container
+                        html += `
+                            <div style="background: #faf5ff; border: 2px solid #9c27b0; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                                <!-- Group Header -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                                    <div style="font-weight: 700; color: #9c27b0; font-size: 1.1rem;">
+                                        📋 Q${questionNumber}. ${parentId || 'Parent-Child Group'}
+                                        <span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">${children.length} Sub-Questions</span>
+                                    </div>
+                                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                        <span style="background: #c8e6c9; color: #388e3c; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">✓ ${groupCorrect}</span>
+                                        <span style="background: #ffcdd2; color: #c62828; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">✗ ${groupIncorrect}</span>
+                                        <span style="background: #e0e0e0; color: #666; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">○ ${groupUnanswered}</span>
+                                        <span style="background: ${groupScore >= 0 ? '#4caf50' : '#f44336'}; color: white; padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;">Score: ${groupScore.toFixed(2)}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Parent Passage -->
+                                ${parent ? `
+                                <div style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                    <div style="color: #9c27b0; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">📖 Passage/Context:</div>
+                                    <div style="color: #333; font-size: 1rem; line-height: 1.7;">${parent.question || 'Passage not available'}</div>
+                                </div>
+                                ` : ''}
+
+                                <!-- Child Questions -->
+                                <div style="border-top: 2px dashed #ce93d8; padding-top: 15px;">
+                                    <div style="color: #7b1fa2; font-weight: 600; margin-bottom: 12px; font-size: 0.9rem;">Sub-Questions:</div>
+                        `;
+
+                        // Render each child
+                        children.sort((a, b) => (a.subQuestionOrder || 0) - (b.subQuestionOrder || 0));
+                        children.forEach((child, childIdx) => {
+                            html += renderQuestionAnswer(child, `${questionNumber}.${childIdx + 1}`, true);
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                        questionNumber++;
+                    }
+                });
+
+                // Render standalone questions
+                standaloneQuestions.forEach(answer => {
+                    html += renderQuestionAnswer(answer, `Q${questionNumber}`, false);
+                    questionNumber++;
                 });
             } else {
                 html += `
