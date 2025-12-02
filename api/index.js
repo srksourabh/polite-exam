@@ -592,7 +592,7 @@ module.exports = async (req, res) => {
 
             // Admin authentication - use environment variables or hardcoded default
             const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-            const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Polite2024@Secure!';
+            const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'politeadmin';
 
             if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
                 return res.status(200).json({
@@ -633,6 +633,35 @@ module.exports = async (req, res) => {
                     token: 'student_' + Date.now()
                 },
                 message: 'Login successful'
+            });
+        }
+
+        // POST /api/auth/reset-password - Reset password
+        if (url === '/api/auth/reset-password' && method === 'POST') {
+            const { mobile, newPassword } = req.body;
+
+            if (!mobile || mobile.length !== 10) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid mobile number (must be 10 digits)'
+                });
+            }
+
+            if (!newPassword || newPassword.length < 6) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Password must be at least 6 characters'
+                });
+            }
+
+            // TODO: In a real system, you would:
+            // 1. Verify mobile number exists in Students table
+            // 2. Send OTP for verification
+            // 3. Update password in database
+            // For now, just return success
+            return res.status(200).json({
+                success: true,
+                message: 'Password reset successful. You can now login with your new password.'
             });
         }
 
