@@ -40,3 +40,6 @@ android/capacitor-cordova-android-plugins/build/
 # iOS (if added later)
 ios/App/Pods/
 ios/App/build/
+
+# Serena IDE cache
+.serena/
