@@ -2388,7 +2388,7 @@ Artificial Intelligence has revolutionized..."></textarea>
                 <h3 class="ocr-review-title">📝 Review Extracted Questions</h3>
                 <button id="ocr-review-close" class="ocr-review-close">✖ Close</button>
             </div>
-            <p style="color: #666; margin-bottom: 20px;">Review and edit the extracted questions below. You can modify the question text, options, correct answer, and subject category before adding them to the question bank.</p>
+            <p style="color: #666; margin-bottom: 20px;">Review AI-detected questions below. <strong>You can change the question type</strong> (Standalone/Parent/Child) using the dropdown, and <strong>assign parent passages</strong> to child questions if the AI detection was incorrect.</p>
             <div id="ocr-review-questions">
                 <!-- Questions will be dynamically inserted here -->
             </div>
@@ -2881,47 +2881,82 @@ Artificial Intelligence has revolutionized..."></textarea>
             // Count hierarchical summary
             const passages = questions.filter(q => q.questionType === 'Main Question').length;
             const subQs = questions.filter(q => q.questionType === 'Sub Question').length;
+            const standalone = questions.filter(q => q.questionType === 'Standalone' || !q.questionType).length;
+
+            // Build list of available parent questions for dropdown
+            const parentOptions = questions
+                .map((q, idx) => ({ index: idx, id: q.id, text: q.question?.substring(0, 50) + '...', type: q.questionType }))
+                .filter(q => q.type === 'Main Question');
 
             let html = '';
 
-            // Add summary header if hierarchical questions detected
-            if (passages > 0) {
-                html += `
-                    <div style="background: linear-gradient(135deg, #9c27b0, #7b1fa2); color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 10px 0;">📋 AI Detected Hierarchical Structure</h4>
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px;">📖 ${passages} Passage(s)</span>
-                            <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px;">📝 ${subQs} Sub-Question(s)</span>
-                            <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px;">✅ ${questions.length - passages - subQs} Standalone</span>
-                        </div>
-                        <p style="margin: 10px 0 0 0; font-size: 0.9rem; opacity: 0.9;">Passages have no marks. Sub-questions: +1 correct, -0.25 wrong, 0 unanswered</p>
+            // Add summary header and editing instructions
+            html += `
+                <div style="background: linear-gradient(135deg, #2196f3, #1976d2); color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0;">✏️ Review & Edit Question Structure</h4>
+                    <p style="margin: 0; font-size: 0.9rem; opacity: 0.95;">
+                        AI has analyzed the text. You can now <strong>edit question types</strong> and <strong>assign parent-child relationships</strong> if the AI detection was incorrect.
+                    </p>
+                </div>
+            `;
+
+            // Summary stats
+            html += `
+                <div style="background: linear-gradient(135deg, #9c27b0, #7b1fa2); color: white; padding: 12px 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                        <span style="font-weight: 600;">Current Structure:</span>
+                        <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 15px;">📖 ${passages} Passage(s)</span>
+                        <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 15px;">📝 ${subQs} Child Question(s)</span>
+                        <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 15px;">✅ ${standalone} Standalone</span>
                     </div>
-                `;
-            }
+                </div>
+            `;
 
             questions.forEach((q, index) => {
-                const isPassage = q.questionType === 'Main Question';
-                const isSubQuestion = q.questionType === 'Sub Question';
-                const correctLetter = q.correct >= 0 ? String.fromCharCode(65 + q.correct) : '';
+                const questionType = q.questionType || 'Standalone';
+                const isPassage = questionType === 'Main Question';
+                const isSubQuestion = questionType === 'Sub Question';
 
-                // Styling based on question type
+                // Initial styling based on question type
                 const cardStyle = isPassage ? 'background: #fff3e0; border-left: 4px solid #ff9800;' :
                                   isSubQuestion ? 'background: #f3e5f5; border-left: 4px solid #9c27b0; margin-left: 30px;' :
                                   'background: #f8f9fa; border-left: 4px solid var(--secondary);';
 
-                const typeLabel = isPassage ? '<span style="background: #ff9800; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">📖 Passage (No Marks)</span>' :
-                                  isSubQuestion ? `<span style="background: #9c27b0; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">📝 Sub-Q #${q.subQuestionNumber || '?'} (+1/-0.25)</span>` :
-                                  '<span style="background: var(--secondary); color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">Standalone</span>';
+                // Build parent options dropdown HTML
+                let parentDropdownOptions = '<option value="">-- Select Parent Passage --</option>';
+                parentOptions.forEach(p => {
+                    if (p.index !== index) { // Don't allow self-selection
+                        const selected = q.parentQuestionId === p.id ? 'selected' : '';
+                        parentDropdownOptions += `<option value="${p.id}" ${selected}>Q${p.index + 1}: ${p.text}</option>`;
+                    }
+                });
 
                 html += `
-                    <div class="ocr-question-card" data-index="${index}" data-question-type="${q.questionType || 'Standalone'}" data-parent-id="${q.parentQuestionId || ''}" style="${cardStyle} border-radius: 10px; padding: 15px; margin-bottom: 12px;">
-                        <div class="ocr-question-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div class="ocr-question-card" id="ocr-card-${index}" data-index="${index}" data-question-type="${questionType}" data-parent-id="${q.parentQuestionId || ''}" style="${cardStyle} border-radius: 10px; padding: 15px; margin-bottom: 12px; transition: all 0.3s ease;">
+                        <div class="ocr-question-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <span class="ocr-question-number" style="font-weight: 600;">Q${index + 1}</span>
-                                ${typeLabel}
+                                <span class="ocr-question-number" style="font-weight: 700; font-size: 1.1rem;">Q${index + 1}</span>
                             </div>
-                            <button class="ocr-delete-btn" onclick="deleteOCRQuestion(${index})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">🗑️</button>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <!-- Question Type Selector -->
+                                <select id="ocr-type-${index}" onchange="updateOCRQuestionType(${index})" style="padding: 6px 12px; border-radius: 5px; border: 2px solid #666; font-weight: 600; cursor: pointer;">
+                                    <option value="Standalone" ${questionType === 'Standalone' ? 'selected' : ''}>✅ Standalone</option>
+                                    <option value="Main Question" ${questionType === 'Main Question' ? 'selected' : ''}>📖 Parent (Passage)</option>
+                                    <option value="Sub Question" ${questionType === 'Sub Question' ? 'selected' : ''}>📝 Child Question</option>
+                                </select>
+                                <button class="ocr-delete-btn" onclick="deleteOCRQuestion(${index})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">🗑️</button>
+                            </div>
                         </div>
+
+                        <!-- Parent Selection (only for Child questions) -->
+                        <div id="ocr-parent-select-${index}" class="ocr-form-group" style="margin-bottom: 10px; display: ${isSubQuestion ? 'block' : 'none'}; background: #e1bee7; padding: 10px; border-radius: 8px;">
+                            <label style="font-weight: 600; margin-bottom: 5px; display: block; color: #7b1fa2;">🔗 Link to Parent Passage:</label>
+                            <select id="ocr-parent-${index}" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #9c27b0;">
+                                ${parentDropdownOptions}
+                            </select>
+                            <small style="color: #666; display: block; margin-top: 5px;">Select which passage this child question belongs to</small>
+                        </div>
+
                         <div class="ocr-form-group" style="margin-bottom: 10px;">
                             <label style="font-weight: 600; margin-bottom: 5px; display: block;">Subject Category</label>
                             <select id="ocr-subject-${index}" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
@@ -2936,62 +2971,141 @@ Artificial Intelligence has revolutionized..."></textarea>
                                 <option value="Others" ${q.subject === 'Others' ? 'selected' : ''}>Others</option>
                             </select>
                         </div>
-                        <div class="ocr-form-group" style="margin-bottom: 10px;">
-                            <label style="font-weight: 600; margin-bottom: 5px; display: block;">${isPassage ? 'Passage/Comprehension Text' : 'Question Text'}</label>
-                            <textarea id="ocr-question-${index}" rows="${isPassage ? 4 : 2}" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">${q.question || ''}</textarea>
-                        </div>`;
 
-                // Only show options and correct answer for non-passage questions
-                if (!isPassage) {
-                    html += `
                         <div class="ocr-form-group" style="margin-bottom: 10px;">
-                            <label style="font-weight: 600; margin-bottom: 5px; display: block;">Options</label>
-                            <div class="ocr-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                <div class="ocr-option-group">
-                                    <label style="font-weight: 500;">A:</label>
-                                    <input type="text" id="ocr-optionA-${index}" value="${q.options ? q.options[0] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
-                                </div>
-                                <div class="ocr-option-group">
-                                    <label style="font-weight: 500;">B:</label>
-                                    <input type="text" id="ocr-optionB-${index}" value="${q.options ? q.options[1] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
-                                </div>
-                                <div class="ocr-option-group">
-                                    <label style="font-weight: 500;">C:</label>
-                                    <input type="text" id="ocr-optionC-${index}" value="${q.options ? q.options[2] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
-                                </div>
-                                <div class="ocr-option-group">
-                                    <label style="font-weight: 500;">D:</label>
-                                    <input type="text" id="ocr-optionD-${index}" value="${q.options ? q.options[3] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
+                            <label id="ocr-text-label-${index}" style="font-weight: 600; margin-bottom: 5px; display: block;">${isPassage ? 'Passage/Comprehension Text' : 'Question Text'}</label>
+                            <textarea id="ocr-question-${index}" rows="${isPassage ? 4 : 2}" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd; resize: vertical;">${q.question || ''}</textarea>
+                        </div>
+
+                        <!-- Options section (hidden for passages) -->
+                        <div id="ocr-options-section-${index}" style="display: ${isPassage ? 'none' : 'block'};">
+                            <div class="ocr-form-group" style="margin-bottom: 10px;">
+                                <label style="font-weight: 600; margin-bottom: 5px; display: block;">Options</label>
+                                <div class="ocr-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div class="ocr-option-group">
+                                        <label style="font-weight: 500;">A:</label>
+                                        <input type="text" id="ocr-optionA-${index}" value="${q.options ? q.options[0] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
+                                    </div>
+                                    <div class="ocr-option-group">
+                                        <label style="font-weight: 500;">B:</label>
+                                        <input type="text" id="ocr-optionB-${index}" value="${q.options ? q.options[1] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
+                                    </div>
+                                    <div class="ocr-option-group">
+                                        <label style="font-weight: 500;">C:</label>
+                                        <input type="text" id="ocr-optionC-${index}" value="${q.options ? q.options[2] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
+                                    </div>
+                                    <div class="ocr-option-group">
+                                        <label style="font-weight: 500;">D:</label>
+                                        <input type="text" id="ocr-optionD-${index}" value="${q.options ? q.options[3] || '' : ''}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
+                                    </div>
                                 </div>
                             </div>
+                            <div class="ocr-correct-answer" style="display: flex; align-items: center; gap: 10px;">
+                                <label style="font-weight: 600;">✓ Correct Answer:</label>
+                                <select id="ocr-correct-${index}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #ddd;">
+                                    <option value="0" ${q.correct === 0 ? 'selected' : ''}>A</option>
+                                    <option value="1" ${q.correct === 1 ? 'selected' : ''}>B</option>
+                                    <option value="2" ${q.correct === 2 ? 'selected' : ''}>C</option>
+                                    <option value="3" ${q.correct === 3 ? 'selected' : ''}>D</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="ocr-correct-answer" style="display: flex; align-items: center; gap: 10px;">
-                            <label style="font-weight: 600;">✓ Correct Answer:</label>
-                            <select id="ocr-correct-${index}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #ddd;">
-                                <option value="0" ${q.correct === 0 ? 'selected' : ''}>A</option>
-                                <option value="1" ${q.correct === 1 ? 'selected' : ''}>B</option>
-                                <option value="2" ${q.correct === 2 ? 'selected' : ''}>C</option>
-                                <option value="3" ${q.correct === 3 ? 'selected' : ''}>D</option>
-                            </select>
-                        </div>`;
-                } else {
-                    // Hidden fields for passage questions
-                    html += `
-                        <input type="hidden" id="ocr-optionA-${index}" value="">
-                        <input type="hidden" id="ocr-optionB-${index}" value="">
-                        <input type="hidden" id="ocr-optionC-${index}" value="">
-                        <input type="hidden" id="ocr-optionD-${index}" value="">
-                        <input type="hidden" id="ocr-correct-${index}" value="-1">
-                        <div style="color: #ff9800; font-weight: 500; margin-top: 10px;">
-                            📖 This passage has no marks - marks are in sub-questions below
-                        </div>`;
-                }
 
-                html += `</div>`;
+                        <!-- Passage info (shown only for passages) -->
+                        <div id="ocr-passage-info-${index}" style="display: ${isPassage ? 'block' : 'none'}; color: #ff9800; font-weight: 500; margin-top: 10px; padding: 10px; background: #fff8e1; border-radius: 8px;">
+                            📖 This is a parent passage - no marks. Add child questions below that reference this passage.
+                        </div>
+                    </div>`;
             });
 
             container.innerHTML = html;
             modal.style.display = 'block';
+        }
+
+        // Handle question type change in OCR review modal
+        function updateOCRQuestionType(index) {
+            const typeSelect = document.getElementById(`ocr-type-${index}`);
+            const card = document.getElementById(`ocr-card-${index}`);
+            const parentSelect = document.getElementById(`ocr-parent-select-${index}`);
+            const optionsSection = document.getElementById(`ocr-options-section-${index}`);
+            const passageInfo = document.getElementById(`ocr-passage-info-${index}`);
+            const textLabel = document.getElementById(`ocr-text-label-${index}`);
+            const questionTextarea = document.getElementById(`ocr-question-${index}`);
+
+            const newType = typeSelect.value;
+
+            // Update card styling based on type
+            if (newType === 'Main Question') {
+                card.style.background = '#fff3e0';
+                card.style.borderLeft = '4px solid #ff9800';
+                card.style.marginLeft = '0';
+                parentSelect.style.display = 'none';
+                optionsSection.style.display = 'none';
+                passageInfo.style.display = 'block';
+                textLabel.textContent = 'Passage/Comprehension Text';
+                questionTextarea.rows = 4;
+            } else if (newType === 'Sub Question') {
+                card.style.background = '#f3e5f5';
+                card.style.borderLeft = '4px solid #9c27b0';
+                card.style.marginLeft = '30px';
+                parentSelect.style.display = 'block';
+                optionsSection.style.display = 'block';
+                passageInfo.style.display = 'none';
+                textLabel.textContent = 'Question Text';
+                questionTextarea.rows = 2;
+            } else {
+                // Standalone
+                card.style.background = '#f8f9fa';
+                card.style.borderLeft = '4px solid var(--secondary)';
+                card.style.marginLeft = '0';
+                parentSelect.style.display = 'none';
+                optionsSection.style.display = 'block';
+                passageInfo.style.display = 'none';
+                textLabel.textContent = 'Question Text';
+                questionTextarea.rows = 2;
+            }
+
+            // Update data attribute
+            card.setAttribute('data-question-type', newType);
+
+            // Always update parent dropdown options when any type changes
+            // This ensures child dropdowns get updated when a new parent is created
+            updateParentDropdownOptions();
+        }
+
+        // Update all parent dropdown options when a question type changes
+        function updateParentDropdownOptions() {
+            const allCards = document.querySelectorAll('.ocr-question-card');
+            const parentOptions = [];
+
+            // First, collect all current parent passages
+            allCards.forEach((card, idx) => {
+                const typeSelect = document.getElementById(`ocr-type-${idx}`);
+                if (typeSelect && typeSelect.value === 'Main Question') {
+                    const questionText = document.getElementById(`ocr-question-${idx}`)?.value || '';
+                    parentOptions.push({
+                        index: idx,
+                        id: extractedQuestions[idx]?.id || `Q${idx}`,
+                        text: questionText.substring(0, 50) + (questionText.length > 50 ? '...' : '')
+                    });
+                }
+            });
+
+            // Update all parent dropdowns
+            allCards.forEach((card, idx) => {
+                const parentDropdown = document.getElementById(`ocr-parent-${idx}`);
+                if (parentDropdown) {
+                    const currentValue = parentDropdown.value;
+                    let optionsHtml = '<option value="">-- Select Parent Passage --</option>';
+                    parentOptions.forEach(p => {
+                        if (p.index !== idx) {
+                            const selected = currentValue === p.id ? 'selected' : '';
+                            optionsHtml += `<option value="${p.id}" ${selected}>Q${p.index + 1}: ${p.text}</option>`;
+                        }
+                    });
+                    parentDropdown.innerHTML = optionsHtml;
+                }
+            });
         }
 
         function deleteOCRQuestion(index) {
@@ -3014,13 +3128,19 @@ Artificial Intelligence has revolutionized..."></textarea>
             // Collect all edited values from the modal
             const questionCards = document.querySelectorAll('.ocr-question-card');
             const updatedQuestions = [];
-            const passageIdMap = new Map(); // Map old passage IDs to new ones
+            const passageIdMap = new Map(); // Map original index to new ID for passages
+            const indexToNewIdMap = new Map(); // Map index to new ID
 
-            // First pass: Collect all questions and create new IDs for passages
+            // First pass: Collect all questions, read type from DROPDOWN (not attribute)
             const timestamp = Date.now();
             questionCards.forEach((card, index) => {
-                const questionType = card.getAttribute('data-question-type') || 'Standalone';
-                const oldParentId = card.getAttribute('data-parent-id') || '';
+                // Read the type from the dropdown selector (which admin may have changed)
+                const typeSelect = document.getElementById(`ocr-type-${index}`);
+                const questionType = typeSelect ? typeSelect.value : (card.getAttribute('data-question-type') || 'Standalone');
+
+                // Read parent selection from dropdown (for child questions)
+                const parentDropdown = document.getElementById(`ocr-parent-${index}`);
+                const selectedParentId = parentDropdown ? parentDropdown.value : '';
 
                 const subject = document.getElementById(`ocr-subject-${index}`).value;
                 const question = document.getElementById(`ocr-question-${index}`).value.trim();
@@ -3035,43 +3155,87 @@ Artificial Intelligence has revolutionized..."></textarea>
                     const isSubQuestion = questionType === 'Sub Question';
                     const newId = isPassage ? `PASSAGE_${timestamp}_${index}` : `Q${timestamp}_${index}`;
 
-                    // Map old passage ID to new one
-                    if (isPassage && extractedQuestions[index]) {
-                        passageIdMap.set(extractedQuestions[index].id, newId);
+                    // Map original index to new ID (for parent resolution)
+                    indexToNewIdMap.set(index, newId);
+
+                    // Map old passage ID to new one (for backward compatibility)
+                    if (isPassage) {
+                        if (extractedQuestions[index]) {
+                            passageIdMap.set(extractedQuestions[index].id, newId);
+                        }
+                        passageIdMap.set(index.toString(), newId); // Also map by index
                     }
 
                     updatedQuestions.push({
                         id: newId,
+                        originalIndex: index,
                         subject: subject,
                         question: question,
                         options: isPassage ? ['', '', '', ''] : [optionA, optionB, optionC, optionD],
                         correct: isPassage ? -1 : correct,
                         questionType: questionType,
-                        parentQuestionId: oldParentId,
-                        subQuestionNumber: extractedQuestions[index]?.subQuestionNumber || null,
-                        mainQuestionText: extractedQuestions[index]?.mainQuestionText || null
+                        parentQuestionId: isSubQuestion ? selectedParentId : null,
+                        subQuestionNumber: null, // Will be calculated in second pass
+                        mainQuestionText: null // Will be filled in second pass
                     });
                 }
             });
 
-            // Second pass: Update parent IDs for sub-questions
-            updatedQuestions.forEach(q => {
+            // Second pass: Update parent IDs and assign sub-question numbers
+            const parentChildCount = new Map(); // Track child count per parent
+
+            updatedQuestions.forEach((q, idx) => {
                 if (q.questionType === 'Sub Question' && q.parentQuestionId) {
-                    const newParentId = passageIdMap.get(q.parentQuestionId);
-                    if (newParentId) {
-                        q.parentQuestionId = newParentId;
-                        // Update mainQuestionText from the parent
-                        const parent = updatedQuestions.find(p => p.id === newParentId);
-                        if (parent) {
-                            q.mainQuestionText = parent.question;
+                    // Try to resolve parent ID
+                    let resolvedParentId = q.parentQuestionId;
+
+                    // Check if it's an index-based reference (from dropdown using Q1, Q2 format)
+                    const indexMatch = q.parentQuestionId.match(/^Q?(\d+)$/);
+                    if (indexMatch) {
+                        const parentIndex = parseInt(indexMatch[1]) - 1; // Q1 = index 0
+                        if (indexToNewIdMap.has(parentIndex)) {
+                            resolvedParentId = indexToNewIdMap.get(parentIndex);
                         }
+                    }
+
+                    // Check if it's an old ID that needs mapping
+                    if (passageIdMap.has(q.parentQuestionId)) {
+                        resolvedParentId = passageIdMap.get(q.parentQuestionId);
+                    }
+
+                    q.parentQuestionId = resolvedParentId;
+
+                    // Find the parent and get its question text
+                    const parent = updatedQuestions.find(p => p.id === resolvedParentId);
+                    if (parent) {
+                        q.mainQuestionText = parent.question;
+
+                        // Calculate sub-question number within this parent
+                        const count = (parentChildCount.get(resolvedParentId) || 0) + 1;
+                        parentChildCount.set(resolvedParentId, count);
+                        q.subQuestionNumber = count;
                     }
                 }
             });
 
+            // Clean up temporary field
+            updatedQuestions.forEach(q => delete q.originalIndex);
+
             if (updatedQuestions.length === 0) {
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                     window.PoliteCCAPI.showNotification('❌ No valid questions to save.', 'error');
+                }
+                return;
+            }
+
+            // Validate: Check if any child questions don't have a parent assigned
+            const orphanChildren = updatedQuestions.filter(q =>
+                q.questionType === 'Sub Question' && !q.parentQuestionId
+            );
+
+            if (orphanChildren.length > 0) {
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification(`⚠️ ${orphanChildren.length} child question(s) have no parent assigned. Please select a parent passage for all child questions.`, 'warning');
                 }
                 return;
             }
@@ -3086,9 +3250,10 @@ Artificial Intelligence has revolutionized..."></textarea>
             // Generate summary message
             const passages = updatedQuestions.filter(q => q.questionType === 'Main Question').length;
             const subQs = updatedQuestions.filter(q => q.questionType === 'Sub Question').length;
+            const standalone = updatedQuestions.filter(q => q.questionType === 'Standalone').length;
             let message = `✅ ${updatedQuestions.length} questions reviewed and ready to add!`;
             if (passages > 0) {
-                message = `✅ ${updatedQuestions.length} questions ready! (${passages} passages, ${subQs} sub-questions)`;
+                message = `✅ ${updatedQuestions.length} questions ready! (${passages} passage(s), ${subQs} child question(s), ${standalone} standalone)`;
             }
 
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
