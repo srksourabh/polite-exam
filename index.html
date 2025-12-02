@@ -1585,7 +1585,6 @@
                 
                 <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 30px;">
                     <button class="admin-btn" id="question-bank-btn">📚 Question Bank</button>
-                    <button class="admin-btn" id="create-question-btn">➕ Create Question</button>
                     <button class="admin-btn" id="create-exam-btn">✏️ Create New Exam</button>
                     <button class="admin-btn" id="view-results-btn">📊 View Results</button>
                     <button class="upload-btn" id="upload-btn">📸 Upload Question Paper</button>
@@ -1703,69 +1702,89 @@
                             </div>
                         </div>
 
-                        <!-- Question Type Selection for Hierarchical Questions -->
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
-                            <div class="form-group" style="flex: 1; min-width: 200px;">
-                                <label>Question Type</label>
-                                <select id="question-type" onchange="handleQuestionTypeChange()">
-                                    <option value="standalone">Standalone Question</option>
-                                    <option value="main">Main Question (Passage/Comprehension)</option>
-                                    <option value="sub">Sub-Question</option>
-                                </select>
-                            </div>
-                            <div class="form-group" id="parent-question-group" style="flex: 2; min-width: 250px; display: none;">
-                                <label>Select Parent Question</label>
-                                <select id="parent-question-select">
-                                    <option value="">-- Select Parent Question --</option>
-                                </select>
-                            </div>
+                        <!-- Question Type Selection -->
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label>Question Type</label>
+                            <select id="question-type" onchange="handleQuestionTypeChange()">
+                                <option value="standalone">Standalone Question</option>
+                                <option value="parent-child">Parent-child Question (Passage with Sub-questions)</option>
+                            </select>
                         </div>
 
-                        <!-- Info box for Main Questions -->
-                        <div id="main-question-info" style="display: none; background: #fff3e0; border: 1px solid #ff9800; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
-                            <div style="color: #e65100; font-weight: 600; margin-bottom: 5px;">📋 Main Question (Passage)</div>
-                            <div style="color: #666; font-size: 0.9rem;">This is a reference passage/comprehension. It has no options or marks. Add sub-questions to this passage for actual scoring.</div>
+                        <!-- Standalone Question Info -->
+                        <div id="standalone-question-info" style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                            <div style="color: #1565c0; font-weight: 600; margin-bottom: 5px;">📝 Standalone Question</div>
+                            <div style="color: #666; font-size: 0.9rem;">A single MCQ with 4 options. Marks: +1 correct, -0.25 wrong, 0 unanswered.</div>
                         </div>
 
-                        <!-- Info box for Sub-Questions -->
-                        <div id="sub-question-info" style="display: none; background: #e8f5e9; border: 1px solid #4caf50; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
-                            <div style="color: #2e7d32; font-weight: 600; margin-bottom: 5px;">📝 Sub-Question</div>
-                            <div style="color: #666; font-size: 0.9rem;">Marks: +1 correct, -0.25 wrong, 0 unanswered. This question will be grouped with its parent.</div>
+                        <!-- Parent-child Question Info -->
+                        <div id="parent-child-question-info" style="display: none; background: #fff3e0; border: 1px solid #ff9800; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                            <div style="color: #e65100; font-weight: 600; margin-bottom: 5px;">📋 Parent-child Question</div>
+                            <div style="color: #666; font-size: 0.9rem;">A passage/scenario with multiple sub-questions. The parent (passage) is not scored. Each child question is scored individually.</div>
                         </div>
 
-                        <div class="form-group">
-                            <label id="question-text-label">Question Text</label>
-                            <textarea id="question-text" rows="3" placeholder="Enter the question here..."></textarea>
+                        <!-- Standalone Question Form -->
+                        <div id="standalone-form-container">
+                            <div class="form-group">
+                                <label>Question Text</label>
+                                <textarea id="question-text" rows="3" placeholder="Enter the question here..."></textarea>
+                            </div>
+                            <div id="question-options-container">
+                                <div class="form-group">
+                                    <label>Option A</label>
+                                    <input type="text" id="option-a" placeholder="Option A">
+                                </div>
+                                <div class="form-group">
+                                    <label>Option B</label>
+                                    <input type="text" id="option-b" placeholder="Option B">
+                                </div>
+                                <div class="form-group">
+                                    <label>Option C</label>
+                                    <input type="text" id="option-c" placeholder="Option C">
+                                </div>
+                                <div class="form-group">
+                                    <label>Option D</label>
+                                    <input type="text" id="option-d" placeholder="Option D">
+                                </div>
+                                <div class="form-group">
+                                    <label>Correct Answer</label>
+                                    <select id="correct-answer">
+                                        <option value="0">A</option>
+                                        <option value="1">B</option>
+                                        <option value="2">C</option>
+                                        <option value="3">D</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button id="add-question-btn">Add Question to Bank</button>
                         </div>
-                        <!-- Options container (hidden for Main Questions) -->
-                        <div id="question-options-container">
-                            <div class="form-group">
-                                <label>Option A</label>
-                                <input type="text" id="option-a" placeholder="Option A">
+
+                        <!-- Parent-child Question Form -->
+                        <div id="parent-child-form-container" style="display: none;">
+                            <!-- Parent Question Section -->
+                            <div style="background: #fff8e1; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin-bottom: 15px;">
+                                <h5 style="margin: 0 0 10px 0; color: #856404;">📖 Parent Question (Passage/Scenario)</h5>
+                                <div class="form-group">
+                                    <label>Passage/Scenario Text</label>
+                                    <textarea id="parent-question-text" rows="6" placeholder="Enter the passage, scenario, or context that the sub-questions will refer to..."></textarea>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label>Option B</label>
-                                <input type="text" id="option-b" placeholder="Option B">
+
+                            <!-- Child Questions Section -->
+                            <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50; margin-bottom: 15px;">
+                                <h5 style="margin: 0 0 10px 0; color: #2e7d32;">👶 Child Questions (Minimum 1 required)</h5>
+                                <div id="bank-children-container">
+                                    <!-- Child questions will be added here dynamically -->
+                                </div>
+                                <button type="button" id="bank-add-child-btn" style="background: #4caf50; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: 600;">
+                                    ➕ Add Another Child Question
+                                </button>
                             </div>
-                            <div class="form-group">
-                                <label>Option C</label>
-                                <input type="text" id="option-c" placeholder="Option C">
-                            </div>
-                            <div class="form-group">
-                                <label>Option D</label>
-                                <input type="text" id="option-d" placeholder="Option D">
-                            </div>
-                            <div class="form-group">
-                                <label>Correct Answer</label>
-                                <select id="correct-answer">
-                                    <option value="0">A</option>
-                                    <option value="1">B</option>
-                                    <option value="2">C</option>
-                                    <option value="3">D</option>
-                                </select>
-                            </div>
+
+                            <button id="add-parent-child-btn" style="background: var(--primary); color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: 600; font-size: 1rem;">
+                                Create Parent-child Question Set
+                            </button>
                         </div>
-                        <button id="add-question-btn">Add Question to Bank</button>
                         <div class="error" id="question-error"></div>
                         <div class="success" id="question-success"></div>
                     </div>
@@ -4863,43 +4882,243 @@ Artificial Intelligence has revolutionized..."></textarea>
             resetQuestionForm();
         });
 
+        // Bank child question counter
+        let bankChildQuestionCount = 0;
+
         // Handle question type change for hierarchical questions
         window.handleQuestionTypeChange = function() {
             const questionType = document.getElementById('question-type').value;
-            const parentGroup = document.getElementById('parent-question-group');
-            const optionsContainer = document.getElementById('question-options-container');
-            const mainQuestionInfo = document.getElementById('main-question-info');
-            const subQuestionInfo = document.getElementById('sub-question-info');
-            const questionTextLabel = document.getElementById('question-text-label');
-            const questionTextArea = document.getElementById('question-text');
+            const standaloneInfo = document.getElementById('standalone-question-info');
+            const parentChildInfo = document.getElementById('parent-child-question-info');
+            const standaloneForm = document.getElementById('standalone-form-container');
+            const parentChildForm = document.getElementById('parent-child-form-container');
 
-            // Hide all info boxes first
-            mainQuestionInfo.style.display = 'none';
-            subQuestionInfo.style.display = 'none';
-            parentGroup.style.display = 'none';
-            optionsContainer.style.display = 'block';
+            if (questionType === 'parent-child') {
+                // Show parent-child form
+                standaloneInfo.style.display = 'none';
+                parentChildInfo.style.display = 'block';
+                standaloneForm.style.display = 'none';
+                parentChildForm.style.display = 'block';
 
-            if (questionType === 'main') {
-                // Main question (passage) - hide options
-                optionsContainer.style.display = 'none';
-                mainQuestionInfo.style.display = 'block';
-                questionTextLabel.textContent = 'Passage/Comprehension Text';
-                questionTextArea.placeholder = 'Enter the passage or comprehension text here...';
-                questionTextArea.rows = 6;
-            } else if (questionType === 'sub') {
-                // Sub-question - show parent selector
-                parentGroup.style.display = 'block';
-                subQuestionInfo.style.display = 'block';
-                questionTextLabel.textContent = 'Sub-Question Text';
-                questionTextArea.placeholder = 'Enter the sub-question here...';
-                questionTextArea.rows = 3;
+                // Add first child question automatically if none exist
+                if (bankChildQuestionCount === 0) {
+                    addBankChildQuestion();
+                }
             } else {
-                // Standalone question
-                questionTextLabel.textContent = 'Question Text';
-                questionTextArea.placeholder = 'Enter the question here...';
-                questionTextArea.rows = 3;
+                // Show standalone form
+                standaloneInfo.style.display = 'block';
+                parentChildInfo.style.display = 'none';
+                standaloneForm.style.display = 'block';
+                parentChildForm.style.display = 'none';
             }
         };
+
+        // Add child question to the bank form
+        function addBankChildQuestion() {
+            bankChildQuestionCount++;
+            const container = document.getElementById('bank-children-container');
+            if (!container) return;
+
+            const childHtml = `
+                <div class="bank-child-question" id="bank-child-${bankChildQuestionCount}" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #4caf50;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h6 style="margin: 0; color: #2e7d32; font-weight: 600;">Child Question ${bankChildQuestionCount}</h6>
+                        <button type="button" class="remove-bank-child-btn" onclick="removeBankChildQuestion(${bankChildQuestionCount})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Question Text</label>
+                        <textarea id="bank-child-question-${bankChildQuestionCount}" rows="2" placeholder="Enter the sub-question here..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>Option A</label>
+                            <input type="text" id="bank-child-option-a-${bankChildQuestionCount}" placeholder="Option A">
+                        </div>
+                        <div class="form-group">
+                            <label>Option B</label>
+                            <input type="text" id="bank-child-option-b-${bankChildQuestionCount}" placeholder="Option B">
+                        </div>
+                        <div class="form-group">
+                            <label>Option C</label>
+                            <input type="text" id="bank-child-option-c-${bankChildQuestionCount}" placeholder="Option C">
+                        </div>
+                        <div class="form-group">
+                            <label>Option D</label>
+                            <input type="text" id="bank-child-option-d-${bankChildQuestionCount}" placeholder="Option D">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Correct Answer</label>
+                        <select id="bank-child-correct-${bankChildQuestionCount}">
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', childHtml);
+        }
+
+        // Remove child question from bank form
+        window.removeBankChildQuestion = function(num) {
+            const child = document.getElementById(`bank-child-${num}`);
+            if (child) {
+                child.remove();
+            }
+        };
+
+        // Add child button handler for bank form
+        const bankAddChildBtn = document.getElementById('bank-add-child-btn');
+        if (bankAddChildBtn) {
+            bankAddChildBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                addBankChildQuestion();
+            });
+        }
+
+        // Create parent-child question set from bank form
+        const addParentChildBtn = document.getElementById('add-parent-child-btn');
+        if (addParentChildBtn) {
+            addParentChildBtn.addEventListener('click', async function() {
+                try {
+                    const subject = document.getElementById('question-subject').value;
+                    const difficulty = document.getElementById('question-difficulty').value;
+                    const parentText = document.getElementById('parent-question-text').value.trim();
+                    const questionError = document.getElementById('question-error');
+                    const questionSuccess = document.getElementById('question-success');
+
+                    // Clear previous messages
+                    if (questionError) questionError.textContent = '';
+                    if (questionSuccess) questionSuccess.textContent = '';
+
+                    if (!parentText) {
+                        if (questionError) {
+                            questionError.textContent = '❌ Please enter the parent question/passage text!';
+                            setTimeout(() => { questionError.textContent = ''; }, 3000);
+                        }
+                        return;
+                    }
+
+                    // Collect child questions
+                    const childQuestions = [];
+                    const childElements = document.querySelectorAll('.bank-child-question');
+
+                    for (const childEl of childElements) {
+                        const num = childEl.id.replace('bank-child-', '');
+                        const childQuestion = document.getElementById(`bank-child-question-${num}`).value.trim();
+                        const childOptionA = document.getElementById(`bank-child-option-a-${num}`).value.trim();
+                        const childOptionB = document.getElementById(`bank-child-option-b-${num}`).value.trim();
+                        const childOptionC = document.getElementById(`bank-child-option-c-${num}`).value.trim();
+                        const childOptionD = document.getElementById(`bank-child-option-d-${num}`).value.trim();
+                        const childCorrect = document.getElementById(`bank-child-correct-${num}`).value;
+
+                        if (!childQuestion || !childOptionA || !childOptionB || !childOptionC || !childOptionD) {
+                            if (questionError) {
+                                questionError.textContent = `❌ Please fill in all fields for Child Question ${num}!`;
+                                setTimeout(() => { questionError.textContent = ''; }, 3000);
+                            }
+                            return;
+                        }
+
+                        childQuestions.push({
+                            question: childQuestion,
+                            optionA: childOptionA,
+                            optionB: childOptionB,
+                            optionC: childOptionC,
+                            optionD: childOptionD,
+                            correct: childCorrect
+                        });
+                    }
+
+                    if (childQuestions.length === 0) {
+                        if (questionError) {
+                            questionError.textContent = '❌ Please add at least one child question!';
+                            setTimeout(() => { questionError.textContent = ''; }, 3000);
+                        }
+                        return;
+                    }
+
+                    // Disable button during creation
+                    this.disabled = true;
+                    this.textContent = 'Creating...';
+
+                    // Create parent question first
+                    const parentData = {
+                        subject: subject,
+                        difficulty: difficulty,
+                        question: parentText,
+                        'Question Type': 'Parent-child',
+                        'Main Question Text': parentText
+                    };
+
+                    const parentResult = await window.PoliteCCAPI.addQuestionToDatabase(parentData);
+
+                    if (!parentResult) {
+                        if (questionError) {
+                            questionError.textContent = '❌ Failed to create parent question!';
+                            setTimeout(() => { questionError.textContent = ''; }, 3000);
+                        }
+                        this.disabled = false;
+                        this.textContent = 'Create Parent-child Question Set';
+                        return;
+                    }
+
+                    // Create child questions linked to parent
+                    let childNum = 1;
+                    for (const child of childQuestions) {
+                        const childData = {
+                            subject: subject,
+                            difficulty: difficulty,
+                            question: child.question,
+                            optionA: child.optionA,
+                            optionB: child.optionB,
+                            optionC: child.optionC,
+                            optionD: child.optionD,
+                            correct: child.correct,
+                            'Question Type': 'Parent-child',
+                            'Parent Question': [parentResult.id],
+                            'Sub Question Number': childNum
+                        };
+
+                        await window.PoliteCCAPI.addQuestionToDatabase(childData);
+                        childNum++;
+                    }
+
+                    // Success
+                    if (questionSuccess) {
+                        questionSuccess.textContent = `✅ Parent-child question set created with ${childQuestions.length} sub-questions!`;
+                        setTimeout(() => { questionSuccess.textContent = ''; }, 5000);
+                    }
+
+                    // Clear form
+                    document.getElementById('parent-question-text').value = '';
+                    document.getElementById('bank-children-container').innerHTML = '';
+                    bankChildQuestionCount = 0;
+                    document.getElementById('question-type').value = 'standalone';
+                    handleQuestionTypeChange();
+
+                    // Refresh question bank
+                    if (typeof loadQuestions === 'function') {
+                        loadQuestions();
+                    }
+
+                    this.disabled = false;
+                    this.textContent = 'Create Parent-child Question Set';
+
+                } catch (error) {
+                    console.error('Error creating parent-child question set:', error);
+                    const questionError = document.getElementById('question-error');
+                    if (questionError) {
+                        questionError.textContent = '❌ Failed to create question set: ' + error.message;
+                        setTimeout(() => { questionError.textContent = ''; }, 5000);
+                    }
+                    this.disabled = false;
+                    this.textContent = 'Create Parent-child Question Set';
+                }
+            });
+        }
 
         // Populate parent question dropdown with main questions
         async function populateParentQuestionDropdown() {
@@ -4939,19 +5158,35 @@ Artificial Intelligence has revolutionized..."></textarea>
 
         // Reset question form to default state
         function resetQuestionForm() {
+            // Reset question type
             document.getElementById('question-type').value = 'standalone';
-            document.getElementById('parent-question-select').value = '';
+
+            // Reset standalone form
+            document.getElementById('question-text').value = '';
+            document.getElementById('option-a').value = '';
+            document.getElementById('option-b').value = '';
+            document.getElementById('option-c').value = '';
+            document.getElementById('option-d').value = '';
+            document.getElementById('correct-answer').value = '0';
+
+            // Reset parent-child form
+            const parentQuestionText = document.getElementById('parent-question-text');
+            if (parentQuestionText) parentQuestionText.value = '';
+
+            const bankChildrenContainer = document.getElementById('bank-children-container');
+            if (bankChildrenContainer) bankChildrenContainer.innerHTML = '';
+
+            bankChildQuestionCount = 0;
+
             handleQuestionTypeChange();
         }
 
-        // Add/Update question to bank
+        // Add standalone question to bank
         document.getElementById('add-question-btn').addEventListener('click', async function() {
             try {
                 const subject = document.getElementById('question-subject').value;
                 const difficulty = document.getElementById('question-difficulty').value;
                 const question = document.getElementById('question-text').value.trim();
-                const questionType = document.getElementById('question-type').value;
-                const parentQuestionId = document.getElementById('parent-question-select').value;
                 const optionA = document.getElementById('option-a').value.trim();
                 const optionB = document.getElementById('option-b').value.trim();
                 const optionC = document.getElementById('option-c').value.trim();
@@ -4965,7 +5200,7 @@ Artificial Intelligence has revolutionized..."></textarea>
                 if (questionError) questionError.textContent = '';
                 if (questionSuccess) questionSuccess.textContent = '';
 
-                // Validate inputs based on question type
+                // Validate inputs for standalone question
                 if (!question) {
                     if (questionError) {
                         questionError.textContent = '❌ Please enter the question text!';
@@ -4974,47 +5209,18 @@ Artificial Intelligence has revolutionized..."></textarea>
                     return;
                 }
 
-                // For main questions (passages), options are not required
-                if (questionType !== 'main') {
-                    if (!optionA || !optionB || !optionC || !optionD) {
-                        if (questionError) {
-                            questionError.textContent = '❌ Please fill in all options!';
-                            setTimeout(() => { questionError.textContent = ''; }, 3000);
-                        }
-                        return;
-                    }
-                }
-
-                // For sub-questions, parent is required
-                if (questionType === 'sub' && !parentQuestionId) {
+                if (!optionA || !optionB || !optionC || !optionD) {
                     if (questionError) {
-                        questionError.textContent = '❌ Please select a parent question!';
+                        questionError.textContent = '❌ Please fill in all options!';
                         setTimeout(() => { questionError.textContent = ''; }, 3000);
                     }
                     return;
                 }
 
-                const correctAnswer = questionType === 'main' ? '' : ['A', 'B', 'C', 'D'][parseInt(correct)];
+                const correctAnswer = ['A', 'B', 'C', 'D'][parseInt(correct)];
                 const isEditMode = this.getAttribute('data-edit-mode') === 'true';
                 const editIndex = parseInt(this.getAttribute('data-edit-index'));
                 const editId = this.getAttribute('data-edit-id');
-
-                // Calculate sub-question order for new sub-questions
-                let subQuestionOrder = null;
-                if (questionType === 'sub' && parentQuestionId) {
-                    // Find parent question and count existing sub-questions
-                    const parentQ = allQuestions.find(q => q.ID === parentQuestionId);
-                    if (parentQ && parentQ.subQuestions) {
-                        subQuestionOrder = parentQ.subQuestions.length + 1;
-                    } else {
-                        // Count from all questions
-                        const existingSubQs = allQuestions.filter(q =>
-                            q['Parent Question ID'] === parentQuestionId &&
-                            (q['Is Sub Question'] === true || q['Is Sub Question'] === 'true')
-                        );
-                        subQuestionOrder = existingSubQs.length + 1;
-                    }
-                }
 
                 if (isEditMode) {
                     // Update existing question
@@ -5022,17 +5228,13 @@ Artificial Intelligence has revolutionized..."></textarea>
                         const updateData = {
                             subject: subject,
                             difficulty: difficulty,
-                            question: question
+                            question: question,
+                            optionA: optionA,
+                            optionB: optionB,
+                            optionC: optionC,
+                            optionD: optionD,
+                            correct: correctAnswer
                         };
-
-                        // Only include options for non-main questions
-                        if (questionType !== 'main') {
-                            updateData.optionA = optionA;
-                            updateData.optionB = optionB;
-                            updateData.optionC = optionC;
-                            updateData.optionD = optionD;
-                            updateData.correct = correctAnswer;
-                        }
 
                         const success = await window.PoliteCCAPI.updateQuestionInDatabase(editId, updateData);
 
@@ -5047,13 +5249,11 @@ Artificial Intelligence has revolutionized..."></textarea>
                         questions[editIndex].Subject = subject;
                         questions[editIndex].Difficulty = difficulty;
                         questions[editIndex].Question = question;
-                        if (questionType !== 'main') {
-                            questions[editIndex]['Option A'] = optionA;
-                            questions[editIndex]['Option B'] = optionB;
-                            questions[editIndex]['Option C'] = optionC;
-                            questions[editIndex]['Option D'] = optionD;
-                            questions[editIndex].Correct = correctAnswer;
-                        }
+                        questions[editIndex]['Option A'] = optionA;
+                        questions[editIndex]['Option B'] = optionB;
+                        questions[editIndex]['Option C'] = optionC;
+                        questions[editIndex]['Option D'] = optionD;
+                        questions[editIndex].Correct = correctAnswer;
 
                         if (questionSuccess) {
                             questionSuccess.textContent = '✅ Question updated successfully!';
@@ -5067,38 +5267,24 @@ Artificial Intelligence has revolutionized..."></textarea>
                     this.removeAttribute('data-edit-index');
                     this.removeAttribute('data-edit-id');
                 } else {
-                    // Add new question to database if API is available
+                    // Add new standalone question to database if API is available
                     if (window.PoliteCCAPI && window.PoliteCCAPI.addQuestionToDatabase) {
                         const questionData = {
                             subject: subject,
                             difficulty: difficulty,
-                            question: question
+                            question: question,
+                            optionA: optionA,
+                            optionB: optionB,
+                            optionC: optionC,
+                            optionD: optionD,
+                            correct: correctAnswer,
+                            'Question Type': 'Standalone'
                         };
-
-                        // Add options only for non-main questions
-                        if (questionType !== 'main') {
-                            questionData.optionA = optionA;
-                            questionData.optionB = optionB;
-                            questionData.optionC = optionC;
-                            questionData.optionD = optionD;
-                            questionData.correct = correctAnswer;
-                        }
-
-                        // Add hierarchical fields
-                        if (questionType === 'sub') {
-                            questionData.isSubQuestion = true;
-                            questionData.parentQuestionId = parentQuestionId;
-                            questionData.subQuestionOrder = subQuestionOrder;
-                        } else if (questionType === 'main') {
-                            questionData.isMainQuestion = true;
-                        }
 
                         const success = await window.PoliteCCAPI.addQuestionToDatabase(questionData);
 
                         if (success && questionSuccess) {
-                            const typeLabel = questionType === 'main' ? 'Main question' :
-                                              questionType === 'sub' ? 'Sub-question' : 'Question';
-                            questionSuccess.textContent = `✅ ${typeLabel} added successfully!`;
+                            questionSuccess.textContent = '✅ Standalone question added successfully!';
                             setTimeout(() => { questionSuccess.textContent = ''; }, 3000);
                         }
                     } else {
@@ -5109,27 +5295,19 @@ Artificial Intelligence has revolutionized..."></textarea>
                             ID: questionId,
                             Subject: subject,
                             Difficulty: difficulty,
-                            Question: question
+                            Question: question,
+                            'Option A': optionA,
+                            'Option B': optionB,
+                            'Option C': optionC,
+                            'Option D': optionD,
+                            Correct: correctAnswer,
+                            'Question Type': 'Standalone'
                         };
-
-                        if (questionType !== 'main') {
-                            newQuestion['Option A'] = optionA;
-                            newQuestion['Option B'] = optionB;
-                            newQuestion['Option C'] = optionC;
-                            newQuestion['Option D'] = optionD;
-                            newQuestion.Correct = correctAnswer;
-                        }
-
-                        if (questionType === 'sub') {
-                            newQuestion['Is Sub Question'] = true;
-                            newQuestion['Parent Question ID'] = parentQuestionId;
-                            newQuestion['Sub Question Order'] = subQuestionOrder;
-                        }
 
                         questions.push(newQuestion);
 
                         if (questionSuccess) {
-                            questionSuccess.textContent = '✅ Question added successfully!';
+                            questionSuccess.textContent = '✅ Standalone question added successfully!';
                             setTimeout(() => { questionSuccess.textContent = ''; }, 3000);
                         }
                     }
