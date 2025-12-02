@@ -655,6 +655,65 @@ module.exports = async (req, res) => {
             });
         }
 
+        // GET /api/results/:examCode - Get all results for an exam
+        if (url.startsWith('/api/results/') && method === 'GET') {
+            const examCode = url.split('/api/results/')[1];
+
+            if (!examCode) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Exam code is required'
+                });
+            }
+
+            try {
+                // First, find the exam by code to get its record ID
+                const examRecords = await base(EXAMS_TABLE).select({
+                    filterByFormula: `{Exam Code} = '${sanitizeForFormula(examCode)}'`
+                }).all();
+
+                if (examRecords.length === 0) {
+                    return res.status(200).json({
+                        success: true,
+                        data: [],
+                        message: 'No exam found with this code'
+                    });
+                }
+
+                const examRecordId = examRecords[0].id;
+
+                // Get all results linked to this exam
+                const resultRecords = await base(RESULTS_TABLE).select({
+                    filterByFormula: `FIND('${examRecordId}', ARRAYJOIN({Exam}, ',')) > 0`
+                }).all();
+
+                const results = resultRecords.map(record => ({
+                    id: record.id,
+                    ...record.fields,
+                    examCode: examCode
+                }));
+
+                // Sort by timestamp descending (newest first)
+                results.sort((a, b) => {
+                    const dateA = new Date(a.Timestamp || 0);
+                    const dateB = new Date(b.Timestamp || 0);
+                    return dateB - dateA;
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    data: results,
+                    count: results.length
+                });
+            } catch (error) {
+                console.error('Error fetching results:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to fetch results'
+                });
+            }
+        }
+
         // =====================================================
         // AUTHENTICATION ENDPOINTS
         // =====================================================

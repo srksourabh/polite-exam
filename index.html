@@ -1841,6 +1841,9 @@
                                 <button id="show-cart-btn" style="background: #27ae60; color: white; padding: 6px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
                                     🛒 Cart (<span id="exam-cart-count">0</span>)
                                 </button>
+                                <button id="reset-selection-btn" style="background: #e74c3c; color: white; padding: 6px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">
+                                    🔄 Reset
+                                </button>
                                 <div id="selected-count" style="background: white; color: #667eea; padding: 8px 20px; border-radius: 25px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2); min-width: 120px; text-align: center;">
                                     0 Selected
                                 </div>
@@ -5524,6 +5527,15 @@ Artificial Intelligence has revolutionized..."></textarea>
             if (questions.length === 0) {
                 examQuestionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No questions available. Please add questions first!</p>';
             } else {
+                // Sort questions by ID descending (latest/highest ID first)
+                questions.sort((a, b) => {
+                    const matchA = (a.ID || '').match(/^[qQ](\d+)/);
+                    const matchB = (b.ID || '').match(/^[qQ](\d+)/);
+                    const numA = matchA ? parseInt(matchA[1]) : 0;
+                    const numB = matchB ? parseInt(matchB[1]) : 0;
+                    return numB - numA; // Descending order
+                });
+
                 // Store all questions for filtering
                 let examFilteredQuestions = [...questions];
 
@@ -5744,7 +5756,7 @@ Artificial Intelligence has revolutionized..."></textarea>
                     applyExamQuestionFilters();
                 });
 
-                // Random selection button
+                // Random selection button - ADD to existing selections (don't clear)
                 document.getElementById('random-select-btn').addEventListener('click', function() {
                     const randomCount = parseInt(document.getElementById('random-count').value);
 
@@ -5753,24 +5765,26 @@ Artificial Intelligence has revolutionized..."></textarea>
                         return;
                     }
 
-                    // Get visible checkboxes (from filtered questions)
-                    const visibleCheckboxes = Array.from(document.querySelectorAll('.question-checkbox'));
+                    // Get visible checkboxes that are NOT already checked
+                    const allVisibleCheckboxes = Array.from(document.querySelectorAll('.question-checkbox'));
+                    const uncheckedCheckboxes = allVisibleCheckboxes.filter(cb => !cb.checked);
 
-                    if (randomCount > visibleCheckboxes.length) {
-                        alert(`You can only select up to ${visibleCheckboxes.length} questions from the current filtered view.`);
+                    if (uncheckedCheckboxes.length === 0) {
+                        alert('All visible questions are already selected!');
                         return;
                     }
 
-                    // Uncheck all first
-                    visibleCheckboxes.forEach(cb => {
-                        cb.checked = false;
-                    });
+                    const actualCount = Math.min(randomCount, uncheckedCheckboxes.length);
 
-                    // Shuffle and select random questions
-                    const shuffled = visibleCheckboxes.sort(() => Math.random() - 0.5);
-                    const selectedCheckboxes = shuffled.slice(0, randomCount);
+                    if (randomCount > uncheckedCheckboxes.length) {
+                        alert(`Only ${uncheckedCheckboxes.length} unselected questions available. Selecting all of them.`);
+                    }
 
-                    // Check the randomly selected checkboxes
+                    // Shuffle and select random from UNCHECKED only (preserves existing selections)
+                    const shuffled = uncheckedCheckboxes.sort(() => Math.random() - 0.5);
+                    const selectedCheckboxes = shuffled.slice(0, actualCount);
+
+                    // Check the randomly selected checkboxes (ADD to existing)
                     selectedCheckboxes.forEach(cb => {
                         cb.checked = true;
                     });
@@ -5780,7 +5794,23 @@ Artificial Intelligence has revolutionized..."></textarea>
 
                     // Show notification
                     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                        window.PoliteCCAPI.showNotification(`🎲 Randomly selected ${randomCount} questions!`, 'success');
+                        window.PoliteCCAPI.showNotification(`🎲 Added ${actualCount} random questions to selection!`, 'success');
+                    }
+                });
+
+                // Reset selection button - clear all selections
+                document.getElementById('reset-selection-btn').addEventListener('click', function() {
+                    const allCheckboxes = document.querySelectorAll('.question-checkbox');
+                    allCheckboxes.forEach(cb => {
+                        cb.checked = false;
+                    });
+
+                    // Update counter
+                    updateSelectedCount();
+
+                    // Show notification
+                    if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                        window.PoliteCCAPI.showNotification('🔄 All selections cleared!', 'info');
                     }
                 });
 
