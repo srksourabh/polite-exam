@@ -8230,12 +8230,14 @@ Artificial Intelligence has revolutionized..."></textarea>
                         'Name': candidateName,
                         'Mobile': candidateMobile,
                         'Score': parseFloat(score.toFixed(2)),
-                        'Answers': JSON.stringify(detailedAnswers)
+                        'Answers': JSON.stringify(detailedAnswers),
+                        'examCode': currentExam.code,
+                        'examTitle': currentExam.title
                     };
 
                     // Only add Exam linked record field if examId is valid
                     if (currentExam.examId) {
-                        resultData['Exam'] = [currentExam.examId];
+                        resultData['examId'] = currentExam.examId;
                     }
 
                     const submitted = await window.PoliteCCAPI.submitResultToDatabase(resultData);
