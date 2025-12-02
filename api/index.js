@@ -636,14 +636,27 @@ module.exports = async (req, res) => {
             }
 
             // Create result record
-            const record = await base(RESULTS_TABLE).create({
-                'Timestamp': new Date().toISOString(),
+            // Build fields object - handle Timestamp field type variations
+            const now = new Date();
+            const resultFields = {
                 'Exam': resultData.examId ? [resultData.examId] : undefined,
                 'Name': resultData.name,
                 'Mobile': resultData.mobile,
                 'Score': totalScore,
                 'Answers': resultData.answers
-            });
+            };
+
+            // Try creating with DateTime format first, fall back to Date only if it fails
+            let record;
+            try {
+                resultFields['Timestamp'] = now.toISOString();
+                record = await base(RESULTS_TABLE).create(resultFields);
+            } catch (timestampError) {
+                // If Timestamp field rejects ISO format, try date-only format
+                console.log('Trying date-only format for Timestamp');
+                resultFields['Timestamp'] = now.toISOString().split('T')[0];
+                record = await base(RESULTS_TABLE).create(resultFields);
+            }
 
             return res.status(201).json({
                 success: true,
