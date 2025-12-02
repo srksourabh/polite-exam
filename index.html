@@ -1679,6 +1679,13 @@
                                     <option value="English Language">English Language</option>
                                     <option value="General Awareness">General Awareness</option>
                                     <option value="Current Affairs">Current Affairs</option>
+                                    <option value="History">History</option>
+                                    <option value="Geography">Geography</option>
+                                    <option value="Economics">Economics</option>
+                                    <option value="Mathematics">Mathematics</option>
+                                    <option value="Law">Law</option>
+                                    <option value="Polity">Polity</option>
+                                    <option value="Science">Science</option>
                                     <option value="Banking Awareness">Banking Awareness</option>
                                     <option value="Computer Knowledge">Computer Knowledge</option>
                                     <option value="Descriptive Writing">Descriptive Writing</option>
@@ -2201,6 +2208,13 @@ Artificial Intelligence has revolutionized..."></textarea>
                             <option value="English Language">English Language</option>
                             <option value="General Awareness">General Awareness</option>
                             <option value="Current Affairs">Current Affairs</option>
+                            <option value="History">History</option>
+                            <option value="Geography">Geography</option>
+                            <option value="Economics">Economics</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Law">Law</option>
+                            <option value="Polity">Polity</option>
+                            <option value="Science">Science</option>
                             <option value="Banking Awareness">Banking Awareness</option>
                             <option value="Computer Knowledge">Computer Knowledge</option>
                             <option value="Descriptive Writing">Descriptive Writing</option>
@@ -3167,6 +3181,40 @@ Artificial Intelligence has revolutionized..."></textarea>
 
         // Wait for DOM to be ready before attaching event listeners
         document.addEventListener('DOMContentLoaded', function() {
+            // Clear caches on page load for fresh data
+            (async function clearCachesOnLoad() {
+                try {
+                    // Clear Cache API if available
+                    if ('caches' in window) {
+                        const cacheNames = await caches.keys();
+                        for (const name of cacheNames) {
+                            // Only clear API/data caches, not static asset caches
+                            if (name.includes('api') || name.includes('data') || name.includes('dynamic')) {
+                                await caches.delete(name);
+                                console.log('Cleared cache:', name);
+                            }
+                        }
+                    }
+
+                    // Clear sessionStorage for fresh session
+                    sessionStorage.clear();
+
+                    // Clear any localStorage cache flags (keep user settings)
+                    const keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && (key.includes('cache') || key.includes('questions_') || key.includes('temp_'))) {
+                            keysToRemove.push(key);
+                        }
+                    }
+                    keysToRemove.forEach(key => localStorage.removeItem(key));
+
+                    console.log('Page caches cleared for fresh data');
+                } catch (e) {
+                    console.warn('Cache clearing error (non-fatal):', e);
+                }
+            })();
+
             // Initialize header navigation first
             updateHeaderNav('hero-landing');
 
@@ -4103,40 +4151,70 @@ Artificial Intelligence has revolutionized..."></textarea>
 
         // Function to group questions hierarchically (attach sub-questions to their parent)
         function groupQuestionsHierarchically(questions) {
-            const mainQuestions = [];
+            const parentQuestions = [];
+            const childQuestions = [];
             const subQuestionsMap = {};
 
-            // First pass: separate main questions and sub-questions
+            // First pass: separate parent questions and child questions
             questions.forEach(q => {
-                const isSubQuestion = q['Is Sub Question'] === true || q['Is Sub Question'] === 'true';
-                const parentId = q['Parent Question ID'];
+                const questionType = q['Question Type'];
+                const parentQuestionLinks = q['Parent Question']; // Array of record IDs (linked record field)
 
-                if (isSubQuestion && parentId) {
-                    if (!subQuestionsMap[parentId]) {
-                        subQuestionsMap[parentId] = [];
+                // Child question: has 'Parent-child' type AND has Parent Question link
+                const isChild = questionType === 'Parent-child' &&
+                               parentQuestionLinks &&
+                               parentQuestionLinks.length > 0;
+
+                // Parent question: has 'Parent-child' type AND no Parent Question link
+                // OR has 'Main Question Text' field (passage)
+                const isParent = (questionType === 'Parent-child' &&
+                                 (!parentQuestionLinks || parentQuestionLinks.length === 0)) ||
+                                q['Main Question Text'];
+
+                if (isChild) {
+                    // This is a child question - group by parent's record ID
+                    const parentRecordId = parentQuestionLinks[0];
+                    if (!subQuestionsMap[parentRecordId]) {
+                        subQuestionsMap[parentRecordId] = [];
                     }
-                    subQuestionsMap[parentId].push(q);
+                    subQuestionsMap[parentRecordId].push(q);
+                    childQuestions.push(q);
+                } else if (isParent) {
+                    // This is a parent/passage question
+                    parentQuestions.push(q);
                 } else {
-                    mainQuestions.push(q);
+                    // Standalone question
+                    parentQuestions.push(q);
                 }
             });
 
-            // Sort sub-questions by order
-            Object.keys(subQuestionsMap).forEach(parentId => {
-                subQuestionsMap[parentId].sort((a, b) => {
-                    const orderA = parseInt(a['Sub Question Order']) || 0;
-                    const orderB = parseInt(b['Sub Question Order']) || 0;
+            // Sort sub-questions by Sub Question Number
+            Object.keys(subQuestionsMap).forEach(parentRecordId => {
+                subQuestionsMap[parentRecordId].sort((a, b) => {
+                    const orderA = parseInt(a['Sub Question Number']) || 0;
+                    const orderB = parseInt(b['Sub Question Number']) || 0;
                     return orderA - orderB;
                 });
             });
 
-            // Attach sub-questions to their parent
-            const groupedQuestions = mainQuestions.map(q => ({
-                ...q,
-                subQuestions: subQuestionsMap[q.ID] || [],
-                hasSubQuestions: (subQuestionsMap[q.ID] || []).length > 0,
-                totalQuestions: 1 + (subQuestionsMap[q.ID] || []).length
-            }));
+            // Attach sub-questions to their parent using parent's record ID (not display ID)
+            const groupedQuestions = parentQuestions.map(q => {
+                const children = subQuestionsMap[q.id] || [];
+                return {
+                    ...q,
+                    subQuestions: children,
+                    hasSubQuestions: children.length > 0,
+                    totalQuestions: 1 + children.length
+                };
+            });
+
+            // Log for debugging
+            console.log('Grouped questions:', {
+                total: questions.length,
+                parents: parentQuestions.length,
+                children: childQuestions.length,
+                grouped: groupedQuestions.length
+            });
 
             return groupedQuestions;
         }
@@ -4146,14 +4224,49 @@ Artificial Intelligence has revolutionized..."></textarea>
 
         // Function to update question bank stats
         function updateQuestionBankStats() {
-            document.getElementById('total-questions-count').textContent = allQuestions.length;
-            document.getElementById('selected-questions-count').textContent = selectedQuestionIds.size;
+            // Calculate total questions including sub-questions
+            let totalIncludingChildren = 0;
+            allQuestions.forEach(q => {
+                if (q.hasSubQuestions && q.subQuestions) {
+                    totalIncludingChildren += q.subQuestions.length; // Count children only (parent is just a passage)
+                } else if (q['Question Type'] !== 'Parent-child' || q['Option A']) {
+                    totalIncludingChildren += 1; // Count standalone questions
+                }
+            });
+
+            // Calculate selected questions count (including children when parent is selected)
+            let selectedCount = 0;
+            selectedQuestionIds.forEach(id => {
+                const question = allQuestions.find(q => (q.id === id || q.ID === id));
+                if (question) {
+                    if (question.hasSubQuestions && question.subQuestions) {
+                        selectedCount += question.subQuestions.length; // Count children when parent selected
+                    } else {
+                        selectedCount += 1;
+                    }
+                } else {
+                    selectedCount += 1;
+                }
+            });
+
+            // Calculate cart count (including children)
+            let cartCount = 0;
+            questionCart.forEach((question) => {
+                if (question.hasSubQuestions && question.subQuestions) {
+                    cartCount += question.subQuestions.length;
+                } else {
+                    cartCount += 1;
+                }
+            });
+
+            document.getElementById('total-questions-count').textContent = totalIncludingChildren;
+            document.getElementById('selected-questions-count').textContent = selectedCount;
             document.getElementById('showing-questions-count').textContent = Math.min(displayedQuestionsCount, filteredQuestions.length);
-            document.getElementById('cart-questions-count').textContent = questionCart.size;
+            document.getElementById('cart-questions-count').textContent = cartCount;
             // Also update exam cart count if it exists
             const examCartCount = document.getElementById('exam-cart-count');
             if (examCartCount) {
-                examCartCount.textContent = questionCart.size;
+                examCartCount.textContent = cartCount;
             }
         }
 
@@ -4228,16 +4341,23 @@ Artificial Intelligence has revolutionized..."></textarea>
         // Function to render a single question item (supports grouped questions with sub-questions)
         function renderQuestionItem(q, index) {
             const isSelected = selectedQuestionIds.has(q.id || q.ID);
-            const isSubQuestion = q['Is Sub Question'] === true || q['Is Sub Question'] === 'true';
-            const parentQuestionId = q['Parent Question ID'];
+            const questionType = q['Question Type'];
+            const parentQuestionLinks = q['Parent Question'];
             const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
             const subQuestionCount = q.subQuestions ? q.subQuestions.length : 0;
-            // Check if this is a main/passage question (has sub-questions but no options)
-            const isMainPassage = hasSubQuestions && (!q['Option A'] || !q['Option B']);
 
-            // Skip rendering sub-questions individually (they will be rendered with their parent)
-            if (isSubQuestion && parentQuestionId) {
-                return ''; // Sub-questions are rendered as part of parent
+            // Check if this is a child question (has Parent-child type AND has Parent Question link)
+            const isChildQuestion = questionType === 'Parent-child' &&
+                                   parentQuestionLinks &&
+                                   parentQuestionLinks.length > 0;
+
+            // Check if this is a main/passage question (parent with sub-questions but no options)
+            const isMainPassage = (hasSubQuestions || q['Main Question Text']) &&
+                                 (!q['Option A'] || !q['Option B']);
+
+            // Skip rendering child questions individually (they will be rendered with their parent)
+            if (isChildQuestion) {
+                return ''; // Child questions are rendered as part of parent
             }
 
             // Extract question number from ID (e.g., Q0012 -> 12)
@@ -4269,8 +4389,12 @@ Artificial Intelligence has revolutionized..."></textarea>
                     <strong style="font-size: 1.1rem; color: ${hasSubQuestions ? '#9c27b0' : 'var(--secondary)'};">${q.ID}</strong>
                     <span class="question-tag" style="background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject || 'Unknown'}</span>
                     <span class="difficulty-tag" style="background: ${q.Difficulty === 'Easy' ? '#27ae60' : q.Difficulty === 'Medium' ? '#f39c12' : q.Difficulty === 'Hard' ? '#e74c3c' : '#95a5a6'}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Difficulty || 'Unknown'}</span>
-                    ${hasSubQuestions ? `<span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📋 ${subQuestionCount} Sub-Questions</span>` : ''}
-                    ${isMainPassage ? `<span style="background: #ff9800; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📖 Passage (No Marks)</span>` : ''}
+                    ${hasSubQuestions ? `
+                        <span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📋 ${subQuestionCount} Sub-Questions</span>
+                        <span style="background: #4caf50; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">⚖️ Weightage: ${subQuestionCount} marks</span>
+                    ` : ''}
+                    ${isMainPassage && !hasSubQuestions ? `<span style="background: #ff9800; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📖 Passage</span>` : ''}
+                    ${!hasSubQuestions && !isMainPassage ? `<span style="background: #4caf50; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">⚖️ 1 mark</span>` : ''}
                 </div>
                 <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question || ''}</p>`;
 
@@ -4297,12 +4421,20 @@ Artificial Intelligence has revolutionized..."></textarea>
             if (hasSubQuestions) {
                 html += `
                 <div class="sub-questions-container" style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #9c27b0;">
-                    <div style="color: #9c27b0; font-weight: 600; margin-bottom: 10px; font-size: 0.95rem;">
-                        📋 Sub-Questions (${subQuestionCount}) - Marks: +1 correct, -0.25 wrong, 0 unanswered
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; background: #f3e5f5; padding: 10px; border-radius: 8px;">
+                        <div style="color: #9c27b0; font-weight: 600; font-size: 0.95rem;">
+                            📋 Sub-Questions (${subQuestionCount})
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <span style="background: #4caf50; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">Max: ${subQuestionCount} marks</span>
+                            <span style="background: #2196f3; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">+1 correct</span>
+                            <span style="background: #f44336; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">-0.25 wrong</span>
+                            <span style="background: #9e9e9e; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">0 unanswered</span>
+                        </div>
                     </div>`;
 
                 q.subQuestions.forEach((sq, sqIndex) => {
-                    const subOrder = sq['Sub Question Order'] || sqIndex + 1;
+                    const subOrder = sq['Sub Question Number'] || sqIndex + 1;
                     // Use parent's question number for hierarchical numbering (e.g., Q0012 -> 12.1, 12.2)
                     const hierarchicalNum = `${qNum}.${subOrder}`;
                     html += `
@@ -7134,6 +7266,10 @@ Artificial Intelligence has revolutionized..."></textarea>
             document.getElementById('ai-generator-section').classList.remove('hidden');
         });
 
+        // Track previously generated questions to avoid repetition
+        let previouslyGeneratedQuestions = [];
+        const MAX_PREVIOUS_QUESTIONS = 10;
+
         // Generate AI question with real Gemini API
         document.getElementById('generate-ai-btn').addEventListener('click', async function() {
             // Get button reference BEFORE try block so it's accessible in finally
@@ -7145,13 +7281,14 @@ Artificial Intelligence has revolutionized..."></textarea>
 
                 // Show processing notification
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                    window.PoliteCCAPI.showNotification('🤖 AI is generating your question...', 'info');
+                    window.PoliteCCAPI.showNotification('🤖 AI is generating a unique question...', 'info');
                 }
 
                 // Disable button during generation
                 generateBtn.disabled = true;
                 generateBtn.textContent = '⏳ Generating...';
-                // Call backend API
+
+                // Call backend API with previously generated questions to avoid repetition
                 const response = await fetch(`${API_URL}/gemini/generate-question`, {
                     method: 'POST',
                     headers: {
@@ -7160,7 +7297,8 @@ Artificial Intelligence has revolutionized..."></textarea>
                     body: JSON.stringify({
                         subject: subject,
                         difficulty: difficulty,
-                        customPrompt: customPrompt
+                        customPrompt: customPrompt,
+                        previousQuestions: previouslyGeneratedQuestions
                     })
                 });
 
@@ -7171,6 +7309,12 @@ Artificial Intelligence has revolutionized..."></textarea>
                 }
 
                 const qData = data.data;
+
+                // Track this question to avoid regenerating it
+                previouslyGeneratedQuestions.unshift(qData.question.substring(0, 100));
+                if (previouslyGeneratedQuestions.length > MAX_PREVIOUS_QUESTIONS) {
+                    previouslyGeneratedQuestions = previouslyGeneratedQuestions.slice(0, MAX_PREVIOUS_QUESTIONS);
+                }
 
                 // Display the question
                 document.getElementById('ai-question-text').textContent = qData.question;
