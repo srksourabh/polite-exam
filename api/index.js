@@ -17,8 +17,7 @@ const RESULTS_TABLE = 'Results';
 // =====================================================
 const QUESTION_TYPES = {
     STANDALONE: 'Standalone',
-    MAIN_QUESTION: 'Main Question',
-    SUB_QUESTION: 'Sub Question'
+    PARENT_CHILD: 'Parent-child'
 };
 
 // =====================================================
@@ -59,10 +58,11 @@ async function getChildQuestions(parentRecordId) {
 }
 
 /**
- * Check if a question is a parent (Main Question type)
+ * Check if a question is a parent (Parent-child type without parent link)
  */
 function isParentQuestion(questionFields) {
-    return questionFields['Question Type'] === QUESTION_TYPES.MAIN_QUESTION;
+    return questionFields['Question Type'] === QUESTION_TYPES.PARENT_CHILD && 
+           !questionFields['Parent Question'];
 }
 
 /**
@@ -109,22 +109,21 @@ function organizeHierarchically(questions) {
     // First pass: categorize questions
     questions.forEach(q => {
         const questionType = q['Question Type'];
+        const hasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
         
-        if (questionType === QUESTION_TYPES.MAIN_QUESTION) {
+        if (questionType === QUESTION_TYPES.PARENT_CHILD && !hasParentLink) {
+            // Parent-child type without parent link = parent question
             parentQuestions.push(q);
-        } else if (questionType === QUESTION_TYPES.SUB_QUESTION) {
-            // Get parent record ID from Parent Question field (it's an array)
-            const parentLinks = q['Parent Question'];
-            if (parentLinks && parentLinks.length > 0) {
-                const parentId = parentLinks[0]; // Record ID
-                
-                if (!childQuestionsMap.has(parentId)) {
-                    childQuestionsMap.set(parentId, []);
-                }
-                childQuestionsMap.get(parentId).push(q);
+        } else if (questionType === QUESTION_TYPES.PARENT_CHILD && hasParentLink) {
+            // Parent-child type with parent link = child question
+            const parentId = q['Parent Question'][0]; // Record ID
+            
+            if (!childQuestionsMap.has(parentId)) {
+                childQuestionsMap.set(parentId, []);
             }
+            childQuestionsMap.get(parentId).push(q);
         } else {
-            // Standalone questions
+            // Standalone questions (default)
             standaloneQuestions.push(q);
         }
     });
@@ -177,7 +176,16 @@ module.exports = async (req, res) => {
     }
 
     const { method } = req;
-    const url = req.url;
+    
+    // Normalize URL - strip query strings and trailing slashes
+    let url = req.url;
+    try {
+        const urlObj = new URL(req.url, `http://${req.headers.host}`);
+        url = urlObj.pathname.replace(/\/+$/, '') || '/';
+    } catch (e) {
+        // If URL parsing fails, use raw URL
+        url = req.url.split('?')[0].replace(/\/+$/, '') || '/';
+    }
 
     try {
         // =====================================================
@@ -257,17 +265,12 @@ module.exports = async (req, res) => {
 
             // Auto-set Question Type if not provided
             if (!cleanedData['Question Type']) {
-                // Check if it has options
-                const hasOptions = cleanedData['Option A'] || cleanedData['Option B'];
-                
-                if (!hasOptions && cleanedData['Main Question Text']) {
-                    // No options but has main text = parent
-                    cleanedData['Question Type'] = QUESTION_TYPES.MAIN_QUESTION;
-                } else if (cleanedData['Parent Question']) {
-                    // Has parent link = child
-                    cleanedData['Question Type'] = QUESTION_TYPES.SUB_QUESTION;
+                // Check if it has Parent Question link
+                if (cleanedData['Parent Question']) {
+                    // Has parent link = child in parent-child relationship
+                    cleanedData['Question Type'] = QUESTION_TYPES.PARENT_CHILD;
                 } else {
-                    // Regular question = standalone
+                    // No parent link = standalone question (default)
                     cleanedData['Question Type'] = QUESTION_TYPES.STANDALONE;
                 }
             }
@@ -393,12 +396,11 @@ module.exports = async (req, res) => {
 
                 // Auto-set Question Type if not provided
                 if (!cleaned['Question Type']) {
-                    const hasOptions = cleaned['Option A'] || cleaned['Option B'];
-                    if (!hasOptions && cleaned['Main Question Text']) {
-                        cleaned['Question Type'] = QUESTION_TYPES.MAIN_QUESTION;
-                    } else if (cleaned['Parent Question']) {
-                        cleaned['Question Type'] = QUESTION_TYPES.SUB_QUESTION;
+                    if (cleaned['Parent Question']) {
+                        // Has parent link = child in parent-child relationship
+                        cleaned['Question Type'] = QUESTION_TYPES.PARENT_CHILD;
                     } else {
+                        // No parent link = standalone (default)
                         cleaned['Question Type'] = QUESTION_TYPES.STANDALONE;
                     }
                 }
@@ -537,9 +539,14 @@ module.exports = async (req, res) => {
                         questionRecords.forEach(qRecord => {
                             const q = qRecord.fields;
                             const questionType = q['Question Type'];
+                            const hasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
                             
-                            // Only score actual questions (not parent passages)
-                            if (questionType !== QUESTION_TYPES.MAIN_QUESTION) {
+                            // Only score actual questions with options
+                            // Standalone questions OR child questions in parent-child relationship
+                            const shouldScore = questionType === QUESTION_TYPES.STANDALONE || 
+                                              (questionType === QUESTION_TYPES.PARENT_CHILD && hasParentLink);
+                            
+                            if (shouldScore) {
                                 const userAnswer = answers[q.ID];
                                 const correctAnswer = q.Correct || q['Correct Answer'];
 
@@ -583,9 +590,9 @@ module.exports = async (req, res) => {
         if (url === '/api/auth/admin/login' && method === 'POST') {
             const { username, password } = req.body;
 
-            // Simple admin authentication using environment variables
+            // Admin authentication - use environment variables or hardcoded default
             const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-            const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
+            const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Polite2024@Secure!';
 
             if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
                 return res.status(200).json({
@@ -593,7 +600,7 @@ module.exports = async (req, res) => {
                     data: {
                         role: 'admin',
                         username: username,
-                        token: 'admin_' + Date.now() // Simple token
+                        token: 'admin_' + Date.now()
                     },
                     message: 'Login successful'
                 });
@@ -612,10 +619,12 @@ module.exports = async (req, res) => {
             if (!mobile || mobile.length !== 10) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Invalid mobile number'
+                    error: 'Invalid mobile number (must be 10 digits)'
                 });
             }
 
+            // Validate student exists in database (optional - can add later)
+            // For now, accept any 10-digit mobile number
             return res.status(200).json({
                 success: true,
                 data: {
@@ -625,32 +634,6 @@ module.exports = async (req, res) => {
                 },
                 message: 'Login successful'
             });
-        }
-
-        // POST /api/auth/examiner/login - Examiner login
-        if (url === '/api/auth/examiner/login' && method === 'POST') {
-            const { username, password } = req.body;
-
-            // Simple examiner authentication
-            const EXAMINER_USERNAME = process.env.EXAMINER_USERNAME || 'examiner';
-            const EXAMINER_PASSWORD = process.env.EXAMINER_PASSWORD || 'examiner';
-
-            if (username === EXAMINER_USERNAME && password === EXAMINER_PASSWORD) {
-                return res.status(200).json({
-                    success: true,
-                    data: {
-                        role: 'examiner',
-                        username: username,
-                        token: 'examiner_' + Date.now()
-                    },
-                    message: 'Login successful'
-                });
-            } else {
-                return res.status(401).json({
-                    success: false,
-                    error: 'Invalid credentials'
-                });
-            }
         }
 
         // =====================================================
