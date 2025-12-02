@@ -953,9 +953,15 @@ module.exports = async (req, res) => {
                 });
             } catch (error) {
                 console.error('Login error:', error);
+                console.error('Login error details:', {
+                    message: error.message,
+                    statusCode: error.statusCode,
+                    error: error.error
+                });
                 return res.status(500).json({
                     success: false,
-                    error: 'Login failed. Please try again.'
+                    error: error.message || 'Login failed. Please try again.',
+                    details: process.env.NODE_ENV === 'development' ? error.toString() : undefined
                 });
             }
         }
