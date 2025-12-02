@@ -1128,38 +1128,56 @@ module.exports = async (req, res) => {
                                 parts: [
                                     {
                                         text: `You are an expert question extraction system for Indian competitive exams.
-Extract ALL questions from this image and AUTOMATICALLY DETECT HIERARCHICAL/GROUPED QUESTIONS.
+Extract ALL questions from this image and AUTOMATICALLY DETECT if they are STANDALONE or PARENT-CHILD questions.
 
-HIERARCHICAL QUESTION DETECTION:
-- Look for PASSAGES, COMPREHENSIONS, DIRECTIONS, or DATA/CHARTS followed by multiple questions
-- Examples: "Directions (Q.1-5):", "Read the following passage...", etc.
+CRITICAL: DETECT QUESTION STRUCTURE
+================================
+PARENT-CHILD QUESTIONS (Grouped):
+- Look for PASSAGES, COMPREHENSIONS, DIRECTIONS, DATA TABLES, CHARTS, PUZZLES, or SCENARIOS followed by multiple questions
+- Indicators: "Directions (Q.1-5):", "Read the following passage and answer...", "Based on the following data...", "Study the arrangement and answer..."
+- The parent/passage has NO answer options - it's just context/reference text
+- Each child question references the parent and HAS answer options (A, B, C, D)
 
-QUESTION TYPES TO IDENTIFY:
-1. "passage" - Reference text with NO answer options (parent of sub-questions)
-2. "sub-question" - Questions that refer to a passage above (have options)
-3. "standalone" - Regular independent questions (have options)
+STANDALONE QUESTIONS (Independent):
+- Single questions with their own context
+- Has all 4 options (A, B, C, D) and a correct answer
+- Does not depend on any passage or external context
+
+QUESTION TYPES IN OUTPUT:
+- "Parent-child" with subtype "parent" - Reference passage/scenario (no options)
+- "Parent-child" with subtype "child" - Sub-questions with options (linked to parent)
+- "Standalone" - Regular independent questions with options
 
 Return the data in this EXACT JSON format:
 {
   "questions": [
     {
-      "question": "Question or passage text",
-      "optionA": "Option A (empty for passages)",
-      "optionB": "Option B",
-      "optionC": "Option C",
-      "optionD": "Option D",
-      "correct": "A/B/C/D (empty for passages)",
+      "question": "Question or passage text (full text)",
+      "optionA": "Option A (empty string for parent passages)",
+      "optionB": "Option B (empty string for parent passages)",
+      "optionC": "Option C (empty string for parent passages)",
+      "optionD": "Option D (empty string for parent passages)",
+      "correct": "A/B/C/D (empty string for parent passages)",
       "subject": "Subject category",
-      "questionType": "passage/sub-question/standalone",
-      "parentId": "passage_N or null",
-      "subQuestionOrder": 1 or null
+      "questionType": "Standalone or Parent-child",
+      "subType": "parent/child/null",
+      "groupId": "group_1, group_2, etc. (for grouping parent with its children)",
+      "subQuestionNumber": 1, 2, 3... (order within group, null for standalone/parent)
     }
   ]
 }
 
-SUBJECT CATEGORIES: Quantitative Aptitude, Reasoning Ability, English Language, General Awareness, Current Affairs, Banking Awareness, Computer Knowledge, Data Interpretation
+SUBJECT CATEGORIES: Quantitative Aptitude, Reasoning Ability, English Language, General Awareness, Current Affairs, History, Geography, Economics, Mathematics, Law, Polity, Science, Banking Awareness, Computer Knowledge, Data Interpretation, Logical Reasoning, Others
 
-Extract ALL questions. Return ONLY valid JSON.`
+IMPORTANT RULES:
+1. Parent questions (passages) MUST have empty optionA, optionB, optionC, optionD, and correct
+2. Child questions MUST have all 4 options and a correct answer
+3. All questions in a group MUST share the same groupId
+4. Standalone questions have subType: null and groupId: null
+5. Extract EVERY question visible in the image
+6. Be accurate with the correct answer detection
+
+Return ONLY valid JSON with no extra text.`
                                     },
                                     {
                                         inline_data: {
@@ -1204,7 +1222,7 @@ Extract ALL questions. Return ONLY valid JSON.`
         // POST /api/gemini/generate-question - Generate a question using Gemini AI
         if (url === '/api/gemini/generate-question' && method === 'POST') {
             try {
-                const { subject, difficulty, customPrompt } = req.body;
+                const { subject, difficulty, customPrompt, previousQuestions } = req.body;
 
                 if (!process.env.GEMINI_API_KEY) {
                     return res.status(500).json({
@@ -1216,20 +1234,64 @@ Extract ALL questions. Return ONLY valid JSON.`
                 const difficultyText = difficulty || 'medium';
                 const subjectName = subject || 'General Knowledge';
 
+                // Generate random seed for uniqueness
+                const randomSeed = Math.random().toString(36).substring(2, 15);
+                const timestamp = Date.now();
+                const randomTopicIndex = Math.floor(Math.random() * 100);
+
+                // Topic variations for each subject to ensure diversity
+                const topicVariations = {
+                    'Quantitative Aptitude': ['Profit & Loss', 'Simple Interest', 'Compound Interest', 'Percentage', 'Ratio & Proportion', 'Time & Work', 'Time & Distance', 'Average', 'Number System', 'Algebra', 'Geometry', 'Mensuration', 'Data Interpretation', 'Simplification', 'Boat & Stream', 'Pipe & Cistern', 'Age Problems', 'Mixture & Alligation', 'Probability', 'Permutation & Combination'],
+                    'Reasoning Ability': ['Blood Relations', 'Coding-Decoding', 'Direction Sense', 'Seating Arrangement', 'Puzzles', 'Syllogism', 'Inequality', 'Input-Output', 'Ranking', 'Alphabetical Series', 'Number Series', 'Analogy', 'Classification', 'Statement & Assumption', 'Statement & Conclusion', 'Critical Reasoning', 'Data Sufficiency', 'Machine Input', 'Floor-based Puzzle', 'Scheduling Puzzle'],
+                    'English Language': ['Reading Comprehension', 'Cloze Test', 'Error Spotting', 'Sentence Improvement', 'Para Jumbles', 'Fill in the Blanks', 'Idioms & Phrases', 'Synonyms', 'Antonyms', 'One Word Substitution', 'Sentence Completion', 'Vocabulary', 'Grammar Rules', 'Active-Passive Voice', 'Direct-Indirect Speech', 'Word Usage', 'Phrase Replacement', 'Column-based Match', 'Word Swap', 'Sentence Connector'],
+                    'General Awareness': ['Indian History', 'World History', 'Indian Geography', 'World Geography', 'Indian Polity', 'Economics', 'Science & Technology', 'Environment', 'Sports', 'Awards & Honors', 'Books & Authors', 'Important Days', 'National Parks', 'Rivers & Dams', 'Constitutional Bodies', 'International Organizations', 'Space Missions', 'Defence', 'Government Schemes', 'Art & Culture'],
+                    'Current Affairs': ['Banking News', 'Economy Updates', 'Government Policies', 'International Relations', 'Sports Events', 'Science Discoveries', 'Awards 2024', 'Appointments', 'Summits & Conferences', 'MoU & Agreements', 'Stock Market', 'RBI Updates', 'Budget Highlights', 'New Schemes', 'Infrastructure Projects', 'Technology Updates', 'Environmental News', 'Health Updates', 'Educational Reforms', 'Legal Changes'],
+                    'History': ['Ancient India', 'Medieval India', 'Modern India', 'Freedom Movement', 'World History', 'Important Battles', 'Dynasties', 'Historical Events', 'Independence Movement', 'Social Reforms', 'Cultural History', 'Economic History', 'Political Movements', 'Mughal Period', 'British India', 'Post-Independence', 'Ancient Civilizations', 'World Wars', 'Important Treaties', 'Historical Personalities'],
+                    'Geography': ['Physical Geography', 'Indian Geography', 'World Geography', 'Rivers & Lakes', 'Mountains', 'Climate', 'Agriculture', 'Industries', 'Population', 'Natural Resources', 'Minerals', 'Soils', 'Forests', 'Ocean Currents', 'Monsoons', 'Map Reading', 'GIS & Remote Sensing', 'Environmental Geography', 'Urban Geography', 'Transport'],
+                    'Economics': ['Microeconomics', 'Macroeconomics', 'Indian Economy', 'Economic Planning', 'Budget', 'Banking', 'Inflation', 'GDP', 'Fiscal Policy', 'Monetary Policy', 'International Trade', 'Economic Organizations', 'Poverty', 'Unemployment', 'Agriculture Economy', 'Industrial Economy', 'Economic Reforms', 'Five Year Plans', 'Public Finance', 'Development Economics'],
+                    'Mathematics': ['Arithmetic', 'Algebra', 'Geometry', 'Trigonometry', 'Statistics', 'Probability', 'Number Theory', 'Calculus', 'Mensuration', 'Coordinate Geometry', 'Linear Equations', 'Quadratic Equations', 'Sets', 'Functions', 'Matrices', 'Determinants', 'Sequences & Series', 'Progressions', 'Logarithms', 'Surds'],
+                    'Law': ['Constitutional Law', 'Criminal Law', 'Civil Law', 'Contract Law', 'Property Law', 'Family Law', 'Labour Law', 'Environmental Law', 'International Law', 'Human Rights', 'Fundamental Rights', 'Directive Principles', 'Writs', 'Judiciary', 'Legal Maxims', 'IPC', 'CrPC', 'CPC', 'Evidence Act', 'Legal Reasoning'],
+                    'Polity': ['Indian Constitution', 'Parliament', 'President', 'Prime Minister', 'Supreme Court', 'High Courts', 'Fundamental Rights', 'Directive Principles', 'Constitutional Bodies', 'Emergency Provisions', 'Union & States', 'Local Government', 'Election Commission', 'CAG', 'UPSC', 'Finance Commission', 'Amendment Procedures', 'Schedules', 'Articles', 'Citizenship'],
+                    'Science': ['Physics', 'Chemistry', 'Biology', 'Astronomy', 'Environmental Science', 'Scientific Inventions', 'Scientists', 'Human Body', 'Diseases', 'Nutrition', 'Space Science', 'Nuclear Science', 'Biotechnology', 'Nanotechnology', 'Computer Science', 'Artificial Intelligence', 'Renewable Energy', 'Pollution', 'Conservation', 'Latest Discoveries'],
+                    'Banking Awareness': ['RBI Functions', 'Banking Terms', 'Types of Banks', 'Monetary Policy', 'Financial Inclusion', 'NPA Management', 'Banking Regulations', 'Credit Cards', 'Loan Types', 'Insurance', 'NABARD', 'SIDBI', 'Digital Banking', 'UPI & BHIM', 'Core Banking', 'KYC Norms', 'Basel Norms', 'Banking History', 'Foreign Exchange', 'SEBI Guidelines'],
+                    'Computer Knowledge': ['Computer Fundamentals', 'Operating Systems', 'MS Office', 'Networking', 'Internet', 'Database', 'Programming Basics', 'Computer Security', 'Hardware', 'Software', 'Computer Memory', 'Input-Output Devices', 'Computer Generations', 'Number Systems', 'Data Communication', 'Cloud Computing', 'Cyber Security', 'Web Technologies', 'Mobile Computing', 'Emerging Technologies']
+                };
+
+                // Get a random topic for the subject
+                const topics = topicVariations[subjectName] || topicVariations['General Awareness'];
+                const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+                const anotherRandomTopic = topics[Math.floor(Math.random() * topics.length)];
+
                 let prompt = '';
                 if (customPrompt && customPrompt.trim()) {
-                    prompt = `Generate a unique multiple choice question based on: "${customPrompt}"
-The question should be suitable for Indian competitive exams. Make it ${difficultyText} difficulty level.`;
+                    prompt = `Generate a COMPLETELY NEW and UNIQUE multiple choice question based on: "${customPrompt}"
+The question should be suitable for Indian competitive exams. Make it ${difficultyText} difficulty level.
+Focus on a DIFFERENT aspect than typical questions. Be creative and original.`;
                 } else {
-                    prompt = `Generate a UNIQUE ${difficultyText} difficulty multiple choice question for ${subjectName}.
-Make it suitable for Indian competitive exams like Railway RRB, Bank PO/Clerk, SSC, UPSC.`;
+                    prompt = `Generate a COMPLETELY NEW and UNIQUE ${difficultyText} difficulty multiple choice question for ${subjectName}.
+IMPORTANT: Focus specifically on the topic "${randomTopic}" or "${anotherRandomTopic}".
+Make it suitable for Indian competitive exams like Railway RRB, Bank PO/Clerk, SSC, UPSC.
+Be creative - do NOT generate a common or frequently asked question.`;
                 }
 
-                prompt += `
+                // Add previous questions to avoid if provided
+                let avoidText = '';
+                if (previousQuestions && previousQuestions.length > 0) {
+                    avoidText = `
+
+IMPORTANT: DO NOT generate questions similar to these recently generated questions:
+${previousQuestions.slice(0, 5).map((q, i) => `${i + 1}. ${q}`).join('\n')}
+
+Generate something COMPLETELY DIFFERENT from the above.`;
+                }
+
+                prompt += `${avoidText}
+
+Random seed for uniqueness: ${randomSeed}-${timestamp}-${randomTopicIndex}
 
 Return ONLY valid JSON in this EXACT format:
 {
-  "question": "The complete question text",
+  "question": "The complete question text - make it unique and interesting",
   "optionA": "First option",
   "optionB": "Second option",
   "optionC": "Third option",
@@ -1237,10 +1299,11 @@ Return ONLY valid JSON in this EXACT format:
   "correct": "A or B or C or D",
   "explanation": "Brief explanation of the correct answer",
   "subject": "${subjectName}",
-  "difficulty": "${difficultyText}"
+  "difficulty": "${difficultyText}",
+  "topic": "Specific topic this question covers"
 }
 
-Generate a fresh, unique question. Ensure one clearly correct answer.`;
+Generate a FRESH, UNIQUE, CREATIVE question that hasn't been asked before. Ensure one clearly correct answer. Think outside the box!`;
 
                 const response = await fetch(
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -1254,7 +1317,13 @@ Generate a fresh, unique question. Ensure one clearly correct answer.`;
                                 parts: [{
                                     text: prompt
                                 }]
-                            }]
+                            }],
+                            generationConfig: {
+                                temperature: 0.9,
+                                topK: 40,
+                                topP: 0.95,
+                                maxOutputTokens: 1024
+                            }
                         })
                     }
                 );
