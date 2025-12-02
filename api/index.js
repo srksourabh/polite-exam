@@ -298,7 +298,22 @@ module.exports = async (req, res) => {
                 }
             }
 
-            const record = await base(QUESTIONS_TABLE).create(cleanedData);
+            // Try to create the question, handle single-select field errors gracefully
+            let record;
+            try {
+                record = await base(QUESTIONS_TABLE).create(cleanedData);
+            } catch (createError) {
+                // Check if error is due to Question Type single-select option not existing
+                if (createError.message && createError.message.includes('select option')) {
+                    console.log('⚠️ Question Type select options not configured in Airtable, retrying without Question Type field');
+                    // Remove Question Type and try again
+                    delete cleanedData['Question Type'];
+                    record = await base(QUESTIONS_TABLE).create(cleanedData);
+                } else {
+                    throw createError;
+                }
+            }
+
             return res.status(201).json({
                 success: true,
                 data: { id: record.id, ...record.fields }
@@ -385,7 +400,20 @@ module.exports = async (req, res) => {
                 }
             }
 
-            const record = await base(QUESTIONS_TABLE).update(questionId, cleanedData);
+            // Try to update, handle single-select field errors gracefully
+            let record;
+            try {
+                record = await base(QUESTIONS_TABLE).update(questionId, cleanedData);
+            } catch (updateError) {
+                if (updateError.message && updateError.message.includes('select option')) {
+                    console.log('⚠️ Question Type select options not configured in Airtable, retrying without Question Type field');
+                    delete cleanedData['Question Type'];
+                    record = await base(QUESTIONS_TABLE).update(questionId, cleanedData);
+                } else {
+                    throw updateError;
+                }
+            }
+
             return res.status(200).json({
                 success: true,
                 data: { id: record.id, ...record.fields }
@@ -433,10 +461,32 @@ module.exports = async (req, res) => {
 
             // Create in batches of 10 (Airtable limit)
             const results = [];
+            let retryWithoutQuestionType = false;
+
             for (let i = 0; i < cleanedQuestions.length; i += 10) {
                 const batch = cleanedQuestions.slice(i, i + 10);
-                const records = await base(QUESTIONS_TABLE).create(batch);
-                results.push(...records);
+                try {
+                    // If we already know Question Type doesn't work, skip it
+                    const batchToCreate = retryWithoutQuestionType
+                        ? batch.map(q => { const { 'Question Type': _, ...rest } = q; return rest; })
+                        : batch;
+                    const records = await base(QUESTIONS_TABLE).create(batchToCreate);
+                    results.push(...records);
+                } catch (batchError) {
+                    if (batchError.message && batchError.message.includes('select option') && !retryWithoutQuestionType) {
+                        console.log('⚠️ Question Type select options not configured in Airtable, retrying batch without Question Type field');
+                        retryWithoutQuestionType = true;
+                        // Retry this batch without Question Type
+                        const batchWithoutType = batch.map(q => {
+                            const { 'Question Type': _, ...rest } = q;
+                            return rest;
+                        });
+                        const records = await base(QUESTIONS_TABLE).create(batchWithoutType);
+                        results.push(...records);
+                    } else {
+                        throw batchError;
+                    }
+                }
             }
 
             return res.status(201).json({

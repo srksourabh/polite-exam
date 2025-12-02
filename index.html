@@ -5256,6 +5256,11 @@ Artificial Intelligence has revolutionized..."></textarea>
         // Populate parent question dropdown with main questions
         async function populateParentQuestionDropdown() {
             const select = document.getElementById('parent-question-select');
+            // Skip if element doesn't exist (not using the add-to-parent feature)
+            if (!select) {
+                console.log('📝 parent-question-select not found, skipping dropdown population');
+                return;
+            }
             select.innerHTML = '<option value="">-- Loading... --</option>';
 
             try {
