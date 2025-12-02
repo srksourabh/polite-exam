@@ -1093,6 +1093,201 @@ module.exports = async (req, res) => {
         }
 
         // =====================================================
+        // GEMINI AI ENDPOINTS
+        // =====================================================
+
+        // POST /api/gemini/extract-questions - Extract questions from image using Gemini Vision
+        if (url === '/api/gemini/extract-questions' && method === 'POST') {
+            try {
+                const { imageData } = req.body;
+
+                if (!process.env.GEMINI_API_KEY) {
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Gemini API key not configured'
+                    });
+                }
+
+                if (!imageData) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Image data is required'
+                    });
+                }
+
+                // Call Gemini Vision API
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    {
+                                        text: `You are an expert question extraction system for Indian competitive exams.
+Extract ALL questions from this image and AUTOMATICALLY DETECT HIERARCHICAL/GROUPED QUESTIONS.
+
+HIERARCHICAL QUESTION DETECTION:
+- Look for PASSAGES, COMPREHENSIONS, DIRECTIONS, or DATA/CHARTS followed by multiple questions
+- Examples: "Directions (Q.1-5):", "Read the following passage...", etc.
+
+QUESTION TYPES TO IDENTIFY:
+1. "passage" - Reference text with NO answer options (parent of sub-questions)
+2. "sub-question" - Questions that refer to a passage above (have options)
+3. "standalone" - Regular independent questions (have options)
+
+Return the data in this EXACT JSON format:
+{
+  "questions": [
+    {
+      "question": "Question or passage text",
+      "optionA": "Option A (empty for passages)",
+      "optionB": "Option B",
+      "optionC": "Option C",
+      "optionD": "Option D",
+      "correct": "A/B/C/D (empty for passages)",
+      "subject": "Subject category",
+      "questionType": "passage/sub-question/standalone",
+      "parentId": "passage_N or null",
+      "subQuestionOrder": 1 or null
+    }
+  ]
+}
+
+SUBJECT CATEGORIES: Quantitative Aptitude, Reasoning Ability, English Language, General Awareness, Current Affairs, Banking Awareness, Computer Knowledge, Data Interpretation
+
+Extract ALL questions. Return ONLY valid JSON.`
+                                    },
+                                    {
+                                        inline_data: {
+                                            mime_type: imageData.mimeType || 'image/jpeg',
+                                            data: imageData.base64.split(',')[1] || imageData.base64
+                                        }
+                                    }
+                                ]
+                            }]
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error?.message || 'Gemini API request failed');
+                }
+
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    throw new Error('No valid JSON found in response');
+                }
+
+                const extractedData = JSON.parse(jsonMatch[0]);
+
+                return res.status(200).json({
+                    success: true,
+                    data: extractedData
+                });
+
+            } catch (error) {
+                console.error('Gemini extraction error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to extract questions'
+                });
+            }
+        }
+
+        // POST /api/gemini/generate-question - Generate a question using Gemini AI
+        if (url === '/api/gemini/generate-question' && method === 'POST') {
+            try {
+                const { subject, difficulty, customPrompt } = req.body;
+
+                if (!process.env.GEMINI_API_KEY) {
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Gemini API key not configured'
+                    });
+                }
+
+                const difficultyText = difficulty || 'medium';
+                const subjectName = subject || 'General Knowledge';
+
+                let prompt = '';
+                if (customPrompt && customPrompt.trim()) {
+                    prompt = `Generate a unique multiple choice question based on: "${customPrompt}"
+The question should be suitable for Indian competitive exams. Make it ${difficultyText} difficulty level.`;
+                } else {
+                    prompt = `Generate a UNIQUE ${difficultyText} difficulty multiple choice question for ${subjectName}.
+Make it suitable for Indian competitive exams like Railway RRB, Bank PO/Clerk, SSC, UPSC.`;
+                }
+
+                prompt += `
+
+Return ONLY valid JSON in this EXACT format:
+{
+  "question": "The complete question text",
+  "optionA": "First option",
+  "optionB": "Second option",
+  "optionC": "Third option",
+  "optionD": "Fourth option",
+  "correct": "A or B or C or D",
+  "explanation": "Brief explanation of the correct answer",
+  "subject": "${subjectName}",
+  "difficulty": "${difficultyText}"
+}
+
+Generate a fresh, unique question. Ensure one clearly correct answer.`;
+
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: prompt
+                                }]
+                            }]
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error?.message || 'Gemini API request failed');
+                }
+
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    throw new Error('No valid JSON found in response');
+                }
+
+                const questionData = JSON.parse(jsonMatch[0]);
+
+                return res.status(200).json({
+                    success: true,
+                    data: questionData
+                });
+
+            } catch (error) {
+                console.error('Gemini generation error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to generate question'
+                });
+            }
+        }
+
+        // =====================================================
         // DEFAULT - 404
         // =====================================================
         return res.status(404).json({
