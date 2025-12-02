@@ -1582,7 +1582,28 @@
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- Database Setup Section -->
+                <div id="db-setup-section" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 12px; padding: 20px; margin-bottom: 20px; color: white;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; font-size: 1.1rem;">🛠️ Database Setup</h4>
+                            <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">Configure Airtable schema for parent-child questions</p>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button id="check-schema-btn" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                                🔍 Check Schema
+                            </button>
+                            <button id="setup-question-types-btn" style="background: white; color: #f5576c; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                                ⚙️ Setup Question Types
+                            </button>
+                        </div>
+                    </div>
+                    <div id="schema-status" style="margin-top: 15px; display: none; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px;">
+                        <!-- Schema status will be displayed here -->
+                    </div>
+                </div>
+
                 <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 30px;">
                     <button class="admin-btn" id="question-bank-btn">📚 Question Bank</button>
                     <button class="admin-btn" id="create-exam-btn">✏️ Create New Exam</button>
@@ -4671,6 +4692,110 @@ Artificial Intelligence has revolutionized..."></textarea>
                 }
             });
         }
+
+        // =====================================================
+        // DATABASE SETUP BUTTON HANDLERS
+        // =====================================================
+
+        // Check Schema button
+        document.getElementById('check-schema-btn').addEventListener('click', async function() {
+            const statusDiv = document.getElementById('schema-status');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<p style="margin: 0;">🔄 Checking Airtable schema...</p>';
+
+            try {
+                const response = await fetch(`${API_URL}/admin/check-schema`);
+                const data = await response.json();
+
+                if (data.success) {
+                    if (!data.schemaAccess) {
+                        statusDiv.innerHTML = `
+                            <p style="margin: 0 0 10px 0;"><strong>⚠️ Schema API Access</strong></p>
+                            <p style="margin: 0; font-size: 0.9rem;">${data.message}</p>
+                            <p style="margin: 10px 0 0 0; font-size: 0.85rem;">Click "Setup Question Types" to try automatic configuration or follow manual steps.</p>
+                        `;
+                    } else if (data.isConfigured) {
+                        statusDiv.innerHTML = `
+                            <p style="margin: 0;"><strong>✅ Schema is properly configured!</strong></p>
+                            <p style="margin: 5px 0 0 0; font-size: 0.9rem;">Question Type field has options: ${data.questionTypeField.options.join(', ')}</p>
+                        `;
+                    } else {
+                        const existing = data.questionTypeField.exists ? `Existing options: ${data.questionTypeField.options.join(', ') || 'none'}` : 'Field does not exist yet';
+                        statusDiv.innerHTML = `
+                            <p style="margin: 0;"><strong>⚠️ Schema needs configuration</strong></p>
+                            <p style="margin: 5px 0 0 0; font-size: 0.9rem;">${existing}</p>
+                            <p style="margin: 5px 0 0 0; font-size: 0.9rem;">Click "Setup Question Types" to add: Standalone, Parent-child</p>
+                        `;
+                    }
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <p style="margin: 0; color: #ffebee;"><strong>❌ Error checking schema</strong></p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9rem;">${error.message}</p>
+                `;
+            }
+        });
+
+        // Setup Question Types button
+        document.getElementById('setup-question-types-btn').addEventListener('click', async function() {
+            const statusDiv = document.getElementById('schema-status');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<p style="margin: 0;">🔄 Setting up Question Type field in Airtable...</p>';
+
+            this.disabled = true;
+            this.textContent = '⏳ Setting up...';
+
+            try {
+                const response = await fetch(`${API_URL}/admin/setup-question-types`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    statusDiv.innerHTML = `
+                        <p style="margin: 0;"><strong>✅ ${data.message}</strong></p>
+                        ${data.existingOptions ? `<p style="margin: 5px 0 0 0; font-size: 0.9rem;">Options: ${data.existingOptions.join(', ')}</p>` : ''}
+                        <p style="margin: 10px 0 0 0; font-size: 0.9rem; color: #c8e6c9;">You can now create parent-child questions!</p>
+                    `;
+                    window.PoliteCCAPI?.showNotification('Question Type field configured successfully!', 'success');
+                } else if (data.needsManualSetup) {
+                    statusDiv.innerHTML = `
+                        <p style="margin: 0;"><strong>⚠️ Manual Setup Required</strong></p>
+                        <p style="margin: 5px 0 0 0; font-size: 0.9rem;">${data.error}</p>
+                        <div style="margin-top: 10px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 6px; font-size: 0.85rem;">
+                            <strong>Follow these steps:</strong>
+                            <ol style="margin: 8px 0 0 0; padding-left: 20px;">
+                                ${data.instructions.map(i => `<li style="margin: 4px 0;">${i}</li>`).join('')}
+                            </ol>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <p style="margin: 0; color: #ffebee;"><strong>❌ Setup Failed</strong></p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9rem;">${error.message}</p>
+                    <div style="margin-top: 10px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 6px; font-size: 0.85rem;">
+                        <strong>Manual setup steps:</strong>
+                        <ol style="margin: 8px 0 0 0; padding-left: 20px;">
+                            <li>Open your Airtable base</li>
+                            <li>Go to the Questions table</li>
+                            <li>Find or create a field called "Question Type"</li>
+                            <li>Set field type to "Single select"</li>
+                            <li>Add options: "Standalone", "Parent-child"</li>
+                            <li>Save the changes</li>
+                        </ol>
+                    </div>
+                `;
+            } finally {
+                this.disabled = false;
+                this.textContent = '⚙️ Setup Question Types';
+            }
+        });
 
         // Main question bank button click handler
         document.getElementById('question-bank-btn').addEventListener('click', async function() {

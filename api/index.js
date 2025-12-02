@@ -1407,6 +1407,223 @@ Generate a FRESH, UNIQUE, CREATIVE question that hasn't been asked before. Ensur
         }
 
         // =====================================================
+        // ADMIN ENDPOINTS - Airtable Schema Configuration
+        // =====================================================
+
+        // POST /api/admin/setup-question-types - Configure Question Type field in Airtable
+        if (url === '/api/admin/setup-question-types' && method === 'POST') {
+            try {
+                const baseId = process.env.AIRTABLE_BASE_ID;
+                const token = process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN;
+
+                if (!baseId || !token) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Airtable credentials not configured'
+                    });
+                }
+
+                // Step 1: Get the table schema to find the Question Type field
+                const schemaResponse = await fetch(
+                    `https://api.airtable.com/v0/meta/bases/${baseId}/tables`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (!schemaResponse.ok) {
+                    const errorData = await schemaResponse.json();
+                    // If schema API is not accessible, provide manual instructions
+                    if (schemaResponse.status === 403 || schemaResponse.status === 401) {
+                        return res.status(200).json({
+                            success: false,
+                            needsManualSetup: true,
+                            instructions: [
+                                '1. Open your Airtable base',
+                                '2. Go to the Questions table',
+                                '3. Find or create a field called "Question Type"',
+                                '4. Set field type to "Single select"',
+                                '5. Add these options: "Standalone", "Parent-child"',
+                                '6. Save the changes'
+                            ],
+                            error: 'Schema API access denied. Please configure manually.'
+                        });
+                    }
+                    throw new Error(errorData.error?.message || 'Failed to fetch schema');
+                }
+
+                const schemaData = await schemaResponse.json();
+                const questionsTable = schemaData.tables.find(t => t.name === QUESTIONS_TABLE);
+
+                if (!questionsTable) {
+                    return res.status(404).json({
+                        success: false,
+                        error: `Table "${QUESTIONS_TABLE}" not found in Airtable base`
+                    });
+                }
+
+                // Find the Question Type field
+                let questionTypeField = questionsTable.fields.find(f => f.name === 'Question Type');
+
+                if (!questionTypeField) {
+                    // Field doesn't exist - create it
+                    console.log('Creating Question Type field...');
+                    const createFieldResponse = await fetch(
+                        `https://api.airtable.com/v0/meta/bases/${baseId}/tables/${questionsTable.id}/fields`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                name: 'Question Type',
+                                type: 'singleSelect',
+                                options: {
+                                    choices: [
+                                        { name: 'Standalone', color: 'blueLight2' },
+                                        { name: 'Parent-child', color: 'purpleLight2' }
+                                    ]
+                                }
+                            })
+                        }
+                    );
+
+                    if (!createFieldResponse.ok) {
+                        const createError = await createFieldResponse.json();
+                        throw new Error(createError.error?.message || 'Failed to create Question Type field');
+                    }
+
+                    const createdField = await createFieldResponse.json();
+                    return res.status(201).json({
+                        success: true,
+                        message: 'Question Type field created successfully!',
+                        field: createdField
+                    });
+                }
+
+                // Field exists - check if it has the right options
+                const existingChoices = questionTypeField.options?.choices || [];
+                const existingNames = existingChoices.map(c => c.name);
+                const requiredOptions = ['Standalone', 'Parent-child'];
+                const missingOptions = requiredOptions.filter(opt => !existingNames.includes(opt));
+
+                if (missingOptions.length === 0) {
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Question Type field is already configured correctly!',
+                        existingOptions: existingNames
+                    });
+                }
+
+                // Update field to add missing options
+                console.log('Updating Question Type field with missing options:', missingOptions);
+                const newChoices = [
+                    ...existingChoices,
+                    ...missingOptions.map(name => ({
+                        name,
+                        color: name === 'Standalone' ? 'blueLight2' : 'purpleLight2'
+                    }))
+                ];
+
+                const updateFieldResponse = await fetch(
+                    `https://api.airtable.com/v0/meta/bases/${baseId}/tables/${questionsTable.id}/fields/${questionTypeField.id}`,
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            options: {
+                                choices: newChoices
+                            }
+                        })
+                    }
+                );
+
+                if (!updateFieldResponse.ok) {
+                    const updateError = await updateFieldResponse.json();
+                    throw new Error(updateError.error?.message || 'Failed to update Question Type field');
+                }
+
+                const updatedField = await updateFieldResponse.json();
+                return res.status(200).json({
+                    success: true,
+                    message: `Added missing options: ${missingOptions.join(', ')}`,
+                    field: updatedField
+                });
+
+            } catch (error) {
+                console.error('Setup error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to setup Question Type field',
+                    instructions: [
+                        '1. Open your Airtable base',
+                        '2. Go to the Questions table',
+                        '3. Find or create a field called "Question Type"',
+                        '4. Set field type to "Single select"',
+                        '5. Add these options: "Standalone", "Parent-child"',
+                        '6. Save the changes'
+                    ]
+                });
+            }
+        }
+
+        // GET /api/admin/check-schema - Check if Airtable schema is properly configured
+        if (url === '/api/admin/check-schema' && method === 'GET') {
+            try {
+                const baseId = process.env.AIRTABLE_BASE_ID;
+                const token = process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN;
+
+                const schemaResponse = await fetch(
+                    `https://api.airtable.com/v0/meta/bases/${baseId}/tables`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (!schemaResponse.ok) {
+                    return res.status(200).json({
+                        success: true,
+                        schemaAccess: false,
+                        message: 'Cannot access schema API - manual configuration required'
+                    });
+                }
+
+                const schemaData = await schemaResponse.json();
+                const questionsTable = schemaData.tables.find(t => t.name === QUESTIONS_TABLE);
+                const questionTypeField = questionsTable?.fields.find(f => f.name === 'Question Type');
+                const choices = questionTypeField?.options?.choices || [];
+
+                return res.status(200).json({
+                    success: true,
+                    schemaAccess: true,
+                    questionTypeField: {
+                        exists: !!questionTypeField,
+                        type: questionTypeField?.type,
+                        options: choices.map(c => c.name)
+                    },
+                    isConfigured: choices.some(c => c.name === 'Standalone') && choices.some(c => c.name === 'Parent-child')
+                });
+            } catch (error) {
+                return res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        }
+
+        // =====================================================
         // DEFAULT - 404
         // =====================================================
         return res.status(404).json({
