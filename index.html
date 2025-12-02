@@ -4389,8 +4389,12 @@ Artificial Intelligence has revolutionized..."></textarea>
                     <strong style="font-size: 1.1rem; color: ${hasSubQuestions ? '#9c27b0' : 'var(--secondary)'};">${q.ID}</strong>
                     <span class="question-tag" style="background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject || 'Unknown'}</span>
                     <span class="difficulty-tag" style="background: ${q.Difficulty === 'Easy' ? '#27ae60' : q.Difficulty === 'Medium' ? '#f39c12' : q.Difficulty === 'Hard' ? '#e74c3c' : '#95a5a6'}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Difficulty || 'Unknown'}</span>
-                    ${hasSubQuestions ? `<span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📋 ${subQuestionCount} Sub-Questions</span>` : ''}
-                    ${isMainPassage ? `<span style="background: #ff9800; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📖 Passage (No Marks)</span>` : ''}
+                    ${hasSubQuestions ? `
+                        <span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📋 ${subQuestionCount} Sub-Questions</span>
+                        <span style="background: #4caf50; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">⚖️ Weightage: ${subQuestionCount} marks</span>
+                    ` : ''}
+                    ${isMainPassage && !hasSubQuestions ? `<span style="background: #ff9800; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📖 Passage</span>` : ''}
+                    ${!hasSubQuestions && !isMainPassage ? `<span style="background: #4caf50; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">⚖️ 1 mark</span>` : ''}
                 </div>
                 <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question || ''}</p>`;
 
@@ -4417,8 +4421,16 @@ Artificial Intelligence has revolutionized..."></textarea>
             if (hasSubQuestions) {
                 html += `
                 <div class="sub-questions-container" style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #9c27b0;">
-                    <div style="color: #9c27b0; font-weight: 600; margin-bottom: 10px; font-size: 0.95rem;">
-                        📋 Sub-Questions (${subQuestionCount}) - Marks: +1 correct, -0.25 wrong, 0 unanswered
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; background: #f3e5f5; padding: 10px; border-radius: 8px;">
+                        <div style="color: #9c27b0; font-weight: 600; font-size: 0.95rem;">
+                            📋 Sub-Questions (${subQuestionCount})
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <span style="background: #4caf50; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">Max: ${subQuestionCount} marks</span>
+                            <span style="background: #2196f3; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">+1 correct</span>
+                            <span style="background: #f44336; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">-0.25 wrong</span>
+                            <span style="background: #9e9e9e; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">0 unanswered</span>
+                        </div>
                     </div>`;
 
                 q.subQuestions.forEach((sq, sqIndex) => {
