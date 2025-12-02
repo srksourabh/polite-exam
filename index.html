@@ -5518,20 +5518,33 @@ Artificial Intelligence has revolutionized..."></textarea>
                 // Store all questions for filtering
                 let examFilteredQuestions = [...questions];
 
-                // Function to render exam questions list
+                // Function to render exam questions list with hierarchical grouping
                 function renderExamQuestionsList() {
+                    // Group questions hierarchically - parents with their children
+                    const groupedQuestions = groupQuestionsHierarchically(examFilteredQuestions);
+
                     let html = '<div id="exam-questions-container" style="max-height: 450px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;">';
 
-                    if (examFilteredQuestions.length === 0) {
+                    if (groupedQuestions.length === 0) {
                         html += '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No questions match the current filters.</p>';
                     } else {
-                        examFilteredQuestions.forEach(q => {
+                        groupedQuestions.forEach(q => {
+                            const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
+                            const subQuestionCount = q.subQuestions ? q.subQuestions.length : 0;
+                            const isParentQuestion = hasSubQuestions || q['Main Question Text'];
+
                             const subjectColors = {
                                 'Math': '#3498db',
                                 'Reasoning': '#9b59b6',
                                 'GK': '#e67e22',
                                 'General Knowledge': '#e67e22',
                                 'English': '#1abc9c',
+                                'Quantitative Aptitude': '#3498db',
+                                'Reasoning Ability': '#9b59b6',
+                                'English Language': '#1abc9c',
+                                'General Awareness': '#e67e22',
+                                'Current Affairs': '#e74c3c',
+                                'Banking Awareness': '#27ae60',
                                 'Others': '#95a5a6'
                             };
                             const difficultyColors = {
@@ -5542,26 +5555,75 @@ Artificial Intelligence has revolutionized..."></textarea>
                             const subjectColor = subjectColors[q.Subject] || '#95a5a6';
                             const difficultyColor = difficultyColors[q.Difficulty] || '#95a5a6';
 
+                            // Store child IDs as data attribute for group selection
+                            const childIds = hasSubQuestions ? q.subQuestions.map(sq => sq.id).join(',') : '';
+
                             html += `
-                            <label class="exam-question-item" data-subject="${q.Subject || ''}" data-difficulty="${q.Difficulty || ''}" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;">
-                                <input type="checkbox" class="question-checkbox" value="${q.id}" data-question-id="${q.ID}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+                            <label class="exam-question-item ${hasSubQuestions ? 'parent-child-group' : ''}" data-subject="${q.Subject || ''}" data-difficulty="${q.Difficulty || ''}" data-child-ids="${childIds}" data-has-children="${hasSubQuestions}" style="display: flex; align-items: flex-start; background: ${hasSubQuestions ? '#faf5ff' : '#f8f9fa'}; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid ${hasSubQuestions ? '#9c27b0' : 'transparent'};">
+                                <input type="checkbox" class="question-checkbox" value="${q.id}" data-question-id="${q.ID}" data-child-ids="${childIds}" data-sub-count="${subQuestionCount}" style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
-                                        <strong style="font-size: 1rem; color: var(--secondary);">${q.ID}</strong>
+                                        <strong style="font-size: 1rem; color: ${hasSubQuestions ? '#9c27b0' : 'var(--secondary)'};">${q.ID}</strong>
                                         <span style="background: ${subjectColor}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Subject}</span>
                                         <span style="background: ${difficultyColor}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Difficulty || 'Unknown'}</span>
+                                        ${hasSubQuestions ? `
+                                            <span style="background: #9c27b0; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">📋 ${subQuestionCount} Sub-Questions</span>
+                                            <span style="background: #4caf50; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⚖️ ${subQuestionCount} marks</span>
+                                        ` : `
+                                            <span style="background: #4caf50; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⚖️ 1 mark</span>
+                                        `}
                                     </div>
-                                    <div style="color: #2c3e50; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-size: 0.95rem; margin-bottom: 8px;"><strong>Q:</strong> ${q.Question}</div>
+                                    <div style="color: #2c3e50; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-size: 0.95rem; margin-bottom: 8px;">
+                                        ${isParentQuestion ? '<strong>📖 Passage:</strong>' : '<strong>Q:</strong>'} ${q.Question}
+                                    </div>`;
+
+                            // Show options only for standalone questions (not parent questions)
+                            if (!isParentQuestion) {
+                                html += `
                                     <details style="margin-top: 8px; cursor: pointer;">
                                         <summary style="color: #3498db; font-weight: 600; font-size: 0.85rem; user-select: none; padding: 4px 0;">Show Options</summary>
                                         <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px; border: 1px solid #e0e0e0;">
-                                            <div style="margin: 4px 0; color: #555;"><strong>A)</strong> ${q['Option A']}</div>
-                                            <div style="margin: 4px 0; color: #555;"><strong>B)</strong> ${q['Option B']}</div>
-                                            <div style="margin: 4px 0; color: #555;"><strong>C)</strong> ${q['Option C']}</div>
-                                            <div style="margin: 4px 0; color: #555;"><strong>D)</strong> ${q['Option D']}</div>
+                                            <div style="margin: 4px 0; color: #555;"><strong>A)</strong> ${q['Option A'] || ''}</div>
+                                            <div style="margin: 4px 0; color: #555;"><strong>B)</strong> ${q['Option B'] || ''}</div>
+                                            <div style="margin: 4px 0; color: #555;"><strong>C)</strong> ${q['Option C'] || ''}</div>
+                                            <div style="margin: 4px 0; color: #555;"><strong>D)</strong> ${q['Option D'] || ''}</div>
                                             <div style="margin-top: 8px; padding: 6px; background: #d4edda; border-radius: 4px; color: #155724; font-weight: 600;"><strong>✓ Correct:</strong> ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}</div>
                                         </div>
-                                    </details>
+                                    </details>`;
+                            }
+
+                            // Show sub-questions for parent-child groups
+                            if (hasSubQuestions) {
+                                html += `
+                                    <details style="margin-top: 10px; cursor: pointer;" open>
+                                        <summary style="color: #9c27b0; font-weight: 600; font-size: 0.85rem; user-select: none; padding: 4px 0;">📋 View ${subQuestionCount} Sub-Questions (All included when selected)</summary>
+                                        <div style="margin-top: 8px; padding: 10px; background: #f3e5f5; border-radius: 6px; border: 1px solid #ce93d8;">`;
+
+                                q.subQuestions.forEach((sq, idx) => {
+                                    const sqId = sq.ID || `${q.ID}.${idx + 1}`;
+                                    html += `
+                                            <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #9c27b0;">
+                                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                                    <strong style="color: #9c27b0;">${sqId}</strong>
+                                                    <span style="background: #4caf50; color: white; padding: 1px 8px; border-radius: 10px; font-size: 0.7rem;">+1/-0.25</span>
+                                                </div>
+                                                <div style="color: #2c3e50; font-size: 0.9rem; margin-bottom: 6px;"><strong>Q:</strong> ${sq.Question || ''}</div>
+                                                <div style="font-size: 0.85rem; color: #666;">
+                                                    <span style="margin-right: 10px;">A) ${sq['Option A'] || ''}</span>
+                                                    <span style="margin-right: 10px;">B) ${sq['Option B'] || ''}</span>
+                                                    <span style="margin-right: 10px;">C) ${sq['Option C'] || ''}</span>
+                                                    <span>D) ${sq['Option D'] || ''}</span>
+                                                </div>
+                                                <div style="color: #27ae60; font-size: 0.8rem; margin-top: 4px;"><strong>✓ Answer:</strong> ${(sq.Correct || sq['Correct Answer'] || '').toString().toUpperCase()}</div>
+                                            </div>`;
+                                });
+
+                                html += `
+                                        </div>
+                                    </details>`;
+                            }
+
+                            html += `
                                 </div>
                             </label>
                             `;
@@ -5573,10 +5635,20 @@ Artificial Intelligence has revolutionized..."></textarea>
                     attachExamQuestionEventListeners();
                 }
 
-                // Update counter when checkboxes change
+                // Update counter when checkboxes change - count actual questions (children count for parent-child)
                 function updateSelectedCount() {
-                    const checkedCount = document.querySelectorAll('.question-checkbox:checked').length;
-                    document.getElementById('selected-count').textContent = checkedCount + ' Selected';
+                    let totalQuestions = 0;
+                    document.querySelectorAll('.question-checkbox:checked').forEach(checkbox => {
+                        const subCount = parseInt(checkbox.dataset.subCount) || 0;
+                        if (subCount > 0) {
+                            // Parent-child: count the children (they are the actual questions)
+                            totalQuestions += subCount;
+                        } else {
+                            // Standalone: count as 1
+                            totalQuestions += 1;
+                        }
+                    });
+                    document.getElementById('selected-count').textContent = totalQuestions + ' Questions Selected';
                 }
 
                 // Function to attach event listeners
@@ -5588,15 +5660,16 @@ Artificial Intelligence has revolutionized..."></textarea>
 
                     // Add hover effect to question items
                     document.querySelectorAll('.exam-question-item').forEach(item => {
+                        const hasChildren = item.dataset.hasChildren === 'true';
                         item.addEventListener('mouseenter', function() {
-                            this.style.borderColor = 'var(--primary)';
-                            this.style.background = '#e8f4fd';
+                            this.style.borderColor = hasChildren ? '#9c27b0' : 'var(--primary)';
+                            this.style.background = hasChildren ? '#f3e5f5' : '#e8f4fd';
                         });
                         item.addEventListener('mouseleave', function() {
                             const checkbox = this.querySelector('.question-checkbox');
                             if (!checkbox.checked) {
-                                this.style.borderColor = 'transparent';
-                                this.style.background = '#f8f9fa';
+                                this.style.borderColor = hasChildren ? '#9c27b0' : 'transparent';
+                                this.style.background = hasChildren ? '#faf5ff' : '#f8f9fa';
                             }
                         });
                     });

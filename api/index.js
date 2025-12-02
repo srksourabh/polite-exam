@@ -1384,13 +1384,48 @@ Generate a FRESH, UNIQUE, CREATIVE question that hasn't been asked before. Ensur
                     throw new Error(data.error?.message || 'Gemini API request failed');
                 }
 
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                const jsonMatch = text.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) {
-                    throw new Error('No valid JSON found in response');
+                let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+                // Remove markdown code blocks if present (```json ... ``` or ``` ... ```)
+                text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+
+                // Extract JSON object - find the outermost balanced braces
+                let jsonStr = '';
+                let braceCount = 0;
+                let inJson = false;
+                for (let i = 0; i < text.length; i++) {
+                    if (text[i] === '{') {
+                        if (!inJson) inJson = true;
+                        braceCount++;
+                    }
+                    if (inJson) {
+                        jsonStr += text[i];
+                    }
+                    if (text[i] === '}') {
+                        braceCount--;
+                        if (braceCount === 0 && inJson) break;
+                    }
                 }
 
-                const questionData = JSON.parse(jsonMatch[0]);
+                if (!jsonStr || jsonStr.length < 10) {
+                    console.error('Raw Gemini response:', text);
+                    throw new Error('No valid JSON found in response. Raw text: ' + text.substring(0, 200));
+                }
+
+                let questionData;
+                try {
+                    questionData = JSON.parse(jsonStr);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError, 'Text:', jsonStr);
+                    // Try to fix common JSON issues
+                    let fixedJson = jsonStr
+                        .replace(/,\s*}/g, '}')  // Remove trailing commas
+                        .replace(/,\s*]/g, ']')  // Remove trailing commas in arrays
+                        .replace(/[\x00-\x1F\x7F]/g, ' ') // Remove control characters
+                        .replace(/\n/g, ' ')  // Replace newlines with spaces
+                        .replace(/\r/g, ''); // Remove carriage returns
+                    questionData = JSON.parse(fixedJson);
+                }
 
                 return res.status(200).json({
                     success: true,
