@@ -7715,6 +7715,271 @@ Artificial Intelligence has revolutionized..."></textarea>
                 console.error('Session check error:', e);
             }
         }); // End of DOMContentLoaded
+
+        // =====================================================
+        // PARENT-CHILD QUESTION CREATION HANDLERS
+        // =====================================================
+
+        let childQuestionCount = 0;
+
+        // Toggle between standalone and parent-child forms
+        const questionTypeSelect = document.getElementById('question-type-select');
+        if (questionTypeSelect) {
+            questionTypeSelect.addEventListener('change', function() {
+                const type = this.value;
+                const standaloneForm = document.getElementById('standalone-form');
+                const parentChildForm = document.getElementById('parent-child-form');
+
+                if (type === 'standalone') {
+                    standaloneForm.style.display = 'block';
+                    parentChildForm.style.display = 'none';
+                } else if (type === 'parent-child') {
+                    standaloneForm.style.display = 'none';
+                    parentChildForm.style.display = 'block';
+
+                    // Add first child question automatically
+                    if (childQuestionCount === 0) {
+                        addChildQuestion();
+                    }
+                } else {
+                    standaloneForm.style.display = 'none';
+                    parentChildForm.style.display = 'none';
+                }
+            });
+        }
+
+        // Add child question to the form
+        function addChildQuestion() {
+            childQuestionCount++;
+            const container = document.getElementById('children-container');
+            if (!container) return;
+
+            const childHtml = `
+                <div class="child-question" id="child-${childQuestionCount}" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #17a2b8;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h5 style="margin: 0; color: #0c5460;">Child Question ${childQuestionCount}</h5>
+                        <button type="button" class="remove-child-btn" onclick="removeChildQuestion(${childQuestionCount})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Question Text:</label>
+                        <textarea id="child-question-${childQuestionCount}" rows="2" placeholder="Enter the sub-question here..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>Option A:</label>
+                            <input type="text" id="child-option-a-${childQuestionCount}" placeholder="Option A">
+                        </div>
+                        <div class="form-group">
+                            <label>Option B:</label>
+                            <input type="text" id="child-option-b-${childQuestionCount}" placeholder="Option B">
+                        </div>
+                        <div class="form-group">
+                            <label>Option C:</label>
+                            <input type="text" id="child-option-c-${childQuestionCount}" placeholder="Option C">
+                        </div>
+                        <div class="form-group">
+                            <label>Option D:</label>
+                            <input type="text" id="child-option-d-${childQuestionCount}" placeholder="Option D">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Correct Answer:</label>
+                        <select id="child-correct-${childQuestionCount}">
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', childHtml);
+        }
+
+        // Remove child question
+        window.removeChildQuestion = function(num) {
+            const child = document.getElementById(`child-${num}`);
+            if (child) {
+                child.remove();
+            }
+        };
+
+        // Add child button handler
+        const addChildBtn = document.getElementById('add-child-btn');
+        if (addChildBtn) {
+            addChildBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                addChildQuestion();
+            });
+        }
+
+        // Create standalone question
+        const createStandaloneBtn = document.getElementById('create-standalone-btn');
+        if (createStandaloneBtn) {
+            createStandaloneBtn.addEventListener('click', async function() {
+                try {
+                    const id = document.getElementById('standalone-id').value.trim();
+                    const subject = document.getElementById('standalone-subject').value;
+                    const question = document.getElementById('standalone-question').value.trim();
+                    const optionA = document.getElementById('standalone-option-a').value.trim();
+                    const optionB = document.getElementById('standalone-option-b').value.trim();
+                    const optionC = document.getElementById('standalone-option-c').value.trim();
+                    const optionD = document.getElementById('standalone-option-d').value.trim();
+                    const correct = document.getElementById('standalone-correct').value;
+                    const difficulty = document.getElementById('standalone-difficulty').value;
+
+                    if (!question || !optionA || !optionB || !optionC || !optionD) {
+                        window.PoliteCCAPI.showNotification('Please fill in all required fields', 'error');
+                        return;
+                    }
+
+                    const questionData = {
+                        subject: subject,
+                        difficulty: difficulty,
+                        question: question,
+                        optionA: optionA,
+                        optionB: optionB,
+                        optionC: optionC,
+                        optionD: optionD,
+                        correct: correct
+                    };
+
+                    if (id) {
+                        questionData.ID = id;
+                    }
+
+                    const result = await window.PoliteCCAPI.addQuestionToDatabase(questionData);
+
+                    if (result) {
+                        window.PoliteCCAPI.showNotification('Standalone question created successfully!', 'success');
+
+                        // Clear form
+                        document.getElementById('standalone-id').value = '';
+                        document.getElementById('standalone-question').value = '';
+                        document.getElementById('standalone-option-a').value = '';
+                        document.getElementById('standalone-option-b').value = '';
+                        document.getElementById('standalone-option-c').value = '';
+                        document.getElementById('standalone-option-d').value = '';
+                        document.getElementById('question-type-select').value = '';
+                        document.getElementById('standalone-form').style.display = 'none';
+
+                        // Refresh question bank
+                        document.getElementById('question-bank-btn').click();
+                    }
+                } catch (error) {
+                    console.error('Error creating standalone question:', error);
+                    window.PoliteCCAPI.showNotification('Failed to create question: ' + error.message, 'error');
+                }
+            });
+        }
+
+        // Create parent-child question set
+        const createParentChildBtn = document.getElementById('create-parent-child-btn');
+        if (createParentChildBtn) {
+            createParentChildBtn.addEventListener('click', async function() {
+                try {
+                    const parentId = document.getElementById('parent-id').value.trim();
+                    const parentSubject = document.getElementById('parent-subject').value;
+                    const parentText = document.getElementById('parent-text').value.trim();
+                    const parentDifficulty = document.getElementById('parent-difficulty').value;
+
+                    if (!parentText) {
+                        window.PoliteCCAPI.showNotification('Please enter the parent question/passage text', 'error');
+                        return;
+                    }
+
+                    // Collect child questions
+                    const childQuestions = [];
+                    const childElements = document.querySelectorAll('.child-question');
+
+                    for (const childEl of childElements) {
+                        const num = childEl.id.replace('child-', '');
+                        const childQuestion = document.getElementById(`child-question-${num}`).value.trim();
+                        const childOptionA = document.getElementById(`child-option-a-${num}`).value.trim();
+                        const childOptionB = document.getElementById(`child-option-b-${num}`).value.trim();
+                        const childOptionC = document.getElementById(`child-option-c-${num}`).value.trim();
+                        const childOptionD = document.getElementById(`child-option-d-${num}`).value.trim();
+                        const childCorrect = document.getElementById(`child-correct-${num}`).value;
+
+                        if (!childQuestion || !childOptionA || !childOptionB || !childOptionC || !childOptionD) {
+                            window.PoliteCCAPI.showNotification(`Please fill in all fields for Child Question ${num}`, 'error');
+                            return;
+                        }
+
+                        childQuestions.push({
+                            question: childQuestion,
+                            optionA: childOptionA,
+                            optionB: childOptionB,
+                            optionC: childOptionC,
+                            optionD: childOptionD,
+                            correct: childCorrect
+                        });
+                    }
+
+                    if (childQuestions.length === 0) {
+                        window.PoliteCCAPI.showNotification('Please add at least one child question', 'error');
+                        return;
+                    }
+
+                    // Create parent question first
+                    const parentData = {
+                        subject: parentSubject,
+                        difficulty: parentDifficulty,
+                        question: parentText,
+                        'Question Type': 'Parent-child',
+                        'Main Question Text': parentText
+                    };
+
+                    if (parentId) {
+                        parentData.ID = parentId;
+                    }
+
+                    const parentResult = await window.PoliteCCAPI.addQuestionToDatabase(parentData);
+
+                    if (!parentResult) {
+                        window.PoliteCCAPI.showNotification('Failed to create parent question', 'error');
+                        return;
+                    }
+
+                    // Create child questions linked to parent
+                    let childNum = 1;
+                    for (const child of childQuestions) {
+                        const childData = {
+                            subject: parentSubject,
+                            difficulty: parentDifficulty,
+                            question: child.question,
+                            optionA: child.optionA,
+                            optionB: child.optionB,
+                            optionC: child.optionC,
+                            optionD: child.optionD,
+                            correct: child.correct,
+                            'Question Type': 'Parent-child',
+                            'Parent Question': [parentResult.id],
+                            'Sub Question Number': childNum
+                        };
+
+                        await window.PoliteCCAPI.addQuestionToDatabase(childData);
+                        childNum++;
+                    }
+
+                    window.PoliteCCAPI.showNotification(`Parent-child question set created with ${childQuestions.length} sub-questions!`, 'success');
+
+                    // Clear form
+                    document.getElementById('parent-id').value = '';
+                    document.getElementById('parent-text').value = '';
+                    document.getElementById('children-container').innerHTML = '';
+                    childQuestionCount = 0;
+                    document.getElementById('question-type-select').value = '';
+                    document.getElementById('parent-child-form').style.display = 'none';
+
+                    // Refresh question bank
+                    document.getElementById('question-bank-btn').click();
+                } catch (error) {
+                    console.error('Error creating parent-child question set:', error);
+                    window.PoliteCCAPI.showNotification('Failed to create question set: ' + error.message, 'error');
+                }
+            });
+        }
     </script>
     
     <!-- Footer -->

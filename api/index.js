@@ -11,6 +11,29 @@ const base = new Airtable({
 const QUESTIONS_TABLE = 'Questions';
 const EXAMS_TABLE = 'Exams';
 const RESULTS_TABLE = 'Results';
+const STUDENTS_TABLE = 'Students';
+
+// =====================================================
+// PASSWORD HASHING UTILITIES
+// =====================================================
+const PASSWORD_SALT = process.env.PASSWORD_SALT || 'polite-salt';
+
+function hashPassword(password) {
+    return crypto.createHash('sha256').update(password + PASSWORD_SALT).digest('hex');
+}
+
+function verifyPassword(password, hashedPassword) {
+    return hashPassword(password) === hashedPassword;
+}
+
+function generateToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+function generateTempPassword() {
+    // Generate a random 8-character alphanumeric password
+    return crypto.randomBytes(4).toString('hex').toUpperCase();
+}
 
 // =====================================================
 // HIERARCHICAL QUESTION TYPE CONSTANTS
@@ -636,32 +659,436 @@ module.exports = async (req, res) => {
             });
         }
 
-        // POST /api/auth/reset-password - Reset password
+        // POST /api/auth/reset-password - Reset password (email-based)
         if (url === '/api/auth/reset-password' && method === 'POST') {
-            const { mobile, newPassword } = req.body;
+            const { email } = req.body;
 
-            if (!mobile || mobile.length !== 10) {
+            if (!email) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Invalid mobile number (must be 10 digits)'
+                    error: 'Email is required'
                 });
             }
 
-            if (!newPassword || newPassword.length < 6) {
+            try {
+                // Find student by email
+                const records = await base(STUDENTS_TABLE).select({
+                    filterByFormula: `{Email} = '${sanitizeForFormula(email)}'`
+                }).all();
+
+                if (records.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'No account found with this email address'
+                    });
+                }
+
+                // Generate temporary password
+                const tempPassword = generateTempPassword();
+                const hashedPassword = hashPassword(tempPassword);
+
+                // Update student's password
+                await base(STUDENTS_TABLE).update(records[0].id, {
+                    'Password': hashedPassword
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        tempPassword: tempPassword
+                    },
+                    message: 'Password reset successful. Use the temporary password to login.'
+                });
+            } catch (error) {
+                console.error('Password reset error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to reset password'
+                });
+            }
+        }
+
+        // =====================================================
+        // CANDIDATE AUTHENTICATION ENDPOINTS (Email-based)
+        // =====================================================
+
+        // POST /api/auth/candidate/signup - Candidate registration
+        if (url === '/api/auth/candidate/signup' && method === 'POST') {
+            const { name, email, mobile, password } = req.body;
+
+            // Validation
+            if (!name || !email || !password) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Name, email, and password are required'
+                });
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid email format'
+                });
+            }
+
+            // Validate password strength
+            if (password.length < 6) {
                 return res.status(400).json({
                     success: false,
                     error: 'Password must be at least 6 characters'
                 });
             }
 
-            // TODO: In a real system, you would:
-            // 1. Verify mobile number exists in Students table
-            // 2. Send OTP for verification
-            // 3. Update password in database
-            // For now, just return success
+            try {
+                // Check if email already exists
+                const existingRecords = await base(STUDENTS_TABLE).select({
+                    filterByFormula: `{Email} = '${sanitizeForFormula(email)}'`
+                }).all();
+
+                if (existingRecords.length > 0) {
+                    return res.status(409).json({
+                        success: false,
+                        error: 'An account with this email already exists'
+                    });
+                }
+
+                // Hash the password
+                const hashedPassword = hashPassword(password);
+
+                // Create new student record
+                const record = await base(STUDENTS_TABLE).create({
+                    'Name': name,
+                    'Email': email,
+                    'Mobile': mobile || '',
+                    'Password': hashedPassword,
+                    'Verified': true, // Auto-verify for simplicity (can add email verification later)
+                    'Created At': new Date().toISOString()
+                });
+
+                return res.status(201).json({
+                    success: true,
+                    data: {
+                        id: record.id,
+                        name: name,
+                        email: email,
+                        mobile: mobile || ''
+                    },
+                    message: 'Account created successfully'
+                });
+            } catch (error) {
+                console.error('Signup error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to create account. Please try again.'
+                });
+            }
+        }
+
+        // POST /api/auth/candidate/login - Candidate login with email/password
+        if (url === '/api/auth/candidate/login' && method === 'POST') {
+            const { email, password } = req.body;
+
+            if (!email || !password) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Email and password are required'
+                });
+            }
+
+            try {
+                // Find student by email
+                const records = await base(STUDENTS_TABLE).select({
+                    filterByFormula: `{Email} = '${sanitizeForFormula(email)}'`
+                }).all();
+
+                if (records.length === 0) {
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Invalid email or password'
+                    });
+                }
+
+                const student = records[0];
+                const storedPassword = student.fields.Password;
+
+                // Verify password
+                if (!verifyPassword(password, storedPassword)) {
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Invalid email or password'
+                    });
+                }
+
+                // Check if account is verified
+                if (student.fields.Verified === false) {
+                    return res.status(403).json({
+                        success: false,
+                        error: 'Please verify your email before logging in',
+                        requiresVerification: true
+                    });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        id: student.id,
+                        name: student.fields.Name,
+                        email: student.fields.Email,
+                        mobile: student.fields.Mobile || '',
+                        profileImage: student.fields['Profile Image'] || '',
+                        token: 'candidate_' + Date.now()
+                    },
+                    message: 'Login successful'
+                });
+            } catch (error) {
+                console.error('Login error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Login failed. Please try again.'
+                });
+            }
+        }
+
+        // =====================================================
+        // CANDIDATE PROFILE ENDPOINTS
+        // =====================================================
+
+        // GET /api/candidates/profile/:email - Get candidate profile
+        if (url.startsWith('/api/candidates/profile/') && method === 'GET') {
+            const email = decodeURIComponent(url.split('/api/candidates/profile/')[1]);
+
+            try {
+                const records = await base(STUDENTS_TABLE).select({
+                    filterByFormula: `{Email} = '${sanitizeForFormula(email)}'`
+                }).all();
+
+                if (records.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Profile not found'
+                    });
+                }
+
+                const student = records[0];
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        id: student.id,
+                        name: student.fields.Name,
+                        email: student.fields.Email,
+                        mobile: student.fields.Mobile || '',
+                        profileImage: student.fields['Profile Image'] || '',
+                        createdAt: student.fields['Created At']
+                    }
+                });
+            } catch (error) {
+                console.error('Profile fetch error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to load profile'
+                });
+            }
+        }
+
+        // PUT /api/candidates/profile - Update candidate profile
+        if (url === '/api/candidates/profile' && method === 'PUT') {
+            const { email, name, mobile, profileImage } = req.body;
+
+            if (!email) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Email is required to update profile'
+                });
+            }
+
+            try {
+                const records = await base(STUDENTS_TABLE).select({
+                    filterByFormula: `{Email} = '${sanitizeForFormula(email)}'`
+                }).all();
+
+                if (records.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Profile not found'
+                    });
+                }
+
+                const updateData = {};
+                if (name) updateData['Name'] = name;
+                if (mobile !== undefined) updateData['Mobile'] = mobile;
+                if (profileImage !== undefined) updateData['Profile Image'] = profileImage;
+
+                const updatedRecord = await base(STUDENTS_TABLE).update(records[0].id, updateData);
+
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        id: updatedRecord.id,
+                        name: updatedRecord.fields.Name,
+                        email: updatedRecord.fields.Email,
+                        mobile: updatedRecord.fields.Mobile || '',
+                        profileImage: updatedRecord.fields['Profile Image'] || ''
+                    },
+                    message: 'Profile updated successfully'
+                });
+            } catch (error) {
+                console.error('Profile update error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to update profile'
+                });
+            }
+        }
+
+        // GET /api/candidates/exams/:email - Get candidate exam history
+        if (url.startsWith('/api/candidates/exams/') && method === 'GET') {
+            const email = decodeURIComponent(url.split('/api/candidates/exams/')[1]);
+
+            try {
+                // First get the student to get their mobile number (results are linked by mobile)
+                const studentRecords = await base(STUDENTS_TABLE).select({
+                    filterByFormula: `{Email} = '${sanitizeForFormula(email)}'`
+                }).all();
+
+                if (studentRecords.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Student not found'
+                    });
+                }
+
+                const student = studentRecords[0];
+                const mobile = student.fields.Mobile;
+                const studentName = student.fields.Name;
+
+                // Find results by mobile number OR name (for backwards compatibility)
+                let filterFormula = '';
+                if (mobile) {
+                    filterFormula = `OR({Mobile} = '${sanitizeForFormula(mobile)}', {Name} = '${sanitizeForFormula(studentName)}')`;
+                } else {
+                    filterFormula = `{Name} = '${sanitizeForFormula(studentName)}'`;
+                }
+
+                const resultRecords = await base(RESULTS_TABLE).select({
+                    filterByFormula: filterFormula,
+                    sort: [{ field: 'Timestamp', direction: 'desc' }]
+                }).all();
+
+                const examHistory = resultRecords.map(record => ({
+                    id: record.id,
+                    examCode: record.fields['Exam Code'] || 'Unknown',
+                    examTitle: record.fields['Exam Title'] || record.fields['Exam Code'] || 'Exam',
+                    score: record.fields.Score || 0,
+                    timestamp: record.fields.Timestamp,
+                    answers: record.fields.Answers
+                }));
+
+                // Calculate stats
+                const totalExams = examHistory.length;
+                const totalScore = examHistory.reduce((sum, exam) => sum + (exam.score || 0), 0);
+                const averageScore = totalExams > 0 ? (totalScore / totalExams).toFixed(2) : 0;
+
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        examsGiven: totalExams,
+                        averageScore: parseFloat(averageScore),
+                        examHistory: examHistory
+                    }
+                });
+            } catch (error) {
+                console.error('Exam history fetch error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to load exam history'
+                });
+            }
+        }
+
+        // POST /api/auth/change-password - Change password
+        if (url === '/api/auth/change-password' && method === 'POST') {
+            const { email, currentPassword, newPassword } = req.body;
+
+            if (!email || !currentPassword || !newPassword) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Email, current password, and new password are required'
+                });
+            }
+
+            if (newPassword.length < 6) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'New password must be at least 6 characters'
+                });
+            }
+
+            try {
+                const records = await base(STUDENTS_TABLE).select({
+                    filterByFormula: `{Email} = '${sanitizeForFormula(email)}'`
+                }).all();
+
+                if (records.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Account not found'
+                    });
+                }
+
+                const student = records[0];
+
+                // Verify current password
+                if (!verifyPassword(currentPassword, student.fields.Password)) {
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Current password is incorrect'
+                    });
+                }
+
+                // Update password
+                await base(STUDENTS_TABLE).update(student.id, {
+                    'Password': hashPassword(newPassword)
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Password changed successfully'
+                });
+            } catch (error) {
+                console.error('Password change error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to change password'
+                });
+            }
+        }
+
+        // POST /api/auth/resend-verification - Resend verification email (stub)
+        if (url === '/api/auth/resend-verification' && method === 'POST') {
+            const { email } = req.body;
+
+            if (!email) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Email is required'
+                });
+            }
+
+            // For now, just return success (email verification is auto-enabled)
             return res.status(200).json({
                 success: true,
-                message: 'Password reset successful. You can now login with your new password.'
+                message: 'Verification email sent. Please check your inbox.'
+            });
+        }
+
+        // GET /api/auth/verify/:token - Verify email (stub)
+        if (url.startsWith('/api/auth/verify/') && method === 'GET') {
+            // For now, just return success (email verification is auto-enabled)
+            return res.status(200).json({
+                success: true,
+                message: 'Email verified successfully'
             });
         }
 
