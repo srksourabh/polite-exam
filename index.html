@@ -4435,16 +4435,17 @@ Artificial Intelligence has revolutionized..."></textarea>
 
                 q.subQuestions.forEach((sq, sqIndex) => {
                     const subOrder = sq['Sub Question Number'] || sqIndex + 1;
-                    // Use parent's question number for hierarchical numbering (e.g., Q0012 -> 12.1, 12.2)
-                    const hierarchicalNum = `${qNum}.${subOrder}`;
+                    // Use stored ID if it's hierarchical (Q0508.1), otherwise calculate from parent
+                    const storedId = sq.ID || '';
+                    const isHierarchicalId = storedId.includes('.');
+                    const displayId = isHierarchicalId ? storedId : `${q.ID}.${subOrder}`;
                     html += `
-                    <div class="sub-question-item" style="background: #f3e5f5; border-radius: 8px; padding: 12px; margin-bottom: 10px; margin-left: 20px; border-left: 3px solid #9c27b0; position: relative; padding-left: 60px;">
-                        <!-- Sub-question number badge -->
-                        <div style="position: absolute; top: 12px; left: 12px; background: #9c27b0; color: white; padding: 4px 12px; border-radius: 15px; font-weight: bold; font-size: 0.9rem;">
-                            ${hierarchicalNum}
+                    <div class="sub-question-item" style="background: #f3e5f5; border-radius: 8px; padding: 12px; margin-bottom: 10px; margin-left: 20px; border-left: 3px solid #9c27b0; position: relative; padding-left: 75px;">
+                        <!-- Sub-question number badge - shows hierarchical ID (Q0508.1) -->
+                        <div style="position: absolute; top: 12px; left: 12px; background: #9c27b0; color: white; padding: 4px 12px; border-radius: 15px; font-weight: bold; font-size: 0.85rem;">
+                            ${displayId}
                         </div>
                         <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <span style="color: #999; font-size: 0.8rem;">${sq.ID || ''}</span>
                             <span style="background: #ce93d8; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">${sq.Subject || q.Subject || 'Unknown'}</span>
                             <span style="background: #4caf50; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">+1 / -0.25</span>
                         </div>

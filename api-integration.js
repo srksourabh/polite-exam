@@ -158,21 +158,56 @@ async function addQuestionToDatabase(questionData) {
     try {
         // First, get all existing questions to determine the next ID
         const existingQuestions = await loadQuestions();
-        let maxNum = 0;
-        existingQuestions.forEach(q => {
-            if (q.ID) {
-                // Support both old format (q1, q2) and new format (Q0001, Q0002)
-                const match = q.ID.match(/^[qQ](\d+)$/);
-                if (match) {
-                    const num = parseInt(match[1]);
-                    if (!isNaN(num) && num > maxNum) {
-                        maxNum = num;
+
+        // Check if this is a child question (has Parent Question set)
+        const isChildQuestion = questionData['Parent Question'] && questionData['Parent Question'].length > 0;
+
+        let nextId;
+
+        if (isChildQuestion) {
+            // For child questions, use parent's ID with suffix (Q0508.1, Q0508.2, etc.)
+            const parentRecordId = questionData['Parent Question'][0];
+            const parentQuestion = existingQuestions.find(q => q.id === parentRecordId);
+
+            if (parentQuestion && parentQuestion.ID) {
+                const parentDisplayId = parentQuestion.ID; // e.g., Q0508
+
+                // Count existing children of this parent to determine the suffix
+                const existingChildren = existingQuestions.filter(q => {
+                    return q['Parent Question'] &&
+                           q['Parent Question'].length > 0 &&
+                           q['Parent Question'][0] === parentRecordId;
+                });
+
+                const childNumber = existingChildren.length + 1;
+                nextId = `${parentDisplayId}.${childNumber}`; // e.g., Q0508.1, Q0508.2
+
+                console.log(`📝 Generating child ID: ${nextId} (parent: ${parentDisplayId}, child #${childNumber})`);
+            } else {
+                // Fallback: if parent not found, use a temporary ID
+                console.warn('⚠️ Parent question not found for child, using fallback ID');
+                nextId = 'Q-CHILD-' + Date.now();
+            }
+        } else {
+            // For parent and standalone questions, generate new sequential ID
+            let maxNum = 0;
+            existingQuestions.forEach(q => {
+                if (q.ID) {
+                    // Support both old format (q1, q2) and new format (Q0001, Q0002)
+                    // Only count main IDs, not child IDs (Q0508.1)
+                    const match = q.ID.match(/^[qQ](\d+)$/);
+                    if (match) {
+                        const num = parseInt(match[1]);
+                        if (!isNaN(num) && num > maxNum) {
+                            maxNum = num;
+                        }
                     }
                 }
-            }
-        });
-        // Generate new ID in Q0001 format (4 digits with leading zeros)
-        const nextId = 'Q' + String(maxNum + 1).padStart(4, '0');
+            });
+            // Generate new ID in Q0001 format (4 digits with leading zeros)
+            nextId = 'Q' + String(maxNum + 1).padStart(4, '0');
+            console.log(`📝 Generating parent/standalone ID: ${nextId}`);
+        }
 
         // Build question payload
         const payload = {
