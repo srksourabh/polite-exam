@@ -11,7 +11,7 @@ const base = new Airtable({
 const QUESTIONS_TABLE = 'Questions';
 const EXAMS_TABLE = 'Exams';
 const RESULTS_TABLE = 'Results';
-const STUDENTS_TABLE = 'Students';
+const STUDENTS_TABLE = 'Candidates';  // Changed from 'Students' to match Airtable table name
 
 // =====================================================
 // PASSWORD HASHING UTILITIES
