@@ -7917,9 +7917,40 @@ Artificial Intelligence has revolutionized..."></textarea>
                 }
 
                 // Find questions by Airtable record ID (new format) or by Question ID field (old format)
-                const examQuestions = questionIds
+                let examQuestions = questionIds
                     .map(id => questions.find(q => q.id === id || q.ID === id))
                     .filter(q => q);
+
+                // Auto-fetch child questions for any parent questions (for backwards compatibility with old exams)
+                const additionalChildren = [];
+                examQuestions.forEach(q => {
+                    const questionType = q['Question Type'];
+                    const hasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
+
+                    // If this is a parent question (Parent-child type without parent link), find its children
+                    if (questionType === 'Parent-child' && !hasParentLink) {
+                        const parentRecordId = q.id;
+
+                        // Find all child questions that reference this parent
+                        questions.forEach(childQ => {
+                            const childParentLink = childQ['Parent Question'];
+                            if (childParentLink && childParentLink.length > 0 && childParentLink[0] === parentRecordId) {
+                                // Check if this child is not already in examQuestions
+                                const alreadyIncluded = examQuestions.some(eq => eq.id === childQ.id);
+                                const alreadyAdded = additionalChildren.some(ac => ac.id === childQ.id);
+                                if (!alreadyIncluded && !alreadyAdded) {
+                                    additionalChildren.push(childQ);
+                                }
+                            }
+                        });
+                    }
+                });
+
+                // Add any missing child questions
+                if (additionalChildren.length > 0) {
+                    console.log(`📋 Auto-added ${additionalChildren.length} child questions for parent-child groups`);
+                    examQuestions = [...examQuestions, ...additionalChildren];
+                }
 
 
                 if (examQuestions.length === 0) {
