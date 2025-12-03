@@ -6337,9 +6337,26 @@ Artificial Intelligence has revolutionized..."></textarea>
                     return;
                 }
 
-                // Get selected questions
+                // Get selected questions - include both parent and child question IDs
                 const checkboxes = document.querySelectorAll('.question-checkbox:checked');
-                const selectedQuestions = Array.from(checkboxes).map(cb => cb.value);
+                const selectedQuestions = [];
+
+                // For each selected checkbox, add the question ID and any child IDs
+                checkboxes.forEach(cb => {
+                    // Add the parent/standalone question ID
+                    selectedQuestions.push(cb.value);
+
+                    // If this is a parent-child group, also add child question IDs
+                    const childIds = cb.dataset.childIds;
+                    if (childIds && childIds.trim()) {
+                        const childIdArray = childIds.split(',').filter(id => id.trim());
+                        childIdArray.forEach(childId => {
+                            if (!selectedQuestions.includes(childId)) {
+                                selectedQuestions.push(childId);
+                            }
+                        });
+                    }
+                });
 
                 // Count total questions including sub-questions (for minimum validation)
                 let totalQuestionCount = 0;
@@ -7900,9 +7917,40 @@ Artificial Intelligence has revolutionized..."></textarea>
                 }
 
                 // Find questions by Airtable record ID (new format) or by Question ID field (old format)
-                const examQuestions = questionIds
+                let examQuestions = questionIds
                     .map(id => questions.find(q => q.id === id || q.ID === id))
                     .filter(q => q);
+
+                // Auto-fetch child questions for any parent questions (for backwards compatibility with old exams)
+                const additionalChildren = [];
+                examQuestions.forEach(q => {
+                    const questionType = q['Question Type'];
+                    const hasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
+
+                    // If this is a parent question (Parent-child type without parent link), find its children
+                    if (questionType === 'Parent-child' && !hasParentLink) {
+                        const parentRecordId = q.id;
+
+                        // Find all child questions that reference this parent
+                        questions.forEach(childQ => {
+                            const childParentLink = childQ['Parent Question'];
+                            if (childParentLink && childParentLink.length > 0 && childParentLink[0] === parentRecordId) {
+                                // Check if this child is not already in examQuestions
+                                const alreadyIncluded = examQuestions.some(eq => eq.id === childQ.id);
+                                const alreadyAdded = additionalChildren.some(ac => ac.id === childQ.id);
+                                if (!alreadyIncluded && !alreadyAdded) {
+                                    additionalChildren.push(childQ);
+                                }
+                            }
+                        });
+                    }
+                });
+
+                // Add any missing child questions
+                if (additionalChildren.length > 0) {
+                    console.log(`📋 Auto-added ${additionalChildren.length} child questions for parent-child groups`);
+                    examQuestions = [...examQuestions, ...additionalChildren];
+                }
 
 
                 if (examQuestions.length === 0) {
