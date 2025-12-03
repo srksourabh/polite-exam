@@ -643,29 +643,47 @@ module.exports = async (req, res) => {
                 }
             }
 
-            // Create result record with exam code and title for easy retrieval
+            // Create result record - use linked Exam field for retrieval
             // Build fields object - handle Timestamp field type variations
             const now = new Date();
+
+            // Build base result fields (only use fields that exist in Airtable)
             const resultFields = {
                 'Exam': resultData.examId ? [resultData.examId] : (examRecord ? [examRecord.id] : undefined),
-                'Exam Code': examCode,
-                'Exam Title': examTitle,
                 'Name': resultData.name,
                 'Mobile': resultData.mobile,
                 'Score': totalScore,
                 'Answers': resultData.answers
             };
 
-            // Try creating with DateTime format first, fall back to Date only if it fails
+            // Try creating with different field combinations (handle optional fields gracefully)
             let record;
+            const createWithFields = async (fields) => {
+                try {
+                    return await base(RESULTS_TABLE).create(fields);
+                } catch (error) {
+                    // If specific field fails, try without it
+                    if (error.message && error.message.includes('Unknown field name')) {
+                        const fieldMatch = error.message.match(/Unknown field name: "([^"]+)"/);
+                        if (fieldMatch) {
+                            const badField = fieldMatch[1];
+                            console.log(`Field "${badField}" not found, creating without it`);
+                            delete fields[badField];
+                            return await base(RESULTS_TABLE).create(fields);
+                        }
+                    }
+                    throw error;
+                }
+            };
+
             try {
                 resultFields['Timestamp'] = now.toISOString();
-                record = await base(RESULTS_TABLE).create(resultFields);
+                record = await createWithFields(resultFields);
             } catch (timestampError) {
                 // If Timestamp field rejects ISO format, try date-only format
                 console.log('Trying date-only format for Timestamp');
                 resultFields['Timestamp'] = now.toISOString().split('T')[0];
-                record = await base(RESULTS_TABLE).create(resultFields);
+                record = await createWithFields(resultFields);
             }
 
             return res.status(201).json({

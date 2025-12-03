@@ -3808,7 +3808,7 @@ Artificial Intelligence has revolutionized..."></textarea>
                 let historyHTML = '';
 
                 examHistory.examHistory.forEach((exam, index) => {
-                    const date = formatDateForDisplay(exam.date);
+                    const date = formatDateForDisplay(exam.timestamp || exam.date);
                     const scoreClass = (exam.score || 0) < 0 ? 'negative' : '';
 
                     // Parse answers to build question details
@@ -5921,7 +5921,7 @@ Artificial Intelligence has revolutionized..."></textarea>
                     applyExamQuestionFilters();
                 });
 
-                // Random selection button - ADD to existing selections (don't clear)
+                // Random selection button - ADD to existing selections (counts TOTAL questions including sub-questions)
                 document.getElementById('random-select-btn').addEventListener('click', function() {
                     const randomCount = parseInt(document.getElementById('random-count').value);
 
@@ -5939,15 +5939,33 @@ Artificial Intelligence has revolutionized..."></textarea>
                         return;
                     }
 
-                    const actualCount = Math.min(randomCount, uncheckedCheckboxes.length);
+                    // Calculate total available questions from unchecked checkboxes (counting sub-questions)
+                    let totalAvailableQuestions = 0;
+                    uncheckedCheckboxes.forEach(cb => {
+                        const subCount = parseInt(cb.dataset.subCount) || 0;
+                        totalAvailableQuestions += (subCount > 0) ? subCount : 1;
+                    });
 
-                    if (randomCount > uncheckedCheckboxes.length) {
-                        alert(`Only ${uncheckedCheckboxes.length} unselected questions available. Selecting all of them.`);
+                    if (randomCount > totalAvailableQuestions) {
+                        alert(`Only ${totalAvailableQuestions} unselected questions available. Selecting all of them.`);
                     }
 
-                    // Shuffle and select random from UNCHECKED only (preserves existing selections)
+                    // Shuffle unchecked checkboxes
                     const shuffled = uncheckedCheckboxes.sort(() => Math.random() - 0.5);
-                    const selectedCheckboxes = shuffled.slice(0, actualCount);
+
+                    // Select checkboxes until we reach the desired TOTAL question count
+                    let currentTotal = 0;
+                    const selectedCheckboxes = [];
+
+                    for (const cb of shuffled) {
+                        if (currentTotal >= randomCount) break;
+
+                        const subCount = parseInt(cb.dataset.subCount) || 0;
+                        const questionsInThis = (subCount > 0) ? subCount : 1;
+
+                        selectedCheckboxes.push(cb);
+                        currentTotal += questionsInThis;
+                    }
 
                     // Check the randomly selected checkboxes (ADD to existing)
                     selectedCheckboxes.forEach(cb => {
@@ -5957,9 +5975,9 @@ Artificial Intelligence has revolutionized..."></textarea>
                     // Update counter
                     updateSelectedCount();
 
-                    // Show notification
+                    // Show notification with actual count
                     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                        window.PoliteCCAPI.showNotification(`🎲 Added ${actualCount} random questions to selection!`, 'success');
+                        window.PoliteCCAPI.showNotification(`🎲 Added ${currentTotal} questions to selection (${selectedCheckboxes.length} items)!`, 'success');
                     }
                 });
 
@@ -6323,10 +6341,23 @@ Artificial Intelligence has revolutionized..."></textarea>
                 const checkboxes = document.querySelectorAll('.question-checkbox:checked');
                 const selectedQuestions = Array.from(checkboxes).map(cb => cb.value);
 
-                if (selectedQuestions.length < 5) {
+                // Count total questions including sub-questions (for minimum validation)
+                let totalQuestionCount = 0;
+                checkboxes.forEach(cb => {
+                    const subCount = parseInt(cb.dataset.subCount) || 0;
+                    if (subCount > 0) {
+                        // Parent-child: count the children (they are the actual questions)
+                        totalQuestionCount += subCount;
+                    } else {
+                        // Standalone: count as 1
+                        totalQuestionCount += 1;
+                    }
+                });
+
+                if (totalQuestionCount < 5) {
                     const examError = document.getElementById('exam-error');
                     if (examError) {
-                        examError.textContent = '❌ Please select at least 5 questions!';
+                        examError.textContent = `❌ Please select at least 5 questions! (Currently: ${totalQuestionCount})`;
                         setTimeout(() => {
                             examError.textContent = '';
                         }, 3000);
@@ -7903,6 +7934,19 @@ Artificial Intelligence has revolutionized..."></textarea>
                 userAnswers = new Array(examQuestions.length).fill(null);
                 currentQuestionIndex = 0;
 
+                // Skip to first non-child question (children are shown with their parent)
+                while (currentQuestionIndex < examQuestions.length) {
+                    const q = examQuestions[currentQuestionIndex];
+                    const hasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
+                    const isChild = hasParentLink || q.isSubQuestion || q['Is Sub Question'];
+                    if (!isChild) break;
+                    currentQuestionIndex++;
+                }
+                // Reset to 0 if all questions are children (shouldn't happen)
+                if (currentQuestionIndex >= examQuestions.length) {
+                    currentQuestionIndex = 0;
+                }
+
                 // Start timer using the centralized timer function
                 timeRemaining = currentExam.duration * 60;
                 startTime = new Date();
@@ -8311,28 +8355,57 @@ Artificial Intelligence has revolutionized..."></textarea>
             // Check if this is a parent question with children
             const questionType = question['Question Type'];
             const hasParentLink = question['Parent Question'] && question['Parent Question'].length > 0;
-            const isParentQuestion = (questionType === 'Parent-child' && !hasParentLink) ||
-                                    question['Main Question Text'] ||
-                                    question.hasSubQuestions;
-
-            // Find children for this parent
-            let childQuestions = [];
-            if (isParentQuestion) {
-                const parentId = question.id || question.ID;
-                childQuestions = currentExam.questions.filter(q => {
-                    const qParentLink = q['Parent Question'];
-                    return (qParentLink && qParentLink.length > 0 && qParentLink[0] === parentId) ||
-                           (q.parentQuestionId === question.ID) ||
-                           (q['Parent Question ID'] === question.ID);
-                });
-            }
 
             // Check if this question is a child (skip it - it's shown with parent)
             const isChildQuestion = hasParentLink || question.isSubQuestion || question['Is Sub Question'];
             if (isChildQuestion) {
-                // Skip to next/previous non-child question
+                // This is a child question - find and show its parent or next non-child question
+                // Try to find the parent
+                const parentLink = question['Parent Question'];
+                if (parentLink && parentLink.length > 0) {
+                    const parentIndex = currentExam.questions.findIndex(q => q.id === parentLink[0]);
+                    if (parentIndex >= 0) {
+                        currentQuestionIndex = parentIndex;
+                        loadQuestion(); // Recursively load the parent
+                        return;
+                    }
+                }
+                // If no parent found, skip to next non-child
+                while (currentQuestionIndex < currentExam.questions.length) {
+                    const q = currentExam.questions[currentQuestionIndex];
+                    const qHasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
+                    if (!qHasParentLink && !q.isSubQuestion && !q['Is Sub Question']) break;
+                    currentQuestionIndex++;
+                }
+                if (currentQuestionIndex < currentExam.questions.length) {
+                    loadQuestion();
+                }
                 return;
             }
+
+            // Use Airtable record ID for matching (question.id), not custom ID (question.ID)
+            const parentRecordId = question.id;
+
+            // Find children for this parent using Airtable record ID
+            let childQuestions = currentExam.questions.filter(q => {
+                const qParentLink = q['Parent Question'];
+                // Match using Airtable record ID from Parent Question linked field
+                if (qParentLink && qParentLink.length > 0 && qParentLink[0] === parentRecordId) {
+                    return true;
+                }
+                // Fallback: also check if parentQuestionId or Parent Question ID matches custom ID
+                if (q.parentQuestionId === question.ID || q['Parent Question ID'] === question.ID) {
+                    return true;
+                }
+                return false;
+            });
+
+            // Determine if this is a parent question
+            const isParentQuestion = (questionType === 'Parent-child' && !hasParentLink) ||
+                                    question['Main Question Text'] ||
+                                    question.hasSubQuestions ||
+                                    question.isParent ||
+                                    childQuestions.length > 0; // Has children = is a parent
 
             const standaloneContainer = document.getElementById('standalone-question-container');
             const parentChildContainer = document.getElementById('parent-child-question-container');
