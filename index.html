@@ -8414,10 +8414,12 @@ Artificial Intelligence has revolutionized..."></textarea>
                     window.PoliteCCAPI.showNotification('⚠️ You have already submitted this exam!', 'error');
                     return; // Prevent submission
                 } else {
+                    // Ensure score has exactly 2 decimal places without rounding to integer
+                    const finalScore = Math.round(score * 100) / 100;
                     const resultData = {
                         'Name': candidateName,
                         'Mobile': candidateMobile,
-                        'Score': parseFloat(score.toFixed(2)),
+                        'Score': finalScore,
                         'Answers': JSON.stringify(detailedAnswers),
                         'examCode': currentExam.code,
                         'examTitle': currentExam.title
@@ -8437,12 +8439,14 @@ Artificial Intelligence has revolutionized..."></textarea>
             }
 
             // Store detailed answers for candidate viewing
+            // Use precise score calculation: Math.round(score * 100) / 100 for 2 decimal places
+            const displayScore = Math.round(score * 100) / 100;
             candidateDetailedAnswers = {
                 candidateName: candidateName,
                 candidateMobile: candidateMobile,
                 examCode: currentExam.code,
                 examTitle: currentExam.title,
-                score: parseFloat(score.toFixed(2)),
+                score: displayScore,
                 answers: detailedAnswers
             };
 
@@ -8451,7 +8455,7 @@ Artificial Intelligence has revolutionized..."></textarea>
             document.getElementById('result-screen').classList.add('active');
             updateHeaderNav('result-screen');
 
-            document.getElementById('final-score').textContent = score.toFixed(2);
+            document.getElementById('final-score').textContent = displayScore.toFixed(2);
             document.getElementById('result-exam-code').textContent = currentExam.code;
             document.getElementById('result-name').textContent = candidateName;
             document.getElementById('result-mobile').textContent = candidateMobile;
