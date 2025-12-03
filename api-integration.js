@@ -829,8 +829,8 @@ async function updateCandidateProfile(profileData) {
 // Change candidate password
 async function changePassword(email, currentPassword, newPassword) {
     try {
-        const response = await fetch(`${API_URL}/candidates/password`, {
-            method: 'PUT',
+        const response = await fetch(`${API_URL}/auth/change-password`, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },

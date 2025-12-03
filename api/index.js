@@ -590,16 +590,15 @@ module.exports = async (req, res) => {
         if (url === '/api/results' && method === 'POST') {
             const resultData = req.body;
 
-            // Calculate score (handles parent-child questions)
-            let totalScore = 0;
+            // Use the score calculated by frontend (more reliable since frontend has direct access to user answers)
+            // Frontend sends Score with correct calculation: +1 correct, -0.25 wrong, 0 unanswered
+            let totalScore = resultData.Score || resultData.score || 0;
             let examRecord = null;
             let examCode = resultData.examCode || '';
             let examTitle = resultData.examTitle || '';
 
-            if (resultData.answers) {
-                const answers = JSON.parse(resultData.answers);
-
-                // Get all questions for this exam
+            // Get exam record for linking (don't recalculate score - use frontend value)
+            if (resultData.examCode) {
                 const examRecords = await base(EXAMS_TABLE).select({
                     filterByFormula: `{Exam Code} = '${sanitizeForFormula(resultData.examCode)}'`
                 }).all();
@@ -610,35 +609,6 @@ module.exports = async (req, res) => {
                     // Use provided title or fall back to record
                     if (!examTitle) {
                         examTitle = examRecord.fields['Exam Title'] || examRecord.fields['Title'] || examCode;
-                    }
-
-                    if (examRecord.fields.Questions) {
-                        const questionRecords = await Promise.all(
-                            examRecord.fields.Questions.map(qId => base(QUESTIONS_TABLE).find(qId))
-                        );
-
-                        questionRecords.forEach(qRecord => {
-                            const q = qRecord.fields;
-                            const questionType = q['Question Type'];
-                            const hasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
-
-                            // Only score actual questions with options
-                            // Standalone questions OR child questions in parent-child relationship
-                            const shouldScore = questionType === QUESTION_TYPES.STANDALONE ||
-                                              (questionType === QUESTION_TYPES.PARENT_CHILD && hasParentLink);
-
-                            if (shouldScore) {
-                                const userAnswer = answers[q.ID];
-                                const correctAnswer = q.Correct || q['Correct Answer'];
-
-                                if (userAnswer === correctAnswer) {
-                                    totalScore += 1; // +1 for correct
-                                } else if (userAnswer && userAnswer !== 'unanswered') {
-                                    totalScore -= 0.25; // -0.25 for incorrect
-                                }
-                                // 0 for unanswered
-                            }
-                        });
                     }
                 }
             }
