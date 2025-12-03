@@ -2187,6 +2187,10 @@ Artificial Intelligence has revolutionized..."></textarea>
                         <button class="admin-btn" style="margin-bottom: 15px;" id="clean-text-btn">🧹 Clean & Format Text</button>
                         
                         <h4 style="margin: 20px 0 15px; color: var(--secondary);">Ready to Add Questions</h4>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                            <button class="admin-btn" id="select-all-extracted-btn" style="background: #2196f3;">☑️ Select All</button>
+                            <button class="admin-btn" id="select-none-extracted-btn" style="background: #9e9e9e;">☐ Select None</button>
+                        </div>
                         <div id="ready-questions">
                             <p style="text-align: center; color: #7f8c8d;">Click 'Clean & Format Text' to see questions</p>
                         </div>
@@ -6541,7 +6545,25 @@ Artificial Intelligence has revolutionized..."></textarea>
 
                     // 'Questions' is the correct Airtable field name for linked records
                     const questionIds = exam['Questions'] || exam['Question IDs'] || exam['QuestionIDs'] || exam.questionIds || [];
-                    const questionCount = Array.isArray(questionIds) ? questionIds.length : (typeof questionIds === 'string' && questionIds.trim() ? questionIds.split(',').filter(id => id.trim()).length : 0);
+                    // Calculate actual scorable questions count (including sub-questions)
+                    let questionCount = 0;
+                    const idsArray = Array.isArray(questionIds) ? questionIds : (typeof questionIds === 'string' && questionIds.trim() ? questionIds.split(',').filter(id => id.trim()) : []);
+                    idsArray.forEach(qId => {
+                        const q = questions.find(question => question.id === qId || question.ID === qId);
+                        if (q) {
+                            // If question has sub-questions, count the sub-questions (parent is just a passage with no marks)
+                            if (q.subQuestions && q.subQuestions.length > 0) {
+                                questionCount += q.subQuestions.length;
+                            } else if (q['Option A'] || q['Option B']) {
+                                // Standalone question with options = 1 scorable question
+                                questionCount += 1;
+                            }
+                            // Parent passages without sub-questions loaded don't count as scorable
+                        } else {
+                            // Question not found in local cache, count as 1
+                            questionCount += 1;
+                        }
+                    });
                     const duration = exam['Duration (mins)'] || exam['Duration'] || exam.duration || 60;
                     const candidateCount = examResultCounts[examCode] || 0;
 
@@ -6600,7 +6622,24 @@ Artificial Intelligence has revolutionized..."></textarea>
                 const duration = exam ? (exam['Duration (mins)'] || exam['Duration'] || exam.duration || 60) : 60;
                 // 'Questions' is the correct Airtable field name for linked records
                 const examQuestionIds = exam ? (exam['Questions'] || exam['Question IDs'] || exam['QuestionIDs'] || exam.questionIds || []) : [];
-                const questionCount = Array.isArray(examQuestionIds) ? examQuestionIds.length : (typeof examQuestionIds === 'string' && examQuestionIds.trim() ? examQuestionIds.split(',').filter(id => id.trim()).length : 0);
+                // Calculate actual scorable questions count (including sub-questions)
+                let questionCount = 0;
+                const idsArray = Array.isArray(examQuestionIds) ? examQuestionIds : (typeof examQuestionIds === 'string' && examQuestionIds.trim() ? examQuestionIds.split(',').filter(id => id.trim()) : []);
+                idsArray.forEach(qId => {
+                    const q = questions.find(question => question.id === qId || question.ID === qId);
+                    if (q) {
+                        // If question has sub-questions, count the sub-questions (parent is just a passage with no marks)
+                        if (q.subQuestions && q.subQuestions.length > 0) {
+                            questionCount += q.subQuestions.length;
+                        } else if (q['Option A'] || q['Option B']) {
+                            // Standalone question with options = 1 scorable question
+                            questionCount += 1;
+                        }
+                    } else {
+                        // Question not found in local cache, count as 1
+                        questionCount += 1;
+                    }
+                });
 
                 document.getElementById('selected-exam-title').textContent = `${examCode} - ${title}`;
                 document.getElementById('selected-exam-info').innerHTML = `
@@ -7501,6 +7540,28 @@ Artificial Intelligence has revolutionized..."></textarea>
                     notification.parentNode.removeChild(notification);
                 }
             }, 3000);
+        });
+
+        // Select All extracted questions button
+        document.getElementById('select-all-extracted-btn').addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.extracted-question-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+            });
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification(`✅ Selected all ${checkboxes.length} questions`, 'success');
+            }
+        });
+
+        // Select None extracted questions button
+        document.getElementById('select-none-extracted-btn').addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.extracted-question-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+            });
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('✅ Deselected all questions', 'info');
+            }
         });
 
         // Add all extracted questions to database
@@ -8463,10 +8524,29 @@ Artificial Intelligence has revolutionized..."></textarea>
             const standaloneContainer = document.getElementById('standalone-question-container');
             const parentChildContainer = document.getElementById('parent-child-question-container');
 
-            // Calculate display question number (excluding children from count)
-            let displayQuestionNum = 1;
-            let totalDisplayQuestions = 0;
+            // Calculate total scorable questions (questions with options that can earn marks)
+            // This includes: standalone questions AND child questions (sub-questions)
+            // This excludes: parent passages (they don't have options/marks directly)
+            let totalScorableQuestions = 0;
+            let currentScorableNum = 0;
             const processedParents = new Set();
+
+            for (let i = 0; i < currentExam.questions.length; i++) {
+                const q = currentExam.questions[i];
+                // A question is scorable if it has options (Option A exists and is not empty)
+                const hasOptions = q['Option A'] && q['Option A'].trim() !== '';
+
+                if (hasOptions) {
+                    totalScorableQuestions++;
+                    if (i <= currentQuestionIndex) {
+                        currentScorableNum++;
+                    }
+                }
+            }
+
+            // For display, still show the "group" number (parent-child as one visual unit)
+            let displayQuestionNum = 1;
+            let totalDisplayGroups = 0;
 
             for (let i = 0; i < currentExam.questions.length; i++) {
                 const q = currentExam.questions[i];
@@ -8474,7 +8554,7 @@ Artificial Intelligence has revolutionized..."></textarea>
                 const qIsChild = qHasParentLink || q.isSubQuestion || q['Is Sub Question'];
 
                 if (!qIsChild) {
-                    totalDisplayQuestions++;
+                    totalDisplayGroups++;
                     if (i < currentQuestionIndex) {
                         displayQuestionNum++;
                     }
@@ -8482,9 +8562,10 @@ Artificial Intelligence has revolutionized..."></textarea>
             }
 
             document.getElementById('current-q-num').textContent = displayQuestionNum;
-            document.getElementById('total-questions').textContent = totalDisplayQuestions;
+            // Show TOTAL SCORABLE questions (including sub-questions) for accurate marks count
+            document.getElementById('total-questions').textContent = totalScorableQuestions;
             document.getElementById('progress-num').textContent = displayQuestionNum;
-            document.getElementById('progress-total').textContent = totalDisplayQuestions;
+            document.getElementById('progress-total').textContent = totalDisplayGroups;
 
             if (isParentQuestion && childQuestions.length > 0) {
                 // Display parent-child group
