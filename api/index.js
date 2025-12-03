@@ -648,12 +648,13 @@ module.exports = async (req, res) => {
             const now = new Date();
 
             // Build base result fields (only use fields that exist in Airtable)
+            // Handle both uppercase and lowercase field names from frontend
             const resultFields = {
                 'Exam': resultData.examId ? [resultData.examId] : (examRecord ? [examRecord.id] : undefined),
-                'Name': resultData.name,
-                'Mobile': resultData.mobile,
+                'Name': resultData.Name || resultData.name,
+                'Mobile': resultData.Mobile || resultData.mobile,
                 'Score': totalScore,
-                'Answers': resultData.answers
+                'Answers': resultData.Answers || resultData.answers
             };
 
             // Try creating with different field combinations (handle optional fields gracefully)
