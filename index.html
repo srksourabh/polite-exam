@@ -8528,21 +8528,29 @@ Artificial Intelligence has revolutionized..."></textarea>
             // This includes: standalone questions AND child questions (sub-questions)
             // This excludes: parent passages (they don't have options/marks directly)
             let totalScorableQuestions = 0;
-            let currentScorableNum = 0;
+            let currentScorableStartNum = 0; // Starting scorable question number for current group/question
             const processedParents = new Set();
 
+            // First pass: count total scorable questions
             for (let i = 0; i < currentExam.questions.length; i++) {
                 const q = currentExam.questions[i];
                 // A question is scorable if it has options (Option A exists and is not empty)
                 const hasOptions = q['Option A'] && q['Option A'].trim() !== '';
-
                 if (hasOptions) {
                     totalScorableQuestions++;
-                    if (i <= currentQuestionIndex) {
-                        currentScorableNum++;
-                    }
                 }
             }
+
+            // Second pass: calculate starting scorable number for current question
+            let scorableCount = 0;
+            for (let i = 0; i < currentQuestionIndex; i++) {
+                const q = currentExam.questions[i];
+                const hasOptions = q['Option A'] && q['Option A'].trim() !== '';
+                if (hasOptions) {
+                    scorableCount++;
+                }
+            }
+            currentScorableStartNum = scorableCount + 1;
 
             // For display, still show the "group" number (parent-child as one visual unit)
             let displayQuestionNum = 1;
@@ -8561,22 +8569,40 @@ Artificial Intelligence has revolutionized..."></textarea>
                 }
             }
 
-            document.getElementById('current-q-num').textContent = displayQuestionNum;
-            // Show TOTAL SCORABLE questions (including sub-questions) for accurate marks count
-            document.getElementById('total-questions').textContent = totalScorableQuestions;
-            document.getElementById('progress-num').textContent = displayQuestionNum;
-            document.getElementById('progress-total').textContent = totalDisplayGroups;
+            // Update question number display based on type
+            const questionNumberDisplay = document.querySelector('#standalone-question-container .question-number');
+            const progressDisplay = document.querySelector('.progress');
+
+            if (isParentQuestion && childQuestions.length > 0) {
+                // Parent-child group: show range "Question X to Y of Z"
+                const endNum = currentScorableStartNum + childQuestions.length - 1;
+                if (questionNumberDisplay) {
+                    questionNumberDisplay.innerHTML = `Question <span id="current-q-num">${currentScorableStartNum} to ${endNum}</span> of <span id="total-questions">${totalScorableQuestions}</span>`;
+                }
+                if (progressDisplay) {
+                    progressDisplay.innerHTML = `Question <span id="progress-num">${displayQuestionNum}</span> of <span id="progress-total">${totalDisplayGroups}</span> groups`;
+                }
+            } else {
+                // Standalone: show "Question X of Z"
+                if (questionNumberDisplay) {
+                    questionNumberDisplay.innerHTML = `Question <span id="current-q-num">${currentScorableStartNum}</span> of <span id="total-questions">${totalScorableQuestions}</span>`;
+                }
+                if (progressDisplay) {
+                    progressDisplay.innerHTML = `Question <span id="progress-num">${currentScorableStartNum}</span> of <span id="progress-total">${totalScorableQuestions}</span>`;
+                }
+            }
 
             if (isParentQuestion && childQuestions.length > 0) {
                 // Display parent-child group
                 standaloneContainer.style.display = 'none';
                 parentChildContainer.style.display = 'block';
 
+                const endScorableNum = currentScorableStartNum + childQuestions.length - 1;
                 let groupHtml = `
                     <div class="question-container" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e5f5 100%); border: 2px solid #9c27b0; max-height: 65vh; overflow-y: auto;">
                         <!-- Group Header -->
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; position: sticky; top: 0; background: #f3e5f5; padding: 10px; margin: -20px -20px 15px -20px; border-radius: 10px 10px 0 0;">
-                            <div class="question-tag" style="background: #9c27b0;">📋 Question ${displayQuestionNum} - Parent-Child Group</div>
+                            <div class="question-tag" style="background: #9c27b0;">📋 Question ${currentScorableStartNum} to ${endScorableNum} of ${totalScorableQuestions}</div>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                 <span style="background: #9c27b0; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 600;">${childQuestions.length} Sub-Questions</span>
                                 <span style="background: #4caf50; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 600;">Max: ${childQuestions.length} marks</span>

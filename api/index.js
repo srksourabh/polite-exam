@@ -619,13 +619,20 @@ module.exports = async (req, res) => {
 
             // Build base result fields (only use fields that exist in Airtable)
             // Handle both uppercase and lowercase field names from frontend
+            // Ensure Exam link is set if we have an exam record
+            const examLink = resultData.examId ? [resultData.examId] : (examRecord ? [examRecord.id] : undefined);
+
             const resultFields = {
-                'Exam': resultData.examId ? [resultData.examId] : (examRecord ? [examRecord.id] : undefined),
+                'Exam': examLink,
+                'Exam Code': examCode, // Store exam code as backup for retrieval
                 'Name': resultData.Name || resultData.name,
                 'Mobile': resultData.Mobile || resultData.mobile,
                 'Score': totalScore,
                 'Answers': resultData.Answers || resultData.answers
             };
+
+            // Log for debugging
+            console.log(`Creating result for exam: ${examCode}, examId: ${resultData.examId}, examRecordId: ${examRecord?.id}, examLink: ${JSON.stringify(examLink)}`);
 
             // Try creating with different field combinations (handle optional fields gracefully)
             let record;
@@ -694,10 +701,52 @@ module.exports = async (req, res) => {
 
                 const examRecordId = examRecords[0].id;
 
-                // Get all results linked to this exam
-                const resultRecords = await base(RESULTS_TABLE).select({
-                    filterByFormula: `FIND('${examRecordId}', ARRAYJOIN({Exam}, ',')) > 0`
-                }).all();
+                // Get all results - try multiple approaches to handle different Airtable configurations
+                let resultRecords = [];
+
+                // Method 1: Try with linked record field 'Exam'
+                try {
+                    resultRecords = await base(RESULTS_TABLE).select({
+                        filterByFormula: `FIND('${examRecordId}', ARRAYJOIN({Exam}, ',')) > 0`
+                    }).all();
+                } catch (linkedFieldError) {
+                    console.log('Linked field query failed, trying alternative methods');
+                }
+
+                // Method 2: If no results from linked field, try 'Exam Code' text field
+                if (resultRecords.length === 0) {
+                    try {
+                        const altResults = await base(RESULTS_TABLE).select({
+                            filterByFormula: `{Exam Code} = '${sanitizeForFormula(examCode)}'`
+                        }).all();
+                        if (altResults.length > 0) {
+                            resultRecords = altResults;
+                        }
+                    } catch (textFieldError) {
+                        console.log('Exam Code text field not found');
+                    }
+                }
+
+                // Method 3: If still no results, fetch all and filter client-side
+                if (resultRecords.length === 0) {
+                    try {
+                        const allResults = await base(RESULTS_TABLE).select().all();
+                        resultRecords = allResults.filter(record => {
+                            const examField = record.fields['Exam'];
+                            const examCodeField = record.fields['Exam Code'] || record.fields['examCode'];
+                            // Check if linked to this exam or has matching exam code
+                            if (Array.isArray(examField) && examField.includes(examRecordId)) {
+                                return true;
+                            }
+                            if (examCodeField === examCode) {
+                                return true;
+                            }
+                            return false;
+                        });
+                    } catch (fallbackError) {
+                        console.log('Fallback query failed:', fallbackError.message);
+                    }
+                }
 
                 const results = resultRecords.map(record => ({
                     id: record.id,
