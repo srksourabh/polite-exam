@@ -8036,10 +8036,15 @@ Artificial Intelligence has revolutionized..."></textarea>
         });
 
         // Option selection - handle clicks on option div, radio button, or child elements
+        // ONLY for standalone questions (NOT for child options in parent-child groups)
         document.addEventListener('click', function(e) {
             // Find the parent option element
             const optionElement = e.target.closest('.option');
             if (optionElement && optionElement.closest('#exam-screen')) {
+                // Skip if this is a child option (handled separately in loadQuestion)
+                if (optionElement.classList.contains('child-option')) {
+                    return;
+                }
                 const optionIndex = parseInt(optionElement.getAttribute('data-index'));
                 selectOption(optionIndex);
             }
