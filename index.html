@@ -6337,9 +6337,26 @@ Artificial Intelligence has revolutionized..."></textarea>
                     return;
                 }
 
-                // Get selected questions
+                // Get selected questions - include both parent and child question IDs
                 const checkboxes = document.querySelectorAll('.question-checkbox:checked');
-                const selectedQuestions = Array.from(checkboxes).map(cb => cb.value);
+                const selectedQuestions = [];
+
+                // For each selected checkbox, add the question ID and any child IDs
+                checkboxes.forEach(cb => {
+                    // Add the parent/standalone question ID
+                    selectedQuestions.push(cb.value);
+
+                    // If this is a parent-child group, also add child question IDs
+                    const childIds = cb.dataset.childIds;
+                    if (childIds && childIds.trim()) {
+                        const childIdArray = childIds.split(',').filter(id => id.trim());
+                        childIdArray.forEach(childId => {
+                            if (!selectedQuestions.includes(childId)) {
+                                selectedQuestions.push(childId);
+                            }
+                        });
+                    }
+                });
 
                 // Count total questions including sub-questions (for minimum validation)
                 let totalQuestionCount = 0;
