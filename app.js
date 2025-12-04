@@ -6074,7 +6074,7 @@ document.getElementById('generate-ai-btn').addEventListener('click', async funct
     }
 });
 
-// Display standalone question
+// Display standalone question with KaTeX rendering
 function displayStandaloneQuestion(qData) {
     // Track this question
     previouslyGeneratedQuestions.unshift(qData.question.substring(0, 100));
@@ -6082,13 +6082,14 @@ function displayStandaloneQuestion(qData) {
         previouslyGeneratedQuestions = previouslyGeneratedQuestions.slice(0, MAX_PREVIOUS_QUESTIONS);
     }
 
-    document.getElementById('ai-question-text').textContent = qData.question;
-    document.getElementById('ai-option-a').textContent = qData.optionA;
-    document.getElementById('ai-option-b').textContent = qData.optionB;
-    document.getElementById('ai-option-c').textContent = qData.optionC;
-    document.getElementById('ai-option-d').textContent = qData.optionD;
+    // Use renderRichContent for KaTeX/LaTeX rendering
+    document.getElementById('ai-question-text').innerHTML = renderRichContent(qData.question);
+    document.getElementById('ai-option-a').innerHTML = renderRichContent(qData.optionA);
+    document.getElementById('ai-option-b').innerHTML = renderRichContent(qData.optionB);
+    document.getElementById('ai-option-c').innerHTML = renderRichContent(qData.optionC);
+    document.getElementById('ai-option-d').innerHTML = renderRichContent(qData.optionD);
     document.getElementById('ai-correct-answer').textContent = qData.correct;
-    document.getElementById('ai-explanation').textContent = qData.explanation;
+    document.getElementById('ai-explanation').innerHTML = renderRichContent(qData.explanation);
     document.getElementById('ai-display-subject').textContent = qData.subject;
     document.getElementById('ai-display-difficulty').textContent = qData.difficulty.toUpperCase();
 
@@ -6104,7 +6105,7 @@ function displayStandaloneQuestion(qData) {
     document.getElementById('ai-parent-child-result').classList.add('hidden');
 }
 
-// Display parent-child questions
+// Display parent-child questions with KaTeX rendering
 function displayParentChildQuestion(qData) {
     // Store for later saving
     aiGeneratedParentChild = qData;
@@ -6113,10 +6114,10 @@ function displayParentChildQuestion(qData) {
     document.getElementById('ai-pc-subject').textContent = qData.subject;
     document.getElementById('ai-pc-difficulty').textContent = qData.difficulty.toUpperCase();
 
-    // Display passage
-    document.getElementById('ai-pc-passage').textContent = qData.mainQuestionText;
+    // Display passage with KaTeX rendering
+    document.getElementById('ai-pc-passage').innerHTML = renderRichContent(qData.mainQuestionText);
 
-    // Display sub-questions
+    // Display sub-questions with KaTeX rendering
     const container = document.getElementById('ai-pc-subquestions-container');
     container.innerHTML = '';
 
@@ -6125,15 +6126,15 @@ function displayParentChildQuestion(qData) {
             const sqHtml = `
                 <div style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #dee2e6;">
                     <h5 style="margin: 0 0 10px 0; color: #495057;">Sub-Question ${idx + 1}:</h5>
-                    <p style="font-weight: 500; margin-bottom: 10px;">${sq.question}</p>
+                    <p style="font-weight: 500; margin-bottom: 10px;">${renderRichContent(sq.question)}</p>
                     <div style="margin-left: 20px; margin-bottom: 10px;">
-                        <div>A) ${sq.optionA}</div>
-                        <div>B) ${sq.optionB}</div>
-                        <div>C) ${sq.optionC}</div>
-                        <div>D) ${sq.optionD}</div>
+                        <div>A) ${renderRichContent(sq.optionA)}</div>
+                        <div>B) ${renderRichContent(sq.optionB)}</div>
+                        <div>C) ${renderRichContent(sq.optionC)}</div>
+                        <div>D) ${renderRichContent(sq.optionD)}</div>
                     </div>
                     <div style="background: #e8f5e9; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem;">
-                        <strong>Answer:</strong> ${sq.correct} | <strong>Explanation:</strong> ${sq.explanation || 'N/A'}
+                        <strong>Answer:</strong> ${sq.correct} | <strong>Explanation:</strong> ${renderRichContent(sq.explanation || 'N/A')}
                     </div>
                 </div>
             `;
