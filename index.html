@@ -991,21 +991,40 @@ Artificial Intelligence has revolutionized..."></textarea>
                     <div class="form-group">
                         <label>Difficulty Level</label>
                         <select id="ai-difficulty">
-                            <option value="easy">Easy</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="hard">Hard</option>
+                            <option value="easy">Easy (Railway Group D, SSC MTS)</option>
+                            <option value="medium" selected>Medium (Bank Clerk, SSC CHSL)</option>
+                            <option value="hard">Hard (Bank PO, SSC CGL)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Question Format</label>
+                        <select id="ai-question-format">
+                            <option value="standalone">Standalone (Single Question)</option>
+                            <option value="parent-child">Parent-Child (Passage + Sub-Questions)</option>
+                        </select>
+                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">💡 Parent-Child format creates a passage/context with multiple related questions (like Reading Comprehension, Data Interpretation)</p>
+                    </div>
+
+                    <div class="form-group" id="sub-questions-count-group" style="display: none;">
+                        <label>Number of Sub-Questions</label>
+                        <select id="ai-sub-questions-count">
+                            <option value="3" selected>3 Questions</option>
+                            <option value="4">4 Questions</option>
+                            <option value="5">5 Questions</option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label>Custom Prompt (Optional)</label>
-                        <textarea id="ai-custom-prompt" rows="3" placeholder="Example: Generate 5 questions for upcoming Railway Clerk exam focusing on quantitative aptitude&#10;OR: Generate 10 questions for Banking official recruitment exam on current affairs&#10;&#10;Leave empty to auto-generate based on subject and difficulty"></textarea>
-                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">💡 Add specific instructions like exam type (Railway, Banking, SSC), topic focus, or question count</p>
+                        <textarea id="ai-custom-prompt" rows="3" placeholder="Example: Generate questions for Railway Clerk exam on quantitative aptitude&#10;OR: Generate reading comprehension passage about Indian economy&#10;&#10;Leave empty to auto-generate based on subject and difficulty"></textarea>
+                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">💡 Add specific instructions like exam type (Railway, Banking, SSC), topic focus</p>
                     </div>
 
                     <button class="ai-btn" id="generate-ai-btn">✨ Generate Question with AI</button>
                     <div class="error" id="ai-error"></div>
                     
+                    <!-- Standalone Question Result -->
                     <div id="ai-result-container" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #e0e0e0;">
                         <h4 style="color: var(--primary); margin-bottom: 10px;">AI Generated Question</h4>
                         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -1022,13 +1041,39 @@ Artificial Intelligence has revolutionized..."></textarea>
                         </div>
 
                         <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin: 15px 0;">
-                            <strong>✓ Correct Answer:</strong> <span id="ai-correct-answer"></span><br>
-                            <strong>💡 Explanation:</strong> <span id="ai-explanation"></span>
+                            <strong>Correct Answer:</strong> <span id="ai-correct-answer"></span><br>
+                            <strong>Explanation:</strong> <span id="ai-explanation"></span>
                         </div>
 
                         <div style="display: flex; gap: 15px; margin-top: 20px;">
-                            <button class="success-btn" style="flex: 1;" id="accept-ai-btn">✅ Accept & Add to Bank</button>
-                            <button class="admin-btn" style="flex: 1;" id="regenerate-ai-btn">🔄 Generate New Question</button>
+                            <button class="success-btn" style="flex: 1;" id="accept-ai-btn">Accept & Add to Bank</button>
+                            <button class="admin-btn" style="flex: 1;" id="regenerate-ai-btn">Generate New Question</button>
+                        </div>
+                    </div>
+
+                    <!-- Parent-Child Question Result -->
+                    <div id="ai-parent-child-result" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 2px solid #17a2b8;">
+                        <h4 style="color: #0c5460; margin-bottom: 10px;">AI Generated Passage-Based Questions</h4>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <span class="question-tag" id="ai-pc-subject">Subject</span>
+                            <span class="question-tag" id="ai-pc-difficulty" style="background: #e3f2fd;">Difficulty</span>
+                            <span class="question-tag" style="background: #d1ecf1; color: #0c5460;">Parent-Child</span>
+                        </div>
+
+                        <!-- Main Passage -->
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
+                            <h5 style="margin: 0 0 10px 0; color: #0c5460;">Main Passage / Context:</h5>
+                            <div id="ai-pc-passage" style="line-height: 1.6; white-space: pre-wrap;"></div>
+                        </div>
+
+                        <!-- Sub Questions Container -->
+                        <div id="ai-pc-subquestions-container">
+                            <!-- Sub-questions will be rendered here by JavaScript -->
+                        </div>
+
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <button class="success-btn" style="flex: 1;" id="accept-ai-pc-btn">Accept & Add All to Bank</button>
+                            <button class="admin-btn" style="flex: 1;" id="regenerate-ai-pc-btn">Generate New Set</button>
                         </div>
                     </div>
                 </div>
