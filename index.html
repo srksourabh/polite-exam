@@ -1275,6 +1275,195 @@
         .remove-child-btn:hover {
             background: #c82333;
         }
+
+        /* =====================================================
+           RICH CONTENT STYLES - Math, Images, Graphs
+           ===================================================== */
+
+        /* Question content container for rich content */
+        .rich-content {
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+
+        /* Math expressions styling */
+        .rich-content .katex {
+            font-size: 1.1em;
+        }
+
+        .rich-content .katex-display {
+            margin: 15px 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 10px 0;
+        }
+
+        /* Inline math */
+        .rich-content .katex-inline {
+            padding: 0 2px;
+        }
+
+        /* Question images */
+        .question-image-container {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .question-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .question-image:hover {
+            transform: scale(1.02);
+        }
+
+        /* Image lightbox for full view */
+        .image-lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .image-lightbox.active {
+            display: flex;
+        }
+
+        .image-lightbox img {
+            max-width: 95%;
+            max-height: 95%;
+            border-radius: 8px;
+        }
+
+        .image-lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+            z-index: 10001;
+        }
+
+        /* Graph container */
+        .graph-container {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .graph-container canvas {
+            max-width: 100%;
+            max-height: 350px;
+        }
+
+        .graph-title {
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        /* Option content with math support */
+        .option .rich-content {
+            display: inline;
+            font-size: 1rem;
+        }
+
+        .option .rich-content .katex {
+            font-size: 1em;
+        }
+
+        /* Table styling for questions */
+        .rich-content table {
+            border-collapse: collapse;
+            margin: 15px 0;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .rich-content th,
+        .rich-content td {
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        .rich-content th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .rich-content tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        /* Code blocks in questions */
+        .rich-content code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+        }
+
+        .rich-content pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .rich-content pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* List styling */
+        .rich-content ul,
+        .rich-content ol {
+            margin: 10px 0 10px 25px;
+        }
+
+        .rich-content li {
+            margin: 5px 0;
+        }
+
+        /* Responsive math */
+        @media (max-width: 600px) {
+            .rich-content .katex-display {
+                font-size: 0.9em;
+            }
+
+            .question-image {
+                max-height: 250px;
+            }
+
+            .graph-container canvas {
+                max-height: 250px;
+            }
+        }
     </style>
 
     <!-- Flatpickr CSS -->
@@ -1282,6 +1471,14 @@
 
     <!-- Flatpickr JS -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <!-- KaTeX for Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <!-- Chart.js for Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <script src="api-integration.js"></script>
 </head>
@@ -2385,6 +2582,12 @@ Artificial Intelligence has revolutionized..."></textarea>
     <!-- Notification Container -->
     <div class="notification-container" id="notification-container"></div>
 
+    <!-- Image Lightbox for full-size image viewing -->
+    <div id="image-lightbox" class="image-lightbox" onclick="closeLightbox()">
+        <span class="image-lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img id="lightbox-image" src="" alt="Full size image">
+    </div>
+
     <!-- OCR Review Modal -->
     <div id="ocr-review-modal" class="ocr-review-modal">
         <div class="ocr-review-content">
@@ -2416,6 +2619,406 @@ Artificial Intelligence has revolutionized..."></textarea>
         let extractedQuestions = [];
         let candidateDetailedAnswers = null; // Store candidate's detailed results for viewing
         let currentScreen = 'hero-landing'; // Track current screen for navigation
+
+        // =====================================================
+        // RICH CONTENT RENDERING - Math, Images, Graphs
+        // =====================================================
+        /**
+         * RICH CONTENT SYNTAX GUIDE
+         * =========================
+         *
+         * The following syntax can be used in question text and options:
+         *
+         * 1. MATH EXPRESSIONS (LaTeX/KaTeX)
+         *    - Inline math: $x^2 + y^2 = z^2$ or \(x^2 + y^2 = z^2\)
+         *    - Display math (centered): $$\frac{-b \pm \sqrt{b^2-4ac}}{2a}$$ or \[\frac{-b \pm \sqrt{b^2-4ac}}{2a}\]
+         *    - Examples: $\sqrt{2}$, $\pi r^2$, $\sum_{i=1}^{n} i$, $\int_0^1 x dx$
+         *
+         * 2. IMAGES
+         *    - Syntax: [img:URL] or [image:URL]
+         *    - Example: [img:https://example.com/diagram.png]
+         *    - Images are clickable to view full size
+         *
+         * 3. GRAPHS (Chart.js)
+         *    - Simple format: [graph:type:label1,value1;label2,value2;...]
+         *    - Types: line, bar, pie, doughnut
+         *    - Example: [graph:bar:Jan,10;Feb,20;Mar,15;Apr,25]
+         *    - Example: [graph:pie:Correct,75;Incorrect,20;Skipped,5]
+         *
+         * 4. TABLES
+         *    - Syntax: [table:header1,header2|row1col1,row1col2|row2col1,row2col2]
+         *    - Example: [table:Name,Score|Alice,85|Bob,92|Charlie,78]
+         *
+         * 5. AIRTABLE FIELD SUPPORT
+         *    - Store the raw syntax (e.g., "$x^2$" or "[img:URL]") directly in Airtable fields
+         *    - Question, Option A-D, and Main Question Text fields all support rich content
+         *    - No need for special field types - regular text fields work fine
+         */
+
+        /**
+         * Renders rich content including LaTeX math, images, and graphs
+         * @param {string} content - The content to render
+         * @param {HTMLElement} element - The element to render into
+         * @param {boolean} isOption - Whether this is an option (smaller rendering)
+         */
+        function renderRichContent(content, element, isOption = false) {
+            if (!content || !element) return;
+
+            // Create a container with rich-content class
+            element.innerHTML = '';
+            const container = document.createElement('div');
+            container.className = 'rich-content';
+
+            // Process content step by step
+            let processedContent = escapeHtmlForRichContent(content);
+
+            // Extract and preserve image placeholders
+            const imagePlaceholders = [];
+            processedContent = processedContent.replace(/\[(?:img|image):([^\]]+)\]/gi, (match, url) => {
+                const placeholder = `__IMAGE_${imagePlaceholders.length}__`;
+                imagePlaceholders.push(url.trim());
+                return placeholder;
+            });
+
+            // Extract and preserve graph placeholders
+            const graphPlaceholders = [];
+            processedContent = processedContent.replace(/\[graph:([^\]]+)\]/gi, (match, graphData) => {
+                const placeholder = `__GRAPH_${graphPlaceholders.length}__`;
+                graphPlaceholders.push(graphData.trim());
+                return placeholder;
+            });
+
+            // Extract and preserve table placeholders
+            const tablePlaceholders = [];
+            processedContent = processedContent.replace(/\[table:([^\]]+)\]/gi, (match, tableData) => {
+                const placeholder = `__TABLE_${tablePlaceholders.length}__`;
+                tablePlaceholders.push(tableData.trim());
+                return placeholder;
+            });
+
+            // Convert newlines to <br> for proper display
+            processedContent = processedContent.replace(/\n/g, '<br>');
+
+            // Set the initial content
+            container.innerHTML = processedContent;
+
+            // Replace image placeholders with actual images
+            imagePlaceholders.forEach((url, index) => {
+                const placeholder = `__IMAGE_${index}__`;
+                const imgHtml = createImageHtml(url, isOption);
+                container.innerHTML = container.innerHTML.replace(placeholder, imgHtml);
+            });
+
+            // Replace table placeholders with actual tables
+            tablePlaceholders.forEach((tableData, index) => {
+                const placeholder = `__TABLE_${index}__`;
+                const tableHtml = createTableHtml(tableData);
+                container.innerHTML = container.innerHTML.replace(placeholder, tableHtml);
+            });
+
+            element.appendChild(container);
+
+            // Render LaTeX math expressions using KaTeX
+            if (typeof renderMathInElement !== 'undefined') {
+                try {
+                    renderMathInElement(container, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false},
+                            {left: '\\[', right: '\\]', display: true},
+                            {left: '\\(', right: '\\)', display: false}
+                        ],
+                        throwOnError: false,
+                        strict: false
+                    });
+                } catch (e) {
+                    console.warn('KaTeX rendering error:', e);
+                }
+            }
+
+            // Render graphs
+            graphPlaceholders.forEach((graphData, index) => {
+                const placeholder = `__GRAPH_${index}__`;
+                const placeholderElement = container.querySelector(`[data-graph-placeholder="${index}"]`);
+                if (!placeholderElement) {
+                    // Find the placeholder text and replace with graph container
+                    const graphContainer = document.createElement('div');
+                    graphContainer.className = 'graph-container';
+                    graphContainer.id = `graph-${Date.now()}-${index}`;
+                    const canvas = document.createElement('canvas');
+                    graphContainer.appendChild(canvas);
+
+                    // Replace placeholder text
+                    container.innerHTML = container.innerHTML.replace(placeholder, graphContainer.outerHTML);
+
+                    // Now render the graph
+                    setTimeout(() => {
+                        const actualContainer = element.querySelector(`#graph-${graphContainer.id.split('-')[1]}-${index}`) ||
+                                               element.querySelectorAll('.graph-container')[index];
+                        if (actualContainer) {
+                            renderGraph(actualContainer.querySelector('canvas'), graphData);
+                        }
+                    }, 100);
+                }
+            });
+
+            // Add click handlers for images
+            container.querySelectorAll('.question-image').forEach(img => {
+                img.addEventListener('click', () => openLightbox(img.src));
+            });
+        }
+
+        /**
+         * Escape HTML but preserve math delimiters and special syntax
+         */
+        function escapeHtmlForRichContent(text) {
+            if (typeof text !== 'string') return String(text || '');
+
+            // Don't escape math delimiters
+            const mathBlocks = [];
+
+            // Preserve display math $$...$$
+            text = text.replace(/\$\$([^$]+)\$\$/g, (match) => {
+                mathBlocks.push(match);
+                return `__MATH_${mathBlocks.length - 1}__`;
+            });
+
+            // Preserve inline math $...$
+            text = text.replace(/\$([^$]+)\$/g, (match) => {
+                mathBlocks.push(match);
+                return `__MATH_${mathBlocks.length - 1}__`;
+            });
+
+            // Preserve \[...\] and \(...\)
+            text = text.replace(/\\\[([^\]]+)\\\]/g, (match) => {
+                mathBlocks.push(match);
+                return `__MATH_${mathBlocks.length - 1}__`;
+            });
+            text = text.replace(/\\\(([^)]+)\\\)/g, (match) => {
+                mathBlocks.push(match);
+                return `__MATH_${mathBlocks.length - 1}__`;
+            });
+
+            // Escape HTML
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            text = text.replace(/[&<>"']/g, (m) => map[m]);
+
+            // Restore math blocks
+            mathBlocks.forEach((block, index) => {
+                text = text.replace(`__MATH_${index}__`, block);
+            });
+
+            return text;
+        }
+
+        /**
+         * Create HTML for an image
+         */
+        function createImageHtml(url, isOption = false) {
+            const maxHeight = isOption ? '150px' : '400px';
+            return `
+                <div class="question-image-container">
+                    <img src="${escapeHtml(url)}"
+                         alt="Question image"
+                         class="question-image"
+                         style="max-height: ${maxHeight};"
+                         onclick="openLightbox('${escapeHtml(url)}')"
+                         onerror="this.parentElement.innerHTML='<span style=\\'color: #e74c3c;\\'>Image failed to load</span>'">
+                </div>
+            `;
+        }
+
+        /**
+         * Create HTML for a table
+         * Format: header1,header2|row1col1,row1col2|row2col1,row2col2
+         */
+        function createTableHtml(tableData) {
+            try {
+                const rows = tableData.split('|');
+                if (rows.length < 2) return `<span style="color: #e74c3c;">Invalid table format</span>`;
+
+                const headers = rows[0].split(',').map(h => h.trim());
+                let html = '<table><thead><tr>';
+                headers.forEach(h => {
+                    html += `<th>${escapeHtml(h)}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                for (let i = 1; i < rows.length; i++) {
+                    const cells = rows[i].split(',').map(c => c.trim());
+                    html += '<tr>';
+                    cells.forEach(cell => {
+                        html += `<td>${escapeHtml(cell)}</td>`;
+                    });
+                    html += '</tr>';
+                }
+                html += '</tbody></table>';
+                return html;
+            } catch (e) {
+                console.warn('Table parsing error:', e);
+                return `<span style="color: #e74c3c;">Table error</span>`;
+            }
+        }
+
+        /**
+         * Render a graph using Chart.js
+         * Format: type:label1,val1;label2,val2;... or type:JSON
+         */
+        function renderGraph(canvas, graphData) {
+            if (!canvas || typeof Chart === 'undefined') {
+                console.warn('Chart.js not available');
+                return;
+            }
+
+            try {
+                const parts = graphData.split(':');
+                const type = parts[0].toLowerCase().trim();
+                const dataStr = parts.slice(1).join(':');
+
+                let chartConfig;
+
+                // Try to parse as JSON first
+                try {
+                    const jsonData = JSON.parse(dataStr);
+                    chartConfig = {
+                        type: type,
+                        data: jsonData.data || jsonData,
+                        options: jsonData.options || {
+                            responsive: true,
+                            maintainAspectRatio: true
+                        }
+                    };
+                } catch {
+                    // Parse simple format: label1,val1;label2,val2;...
+                    const dataPoints = dataStr.split(';').map(point => {
+                        const [label, value] = point.split(',').map(s => s.trim());
+                        return { label, value: parseFloat(value) || 0 };
+                    });
+
+                    const labels = dataPoints.map(d => d.label);
+                    const values = dataPoints.map(d => d.value);
+
+                    const colors = [
+                        '#3498db', '#e74c3c', '#27ae60', '#f39c12',
+                        '#9b59b6', '#1abc9c', '#34495e', '#e67e22'
+                    ];
+
+                    chartConfig = {
+                        type: type === 'pie' || type === 'doughnut' ? type : (type === 'bar' ? 'bar' : 'line'),
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Data',
+                                data: values,
+                                backgroundColor: type === 'pie' || type === 'doughnut'
+                                    ? colors.slice(0, values.length)
+                                    : 'rgba(52, 152, 219, 0.6)',
+                                borderColor: type === 'pie' || type === 'doughnut'
+                                    ? colors.slice(0, values.length)
+                                    : '#3498db',
+                                borderWidth: 2,
+                                fill: type === 'line' ? false : true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    display: type === 'pie' || type === 'doughnut'
+                                }
+                            }
+                        }
+                    };
+                }
+
+                new Chart(canvas, chartConfig);
+            } catch (e) {
+                console.warn('Graph rendering error:', e);
+                canvas.parentElement.innerHTML = `<span style="color: #e74c3c;">Graph error: ${e.message}</span>`;
+            }
+        }
+
+        /**
+         * Open image in lightbox
+         */
+        function openLightbox(src) {
+            const lightbox = document.getElementById('image-lightbox');
+            const lightboxImg = document.getElementById('lightbox-image');
+            if (lightbox && lightboxImg) {
+                lightboxImg.src = src;
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        /**
+         * Close lightbox
+         */
+        function closeLightbox() {
+            const lightbox = document.getElementById('image-lightbox');
+            if (lightbox) {
+                lightbox.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        /**
+         * Helper function to render content and return HTML string
+         * Used for template literals where we need HTML string
+         */
+        function getRichContentHtml(content, isOption = false) {
+            const temp = document.createElement('div');
+            renderRichContent(content, temp, isOption);
+            return temp.innerHTML;
+        }
+
+        /**
+         * Process all rich content in a container after it's added to DOM
+         * Call this after setting innerHTML with rich content placeholders
+         */
+        function processRichContentInContainer(container) {
+            if (!container) return;
+
+            // Find all elements that need math rendering
+            if (typeof renderMathInElement !== 'undefined') {
+                try {
+                    renderMathInElement(container, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false},
+                            {left: '\\[', right: '\\]', display: true},
+                            {left: '\\(', right: '\\)', display: false}
+                        ],
+                        throwOnError: false,
+                        strict: false
+                    });
+                } catch (e) {
+                    console.warn('KaTeX rendering error:', e);
+                }
+            }
+
+            // Add click handlers for images
+            container.querySelectorAll('.question-image').forEach(img => {
+                if (!img.dataset.lightboxBound) {
+                    img.addEventListener('click', () => openLightbox(img.src));
+                    img.dataset.lightboxBound = 'true';
+                }
+            });
+        }
+
+        // Close lightbox with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
 
         // ========== HIERARCHICAL QUESTION AUTO-DETECTION ==========
         /**
@@ -3306,16 +3909,16 @@ Artificial Intelligence has revolutionized..."></textarea>
                                 ${typeLabel}
                                 <span class="question-tag" style="background: var(--secondary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">${q.subject}</span>
                             </div>
-                            <p style="margin-bottom: 10px; font-weight: 500;">${q.question}</p>`;
+                            <p class="rich-content" style="margin-bottom: 10px; font-weight: 500;">${escapeHtmlForRichContent(q.question)}</p>`;
 
                 // Only show options for non-passage questions
                 if (!isPassage) {
                     html += `
                             <div style="margin-left: 25px; margin-bottom: 8px;">
-                                <div>A) ${q.options ? q.options[0] : ''}</div>
-                                <div>B) ${q.options ? q.options[1] : ''}</div>
-                                <div>C) ${q.options ? q.options[2] : ''}</div>
-                                <div>D) ${q.options ? q.options[3] : ''}</div>
+                                <div class="rich-content">A) ${escapeHtmlForRichContent(q.options ? q.options[0] : '')}</div>
+                                <div class="rich-content">B) ${escapeHtmlForRichContent(q.options ? q.options[1] : '')}</div>
+                                <div class="rich-content">C) ${escapeHtmlForRichContent(q.options ? q.options[2] : '')}</div>
+                                <div class="rich-content">D) ${escapeHtmlForRichContent(q.options ? q.options[3] : '')}</div>
                             </div>
                             <div style="color: var(--success); font-weight: 500;">
                                 ✓ Correct Answer: ${q.correct >= 0 ? String.fromCharCode(65 + q.correct) : 'N/A'}
@@ -3334,6 +3937,9 @@ Artificial Intelligence has revolutionized..."></textarea>
             });
             html += '</div>';
             readyQuestions.innerHTML = html;
+
+            // Process rich content (render math expressions) in OCR review
+            processRichContentInContainer(readyQuestions);
 
             // Add hover effects with type-aware colors
             document.querySelectorAll('.extracted-question-item').forEach(item => {
@@ -4577,16 +5183,16 @@ Artificial Intelligence has revolutionized..."></textarea>
                     ${isMainPassage && !hasSubQuestions ? `<span style="background: #ff9800; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📖 Passage</span>` : ''}
                     ${!hasSubQuestions && !isMainPassage ? `<span style="background: #4caf50; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">⚖️ 1 mark</span>` : ''}
                 </div>
-                <p style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${q.Question || ''}</p>`;
+                <p class="rich-content" style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${escapeHtmlForRichContent(q.Question || '')}</p>`;
 
             // Only show options and correct answer for non-passage questions
             if (!isMainPassage) {
                 html += `
                 <div style="margin-left: 25px; margin-bottom: 8px;">
-                    <div style="margin: 5px 0;">A) ${q['Option A'] || ''}</div>
-                    <div style="margin: 5px 0;">B) ${q['Option B'] || ''}</div>
-                    <div style="margin: 5px 0;">C) ${q['Option C'] || ''}</div>
-                    <div style="margin: 5px 0;">D) ${q['Option D'] || ''}</div>
+                    <div class="rich-content" style="margin: 5px 0;">A) ${escapeHtmlForRichContent(q['Option A'] || '')}</div>
+                    <div class="rich-content" style="margin: 5px 0;">B) ${escapeHtmlForRichContent(q['Option B'] || '')}</div>
+                    <div class="rich-content" style="margin: 5px 0;">C) ${escapeHtmlForRichContent(q['Option C'] || '')}</div>
+                    <div class="rich-content" style="margin: 5px 0;">D) ${escapeHtmlForRichContent(q['Option D'] || '')}</div>
                 </div>
                 <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 8px; border-radius: 6px; display: inline-block;">
                     ✅ Correct Answer: ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}
@@ -4630,12 +5236,12 @@ Artificial Intelligence has revolutionized..."></textarea>
                             <span style="background: #ce93d8; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">${sq.Subject || q.Subject || 'Unknown'}</span>
                             <span style="background: #4caf50; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">+1 / -0.25</span>
                         </div>
-                        <p style="margin-bottom: 8px; font-weight: 500; font-size: 1rem;">${sq.Question || ''}</p>
+                        <p class="rich-content" style="margin-bottom: 8px; font-weight: 500; font-size: 1rem;">${escapeHtmlForRichContent(sq.Question || '')}</p>
                         <div style="margin-left: 10px; font-size: 0.95rem; background: white; padding: 10px; border-radius: 6px;">
-                            <div style="margin: 4px 0;">A) ${sq['Option A'] || ''}</div>
-                            <div style="margin: 4px 0;">B) ${sq['Option B'] || ''}</div>
-                            <div style="margin: 4px 0;">C) ${sq['Option C'] || ''}</div>
-                            <div style="margin: 4px 0;">D) ${sq['Option D'] || ''}</div>
+                            <div class="rich-content" style="margin: 4px 0;">A) ${escapeHtmlForRichContent(sq['Option A'] || '')}</div>
+                            <div class="rich-content" style="margin: 4px 0;">B) ${escapeHtmlForRichContent(sq['Option B'] || '')}</div>
+                            <div class="rich-content" style="margin: 4px 0;">C) ${escapeHtmlForRichContent(sq['Option C'] || '')}</div>
+                            <div class="rich-content" style="margin: 4px 0;">D) ${escapeHtmlForRichContent(sq['Option D'] || '')}</div>
                         </div>
                         <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 6px 10px; border-radius: 4px; display: inline-block; font-size: 0.9rem; margin-top: 8px;">
                             ✅ Correct: ${(sq.Correct || sq['Correct Answer'] || '').toString().toUpperCase()}
@@ -4697,6 +5303,9 @@ Artificial Intelligence has revolutionized..."></textarea>
 
                 questionsList.insertAdjacentHTML('beforeend', html);
                 displayedQuestionsCount = endIndex;
+
+                // Process rich content (render math expressions) in newly added questions
+                processRichContentInContainer(questionsList);
 
                 // Attach event listeners to new elements
                 attachQuestionEventListeners(startIndex, endIndex);
@@ -6888,7 +7497,7 @@ Artificial Intelligence has revolutionized..."></textarea>
                     }
                 });
 
-                // Helper function to render a single question's answer
+                // Helper function to render a single question's answer with rich content support
                 function renderQuestionAnswer(answer, qNumber, isChild = false) {
                     const isCorrect = answer.isCorrect;
                     const userAnswered = answer.userAnswer !== 'Not Answered';
@@ -6896,6 +7505,13 @@ Artificial Intelligence has revolutionized..."></textarea>
                     const correctAnswerLetter = answer.correctAnswer;
                     const bgColor = isCorrect ? '#e8f5e9' : (userAnswered ? '#ffebee' : '#f5f5f5');
                     const borderColor = isCorrect ? '#27ae60' : (userAnswered ? '#e74c3c' : '#95a5a6');
+
+                    // Use escapeHtmlForRichContent to preserve math delimiters
+                    const questionText = escapeHtmlForRichContent(answer.question || 'Question not available');
+                    const optA = escapeHtmlForRichContent(answer.optionA || '');
+                    const optB = escapeHtmlForRichContent(answer.optionB || '');
+                    const optC = escapeHtmlForRichContent(answer.optionC || '');
+                    const optD = escapeHtmlForRichContent(answer.optionD || '');
 
                     return `
                         <div style="background: ${bgColor}; border-left: 5px solid ${isChild ? '#9c27b0' : borderColor}; padding: 15px; margin-bottom: 10px; border-radius: 8px; ${isChild ? 'margin-left: 20px;' : ''}">
@@ -6909,21 +7525,21 @@ Artificial Intelligence has revolutionized..."></textarea>
                                     ${isCorrect ? '+1' : (userAnswered ? '-0.25' : '0')}
                                 </div>
                             </div>
-                            <div style="font-size: 1rem; line-height: 1.6; margin-bottom: 12px; color: #333; background: white; padding: 12px; border-radius: 6px;">
-                                ${answer.question || 'Question not available'}
+                            <div class="rich-content" style="font-size: 1rem; line-height: 1.6; margin-bottom: 12px; color: #333; background: white; padding: 12px; border-radius: 6px;">
+                                ${questionText}
                             </div>
                             <div style="display: grid; gap: 6px; font-size: 0.95rem;">
                                 <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'A' ? (correctAnswerLetter === 'A' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'A' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'A' ? '#27ae60' : (userAnswerLetter === 'A' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong>A:</strong> ${answer.optionA || ''} ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
+                                    <strong>A:</strong> <span class="rich-content">${optA}</span> ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
                                 <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'B' ? (correctAnswerLetter === 'B' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'B' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'B' ? '#27ae60' : (userAnswerLetter === 'B' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong>B:</strong> ${answer.optionB || ''} ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
+                                    <strong>B:</strong> <span class="rich-content">${optB}</span> ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
                                 <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'C' ? (correctAnswerLetter === 'C' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'C' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'C' ? '#27ae60' : (userAnswerLetter === 'C' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong>C:</strong> ${answer.optionC || ''} ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
+                                    <strong>C:</strong> <span class="rich-content">${optC}</span> ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
                                 <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'D' ? (correctAnswerLetter === 'D' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'D' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'D' ? '#27ae60' : (userAnswerLetter === 'D' ? '#e74c3c' : '#e0e0e0')};">
-                                    <strong>D:</strong> ${answer.optionD || ''} ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
+                                    <strong>D:</strong> <span class="rich-content">${optD}</span> ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                 </div>
                             </div>
                             <div style="margin-top: 10px; font-weight: 600; font-size: 0.9rem; text-align: right;">
@@ -6967,11 +7583,11 @@ Artificial Intelligence has revolutionized..."></textarea>
                                     </div>
                                 </div>
 
-                                <!-- Parent Passage -->
+                                <!-- Parent Passage with rich content support -->
                                 ${parent ? `
                                 <div style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                                     <div style="color: #9c27b0; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">📖 Passage/Context:</div>
-                                    <div style="color: #333; font-size: 1rem; line-height: 1.7;">${parent.question || 'Passage not available'}</div>
+                                    <div class="rich-content" style="color: #333; font-size: 1rem; line-height: 1.7;">${escapeHtmlForRichContent(parent.question || 'Passage not available')}</div>
                                 </div>
                                 ` : ''}
 
@@ -7009,6 +7625,10 @@ Artificial Intelligence has revolutionized..."></textarea>
 
             html += '</div>';
             content.innerHTML = html;
+
+            // Process rich content (render math expressions) in the results modal
+            processRichContentInContainer(content);
+
             modal.style.display = 'block';
         }
 
@@ -8632,6 +9252,7 @@ Artificial Intelligence has revolutionized..."></textarea>
                 parentChildContainer.style.display = 'block';
 
                 const endScorableNum = currentScorableStartNum + childQuestions.length - 1;
+                const passageContent = escapeHtmlForRichContent(question.Question || question['Main Question Text'] || '');
                 let groupHtml = `
                     <div class="question-container" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e5f5 100%); border: 2px solid #9c27b0; max-height: 65vh; overflow-y: auto;">
                         <!-- Group Header -->
@@ -8643,10 +9264,10 @@ Artificial Intelligence has revolutionized..."></textarea>
                             </div>
                         </div>
 
-                        <!-- Parent Passage -->
+                        <!-- Parent Passage with rich content support -->
                         <div style="background: white; border-left: 4px solid #9c27b0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                             <div style="color: #9c27b0; font-weight: 700; margin-bottom: 10px; font-size: 1rem;">📖 Passage / Context:</div>
-                            <div style="color: #333; font-size: 1.05rem; line-height: 1.8;">${question.Question || question['Main Question Text'] || ''}</div>
+                            <div class="rich-content" style="color: #333; font-size: 1.05rem; line-height: 1.8;">${passageContent}</div>
                         </div>
 
                         <!-- Sub-Questions -->
@@ -8669,6 +9290,13 @@ Artificial Intelligence has revolutionized..."></textarea>
                     const childNum = childIdx + 1;
                     const childId = child.ID || `${question.ID}.${childNum}`;
 
+                    // Escape content for rich rendering
+                    const childQuestionContent = escapeHtmlForRichContent(child.Question || '');
+                    const optAContent = escapeHtmlForRichContent(child['Option A'] || '');
+                    const optBContent = escapeHtmlForRichContent(child['Option B'] || '');
+                    const optCContent = escapeHtmlForRichContent(child['Option C'] || '');
+                    const optDContent = escapeHtmlForRichContent(child['Option D'] || '');
+
                     groupHtml += `
                         <div class="sub-question-block" style="background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #9c27b0;" data-child-index="${childIndex}">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -8680,27 +9308,27 @@ Artificial Intelligence has revolutionized..."></textarea>
                                     <span style="background: #ffebee; color: #c62828; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">-0.25</span>
                                 </div>
                             </div>
-                            <div style="font-size: 1rem; line-height: 1.6; margin-bottom: 12px; color: #333;">${child.Question || ''}</div>
+                            <div class="rich-content" style="font-size: 1rem; line-height: 1.6; margin-bottom: 12px; color: #333;">${childQuestionContent}</div>
                             <div class="options child-options" data-child-index="${childIndex}">
                                 <div class="option child-option ${childAnswer === 0 ? 'selected' : ''}" data-index="0" data-child-index="${childIndex}">
                                     <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 0 ? 'checked' : ''}>
                                     <span class="option-letter">A</span>
-                                    <span>${child['Option A'] || ''}</span>
+                                    <span class="rich-content">${optAContent}</span>
                                 </div>
                                 <div class="option child-option ${childAnswer === 1 ? 'selected' : ''}" data-index="1" data-child-index="${childIndex}">
                                     <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 1 ? 'checked' : ''}>
                                     <span class="option-letter">B</span>
-                                    <span>${child['Option B'] || ''}</span>
+                                    <span class="rich-content">${optBContent}</span>
                                 </div>
                                 <div class="option child-option ${childAnswer === 2 ? 'selected' : ''}" data-index="2" data-child-index="${childIndex}">
                                     <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 2 ? 'checked' : ''}>
                                     <span class="option-letter">C</span>
-                                    <span>${child['Option C'] || ''}</span>
+                                    <span class="rich-content">${optCContent}</span>
                                 </div>
                                 <div class="option child-option ${childAnswer === 3 ? 'selected' : ''}" data-index="3" data-child-index="${childIndex}">
                                     <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 3 ? 'checked' : ''}>
                                     <span class="option-letter">D</span>
-                                    <span>${child['Option D'] || ''}</span>
+                                    <span class="rich-content">${optDContent}</span>
                                 </div>
                             </div>
                         </div>
@@ -8709,6 +9337,9 @@ Artificial Intelligence has revolutionized..."></textarea>
 
                 groupHtml += `</div>`;
                 parentChildContainer.innerHTML = groupHtml;
+
+                // Process rich content (render math expressions) in the parent-child container
+                processRichContentInContainer(parentChildContainer);
 
                 // Add click handlers for child options
                 parentChildContainer.querySelectorAll('.child-option').forEach(option => {
@@ -8746,12 +9377,15 @@ Artificial Intelligence has revolutionized..."></textarea>
                 parentChildContainer.style.display = 'none';
 
                 document.getElementById('question-subject-display').textContent = question.Subject || 'Unknown';
-                document.getElementById('question-text-display').textContent = question.Question || 'Loading question...';
 
-                document.getElementById('option-a-display').textContent = question['Option A'] || 'Option A';
-                document.getElementById('option-b-display').textContent = question['Option B'] || 'Option B';
-                document.getElementById('option-c-display').textContent = question['Option C'] || 'Option C';
-                document.getElementById('option-d-display').textContent = question['Option D'] || 'Option D';
+                // Use rich content rendering for math, images, and graphs
+                renderRichContent(question.Question || 'Loading question...', document.getElementById('question-text-display'));
+
+                // Render options with rich content support
+                renderRichContent(question['Option A'] || 'Option A', document.getElementById('option-a-display'), true);
+                renderRichContent(question['Option B'] || 'Option B', document.getElementById('option-b-display'), true);
+                renderRichContent(question['Option C'] || 'Option C', document.getElementById('option-c-display'), true);
+                renderRichContent(question['Option D'] || 'Option D', document.getElementById('option-d-display'), true);
 
                 // Update selected option
                 const options = document.querySelectorAll('#standalone-options .option');
