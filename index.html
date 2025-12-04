@@ -1466,153 +1466,149 @@
     <div class="toast toast-end" id="notification-container"></div>
 
     <!-- Math Syntax Help Modal -->
-    <dialog id="math-syntax-modal" class="modal">
-        <div class="modal-box w-11/12 max-w-3xl">
-            <form method="dialog">
-                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-            </form>
-            <h3 class="font-bold text-lg mb-4">📐 Math & Image Syntax Guide</h3>
-            <div class="space-y-4">
-                <div class="collapse collapse-arrow bg-base-200">
-                    <input type="radio" name="syntax-accordion" checked="checked" />
-                    <div class="collapse-title font-medium">Easy Syntax (Recommended)</div>
-                    <div class="collapse-content">
-                        <ul class="list-disc list-inside space-y-1 text-sm">
-                            <li><code>2^2</code> → 2²</li>
-                            <li><code>x_1</code> → x₁</li>
-                            <li><code>sqrt(x)</code> → √x</li>
-                            <li><code>1/2</code> → ½</li>
-                            <li><code>pi</code> → π</li>
-                        </ul>
-                    </div>
+    <div id="math-syntax-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div class="card bg-base-100 w-11/12 max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="card-title">📐 Math & Image Syntax Guide</h3>
+                    <button id="close-math-syntax-modal" class="btn btn-sm btn-circle btn-ghost">✕</button>
                 </div>
-                <div class="collapse collapse-arrow bg-base-200">
-                    <input type="radio" name="syntax-accordion" />
-                    <div class="collapse-title font-medium">LaTeX Syntax</div>
-                    <div class="collapse-content">
-                        <ul class="list-disc list-inside space-y-1 text-sm">
-                            <li><code>$x^2$</code> → x²</li>
-                            <li><code>$\frac{a}{b}$</code> → fraction</li>
-                            <li><code>$\sqrt{x}$</code> → √x</li>
-                        </ul>
+                <div class="space-y-4">
+                    <div class="collapse collapse-arrow bg-base-200">
+                        <input type="radio" name="syntax-accordion" checked="checked" />
+                        <div class="collapse-title font-medium">Easy Syntax (Recommended)</div>
+                        <div class="collapse-content">
+                            <ul class="list-disc list-inside space-y-1 text-sm">
+                                <li><code>2^2</code> → 2²</li>
+                                <li><code>x_1</code> → x₁</li>
+                                <li><code>sqrt(x)</code> → √x</li>
+                                <li><code>1/2</code> → ½</li>
+                                <li><code>pi</code> → π</li>
+                            </ul>
+                        </div>
                     </div>
-                </div>
-                <div class="collapse collapse-arrow bg-base-200">
-                    <input type="radio" name="syntax-accordion" />
-                    <div class="collapse-title font-medium">Images</div>
-                    <div class="collapse-content">
-                        <p class="text-sm"><code>[img:URL]</code> - Insert an image</p>
+                    <div class="collapse collapse-arrow bg-base-200">
+                        <input type="radio" name="syntax-accordion" />
+                        <div class="collapse-title font-medium">LaTeX Syntax</div>
+                        <div class="collapse-content">
+                            <ul class="list-disc list-inside space-y-1 text-sm">
+                                <li><code>$x^2$</code> → x²</li>
+                                <li><code>$\frac{a}{b}$</code> → fraction</li>
+                                <li><code>$\sqrt{x}$</code> → √x</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="collapse collapse-arrow bg-base-200">
+                        <input type="radio" name="syntax-accordion" />
+                        <div class="collapse-title font-medium">Images</div>
+                        <div class="collapse-content">
+                            <p class="text-sm"><code>[img:URL]</code> - Insert an image</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <form method="dialog" class="modal-backdrop">
-            <button>close</button>
-        </form>
-    </dialog>
+    </div>
 
     <!-- OCR Review Modal -->
-    <dialog id="ocr-review-modal" class="modal">
-        <div class="modal-box w-11/12 max-w-5xl max-h-[90vh]">
-            <form method="dialog">
-                <button id="ocr-review-close" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-            </form>
-            <h3 class="font-bold text-lg mb-4">Review Extracted Questions</h3>
-            <div id="ocr-review-questions" class="space-y-4 max-h-[60vh] overflow-y-auto">
-                <!-- Questions will be rendered here -->
-            </div>
-            <div class="modal-action">
-                <button id="ocr-cancel-review" class="btn btn-ghost">Cancel</button>
-                <button id="ocr-save-reviewed" class="btn btn-success">Save & Continue</button>
+    <div id="ocr-review-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div class="card bg-base-100 w-11/12 max-w-5xl max-h-[90vh] overflow-y-auto">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="card-title">Review Extracted Questions</h3>
+                    <button id="ocr-review-close" class="btn btn-sm btn-circle btn-ghost">✕</button>
+                </div>
+                <div id="ocr-review-questions" class="space-y-4 max-h-[60vh] overflow-y-auto">
+                    <!-- Questions will be rendered here -->
+                </div>
+                <div class="flex justify-end gap-3 mt-4">
+                    <button id="ocr-cancel-review" class="btn btn-ghost">Cancel</button>
+                    <button id="ocr-save-reviewed" class="btn btn-success">Save & Continue</button>
+                </div>
             </div>
         </div>
-        <form method="dialog" class="modal-backdrop">
-            <button>close</button>
-        </form>
-    </dialog>
+    </div>
 
     <!-- Image Lightbox Modal -->
-    <dialog id="image-lightbox-modal" class="modal">
-        <div class="modal-box w-11/12 max-w-4xl p-2">
-            <form method="dialog">
-                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 z-10 bg-base-100">✕</button>
-            </form>
-            <img id="lightbox-image" src="" alt="Full size image" class="w-full h-auto rounded-lg">
+    <div id="image-lightbox" class="fixed inset-0 bg-black/80 z-[10000] hidden items-center justify-center p-4" onclick="closeLightbox()">
+        <div class="relative max-w-4xl max-h-[90vh]" onclick="event.stopPropagation()">
+            <button onclick="closeLightbox()" class="btn btn-sm btn-circle btn-ghost absolute -right-2 -top-2 z-10 bg-white text-black">✕</button>
+            <img id="lightbox-image" src="" alt="Full size image" class="max-w-full max-h-[85vh] object-contain rounded-lg">
         </div>
-        <form method="dialog" class="modal-backdrop">
-            <button>close</button>
-        </form>
-    </dialog>
+    </div>
+    <style>
+        #image-lightbox.active { display: flex !important; }
+    </style>
 
     <!-- Profile Modal -->
-    <dialog id="profile-modal" class="modal">
-        <div class="modal-box w-11/12 max-w-md">
-            <form method="dialog">
-                <button id="close-profile-modal" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-            </form>
-            <h3 class="font-bold text-lg mb-4">Edit Profile</h3>
+    <div id="edit-profile-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div class="card bg-base-100 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="card-title">Edit Profile</h3>
+                    <button id="close-profile-modal" class="btn btn-sm btn-circle btn-ghost">✕</button>
+                </div>
 
-            <div class="flex flex-col items-center mb-6">
-                <div class="avatar placeholder mb-4">
-                    <div class="bg-primary text-primary-content rounded-full w-24">
-                        <img id="modal-profile-image" src="" alt="Profile" class="hidden">
-                        <span id="modal-profile-initial" class="text-3xl">U</span>
+                <div class="flex flex-col items-center mb-6">
+                    <div class="avatar placeholder mb-4">
+                        <div class="bg-primary text-primary-content rounded-full w-24" id="profile-image-display">
+                            <img id="modal-profile-image" src="" alt="Profile" class="hidden">
+                            <span id="modal-profile-initial" class="text-3xl">U</span>
+                        </div>
+                    </div>
+                    <label for="profile-image-input" class="btn btn-sm btn-outline">
+                        Change Photo
+                    </label>
+                    <input type="file" id="profile-image-input" accept="image/*" class="hidden">
+                </div>
+
+                <div class="form-control mb-3">
+                    <label class="label"><span class="label-text font-medium">Name</span></label>
+                    <input type="text" id="edit-profile-name" class="input input-bordered" placeholder="Your name">
+                </div>
+
+                <div class="form-control mb-3">
+                    <label class="label">
+                        <span class="label-text font-medium">Mobile</span>
+                        <a href="#" id="edit-mobile-link" class="link link-primary text-sm">Edit</a>
+                    </label>
+                    <input type="tel" id="edit-profile-mobile" class="input input-bordered" placeholder="Mobile number">
+                </div>
+
+                <div class="form-control mb-4">
+                    <label class="label"><span class="label-text font-medium">Email</span></label>
+                    <input type="email" id="edit-profile-email" class="input input-bordered" placeholder="Email address" disabled>
+                </div>
+
+                <div class="flex gap-3 mb-4">
+                    <button id="save-profile-btn" class="btn btn-primary flex-1">Save Changes</button>
+                </div>
+
+                <div class="divider">Password</div>
+
+                <div id="change-password-section">
+                    <button id="change-password-btn" class="btn btn-outline w-full">Change Password</button>
+                </div>
+
+                <div id="password-change-form" class="hidden space-y-3 mt-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-medium">Current Password</span></label>
+                        <input type="password" id="current-password" class="input input-bordered" placeholder="Current password">
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-medium">New Password</span></label>
+                        <input type="password" id="new-password" class="input input-bordered" placeholder="New password">
+                    </div>
+                    <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Confirm Password</span></label>
+                            <input type="password" id="confirm-new-password" class="input input-bordered" placeholder="Confirm new password">
+                        </div>
+                        <button id="save-password-btn" class="btn btn-success w-full mt-3">Update Password</button>
                     </div>
                 </div>
-                <label for="profile-image-input" class="btn btn-sm btn-outline">
-                    Change Photo
-                </label>
-                <input type="file" id="profile-image-input" accept="image/*" class="hidden">
-            </div>
-
-            <div class="form-control mb-3">
-                <label class="label"><span class="label-text font-medium">Name</span></label>
-                <input type="text" id="profile-name-input" class="input input-bordered" placeholder="Your name">
-            </div>
-
-            <div class="form-control mb-3">
-                <label class="label">
-                    <span class="label-text font-medium">Mobile</span>
-                    <a href="#" id="edit-mobile-link" class="link link-primary text-sm">Edit</a>
-                </label>
-                <input type="tel" id="profile-mobile-input" class="input input-bordered" placeholder="Mobile number" disabled>
-            </div>
-
-            <div class="form-control mb-4">
-                <label class="label"><span class="label-text font-medium">Email</span></label>
-                <input type="email" id="profile-email-input" class="input input-bordered" placeholder="Email address" disabled>
-            </div>
-
-            <div class="flex gap-3 mb-4">
-                <button id="save-profile-btn" class="btn btn-primary flex-1">Save Changes</button>
-            </div>
-
-            <div class="divider">Password</div>
-
-            <div id="change-password-section">
-                <button id="change-password-btn" class="btn btn-outline w-full">Change Password</button>
-            </div>
-
-            <div id="password-change-form" class="hidden space-y-3 mt-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Current Password</span></label>
-                    <input type="password" id="current-password-input" class="input input-bordered" placeholder="Current password">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">New Password</span></label>
-                    <input type="password" id="new-password-input" class="input input-bordered" placeholder="New password">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Confirm Password</span></label>
-                    <input type="password" id="confirm-password-input" class="input input-bordered" placeholder="Confirm new password">
-                </div>
-                <button id="save-password-btn" class="btn btn-success w-full">Update Password</button>
             </div>
         </div>
-        <form method="dialog" class="modal-backdrop">
-            <button>close</button>
-        </form>
-    </dialog>
+    </div>
 
     <!-- Service Worker Registration -->
     <script>
