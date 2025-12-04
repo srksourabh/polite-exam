@@ -5984,26 +5984,47 @@ document.getElementById('ai-btn').addEventListener('click', function() {
 // Track previously generated questions to avoid repetition
 let previouslyGeneratedQuestions = [];
 const MAX_PREVIOUS_QUESTIONS = 10;
+let aiGeneratedParentChild = null; // Store parent-child question data
+
+// Toggle sub-questions count visibility based on question format
+document.getElementById('ai-question-format').addEventListener('change', function() {
+    const subQCountGroup = document.getElementById('sub-questions-count-group');
+    if (this.value === 'parent-child') {
+        subQCountGroup.style.display = 'block';
+    } else {
+        subQCountGroup.style.display = 'none';
+    }
+});
 
 // Generate AI question with real Gemini API
 document.getElementById('generate-ai-btn').addEventListener('click', async function() {
-    // Get button reference BEFORE try block so it's accessible in finally
     const generateBtn = document.getElementById('generate-ai-btn');
     try {
         const subject = document.getElementById('ai-subject').value;
         const difficulty = document.getElementById('ai-difficulty').value;
         const customPrompt = document.getElementById('ai-custom-prompt').value.trim();
+        const questionFormat = document.getElementById('ai-question-format').value;
+        const numSubQuestions = parseInt(document.getElementById('ai-sub-questions-count').value) || 3;
+
+        const isParentChild = questionFormat === 'parent-child';
 
         // Show processing notification
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('🤖 AI is generating a unique question...', 'info');
+            const msg = isParentChild ?
+                '🤖 AI is generating passage-based questions...' :
+                '🤖 AI is generating a unique question...';
+            window.PoliteCCAPI.showNotification(msg, 'info');
         }
 
         // Disable button during generation
         generateBtn.disabled = true;
-        generateBtn.textContent = '⏳ Generating...';
+        generateBtn.textContent = isParentChild ? '⏳ Generating Passage...' : '⏳ Generating...';
 
-        // Call backend API with previously generated questions to avoid repetition
+        // Hide both result containers
+        document.getElementById('ai-result-container').classList.add('hidden');
+        document.getElementById('ai-parent-child-result').classList.add('hidden');
+
+        // Call backend API
         const response = await fetch(`${API_URL}/gemini/generate-question`, {
             method: 'POST',
             headers: {
@@ -6013,7 +6034,9 @@ document.getElementById('generate-ai-btn').addEventListener('click', async funct
                 subject: subject,
                 difficulty: difficulty,
                 customPrompt: customPrompt,
-                previousQuestions: previouslyGeneratedQuestions
+                previousQuestions: previouslyGeneratedQuestions,
+                questionFormat: questionFormat,
+                numSubQuestions: numSubQuestions
             })
         });
 
@@ -6025,35 +6048,19 @@ document.getElementById('generate-ai-btn').addEventListener('click', async funct
 
         const qData = data.data;
 
-        // Track this question to avoid regenerating it
-        previouslyGeneratedQuestions.unshift(qData.question.substring(0, 100));
-        if (previouslyGeneratedQuestions.length > MAX_PREVIOUS_QUESTIONS) {
-            previouslyGeneratedQuestions = previouslyGeneratedQuestions.slice(0, MAX_PREVIOUS_QUESTIONS);
+        if (qData.isParentChild) {
+            // Handle Parent-Child format
+            displayParentChildQuestion(qData);
+        } else {
+            // Handle Standalone format
+            displayStandaloneQuestion(qData);
         }
 
-        // Display the question
-        document.getElementById('ai-question-text').textContent = qData.question;
-        document.getElementById('ai-option-a').textContent = qData.optionA;
-        document.getElementById('ai-option-b').textContent = qData.optionB;
-        document.getElementById('ai-option-c').textContent = qData.optionC;
-        document.getElementById('ai-option-d').textContent = qData.optionD;
-        document.getElementById('ai-correct-answer').textContent = qData.correct;
-        document.getElementById('ai-explanation').textContent = qData.explanation;
-        document.getElementById('ai-display-subject').textContent = qData.subject;
-        document.getElementById('ai-display-difficulty').textContent = qData.difficulty.toUpperCase();
-
-        aiGeneratedQuestion = {
-            subject: qData.subject,
-            question: qData.question,
-            options: [qData.optionA, qData.optionB, qData.optionC, qData.optionD],
-            correct: ['A', 'B', 'C', 'D'].indexOf(qData.correct.toUpperCase()),
-            difficulty: qData.difficulty
-        };
-
-        document.getElementById('ai-result-container').classList.remove('hidden');
-
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('✅ AI question generated successfully!', 'success');
+            const msg = qData.isParentChild ?
+                '✅ Passage-based questions generated successfully!' :
+                '✅ AI question generated successfully!';
+            window.PoliteCCAPI.showNotification(msg, 'success');
         }
 
     } catch (error) {
@@ -6062,23 +6069,92 @@ document.getElementById('generate-ai-btn').addEventListener('click', async funct
             window.PoliteCCAPI.showNotification(`❌ Failed to generate question: ${error.message}`, 'error');
         }
     } finally {
-        // Re-enable button
         generateBtn.disabled = false;
         generateBtn.textContent = '✨ Generate Question with AI';
     }
 });
 
-// Accept AI question and add to database
+// Display standalone question with KaTeX rendering
+function displayStandaloneQuestion(qData) {
+    // Track this question
+    previouslyGeneratedQuestions.unshift(qData.question.substring(0, 100));
+    if (previouslyGeneratedQuestions.length > MAX_PREVIOUS_QUESTIONS) {
+        previouslyGeneratedQuestions = previouslyGeneratedQuestions.slice(0, MAX_PREVIOUS_QUESTIONS);
+    }
+
+    // Use renderRichContent for KaTeX/LaTeX rendering
+    document.getElementById('ai-question-text').innerHTML = renderRichContent(qData.question);
+    document.getElementById('ai-option-a').innerHTML = renderRichContent(qData.optionA);
+    document.getElementById('ai-option-b').innerHTML = renderRichContent(qData.optionB);
+    document.getElementById('ai-option-c').innerHTML = renderRichContent(qData.optionC);
+    document.getElementById('ai-option-d').innerHTML = renderRichContent(qData.optionD);
+    document.getElementById('ai-correct-answer').textContent = qData.correct;
+    document.getElementById('ai-explanation').innerHTML = renderRichContent(qData.explanation);
+    document.getElementById('ai-display-subject').textContent = qData.subject;
+    document.getElementById('ai-display-difficulty').textContent = qData.difficulty.toUpperCase();
+
+    aiGeneratedQuestion = {
+        subject: qData.subject,
+        question: qData.question,
+        options: [qData.optionA, qData.optionB, qData.optionC, qData.optionD],
+        correct: ['A', 'B', 'C', 'D'].indexOf(qData.correct.toUpperCase()),
+        difficulty: qData.difficulty
+    };
+
+    document.getElementById('ai-result-container').classList.remove('hidden');
+    document.getElementById('ai-parent-child-result').classList.add('hidden');
+}
+
+// Display parent-child questions with KaTeX rendering
+function displayParentChildQuestion(qData) {
+    // Store for later saving
+    aiGeneratedParentChild = qData;
+
+    // Display subject and difficulty
+    document.getElementById('ai-pc-subject').textContent = qData.subject;
+    document.getElementById('ai-pc-difficulty').textContent = qData.difficulty.toUpperCase();
+
+    // Display passage with KaTeX rendering
+    document.getElementById('ai-pc-passage').innerHTML = renderRichContent(qData.mainQuestionText);
+
+    // Display sub-questions with KaTeX rendering
+    const container = document.getElementById('ai-pc-subquestions-container');
+    container.innerHTML = '';
+
+    if (qData.subQuestions && qData.subQuestions.length > 0) {
+        qData.subQuestions.forEach((sq, idx) => {
+            const sqHtml = `
+                <div style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #dee2e6;">
+                    <h5 style="margin: 0 0 10px 0; color: #495057;">Sub-Question ${idx + 1}:</h5>
+                    <p style="font-weight: 500; margin-bottom: 10px;">${renderRichContent(sq.question)}</p>
+                    <div style="margin-left: 20px; margin-bottom: 10px;">
+                        <div>A) ${renderRichContent(sq.optionA)}</div>
+                        <div>B) ${renderRichContent(sq.optionB)}</div>
+                        <div>C) ${renderRichContent(sq.optionC)}</div>
+                        <div>D) ${renderRichContent(sq.optionD)}</div>
+                    </div>
+                    <div style="background: #e8f5e9; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem;">
+                        <strong>Answer:</strong> ${sq.correct} | <strong>Explanation:</strong> ${renderRichContent(sq.explanation || 'N/A')}
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', sqHtml);
+        });
+    }
+
+    document.getElementById('ai-parent-child-result').classList.remove('hidden');
+    document.getElementById('ai-result-container').classList.add('hidden');
+}
+
+// Accept standalone AI question and add to database
 document.getElementById('accept-ai-btn').addEventListener('click', async function() {
-    // Get button reference BEFORE try block so it's accessible in finally
     const acceptBtn = document.getElementById('accept-ai-btn');
     try {
         if (!aiGeneratedQuestion) return;
 
-        // Disable button during save
         acceptBtn.disabled = true;
         acceptBtn.textContent = '⏳ Saving...';
-        // Add to database
+
         const success = await window.PoliteCCAPI.addQuestionToDatabase({
             subject: aiGeneratedQuestion.subject,
             question: aiGeneratedQuestion.question,
@@ -6090,12 +6166,10 @@ document.getElementById('accept-ai-btn').addEventListener('click', async functio
         });
 
         if (success) {
-            // Clear AI section
             aiGeneratedQuestion = null;
             document.getElementById('ai-result-container').classList.add('hidden');
             document.getElementById('ai-custom-prompt').value = '';
 
-            // Show success message
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                 window.PoliteCCAPI.showNotification('✅ AI question added to your bank!', 'success');
             }
@@ -6107,14 +6181,85 @@ document.getElementById('accept-ai-btn').addEventListener('click', async functio
             window.PoliteCCAPI.showNotification(`❌ Failed to save question: ${error.message}`, 'error');
         }
     } finally {
-        // Re-enable button
         acceptBtn.disabled = false;
-        acceptBtn.textContent = '✅ Accept & Add to Bank';
+        acceptBtn.textContent = 'Accept & Add to Bank';
     }
 });
 
-// Regenerate AI question
+// Accept parent-child questions and add to database
+document.getElementById('accept-ai-pc-btn').addEventListener('click', async function() {
+    const acceptBtn = document.getElementById('accept-ai-pc-btn');
+    try {
+        if (!aiGeneratedParentChild) return;
+
+        acceptBtn.disabled = true;
+        acceptBtn.textContent = '⏳ Saving All Questions...';
+
+        // First, add the parent question (passage)
+        const parentResult = await window.PoliteCCAPI.addQuestionToDatabase({
+            subject: aiGeneratedParentChild.subject,
+            question: aiGeneratedParentChild.mainQuestionText,
+            'Question Type': 'Parent-child',
+            'Main Question Text': aiGeneratedParentChild.mainQuestionText,
+            isMainQuestion: true
+        });
+
+        if (!parentResult || !parentResult.id) {
+            throw new Error('Failed to create parent question');
+        }
+
+        const parentRecordId = parentResult.id;
+
+        // Now add all sub-questions linked to the parent
+        let successCount = 0;
+        for (let i = 0; i < aiGeneratedParentChild.subQuestions.length; i++) {
+            const sq = aiGeneratedParentChild.subQuestions[i];
+            const childResult = await window.PoliteCCAPI.addQuestionToDatabase({
+                subject: aiGeneratedParentChild.subject,
+                question: sq.question,
+                optionA: sq.optionA,
+                optionB: sq.optionB,
+                optionC: sq.optionC,
+                optionD: sq.optionD,
+                correct: sq.correct,
+                'Question Type': 'Parent-child',
+                'Parent Question': [parentRecordId],
+                'Sub Question Number': i + 1
+            });
+
+            if (childResult) {
+                successCount++;
+            }
+        }
+
+        if (successCount > 0) {
+            aiGeneratedParentChild = null;
+            document.getElementById('ai-parent-child-result').classList.add('hidden');
+            document.getElementById('ai-custom-prompt').value = '';
+
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification(`✅ Parent + ${successCount} sub-questions added to bank!`, 'success');
+            }
+        }
+
+    } catch (error) {
+        console.error('Error accepting parent-child questions:', error);
+        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+            window.PoliteCCAPI.showNotification(`❌ Failed to save: ${error.message}`, 'error');
+        }
+    } finally {
+        acceptBtn.disabled = false;
+        acceptBtn.textContent = 'Accept & Add All to Bank';
+    }
+});
+
+// Regenerate AI question (standalone)
 document.getElementById('regenerate-ai-btn').addEventListener('click', function() {
+    document.getElementById('generate-ai-btn').click();
+});
+
+// Regenerate AI question (parent-child)
+document.getElementById('regenerate-ai-pc-btn').addEventListener('click', function() {
     document.getElementById('generate-ai-btn').click();
 });
 

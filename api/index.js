@@ -1417,7 +1417,7 @@ Return ONLY valid JSON with no extra text.`
         // POST /api/gemini/generate-question - Generate a question using Gemini AI
         if (url === '/api/gemini/generate-question' && method === 'POST') {
             try {
-                const { subject, difficulty, customPrompt, previousQuestions } = req.body;
+                const { subject, difficulty, customPrompt, previousQuestions, questionFormat, numSubQuestions } = req.body;
 
                 if (!process.env.GEMINI_API_KEY) {
                     return res.status(500).json({
@@ -1428,6 +1428,8 @@ Return ONLY valid JSON with no extra text.`
 
                 const difficultyText = difficulty || 'medium';
                 const subjectName = subject || 'General Knowledge';
+                const isParentChild = questionFormat === 'parent-child';
+                const subQuestionCount = numSubQuestions || 3;
 
                 // Generate random seed for uniqueness
                 const randomSeed = Math.random().toString(36).substring(2, 15);
@@ -1458,47 +1460,160 @@ Return ONLY valid JSON with no extra text.`
                 const anotherRandomTopic = topics[Math.floor(Math.random() * topics.length)];
 
                 let prompt = '';
-                if (customPrompt && customPrompt.trim()) {
-                    prompt = `Generate a COMPLETELY NEW and UNIQUE multiple choice question based on: "${customPrompt}"
-The question should be suitable for Indian competitive exams. Make it ${difficultyText} difficulty level.
-Focus on a DIFFERENT aspect than typical questions. Be creative and original.`;
-                } else {
-                    prompt = `Generate a COMPLETELY NEW and UNIQUE ${difficultyText} difficulty multiple choice question for ${subjectName}.
-IMPORTANT: Focus specifically on the topic "${randomTopic}" or "${anotherRandomTopic}".
-Make it suitable for Indian competitive exams like Railway RRB, Bank PO/Clerk, SSC, UPSC.
-Be creative - do NOT generate a common or frequently asked question.`;
-                }
 
-                // Add previous questions to avoid if provided
-                let avoidText = '';
-                if (previousQuestions && previousQuestions.length > 0) {
-                    avoidText = `
+                // Indian Competitive Exam Guidelines
+                const examGuidelines = `
+INDIAN COMPETITIVE EXAM QUESTION GUIDELINES:
+Follow these patterns used in actual Bank PO/Clerk, SSC CGL/CHSL, Railway RRB NTPC/Group D, and UPSC exams:
 
-IMPORTANT: DO NOT generate questions similar to these recently generated questions:
-${previousQuestions.slice(0, 5).map((q, i) => `${i + 1}. ${q}`).join('\n')}
+DIFFICULTY LEVELS:
+- Easy: Direct questions, single-step calculations, basic recall (Railway Group D, SSC MTS level)
+- Medium: Two-step problems, application of concepts, moderate analysis (Bank Clerk, SSC CHSL level)
+- Hard: Multi-step problems, complex analysis, tricky options (Bank PO, SSC CGL, Railway NTPC level)
 
-Generate something COMPLETELY DIFFERENT from the above.`;
-                }
+QUESTION PATTERNS BY SUBJECT:
+1. Quantitative Aptitude: Use realistic scenarios (shopping, banking, travel), include Data Interpretation with tables/charts descriptions
+2. Reasoning: Include coding patterns (A=1,B=2), direction-based problems, blood relations with Indian names
+3. English: Use formal/business English, include passages about Indian economy, culture, environment
+4. General Awareness: Focus on current Indian affairs, constitutional bodies, government schemes, banking terms
+5. Current Affairs: Recent appointments, awards, summits, sports achievements, government policies
 
-                prompt += `${avoidText}
+OPTION GUIDELINES:
+- Options should be plausible and well-distributed
+- Avoid obvious wrong answers
+- Include common mistakes as distractors
+- For numerical questions, include calculation error traps
+- Options should be similar in length and format`;
+
+                // Generate different prompts based on question format
+                if (isParentChild) {
+                    // Parent-Child format: Passage with multiple sub-questions
+                    if (customPrompt && customPrompt.trim()) {
+                        prompt = `Generate a PASSAGE-BASED question set based on: "${customPrompt}"
+Create a main passage/context and ${subQuestionCount} sub-questions based on it.
+This is for Indian competitive exams. Difficulty level: ${difficultyText}.
+
+${examGuidelines}`;
+                    } else {
+                        prompt = `Generate a PASSAGE-BASED question set for ${subjectName}.
+Topic: "${randomTopic}" or "${anotherRandomTopic}".
+Create a main passage/context (200-400 words) and ${subQuestionCount} sub-questions based on it.
+
+${examGuidelines}
+
+PASSAGE GUIDELINES for ${subjectName}:
+- For English: Use formal passages about Indian economy, environment, technology, social issues
+- For Reasoning: Use puzzle-based scenarios (seating arrangements, scheduling, rankings)
+- For Quantitative: Use data interpretation with tables/charts (describe the data in text format)
+- For General Awareness: Use informative passages about Indian history, polity, economy
+
+Difficulty level: ${difficultyText}`;
+                    }
+
+                    prompt += `
 
 Random seed for uniqueness: ${randomSeed}-${timestamp}-${randomTopicIndex}
 
 Return ONLY valid JSON in this EXACT format:
 {
-  "question": "The complete question text - make it unique and interesting",
-  "optionA": "First option",
-  "optionB": "Second option",
-  "optionC": "Third option",
-  "optionD": "Fourth option",
-  "correct": "A or B or C or D",
-  "explanation": "Brief explanation of the correct answer",
+  "isParentChild": true,
+  "mainQuestionText": "The complete passage or context text (200-400 words). For Reading Comprehension, write a formal passage. For Data Interpretation, describe the table/chart data. For Puzzles, describe the scenario and conditions.",
   "subject": "${subjectName}",
   "difficulty": "${difficultyText}",
-  "topic": "Specific topic this question covers"
+  "topic": "Specific topic this covers",
+  "subQuestions": [
+    {
+      "question": "First question based on the passage - test direct comprehension",
+      "optionA": "Option A",
+      "optionB": "Option B",
+      "optionC": "Option C",
+      "optionD": "Option D",
+      "correct": "A",
+      "explanation": "Brief explanation with reference to passage"
+    },
+    {
+      "question": "Second question - test inference or calculation",
+      "optionA": "Option A",
+      "optionB": "Option B",
+      "optionC": "Option C",
+      "optionD": "Option D",
+      "correct": "B",
+      "explanation": "Brief explanation"
+    }
+  ]
 }
 
-Generate a FRESH, UNIQUE, CREATIVE question that hasn't been asked before. Ensure one clearly correct answer. Think outside the box!`;
+CRITICAL REQUIREMENTS:
+- Generate exactly ${subQuestionCount} sub-questions in the subQuestions array
+- Each sub-question must have exactly 4 options (A, B, C, D)
+- The "correct" field must be exactly one letter: A, B, C, or D
+- All questions should be answerable from the passage
+- Mix question types: 1-2 direct/factual, 1-2 inference/analysis, 1 vocabulary/title if applicable
+- Use Indian names, places, and context where appropriate`;
+                } else {
+                    // Standalone format: Single question
+                    if (customPrompt && customPrompt.trim()) {
+                        prompt = `Generate a multiple choice question based on: "${customPrompt}"
+This is for Indian competitive exams. Difficulty level: ${difficultyText}.
+
+${examGuidelines}`;
+                    } else {
+                        prompt = `Generate a ${difficultyText} difficulty multiple choice question for ${subjectName}.
+Focus on topic: "${randomTopic}" or "${anotherRandomTopic}".
+
+${examGuidelines}
+
+SPECIFIC PATTERNS for ${subjectName}:
+${subjectName === 'Quantitative Aptitude' ? `
+- Use realistic Indian scenarios (railway tickets, bank interest, shop discounts)
+- Include unit conversions where applicable
+- For ${difficultyText} level: ${difficultyText === 'easy' ? 'single operation, direct formula' : difficultyText === 'medium' ? 'two operations, concept application' : 'multi-step, tricky calculations'}` : ''}
+${subjectName === 'Reasoning Ability' ? `
+- Use Indian names (Rahul, Priya, Amit, Sneha, etc.)
+- Include clear conditions and constraints
+- For ${difficultyText} level: ${difficultyText === 'easy' ? 'direct pattern, 3-4 elements' : difficultyText === 'medium' ? 'moderate complexity, 5-6 elements' : 'complex arrangement, 6-8 elements'}` : ''}
+${subjectName === 'English Language' ? `
+- Use formal/professional English
+- Include vocabulary from business, economics, environment
+- For ${difficultyText} level: ${difficultyText === 'easy' ? 'common words, simple grammar' : difficultyText === 'medium' ? 'moderate vocabulary, standard rules' : 'advanced vocabulary, nuanced usage'}` : ''}
+${subjectName === 'General Awareness' || subjectName === 'Current Affairs' ? `
+- Focus on facts relevant to banking/government job aspirants
+- Include recent developments in India
+- For ${difficultyText} level: ${difficultyText === 'easy' ? 'well-known facts' : difficultyText === 'medium' ? 'moderate detail required' : 'specific/detailed knowledge needed'}` : ''}`;
+                    }
+
+                    // Add previous questions to avoid if provided
+                    let avoidText = '';
+                    if (previousQuestions && previousQuestions.length > 0) {
+                        avoidText = `
+
+DO NOT generate questions similar to these:
+${previousQuestions.slice(0, 5).map((q, i) => `${i + 1}. ${q}`).join('\n')}`;
+                    }
+
+                    prompt += `${avoidText}
+
+Random seed: ${randomSeed}-${timestamp}-${randomTopicIndex}
+
+Return ONLY valid JSON:
+{
+  "question": "Complete question text following exam patterns above",
+  "optionA": "First option (plausible)",
+  "optionB": "Second option (plausible)",
+  "optionC": "Third option (plausible)",
+  "optionD": "Fourth option (plausible)",
+  "correct": "A or B or C or D",
+  "explanation": "Brief explanation of why the answer is correct",
+  "subject": "${subjectName}",
+  "difficulty": "${difficultyText}",
+  "topic": "Specific topic covered"
+}
+
+Generate a question that could appear in actual ${difficultyText === 'easy' ? 'Railway Group D/SSC MTS' : difficultyText === 'medium' ? 'Bank Clerk/SSC CHSL' : 'Bank PO/SSC CGL'} exam.`;
+                }
+
+                // Use higher token limit for parent-child questions (they need more content)
+                const maxTokens = isParentChild ? 4096 : 1024;
 
                 const response = await fetch(
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -1514,10 +1629,10 @@ Generate a FRESH, UNIQUE, CREATIVE question that hasn't been asked before. Ensur
                                 }]
                             }],
                             generationConfig: {
-                                temperature: 0.9,
+                                temperature: 0.85,
                                 topK: 40,
                                 topP: 0.95,
-                                maxOutputTokens: 1024
+                                maxOutputTokens: maxTokens
                             }
                         })
                     }
