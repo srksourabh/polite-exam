@@ -11,6 +11,11 @@ let extractedQuestions = [];
 let candidateDetailedAnswers = null; // Store candidate's detailed results for viewing
 let currentScreen = 'hero-landing'; // Track current screen for navigation
 
+// App Version for cache invalidation on new deployments
+// Update this version when deploying significant changes to clear old sessions
+const APP_VERSION = '2.1.0';
+const APP_VERSION_KEY = 'polite_app_version';
+
 // =====================================================
 // RICH CONTENT RENDERING - Math, Images, Graphs
 // =====================================================
@@ -1504,10 +1509,38 @@ function displayReadyQuestions(questions) {
 
 // Wait for DOM to be ready before attaching event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    // Clear caches on page load for fresh data
+    // Check app version and clear ALL data if version changed (new deployment)
+    (function checkAppVersion() {
+        const storedVersion = localStorage.getItem(APP_VERSION_KEY);
+        if (storedVersion !== APP_VERSION) {
+            console.log(`App version changed: ${storedVersion} -> ${APP_VERSION}. Clearing all cached data.`);
+
+            // Clear ALL localStorage (including user sessions)
+            localStorage.clear();
+
+            // Clear ALL sessionStorage
+            sessionStorage.clear();
+
+            // Clear Cache API completely
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                        console.log('Cleared cache:', name);
+                    });
+                });
+            }
+
+            // Store new version
+            localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
+            console.log('All caches cleared for new app version');
+        }
+    })();
+
+    // Clear temporary caches on page load for fresh data
     (async function clearCachesOnLoad() {
         try {
-            // Clear Cache API if available
+            // Clear Cache API if available (only dynamic/API caches)
             if ('caches' in window) {
                 const cacheNames = await caches.keys();
                 for (const name of cacheNames) {
@@ -1519,10 +1552,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Clear sessionStorage for fresh session
+            // Clear sessionStorage for fresh session (keep localStorage for session persistence)
             sessionStorage.clear();
 
-            // Clear any localStorage cache flags (keep user settings)
+            // Clear any localStorage cache flags (keep user settings and exam state)
             const keysToRemove = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);

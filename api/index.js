@@ -1562,14 +1562,67 @@ Generate a FRESH, UNIQUE, CREATIVE question that hasn't been asked before. Ensur
                     questionData = JSON.parse(jsonStr);
                 } catch (parseError) {
                     console.error('JSON parse error:', parseError, 'Text:', jsonStr);
-                    // Try to fix common JSON issues
+                    // Try to fix common JSON issues with multiple strategies
                     let fixedJson = jsonStr
-                        .replace(/,\s*}/g, '}')  // Remove trailing commas
-                        .replace(/,\s*]/g, ']')  // Remove trailing commas in arrays
+                        .replace(/,\s*}/g, '}')  // Remove trailing commas before }
+                        .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
                         .replace(/[\x00-\x1F\x7F]/g, ' ') // Remove control characters
                         .replace(/\n/g, ' ')  // Replace newlines with spaces
-                        .replace(/\r/g, ''); // Remove carriage returns
-                    questionData = JSON.parse(fixedJson);
+                        .replace(/\r/g, '') // Remove carriage returns
+                        .replace(/\t/g, ' ') // Replace tabs with spaces
+                        .replace(/[\u2018\u2019]/g, "'") // Smart single quotes to regular
+                        .replace(/[\u201C\u201D]/g, '"') // Smart double quotes to regular
+                        .replace(/\u2013/g, '-') // En dash to hyphen
+                        .replace(/\u2014/g, '--') // Em dash to double hyphen
+                        .replace(/\u2026/g, '...') // Ellipsis to dots
+                        .replace(/[\u00A0]/g, ' '); // Non-breaking space to regular space
+
+                    try {
+                        questionData = JSON.parse(fixedJson);
+                    } catch (secondError) {
+                        // More aggressive fixing - escape problematic characters in string values
+                        console.error('Second parse attempt failed, trying aggressive fix');
+
+                        // Try to fix unescaped quotes within string values
+                        fixedJson = fixedJson.replace(/"([^"]*?)"/g, (match, content) => {
+                            // Escape any unescaped quotes within the content
+                            const fixed = content
+                                .replace(/(?<!\\)"/g, '\\"')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                            return '"' + fixed + '"';
+                        });
+
+                        try {
+                            questionData = JSON.parse(fixedJson);
+                        } catch (thirdError) {
+                            // Final fallback - manually extract fields using regex
+                            console.error('Third parse attempt failed, using regex extraction');
+                            const extractField = (field) => {
+                                const regex = new RegExp(`"${field}"\\s*:\\s*"([^"]*(?:\\\\"[^"]*)*)"`, 'i');
+                                const match = jsonStr.match(regex);
+                                return match ? match[1].replace(/\\"/g, '"') : '';
+                            };
+
+                            questionData = {
+                                question: extractField('question') || 'Question could not be parsed',
+                                optionA: extractField('optionA') || 'Option A',
+                                optionB: extractField('optionB') || 'Option B',
+                                optionC: extractField('optionC') || 'Option C',
+                                optionD: extractField('optionD') || 'Option D',
+                                correct: extractField('correct') || 'A',
+                                explanation: extractField('explanation') || 'Explanation not available',
+                                subject: extractField('subject') || 'General',
+                                difficulty: extractField('difficulty') || 'medium',
+                                topic: extractField('topic') || 'General'
+                            };
+
+                            // Validate we got at least a question
+                            if (!questionData.question || questionData.question === 'Question could not be parsed') {
+                                throw new Error('Failed to extract question from AI response');
+                            }
+                        }
+                    }
                 }
 
                 return res.status(200).json({
