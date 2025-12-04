@@ -1613,6 +1613,175 @@
         </div>
     </div>
 
+    <!-- Cart Modal -->
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div class="card bg-base-100 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="card-title">Question Cart</h3>
+                    <button id="close-cart-modal-btn" class="btn btn-sm btn-circle btn-ghost">✕</button>
+                </div>
+                <div id="cart-stats-summary" class="stats stats-vertical sm:stats-horizontal shadow w-full mb-4">
+                    <div class="stat">
+                        <div class="stat-title">In Cart</div>
+                        <div class="stat-value" id="exam-cart-count">0</div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button id="cart-select-all-btn" class="btn btn-sm btn-info">Select All</button>
+                    <button id="cart-deselect-all-btn" class="btn btn-sm btn-ghost">Deselect All</button>
+                    <button id="cart-clear-btn" class="btn btn-sm btn-error">Clear Cart</button>
+                </div>
+                <div id="cart-selected-info" class="text-sm mb-2">0 questions selected</div>
+                <div id="cart-questions-list" class="space-y-2 max-h-96 overflow-y-auto">
+                    <!-- Cart questions will be rendered here -->
+                </div>
+                <div class="mt-4">
+                    <button id="add-cart-to-exam-btn" class="btn btn-success w-full">Add Selected to Exam</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Result Modal -->
+    <div id="detailed-result-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div class="card bg-base-100 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="card-title">Detailed Results</h3>
+                    <button id="close-detailed-modal" class="btn btn-sm btn-circle btn-ghost">✕</button>
+                </div>
+                <div id="detailed-result-content">
+                    <!-- Detailed results will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Detail Modal (Admin View) -->
+    <div id="results-detail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div class="card bg-base-100 w-11/12 max-w-5xl max-h-[90vh] overflow-y-auto">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="card-title">Exam Results Detail</h3>
+                    <button id="close-detail-modal-btn" class="btn btn-sm btn-circle btn-ghost">✕</button>
+                </div>
+                <div id="results-main-view">
+                    <div id="selected-exam-info" class="mb-4">
+                        <h4 class="font-bold" id="selected-exam-title">Exam Title</h4>
+                    </div>
+                    <div id="results-candidates-view" class="space-y-2">
+                        <!-- Candidates list will be rendered here -->
+                    </div>
+                </div>
+                <div id="results-detail-content" class="hidden">
+                    <!-- Individual result details will be rendered here -->
+                </div>
+                <div class="mt-4">
+                    <button id="back-to-exams-btn" class="btn btn-ghost hidden">← Back to Exams</button>
+                    <button id="export-results-btn-new" class="btn btn-accent">Export Results</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div class="card bg-base-100 w-full max-w-md">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="card-title">Change Password</h3>
+                    <button id="close-password-modal" class="btn btn-sm btn-circle btn-ghost">✕</button>
+                </div>
+                <div class="form-control mb-3">
+                    <label class="label"><span class="label-text">New Temporary Password</span></label>
+                    <input type="password" id="new-temp-password" class="input input-bordered" placeholder="Enter new password">
+                </div>
+                <button id="submit-btn" class="btn btn-primary w-full">Update Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Elements for JavaScript Compatibility -->
+    <div class="hidden">
+        <!-- Question Bank Additional Elements -->
+        <div id="questions-loading-more">Loading more questions...</div>
+        <select id="question-type-select">
+            <option value="standalone">Standalone</option>
+            <option value="parent-child">Parent-Child</option>
+        </select>
+        <span id="selected-count">0</span>
+        <button id="show-cart-btn">Show Cart</button>
+
+        <!-- Display Elements -->
+        <div id="question-text-display"></div>
+        <div id="question-subject-display"></div>
+        <div id="option-a-display"></div>
+        <div id="option-b-display"></div>
+        <div id="option-c-display"></div>
+        <div id="option-d-display"></div>
+
+        <!-- Parent-Child Question Form Elements -->
+        <div id="parent-child-form">
+            <div id="parent-child-question-container">
+                <textarea id="parent-text"></textarea>
+                <select id="parent-subject"></select>
+                <select id="parent-difficulty"></select>
+                <input type="hidden" id="parent-id">
+                <select id="parent-question-select"></select>
+            </div>
+            <div id="children-container"></div>
+            <div id="bank-children-container"></div>
+            <button id="add-child-btn">Add Child Question</button>
+            <button id="create-parent-child-btn">Create Parent-Child</button>
+            <button id="create-standalone-btn">Create Standalone</button>
+        </div>
+
+        <!-- Standalone Form Elements -->
+        <div id="standalone-form">
+            <div id="standalone-question-container">
+                <textarea id="standalone-question"></textarea>
+                <select id="standalone-subject"></select>
+                <select id="standalone-difficulty"></select>
+                <input type="text" id="standalone-option-a">
+                <input type="text" id="standalone-option-b">
+                <input type="text" id="standalone-option-c">
+                <input type="text" id="standalone-option-d">
+                <select id="standalone-correct"></select>
+                <input type="hidden" id="standalone-id">
+            </div>
+        </div>
+
+        <!-- Exam History Elements -->
+        <div id="exam-history-container"></div>
+        <div id="exams-grid-container"></div>
+        <div id="candidates-grid-container"></div>
+
+        <!-- Stats Elements -->
+        <span id="active-exams-count">0</span>
+        <span id="expired-exams-count">0</span>
+        <span id="total-exams-count">0</span>
+        <span id="total-exams-given">0</span>
+        <span id="average-score">0</span>
+
+        <!-- OCR Elements -->
+        <div id="ocr-progress" class="hidden">
+            <div id="ocr-progress-bar" style="width: 0%"></div>
+        </div>
+        <div id="ocr-status"></div>
+        <button id="process-upload-btn">Process Upload</button>
+        <div id="selected-file-info">
+            <span id="file-name"></span>
+        </div>
+        <div id="upload-result-container"></div>
+
+        <!-- Timer Display -->
+        <span id="timer-display">00:00</span>
+
+        <!-- Profile Preview -->
+        <img id="modal-profile-preview" src="" alt="Profile Preview">
+    </div>
+
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
