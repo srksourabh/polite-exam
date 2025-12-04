@@ -932,18 +932,31 @@
                                         </div>
                                     </div>
 
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                         <div class="form-control">
                                             <label class="label"><span class="label-text font-medium">Duration (minutes)</span></label>
                                             <input type="number" id="exam-duration" class="input input-bordered" placeholder="60" value="60">
                                         </div>
                                         <div class="form-control">
-                                            <label class="label"><span class="label-text font-medium">Total Questions</span></label>
-                                            <input type="number" id="exam-total-questions" class="input input-bordered" placeholder="50" value="50">
-                                        </div>
-                                        <div class="form-control">
                                             <label class="label"><span class="label-text font-medium">Expiry Date</span></label>
                                             <input type="date" id="exam-expiry" class="input input-bordered" placeholder="Select date">
+                                        </div>
+                                    </div>
+
+                                    <!-- Selected Questions Stats -->
+                                    <div class="stats stats-vertical sm:stats-horizontal shadow w-full mb-4 bg-gradient-to-r from-info to-primary text-primary-content">
+                                        <div class="stat">
+                                            <div class="stat-title text-primary-content/70">Total Questions Selected</div>
+                                            <div class="stat-value text-3xl" id="exam-total-questions">0</div>
+                                            <div class="stat-desc text-primary-content/70">Will be added to exam</div>
+                                        </div>
+                                        <div class="stat">
+                                            <div class="stat-title text-primary-content/70">From Cart</div>
+                                            <div class="stat-value text-2xl" id="cart-count-display">0</div>
+                                        </div>
+                                        <div class="stat">
+                                            <div class="stat-title text-primary-content/70">Individually Selected</div>
+                                            <div class="stat-value text-2xl" id="individual-count-display">0</div>
                                         </div>
                                     </div>
 
@@ -1022,10 +1035,55 @@
                         <div id="view-results-section" class="hidden">
                             <div class="card bg-base-100 shadow-xl">
                                 <div class="card-body">
-                                    <h3 class="card-title mb-4">Exam Results</h3>
-                                    <div id="results-list" class="space-y-3">
-                                        <div class="flex justify-center py-8">
-                                            <span class="loading loading-spinner loading-lg text-primary"></span>
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="card-title">Exam Results</h3>
+                                        <button id="export-results-btn" class="btn btn-accent btn-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                            </svg>
+                                            Export
+                                        </button>
+                                    </div>
+
+                                    <!-- Exam Stats -->
+                                    <div class="stats stats-vertical sm:stats-horizontal shadow w-full mb-4">
+                                        <div class="stat">
+                                            <div class="stat-title">Total Exams</div>
+                                            <div class="stat-value text-primary" id="results-total-exams">0</div>
+                                        </div>
+                                        <div class="stat">
+                                            <div class="stat-title">Active</div>
+                                            <div class="stat-value text-success" id="results-active-exams">0</div>
+                                        </div>
+                                        <div class="stat">
+                                            <div class="stat-title">Total Candidates</div>
+                                            <div class="stat-value text-secondary" id="results-total-candidates">0</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Results Main View - Shows list of exams -->
+                                    <div id="results-main-view">
+                                        <div id="exams-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <!-- Exams will be loaded here -->
+                                        </div>
+                                        <div id="results-list" class="space-y-3 hidden">
+                                            <!-- Results list fallback -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Results Candidates View - Shows candidates for selected exam -->
+                                    <div id="results-candidates-view" class="hidden">
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <button id="back-to-results-btn" class="btn btn-ghost btn-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                                </svg>
+                                                Back to Exams
+                                            </button>
+                                            <h4 class="font-bold" id="results-exam-title">Exam Title</h4>
+                                        </div>
+                                        <div id="candidates-grid-container" class="space-y-3">
+                                            <!-- Candidates will be loaded here -->
                                         </div>
                                     </div>
                                 </div>
@@ -1051,11 +1109,42 @@
                                         </div>
                                         <input type="file" id="paper-upload" accept="image/*,.pdf" capture="environment" class="hidden">
                                         <input type="file" id="paper-upload-file" accept="image/*,.pdf" class="hidden">
+
+                                        <!-- Selected File Info -->
+                                        <div id="selected-file-info" class="hidden mt-4 p-3 bg-base-200 rounded-lg">
+                                            <span class="font-medium">Selected: </span>
+                                            <span id="file-name" class="text-primary"></span>
+                                        </div>
                                     </div>
 
+                                    <!-- Preview Container -->
                                     <div id="ocr-preview-container" class="mb-4 hidden">
                                         <label class="label"><span class="label-text font-medium">Selected Image</span></label>
                                         <img id="preview-image" class="w-full max-h-64 object-contain rounded-lg border" src="" alt="Preview">
+                                    </div>
+
+                                    <!-- Process Button -->
+                                    <button id="process-upload-btn" class="btn btn-accent w-full mb-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        Extract Questions with AI
+                                    </button>
+
+                                    <!-- OCR Progress -->
+                                    <div id="ocr-progress" class="hidden mb-4">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <span class="loading loading-spinner loading-md text-primary"></span>
+                                            <span id="ocr-status" class="text-sm">Processing...</span>
+                                        </div>
+                                        <progress id="ocr-progress-bar" class="progress progress-primary w-full" value="0" max="100"></progress>
+                                    </div>
+
+                                    <!-- Upload Result Container -->
+                                    <div id="upload-result-container" class="hidden mb-4">
+                                        <div class="alert alert-success">
+                                            <span>Questions extracted successfully!</span>
+                                        </div>
                                     </div>
 
                                     <div class="form-control">
@@ -1666,11 +1755,11 @@
                     <h3 class="card-title">Exam Results Detail</h3>
                     <button id="close-detail-modal-btn" class="btn btn-sm btn-circle btn-ghost">✕</button>
                 </div>
-                <div id="results-main-view">
+                <div id="modal-results-main-view">
                     <div id="selected-exam-info" class="mb-4">
                         <h4 class="font-bold" id="selected-exam-title">Exam Title</h4>
                     </div>
-                    <div id="results-candidates-view" class="space-y-2">
+                    <div id="modal-candidates-list" class="space-y-2">
                         <!-- Candidates list will be rendered here -->
                     </div>
                 </div>
@@ -1754,8 +1843,6 @@
 
         <!-- Exam History Elements -->
         <div id="exam-history-container"></div>
-        <div id="exams-grid-container"></div>
-        <div id="candidates-grid-container"></div>
 
         <!-- Stats Elements -->
         <span id="active-exams-count">0</span>
@@ -1763,17 +1850,6 @@
         <span id="total-exams-count">0</span>
         <span id="total-exams-given">0</span>
         <span id="average-score">0</span>
-
-        <!-- OCR Elements -->
-        <div id="ocr-progress" class="hidden">
-            <div id="ocr-progress-bar" style="width: 0%"></div>
-        </div>
-        <div id="ocr-status"></div>
-        <button id="process-upload-btn">Process Upload</button>
-        <div id="selected-file-info">
-            <span id="file-name"></span>
-        </div>
-        <div id="upload-result-container"></div>
 
         <!-- Timer Display -->
         <span id="timer-display">00:00</span>
