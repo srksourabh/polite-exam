@@ -428,8 +428,11 @@
                             <div class="card-body">
                                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                     <div>
-                                        <h2 class="card-title text-2xl">Welcome back!</h2>
-                                        <p class="opacity-90" id="candidate-dashboard-name">User</p>
+                                        <h2 class="card-title text-2xl">Welcome back, <span id="dashboard-name">User</span>!</h2>
+                                        <p class="opacity-90 text-sm"><span id="dashboard-email">email@example.com</span></p>
+                                        <p class="opacity-90 text-sm">Mobile: <span id="dashboard-mobile">Not set</span></p>
+                                        <span id="profile-name-display" class="hidden">User</span>
+                                        <span id="profile-initials" class="hidden">U</span>
                                     </div>
                                     <div class="flex gap-2">
                                         <button id="edit-profile-btn" class="btn btn-ghost btn-sm border-white/30">
@@ -528,8 +531,13 @@
                                     <h2 class="card-title text-2xl font-bold justify-center">Admin Login</h2>
                                 </div>
 
+                                <div class="form-control w-full mb-3">
+                                    <label class="label"><span class="label-text font-medium">Username</span></label>
+                                    <input type="text" id="admin-username" placeholder="Enter admin username" class="input input-bordered w-full" required>
+                                </div>
+
                                 <div class="form-control w-full">
-                                    <label class="label"><span class="label-text font-medium">Admin Password</span></label>
+                                    <label class="label"><span class="label-text font-medium">Password</span></label>
                                     <input type="password" id="admin-password" placeholder="Enter admin password" class="input input-bordered w-full" required>
                                 </div>
 
@@ -537,12 +545,7 @@
                                     Login as Admin
                                 </button>
 
-                                <div id="admin-error" class="alert alert-error mt-4 hidden">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span id="admin-error-text">Invalid password</span>
-                                </div>
+                                <p id="admin-login-error" class="text-error text-center mt-4"></p>
                             </div>
                         </div>
                     </div>
@@ -752,7 +755,7 @@
                                     </div>
 
                                     <!-- Questions List -->
-                                    <div id="question-list" class="space-y-3">
+                                    <div id="questions-list" class="space-y-3">
                                         <div class="flex justify-center py-8">
                                             <span class="loading loading-spinner loading-lg text-primary"></span>
                                         </div>
@@ -871,25 +874,16 @@
 
                                         <div class="form-control mb-4">
                                             <label class="label"><span class="label-text font-medium">Correct Answer</span></label>
-                                            <div class="flex gap-4">
-                                                <label class="label cursor-pointer gap-2">
-                                                    <input type="radio" name="correct-answer" value="A" class="radio radio-primary" checked>
-                                                    <span class="label-text">A</span>
-                                                </label>
-                                                <label class="label cursor-pointer gap-2">
-                                                    <input type="radio" name="correct-answer" value="B" class="radio radio-primary">
-                                                    <span class="label-text">B</span>
-                                                </label>
-                                                <label class="label cursor-pointer gap-2">
-                                                    <input type="radio" name="correct-answer" value="C" class="radio radio-primary">
-                                                    <span class="label-text">C</span>
-                                                </label>
-                                                <label class="label cursor-pointer gap-2">
-                                                    <input type="radio" name="correct-answer" value="D" class="radio radio-primary">
-                                                    <span class="label-text">D</span>
-                                                </label>
-                                            </div>
+                                            <select id="correct-answer" class="select select-bordered w-full">
+                                                <option value="0">A</option>
+                                                <option value="1">B</option>
+                                                <option value="2">C</option>
+                                                <option value="3">D</option>
+                                            </select>
                                         </div>
+
+                                        <p id="question-error" class="text-error text-center mb-2"></p>
+                                        <p id="question-success" class="text-success text-center mb-2"></p>
 
                                         <button id="add-question-btn" class="btn btn-success w-full">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -949,9 +943,12 @@
                                         </div>
                                         <div class="form-control">
                                             <label class="label"><span class="label-text font-medium">Expiry Date</span></label>
-                                            <input type="text" id="exam-expiry-date" class="input input-bordered" placeholder="Select date">
+                                            <input type="date" id="exam-expiry" class="input input-bordered" placeholder="Select date">
                                         </div>
                                     </div>
+
+                                    <p id="exam-error" class="text-error text-center mb-2"></p>
+                                    <p id="exam-success" class="text-success text-center mb-2"></p>
 
                                     <div class="divider">Select Questions</div>
 
@@ -1275,6 +1272,8 @@
                                     <input type="tel" id="candidate-mobile" class="input input-bordered w-full" placeholder="Enter your mobile number">
                                 </div>
 
+                                <p id="login-error" class="text-error text-center mb-2"></p>
+
                                 <button id="start-exam-btn" class="btn btn-primary w-full mt-4">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -1384,18 +1383,27 @@
                     <div class="space-y-6">
                         <!-- Result Header -->
                         <div class="card bg-gradient-to-r from-primary to-secondary text-primary-content shadow-xl">
-                            <div class="card-body text-center">
-                                <div class="text-5xl mb-4">🎉</div>
-                                <h2 class="text-3xl font-bold mb-2">Exam Completed!</h2>
-                                <p class="opacity-90" id="result-exam-title">Exam Title</p>
+                            <div class="card-body">
+                                <div class="flex justify-between items-start">
+                                    <div class="text-center flex-1">
+                                        <div class="text-5xl mb-4">🎉</div>
+                                        <h2 class="text-3xl font-bold mb-2">Exam Completed!</h2>
+                                        <p class="opacity-90">Exam Code: <span id="result-exam-code">-</span></p>
+                                        <p class="opacity-90">Candidate: <span id="result-name">-</span></p>
+                                        <p class="opacity-90">Mobile: <span id="result-mobile">-</span></p>
+                                    </div>
+                                    <button id="result-logout-btn" class="btn btn-ghost btn-sm border-white/30">
+                                        Logout
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Score Card -->
                         <div class="stats stats-vertical sm:stats-horizontal shadow w-full bg-base-100">
                             <div class="stat">
-                                <div class="stat-title">Your Score</div>
-                                <div class="stat-value text-primary" id="result-score">0</div>
+                                <div class="stat-title">Final Score</div>
+                                <div class="stat-value text-primary" id="final-score">0</div>
                                 <div class="stat-desc">out of <span id="result-total-marks">0</span></div>
                             </div>
                             <div class="stat">
