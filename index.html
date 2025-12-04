@@ -1863,7 +1863,12 @@
                     <!-- Add Question Form (Initially Hidden) -->
                     <div id="add-question-form" class="hidden" style="background: #f0f8ff; padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 2px solid var(--primary);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h4 style="margin: 0; color: var(--primary);">Add New Question</h4>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <h4 style="margin: 0; color: var(--primary);">Add New Question</h4>
+                                <a href="#" id="math-syntax-help-link" style="color: var(--secondary); font-size: 0.85rem; text-decoration: none; background: #e3f2fd; padding: 4px 10px; border-radius: 15px; display: flex; align-items: center; gap: 5px;" title="Click to see how to add math, images & graphs">
+                                    <span style="font-size: 1rem;">📐</span> Math & Image Syntax Help
+                                </a>
+                            </div>
                             <button id="close-add-question-btn" style="background: #e74c3c; color: white; padding: 5px 12px; border-radius: 5px; border: none; cursor: pointer; font-size: 0.85rem;">✖ Close</button>
                         </div>
 
@@ -2586,6 +2591,135 @@ Artificial Intelligence has revolutionized..."></textarea>
     <div id="image-lightbox" class="image-lightbox" onclick="closeLightbox()">
         <span class="image-lightbox-close" onclick="closeLightbox()">&times;</span>
         <img id="lightbox-image" src="" alt="Full size image">
+    </div>
+
+    <!-- Math & Image Syntax Help Modal -->
+    <div id="math-syntax-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: white; border-radius: 15px; max-width: 800px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 25px; border-radius: 15px 15px 0 0; position: sticky; top: 0; z-index: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 1.3rem;">📐 Math, Image & Graph Syntax Guide</h3>
+                    <button id="close-math-syntax-modal" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px 12px; border-radius: 8px;">&times;</button>
+                </div>
+                <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 0.9rem;">Use these formats in Question Text and Options</p>
+            </div>
+
+            <!-- Content -->
+            <div style="padding: 25px;">
+                <!-- Math Section -->
+                <div style="margin-bottom: 25px;">
+                    <h4 style="color: #667eea; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span style="background: #667eea; color: white; padding: 4px 10px; border-radius: 8px;">1</span>
+                        Mathematical Expressions (LaTeX)
+                    </h4>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+                        <p style="margin: 0 0 10px 0; font-weight: 600;">Basic Format:</p>
+                        <code style="background: #e9ecef; padding: 8px 12px; border-radius: 6px; display: block; margin-bottom: 8px;">Inline math: $formula$ &nbsp;&nbsp;|&nbsp;&nbsp; Display math: $$formula$$</code>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="background: #667eea; color: white;">
+                                <th style="padding: 10px; text-align: left; border-radius: 8px 0 0 0;">What You Want</th>
+                                <th style="padding: 10px; text-align: left;">What You Type</th>
+                                <th style="padding: 10px; text-align: left; border-radius: 0 8px 0 0;">Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background: #f8f9fa;"><td style="padding: 10px;">Superscript (power)</td><td style="padding: 10px;"><code>$x^2$</code> or <code>$x^{10}$</code></td><td style="padding: 10px;">x², x¹⁰</td></tr>
+                            <tr><td style="padding: 10px;">Subscript</td><td style="padding: 10px;"><code>$x_1$</code> or <code>$x_{12}$</code></td><td style="padding: 10px;">x₁, x₁₂</td></tr>
+                            <tr style="background: #f8f9fa;"><td style="padding: 10px;">Fraction</td><td style="padding: 10px;"><code>$\frac{1}{2}$</code> or <code>$\frac{a+b}{c}$</code></td><td style="padding: 10px;">½, (a+b)/c</td></tr>
+                            <tr><td style="padding: 10px;">Square root</td><td style="padding: 10px;"><code>$\sqrt{2}$</code> or <code>$\sqrt{a+b}$</code></td><td style="padding: 10px;">√2, √(a+b)</td></tr>
+                            <tr style="background: #f8f9fa;"><td style="padding: 10px;">nth root</td><td style="padding: 10px;"><code>$\sqrt[3]{8}$</code></td><td style="padding: 10px;">³√8</td></tr>
+                            <tr><td style="padding: 10px;">Pi, Alpha, Beta, Theta</td><td style="padding: 10px;"><code>$\pi$, $\alpha$, $\beta$, $\theta$</code></td><td style="padding: 10px;">π, α, β, θ</td></tr>
+                            <tr style="background: #f8f9fa;"><td style="padding: 10px;">Multiply, Divide</td><td style="padding: 10px;"><code>$\times$, $\div$</code></td><td style="padding: 10px;">×, ÷</td></tr>
+                            <tr><td style="padding: 10px;">Not equal, ≤, ≥</td><td style="padding: 10px;"><code>$\neq$, $\leq$, $\geq$</code></td><td style="padding: 10px;">≠, ≤, ≥</td></tr>
+                            <tr style="background: #f8f9fa;"><td style="padding: 10px;">Plus/minus, Infinity</td><td style="padding: 10px;"><code>$\pm$, $\infty$</code></td><td style="padding: 10px;">±, ∞</td></tr>
+                            <tr><td style="padding: 10px;">Sum (Sigma)</td><td style="padding: 10px;"><code>$\sum_{i=1}^{n} i$</code></td><td style="padding: 10px;">Σᵢ₌₁ⁿ i</td></tr>
+                            <tr style="background: #f8f9fa;"><td style="padding: 10px;">Integral</td><td style="padding: 10px;"><code>$\int_0^1 x \, dx$</code></td><td style="padding: 10px;">∫₀¹ x dx</td></tr>
+                            <tr><td style="padding: 10px;">Degree symbol</td><td style="padding: 10px;"><code>$90^\circ$</code></td><td style="padding: 10px;">90°</td></tr>
+                            <tr style="background: #f8f9fa;"><td style="padding: 10px;">Percentage</td><td style="padding: 10px;"><code>$25\%$</code></td><td style="padding: 10px;">25%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Images Section -->
+                <div style="margin-bottom: 25px;">
+                    <h4 style="color: #27ae60; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span style="background: #27ae60; color: white; padding: 4px 10px; border-radius: 8px;">2</span>
+                        Images
+                    </h4>
+                    <div style="background: #e8f5e9; padding: 15px; border-radius: 10px;">
+                        <p style="margin: 0 0 10px 0; font-weight: 600;">Format:</p>
+                        <code style="background: #c8e6c9; padding: 8px 12px; border-radius: 6px; display: block; margin-bottom: 10px;">[img:https://your-image-url.com/image.png]</code>
+                        <p style="margin: 0; font-size: 0.9rem; color: #2e7d32;">
+                            <strong>Example:</strong> [img:https://i.imgur.com/example.png]<br>
+                            <strong>Tip:</strong> Upload images to Imgur, Google Drive (public), or any image hosting service and use the direct URL.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Graphs Section -->
+                <div style="margin-bottom: 25px;">
+                    <h4 style="color: #f39c12; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span style="background: #f39c12; color: white; padding: 4px 10px; border-radius: 8px;">3</span>
+                        Graphs & Charts
+                    </h4>
+                    <div style="background: #fff8e1; padding: 15px; border-radius: 10px;">
+                        <p style="margin: 0 0 10px 0; font-weight: 600;">Format:</p>
+                        <code style="background: #ffecb3; padding: 8px 12px; border-radius: 6px; display: block; margin-bottom: 10px;">[graph:type:label1,value1;label2,value2;label3,value3]</code>
+                        <p style="margin: 0 0 8px 0; font-size: 0.9rem;"><strong>Types:</strong> line, bar, pie, doughnut</p>
+                        <p style="margin: 0; font-size: 0.9rem; color: #e65100;">
+                            <strong>Examples:</strong><br>
+                            • Bar chart: <code>[graph:bar:Jan,100;Feb,150;Mar,200]</code><br>
+                            • Pie chart: <code>[graph:pie:Pass,75;Fail,25]</code><br>
+                            • Line graph: <code>[graph:line:2020,50;2021,75;2022,100]</code>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Tables Section -->
+                <div style="margin-bottom: 25px;">
+                    <h4 style="color: #9c27b0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span style="background: #9c27b0; color: white; padding: 4px 10px; border-radius: 8px;">4</span>
+                        Tables
+                    </h4>
+                    <div style="background: #f3e5f5; padding: 15px; border-radius: 10px;">
+                        <p style="margin: 0 0 10px 0; font-weight: 600;">Format:</p>
+                        <code style="background: #e1bee7; padding: 8px 12px; border-radius: 6px; display: block; margin-bottom: 10px;">[table:Header1,Header2|Row1Col1,Row1Col2|Row2Col1,Row2Col2]</code>
+                        <p style="margin: 0; font-size: 0.9rem; color: #7b1fa2;">
+                            <strong>Example:</strong> <code>[table:Name,Score|Alice,85|Bob,92|Charlie,78]</code>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Example Questions -->
+                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); padding: 20px; border-radius: 10px; border: 2px dashed #667eea;">
+                    <h4 style="color: #1565c0; margin: 0 0 15px 0;">Example Questions</h4>
+
+                    <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                        <p style="margin: 0 0 5px 0; font-weight: 600; color: #333;">Algebra Question:</p>
+                        <code style="font-size: 0.85rem; color: #555;">Solve for $x$: $2x^2 + 5x - 3 = 0$</code>
+                    </div>
+
+                    <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                        <p style="margin: 0 0 5px 0; font-weight: 600; color: #333;">Geometry Question:</p>
+                        <code style="font-size: 0.85rem; color: #555;">Find the area of a circle with radius $r = 7$ cm. (Use $\pi = \frac{22}{7}$)</code>
+                    </div>
+
+                    <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                        <p style="margin: 0 0 5px 0; font-weight: 600; color: #333;">Option with Math:</p>
+                        <code style="font-size: 0.85rem; color: #555;">Option A: $x = \frac{-5 + \sqrt{49}}{4}$</code>
+                    </div>
+
+                    <div style="background: white; padding: 12px; border-radius: 8px;">
+                        <p style="margin: 0 0 5px 0; font-weight: 600; color: #333;">Question with Image:</p>
+                        <code style="font-size: 0.85rem; color: #555;">Based on the diagram: [img:https://example.com/triangle.png] Find angle $\theta$.</code>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- OCR Review Modal -->
@@ -5803,6 +5937,25 @@ Artificial Intelligence has revolutionized..."></textarea>
         document.getElementById('close-add-question-btn').addEventListener('click', function() {
             document.getElementById('add-question-form').classList.add('hidden');
             resetQuestionForm();
+        });
+
+        // Math Syntax Help Modal - Open
+        document.getElementById('math-syntax-help-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            const modal = document.getElementById('math-syntax-modal');
+            modal.style.display = 'flex';
+        });
+
+        // Math Syntax Help Modal - Close button
+        document.getElementById('close-math-syntax-modal').addEventListener('click', function() {
+            document.getElementById('math-syntax-modal').style.display = 'none';
+        });
+
+        // Math Syntax Help Modal - Close on backdrop click
+        document.getElementById('math-syntax-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
         });
 
         // Bank child question counter
