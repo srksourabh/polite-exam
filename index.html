@@ -1257,7 +1257,7 @@
 
                                 <div class="form-control w-full mb-4">
                                     <label class="label"><span class="label-text font-medium">Select Exam</span></label>
-                                    <select id="exam-select" class="select select-bordered w-full">
+                                    <select id="exam-code-input" class="select select-bordered w-full">
                                         <option value="">-- Select an Exam --</option>
                                     </select>
                                 </div>
@@ -1297,7 +1297,7 @@
                                         <h2 class="text-xl font-bold" id="exam-title-display">Exam Title</h2>
                                         <p class="text-sm text-base-content/60">Question <span id="current-question-num">1</span> of <span id="total-questions-num">0</span></p>
                                     </div>
-                                    <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-2 sm:gap-4">
                                         <div id="timer" class="badge badge-lg badge-primary gap-2 px-4 py-3 text-lg font-mono">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1305,7 +1305,10 @@
                                             <span id="time-remaining">00:00</span>
                                         </div>
                                         <button id="submit-exam-btn" class="btn btn-error btn-sm">
-                                            Submit Exam
+                                            Submit
+                                        </button>
+                                        <button id="candidate-logout-btn" class="btn btn-ghost btn-sm">
+                                            Logout
                                         </button>
                                     </div>
                                 </div>
