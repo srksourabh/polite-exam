@@ -41,13 +41,13 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
  *    - Example: [table:Name,Score|Alice,85|Bob,92|Charlie,78]
  *
  * 5. SIMPLE SYNTAX (Auto-converted to LaTeX)
- *    - Powers: 2^2, x^10, a^{n+1} → automatically wrapped in $...$
- *    - Subscripts: x_1, a_n → automatically wrapped in $...$
- *    - Square root: sqrt(x), sqrt(a+b) → $\sqrt{x}$
- *    - Fractions: 1/2, (a+b)/c → converted to fractions
- *    - Symbols: pi, alpha, beta, theta, infinity → Greek letters
- *    - Comparisons: >=, <=, != → ≥, ≤, ≠
- *    - Operations: +-, */ → ±, ×÷
+ *    - Powers: 2^2, x^10, a^{n+1} - automatically wrapped in $...$
+ *    - Subscripts: x_1, a_n - automatically wrapped in $...$
+ *    - Square root: sqrt(x), sqrt(a+b) - becomes $\sqrt{x}$
+ *    - Fractions: 1/2, (a+b)/c - converted to fractions
+ *    - Symbols: pi, alpha, beta, theta, infinity - Greek letters
+ *    - Comparisons: >=, <=, != - become >= <= != symbols
+ *    - Operations: +- and multiplication/division symbols
  *
  * 6. AIRTABLE FIELD SUPPORT
  *    - Store the raw syntax directly in Airtable fields
