@@ -6239,13 +6239,13 @@ function displayStandaloneQuestion(qData) {
     }
 
     // Use renderRichContent for KaTeX/LaTeX rendering
-    document.getElementById('ai-question-text').innerHTML = renderRichContent(question);
-    document.getElementById('ai-option-a').innerHTML = renderRichContent(optionA);
-    document.getElementById('ai-option-b').innerHTML = renderRichContent(optionB);
-    document.getElementById('ai-option-c').innerHTML = renderRichContent(optionC);
-    document.getElementById('ai-option-d').innerHTML = renderRichContent(optionD);
+    renderRichContent(question, document.getElementById('ai-question-text'));
+    renderRichContent(optionA, document.getElementById('ai-option-a'));
+    renderRichContent(optionB, document.getElementById('ai-option-b'));
+    renderRichContent(optionC, document.getElementById('ai-option-c'));
+    renderRichContent(optionD, document.getElementById('ai-option-d'));
     document.getElementById('ai-correct-answer').textContent = correct;
-    document.getElementById('ai-explanation').innerHTML = renderRichContent(explanation);
+    renderRichContent(explanation, document.getElementById('ai-explanation'));
     document.getElementById('ai-display-subject').textContent = subject;
     document.getElementById('ai-display-difficulty').textContent = difficulty.toUpperCase();
 
@@ -6282,7 +6282,7 @@ function displayParentChildQuestion(qData) {
     document.getElementById('ai-pc-difficulty').textContent = difficulty.toUpperCase();
 
     // Display passage with KaTeX rendering
-    document.getElementById('ai-pc-passage').innerHTML = renderRichContent(mainQuestionText);
+    renderRichContent(mainQuestionText, document.getElementById('ai-pc-passage'));
 
     // Display sub-questions with KaTeX rendering
     const container = document.getElementById('ai-pc-subquestions-container');
@@ -6302,15 +6302,15 @@ function displayParentChildQuestion(qData) {
             const sqHtml = `
                 <div style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #dee2e6;">
                     <h5 style="margin: 0 0 10px 0; color: #495057;">Sub-Question ${idx + 1}:</h5>
-                    <p style="font-weight: 500; margin-bottom: 10px;">${renderRichContent(question)}</p>
+                    <p style="font-weight: 500; margin-bottom: 10px;">${getRichContentHtml(question)}</p>
                     <div style="margin-left: 20px; margin-bottom: 10px;">
-                        <div>A) ${renderRichContent(optionA)}</div>
-                        <div>B) ${renderRichContent(optionB)}</div>
-                        <div>C) ${renderRichContent(optionC)}</div>
-                        <div>D) ${renderRichContent(optionD)}</div>
+                        <div>A) ${getRichContentHtml(optionA)}</div>
+                        <div>B) ${getRichContentHtml(optionB)}</div>
+                        <div>C) ${getRichContentHtml(optionC)}</div>
+                        <div>D) ${getRichContentHtml(optionD)}</div>
                     </div>
                     <div style="background: #e8f5e9; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem;">
-                        <strong>Answer:</strong> ${correct} | <strong>Explanation:</strong> ${renderRichContent(explanation)}
+                        <strong>Answer:</strong> ${correct} | <strong>Explanation:</strong> ${getRichContentHtml(explanation)}
                     </div>
                 </div>
             `;
@@ -7411,7 +7411,7 @@ function loadQuestion() {
         const parentQuestionText = document.getElementById('parent-question-text');
         if (parentQuestionContainer && parentQuestionText) {
             parentQuestionContainer.classList.remove('hidden');
-            parentQuestionText.innerHTML = renderRichContent(question.Question || question['Main Question Text'] || '');
+            renderRichContent(question.Question || question['Main Question Text'] || '', parentQuestionText);
         }
 
         // Hide regular question display
@@ -7645,7 +7645,7 @@ function loadQuestion() {
         // Update the visible question display in exam screen
         const questionDisplay = document.getElementById('question-display');
         if (questionDisplay) {
-            questionDisplay.innerHTML = renderRichContent(question.Question || 'Loading question...');
+            renderRichContent(question.Question || 'Loading question...', questionDisplay);
         }
 
         // Update question number in new UI
