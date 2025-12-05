@@ -13,7 +13,7 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 
 // App Version for cache invalidation on new deployments
 // Update this version when deploying significant changes to clear old sessions
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.2.0';
 const APP_VERSION_KEY = 'polite_app_version';
 
 // =====================================================
@@ -1512,28 +1512,45 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check app version and clear ALL data if version changed (new deployment)
     (function checkAppVersion() {
         const storedVersion = localStorage.getItem(APP_VERSION_KEY);
-        if (storedVersion !== APP_VERSION) {
-            console.log(`App version changed: ${storedVersion} -> ${APP_VERSION}. Clearing all cached data.`);
+        const reloadFlag = sessionStorage.getItem('version_reload_done');
+
+        if (storedVersion !== APP_VERSION && !reloadFlag) {
+            console.log(`🔄 App version changed: ${storedVersion} -> ${APP_VERSION}. Clearing all cached data and reloading...`);
+
+            // Set reload flag to prevent infinite loops
+            sessionStorage.setItem('version_reload_done', 'true');
 
             // Clear ALL localStorage (including user sessions)
             localStorage.clear();
-
-            // Clear ALL sessionStorage
-            sessionStorage.clear();
 
             // Clear Cache API completely
             if ('caches' in window) {
                 caches.keys().then(names => {
                     names.forEach(name => {
                         caches.delete(name);
-                        console.log('Cleared cache:', name);
+                        console.log('✓ Cleared cache:', name);
                     });
-                });
-            }
+                }).then(() => {
+                    // Store new version
+                    localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
+                    console.log('✓ All caches cleared. Forcing hard reload...');
 
-            // Store new version
+                    // Force hard reload to get fresh files
+                    window.location.reload(true);
+                });
+            } else {
+                // Store new version
+                localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
+                console.log('✓ Cache cleared. Forcing hard reload...');
+
+                // Force hard reload
+                window.location.reload(true);
+            }
+        } else if (storedVersion !== APP_VERSION && reloadFlag) {
+            // After reload, clear the flag and store version
+            sessionStorage.removeItem('version_reload_done');
             localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
-            console.log('All caches cleared for new app version');
+            console.log('✅ App updated to version', APP_VERSION);
         }
     })();
 
