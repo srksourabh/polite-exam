@@ -2348,24 +2348,61 @@ document.getElementById('modal-profile-image').addEventListener('change', functi
 // Quick profile image upload from dashboard
 document.getElementById('profile-image-input').addEventListener('change', async function(e) {
     const file = e.target.files[0];
-    if (!file || !currentUserData) return;
+    if (!file) return;
+
+    if (!currentUserData) {
+        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+            window.PoliteCCAPI.showNotification('Please sign in first', 'error');
+        }
+        return;
+    }
 
     if (file.size > 500 * 1024) {
-        window.PoliteCCAPI.showNotification('Image too large. Maximum size is 500KB.', 'error');
+        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+            window.PoliteCCAPI.showNotification('Image too large. Maximum size is 500KB.', 'error');
+        }
         return;
+    }
+
+    if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+        window.PoliteCCAPI.showNotification('Uploading image...', 'info');
     }
 
     const reader = new FileReader();
     reader.onload = async function(event) {
-        const result = await window.PoliteCCAPI.updateCandidateProfile({
-            email: currentUserData.email,
-            profileImage: event.target.result
-        });
+        try {
+            const result = await window.PoliteCCAPI.updateCandidateProfile({
+                email: currentUserData.email,
+                profileImage: event.target.result
+            });
 
-        if (result) {
-            currentUserData.profileImage = event.target.result;
-            document.getElementById('profile-image-display').innerHTML =
-                `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            if (result) {
+                currentUserData.profileImage = event.target.result;
+                document.getElementById('profile-image-display').innerHTML =
+                    `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+
+                // Also update dashboard profile image if it exists
+                const dashboardProfileImg = document.getElementById('profile-image-display');
+                if (dashboardProfileImg) {
+                    dashboardProfileImg.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                }
+
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('✅ Profile photo updated successfully!', 'success');
+                }
+            } else {
+                throw new Error('Failed to update profile image');
+            }
+        } catch (error) {
+            console.error('Profile image upload error:', error);
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('❌ Failed to upload image: ' + error.message, 'error');
+            }
+        }
+    };
+    reader.onerror = function() {
+        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+            window.PoliteCCAPI.showNotification('❌ Failed to read image file', 'error');
         }
     };
     reader.readAsDataURL(file);
@@ -3972,6 +4009,17 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
     document.getElementById('upload-section').classList.add('hidden');
     document.getElementById('ai-generator-section').classList.add('hidden');
 
+    // Set default expiry date to 7 days from today
+    const expiryInput = document.getElementById('exam-expiry');
+    if (expiryInput && !expiryInput.value) {
+        const defaultExpiry = new Date();
+        defaultExpiry.setDate(defaultExpiry.getDate() + 7);
+        const year = defaultExpiry.getFullYear();
+        const month = String(defaultExpiry.getMonth() + 1).padStart(2, '0');
+        const day = String(defaultExpiry.getDate()).padStart(2, '0');
+        expiryInput.value = `${year}-${month}-${day}`;
+    }
+
     // Render exam questions list
     const examQuestionsList = document.getElementById('exam-questions-list');
     examQuestionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">Loading questions from database...</p>';
@@ -4163,9 +4211,25 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
 
         // Function to attach event listeners
         function attachExamQuestionEventListeners() {
-            // Add event listeners to checkboxes
+            // Add event listeners to checkboxes with parent-child selection logic
             document.querySelectorAll('.question-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', updateSelectedCount);
+                checkbox.addEventListener('change', function() {
+                    const childIds = this.dataset.childIds;
+                    const isChecked = this.checked;
+
+                    // If this is a parent-child question, also check/uncheck all children
+                    if (childIds && childIds.trim()) {
+                        const childIdArray = childIds.split(',').filter(id => id.trim());
+                        childIdArray.forEach(childId => {
+                            const childCheckbox = document.querySelector(`.question-checkbox[value="${childId}"]`);
+                            if (childCheckbox && childCheckbox !== this) {
+                                childCheckbox.checked = isChecked;
+                            }
+                        });
+                    }
+
+                    updateSelectedCount();
+                });
             });
 
             // Add hover effect to question items

@@ -934,27 +934,23 @@
 
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                         <div class="form-control">
-                                            <label class="label"><span class="label-text font-medium">Exam Title</span></label>
-                                            <input type="text" id="exam-title" class="input input-bordered" placeholder="e.g., Railway Clerk Mock Test 1">
+                                            <label class="label"><span class="label-text font-medium">Exam Code <span class="text-error">*</span></span></label>
+                                            <input type="text" id="exam-code" class="input input-bordered" placeholder="e.g., RRCLK001" required>
                                         </div>
                                         <div class="form-control">
-                                            <label class="label"><span class="label-text font-medium">Exam Code</span></label>
-                                            <input type="text" id="exam-code" class="input input-bordered" placeholder="e.g., RRCLK001">
+                                            <label class="label"><span class="label-text font-medium">Exam Title <span class="text-error">*</span></span></label>
+                                            <input type="text" id="exam-title" class="input input-bordered" placeholder="e.g., Railway Clerk Mock Test 1" required>
                                         </div>
                                     </div>
 
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                         <div class="form-control">
-                                            <label class="label"><span class="label-text font-medium">Duration (minutes)</span></label>
-                                            <input type="number" id="exam-duration" class="input input-bordered" placeholder="60" value="60">
+                                            <label class="label"><span class="label-text font-medium">Duration (minutes) <span class="text-error">*</span></span></label>
+                                            <input type="number" id="exam-duration" class="input input-bordered" placeholder="60" value="60" required>
                                         </div>
                                         <div class="form-control">
-                                            <label class="label"><span class="label-text font-medium">Total Questions</span></label>
-                                            <input type="number" id="exam-total-questions" class="input input-bordered" placeholder="50" value="50">
-                                        </div>
-                                        <div class="form-control">
-                                            <label class="label"><span class="label-text font-medium">Expiry Date</span></label>
-                                            <input type="date" id="exam-expiry" class="input input-bordered" placeholder="Select date">
+                                            <label class="label"><span class="label-text font-medium">Expiry Date <span class="text-error">*</span></span></label>
+                                            <input type="date" id="exam-expiry" class="input input-bordered" required>
                                         </div>
                                     </div>
 
