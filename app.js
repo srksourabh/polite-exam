@@ -4150,7 +4150,15 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
                     totalQuestions += 1;
                 }
             });
-            document.getElementById('selected-count').textContent = totalQuestions + ' Questions Selected';
+            const selectedCountElement = document.getElementById('selected-count-text');
+            if (selectedCountElement) {
+                selectedCountElement.textContent = `${totalQuestions} selected`;
+            }
+            // Also update the legacy element if it exists
+            const legacyElement = document.getElementById('selected-count');
+            if (legacyElement) {
+                legacyElement.textContent = totalQuestions + ' Questions Selected';
+            }
         }
 
         // Function to attach event listeners
@@ -7451,7 +7459,7 @@ function loadQuestion() {
                     <div class="card bg-base-200 shadow-sm mb-4 child-question-card" data-child-index="${childIndex}">
                         <div class="card-body p-4">
                             <h4 class="font-bold text-primary mb-2">Question ${displayQuestionNum}.${childNum}</h4>
-                            <p class="mb-3">${renderRichContent(child.Question || '')}</p>
+                            <p class="mb-3 rich-content">${escapeHtmlForRichContent(child.Question || '')}</p>
                             <div class="space-y-2 child-options" data-child-index="${childIndex}">
                                 ${optionValues.map((opt, idx) => {
                                     const isSelected = childAnswer === idx;
@@ -7459,7 +7467,7 @@ function loadQuestion() {
                                         <div class="option child-option flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-100 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}" data-child-index="${childIndex}">
                                             <input type="radio" name="child-answer-${childIndex}" class="radio radio-primary option-radio child-radio" ${isSelected ? 'checked' : ''}>
                                             <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
-                                            <span class="flex-1">${renderRichContent(opt)}</span>
+                                            <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>
                                         </div>
                                     `;
                                 }).join('')}
@@ -7674,7 +7682,7 @@ function loadQuestion() {
                     <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}">
                         <input type="radio" name="answer" class="radio radio-primary option-radio" ${isSelected ? 'checked' : ''}>
                         <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
-                        <span class="flex-1 rich-content">${renderRichContent(opt)}</span>
+                        <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>
                     </div>
                 `;
             }).join('');
