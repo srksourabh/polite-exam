@@ -1678,6 +1678,42 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('ocr-cancel-review').addEventListener('click', closeOCRReviewModal);
     document.getElementById('ocr-save-reviewed').addEventListener('click', saveOCRReviewedQuestions);
 
+    // Mobile Navigation Handlers
+    const mobileHomeLink = document.getElementById('mobile-home-link');
+    if (mobileHomeLink) {
+        mobileHomeLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Clear any active timers
+            if (examTimer) {
+                clearInterval(examTimer);
+                examTimer = null;
+            }
+            // Clear session
+            clearSession();
+            // Navigate to hero landing
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('hero-landing').classList.add('active');
+            updateHeaderNav('hero-landing');
+            // Close mobile menu drawer if open
+            const mobileDrawer = document.getElementById('mobile-menu-drawer');
+            if (mobileDrawer) mobileDrawer.checked = false;
+        });
+    }
+
+    const mobileAdminLink = document.getElementById('mobile-admin-link');
+    if (mobileAdminLink) {
+        mobileAdminLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Navigate to admin login
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('admin-login-screen').classList.add('active');
+            updateHeaderNav('admin-login-screen');
+            // Close mobile menu drawer if open
+            const mobileDrawer = document.getElementById('mobile-menu-drawer');
+            if (mobileDrawer) mobileDrawer.checked = false;
+        });
+    }
+
     // Navigation: Hero Landing <-> Signup
     document.getElementById('signup-btn').addEventListener('click', function() {
         document.getElementById('hero-landing').classList.remove('active');
@@ -2154,6 +2190,68 @@ document.getElementById('start-exam-hero-btn').addEventListener('click', functio
     document.getElementById('candidate-signin-screen').classList.add('active');
     updateHeaderNav('candidate-signin-screen');
 });
+
+// Dashboard - View Results
+const dashboardViewResultsBtn = document.getElementById('dashboard-view-results-btn');
+if (dashboardViewResultsBtn) {
+    dashboardViewResultsBtn.addEventListener('click', async function() {
+        const session = getSession();
+        if (!session || session.userType !== 'candidate') {
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('Please sign in to view results', 'error');
+            }
+            return;
+        }
+
+        try {
+            // Show loading notification
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('Loading your results...', 'info');
+            }
+
+            // Fetch results for this candidate
+            if (window.PoliteCCAPI && window.PoliteCCAPI.getCandidateResults) {
+                const results = await window.PoliteCCAPI.getCandidateResults(session.userData.email);
+
+                // Display results in a modal or section
+                const modal = document.getElementById('results-detail-modal');
+                const content = document.getElementById('results-detail-content');
+
+                if (modal && content) {
+                    if (results && results.length > 0) {
+                        let resultsHtml = '<h3 class="font-bold mb-4">Your Exam Results</h3><div class="space-y-3">';
+                        results.forEach(result => {
+                            resultsHtml += `
+                                <div class="card bg-base-200 shadow-sm">
+                                    <div class="card-body p-4">
+                                        <div class="flex justify-between items-center">
+                                            <div>
+                                                <h4 class="font-bold">${result['Exam'] || result.examTitle || 'Unknown Exam'}</h4>
+                                                <p class="text-sm text-base-content/60">${result.Date || new Date(result.createdAt).toLocaleDateString() || ''}</p>
+                                            </div>
+                                            <div class="text-2xl font-bold text-primary">${result.Score || 0}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        resultsHtml += '</div>';
+                        content.innerHTML = resultsHtml;
+                    } else {
+                        content.innerHTML = '<p class="text-center text-base-content/60 py-8">No exam results found. Take an exam to see your results here.</p>';
+                    }
+                    content.classList.remove('hidden');
+                    modal.style.display = 'flex';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading results:', error);
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('Failed to load results: ' + error.message, 'error');
+            }
+        }
+    });
+}
 
 // Candidate Logout
 document.getElementById('candidate-logout-link').addEventListener('click', function(e) {
@@ -6444,12 +6542,19 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
         startTime = new Date();
         startExamTimer();
 
+        // Update exam title display in the new UI
+        const examTitleDisplay = document.getElementById('exam-title-display');
+        if (examTitleDisplay) {
+            examTitleDisplay.textContent = currentExam.title || 'Exam';
+        }
+
         // Show exam screen
         document.getElementById('candidate-login-screen').classList.remove('active');
         document.getElementById('exam-screen').classList.add('active');
         updateHeaderNav('exam-screen');
 
         loadQuestion();
+        updateQuestionNavigator();
 
         // Save initial exam state for resume functionality
         saveExamState();
@@ -6559,10 +6664,20 @@ document.getElementById('next-btn').addEventListener('click', function() {
     }
 });
 
-// Submit exam
-document.getElementById('submit-btn').addEventListener('click', function() {
+// Submit exam - handle both old and new button IDs
+document.getElementById('submit-btn')?.addEventListener('click', function() {
     submitExam();
 });
+
+// New UI submit button
+const submitExamBtn = document.getElementById('submit-exam-btn');
+if (submitExamBtn) {
+    submitExamBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to submit the exam? You cannot change your answers after submission.')) {
+            submitExam();
+        }
+    });
+}
 
 // Function to show candidate's own detailed results (used by results modal)
 function showCandidateOwnResults() {
@@ -6620,6 +6735,36 @@ function showCandidateOwnResults() {
     // Close modal handler is already set up for results-detail-modal
 }
 
+// Result screen navigation handlers
+const backToDashboardBtn = document.getElementById('back-to-dashboard-btn');
+if (backToDashboardBtn) {
+    backToDashboardBtn.addEventListener('click', function() {
+        const session = getSession();
+        document.getElementById('result-screen').classList.remove('active');
+        if (session && session.userType === 'candidate') {
+            showCandidateDashboard(session.userData);
+        } else {
+            document.getElementById('hero-landing').classList.add('active');
+            updateHeaderNav('hero-landing');
+        }
+    });
+}
+
+const takeAnotherExamBtn = document.getElementById('take-another-exam-btn');
+if (takeAnotherExamBtn) {
+    takeAnotherExamBtn.addEventListener('click', function() {
+        const session = getSession();
+        document.getElementById('result-screen').classList.remove('active');
+        if (session && session.userType === 'candidate') {
+            document.getElementById('candidate-login-screen').classList.add('active');
+            updateHeaderNav('candidate-login-screen');
+        } else {
+            document.getElementById('hero-landing').classList.add('active');
+            updateHeaderNav('hero-landing');
+        }
+    });
+}
+
 // Log out and close from result screen
 document.getElementById('result-logout-btn').addEventListener('click', function() {
     // Clear any running exam timer
@@ -6667,8 +6812,26 @@ function startTimer() {
 function updateTimerDisplay() {
     const minutes = Math.floor(timeRemaining / 60);
     const seconds = timeRemaining % 60;
-    document.getElementById('timer-display').textContent = 
-        `⏱️ Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    // Update both old and new timer elements for compatibility
+    const timerDisplayOld = document.getElementById('timer-display');
+    const timerDisplayNew = document.getElementById('time-remaining');
+
+    if (timerDisplayOld) timerDisplayOld.textContent = `⏱️ Time Remaining: ${timeStr}`;
+    if (timerDisplayNew) timerDisplayNew.textContent = timeStr;
+
+    // Add warning class when time is low
+    const timerBadge = document.getElementById('timer');
+    if (timerBadge) {
+        if (timeRemaining <= 60) {
+            timerBadge.classList.remove('badge-primary', 'badge-warning');
+            timerBadge.classList.add('badge-error');
+        } else if (timeRemaining <= 300) {
+            timerBadge.classList.remove('badge-primary', 'badge-error');
+            timerBadge.classList.add('badge-warning');
+        }
+    }
 }
 
 function autoSubmitExam() {
@@ -6803,19 +6966,89 @@ async function submitExam(isAutoSubmit = false) {
         answers: detailedAnswers
     };
 
+    // Calculate detailed statistics
+    let correctCount = 0;
+    let wrongCount = 0;
+    let unansweredCount = 0;
+    let totalMarks = 0;
+
+    detailedAnswers.forEach(answer => {
+        if (answer.isMainPassage) return; // Skip passages
+        totalMarks++;
+        if (answer.userAnswer === 'Not Answered') {
+            unansweredCount++;
+        } else if (answer.isCorrect) {
+            correctCount++;
+        } else {
+            wrongCount++;
+        }
+    });
+
+    const percentage = totalMarks > 0 ? ((displayScore / totalMarks) * 100).toFixed(1) : 0;
+
     // Show result screen
     document.getElementById('exam-screen').classList.remove('active');
     document.getElementById('result-screen').classList.add('active');
     updateHeaderNav('result-screen');
 
+    // Update all result screen elements
     document.getElementById('final-score').textContent = displayScore.toFixed(2);
     document.getElementById('result-exam-code').textContent = currentExam.code;
     document.getElementById('result-name').textContent = candidateName;
     document.getElementById('result-mobile').textContent = candidateMobile;
 
+    // Update new statistics elements
+    const resultTotalMarks = document.getElementById('result-total-marks');
+    const resultPercentage = document.getElementById('result-percentage');
+    const resultCorrect = document.getElementById('result-correct');
+    const resultWrong = document.getElementById('result-wrong');
+    const resultUnanswered = document.getElementById('result-unanswered');
+
+    if (resultTotalMarks) resultTotalMarks.textContent = totalMarks;
+    if (resultPercentage) resultPercentage.textContent = percentage + '%';
+    if (resultCorrect) resultCorrect.textContent = correctCount;
+    if (resultWrong) resultWrong.textContent = wrongCount;
+    if (resultUnanswered) resultUnanswered.textContent = unansweredCount;
+
+    // Render detailed results in the new UI
+    const detailedResultsContainer = document.getElementById('detailed-results');
+    if (detailedResultsContainer) {
+        let detailedHtml = '';
+        detailedAnswers.forEach((answer, index) => {
+            if (answer.isMainPassage) return; // Skip passages
+
+            const statusColor = answer.isCorrect ? 'success' : (answer.userAnswer !== 'Not Answered' ? 'error' : 'warning');
+            const statusIcon = answer.isCorrect ? '✅' : (answer.userAnswer !== 'Not Answered' ? '❌' : '⚪');
+            const statusText = answer.isCorrect ? 'Correct (+1)' : (answer.userAnswer !== 'Not Answered' ? 'Wrong (-0.25)' : 'Unanswered (0)');
+
+            detailedHtml += `
+                <div class="card bg-base-200 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-${statusColor}">${statusIcon} Question ${answer.hierarchicalNumber || (index + 1)}</h4>
+                            <span class="badge badge-${statusColor}">${statusText}</span>
+                        </div>
+                        <p class="text-sm mt-2">${answer.question ? answer.question.substring(0, 200) + (answer.question.length > 200 ? '...' : '') : ''}</p>
+                        <div class="grid grid-cols-2 gap-2 mt-2 text-sm">
+                            <div class="${answer.userAnswer === 'A' ? 'font-bold text-primary' : ''} ${answer.correctAnswer === 'A' ? 'text-success' : ''}">A: ${answer.optionA || ''}</div>
+                            <div class="${answer.userAnswer === 'B' ? 'font-bold text-primary' : ''} ${answer.correctAnswer === 'B' ? 'text-success' : ''}">B: ${answer.optionB || ''}</div>
+                            <div class="${answer.userAnswer === 'C' ? 'font-bold text-primary' : ''} ${answer.correctAnswer === 'C' ? 'text-success' : ''}">C: ${answer.optionC || ''}</div>
+                            <div class="${answer.userAnswer === 'D' ? 'font-bold text-primary' : ''} ${answer.correctAnswer === 'D' ? 'text-success' : ''}">D: ${answer.optionD || ''}</div>
+                        </div>
+                        <div class="flex gap-4 mt-2 text-sm">
+                            <span>Your Answer: <strong class="${answer.userAnswer !== 'Not Answered' ? 'text-primary' : 'text-warning'}">${answer.userAnswer}</strong></span>
+                            <span>Correct: <strong class="text-success">${answer.correctAnswer}</strong></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        detailedResultsContainer.innerHTML = detailedHtml || '<p class="text-center text-base-content/60">No detailed results available</p>';
+    }
+
     const notification = document.createElement('div');
     notification.className = 'notification success';
-    notification.innerHTML = `✅ Exam submitted! Final score: ${score.toFixed(2)}`;
+    notification.innerHTML = `✅ Exam submitted! Final score: ${displayScore.toFixed(2)} (${correctCount} correct, ${wrongCount} wrong)`;
     document.getElementById('notification-container').appendChild(notification);
 
     setTimeout(() => {
@@ -6845,6 +7078,105 @@ function getHierarchicalQuestionNumber(questionIndex) {
     }
 
     return { display: questionIndex + 1, isSubQ: false };
+}
+
+// Select option in the new UI
+function selectOptionNewUI(optionIndex) {
+    const optionsContainer = document.getElementById('options-container');
+    if (!optionsContainer) return;
+
+    const options = optionsContainer.querySelectorAll('.option');
+    const radios = optionsContainer.querySelectorAll('.option-radio');
+
+    // Check if clicking the same option again (toggle off)
+    if (userAnswers[currentQuestionIndex] === optionIndex) {
+        // Deselect - user wants to not answer this question
+        userAnswers[currentQuestionIndex] = undefined;
+        options[optionIndex].classList.remove('border-primary', 'bg-primary/10');
+        options[optionIndex].classList.add('border-base-300');
+        radios[optionIndex].checked = false;
+    } else {
+        // Select new option
+        userAnswers[currentQuestionIndex] = optionIndex;
+        options.forEach((option, i) => {
+            if (i === optionIndex) {
+                option.classList.remove('border-base-300');
+                option.classList.add('border-primary', 'bg-primary/10');
+                radios[i].checked = true;
+            } else {
+                option.classList.remove('border-primary', 'bg-primary/10');
+                option.classList.add('border-base-300');
+                radios[i].checked = false;
+            }
+        });
+    }
+
+    // Update question navigator
+    updateQuestionNavigator();
+
+    // Save exam state after answer selection for resume functionality
+    saveExamState();
+}
+
+// Update the question navigator buttons in the new UI
+function updateQuestionNavigator() {
+    const navigator = document.getElementById('question-navigator');
+    if (!navigator || !currentExam || !currentExam.questions) return;
+
+    // Build navigator buttons showing answered/current status
+    let navHtml = '';
+    let displayNum = 0;
+
+    for (let i = 0; i < currentExam.questions.length; i++) {
+        const q = currentExam.questions[i];
+        const qHasParentLink = q['Parent Question'] && q['Parent Question'].length > 0;
+        const isChild = qHasParentLink || q.isSubQuestion || q['Is Sub Question'];
+
+        // Skip child questions in navigator (they're shown with parent)
+        if (isChild) continue;
+
+        displayNum++;
+        const isAnswered = userAnswers[i] !== null && userAnswers[i] !== undefined;
+        const isCurrent = i === currentQuestionIndex;
+
+        let btnClass = 'btn btn-sm ';
+        if (isCurrent) {
+            btnClass += 'btn-primary';
+        } else if (isAnswered) {
+            btnClass += 'btn-success';
+        } else {
+            btnClass += 'btn-ghost border border-base-300';
+        }
+
+        navHtml += `<button class="${btnClass}" data-question-index="${i}">${displayNum}</button>`;
+    }
+
+    navigator.innerHTML = navHtml;
+
+    // Add click handlers to navigator buttons
+    navigator.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const idx = parseInt(this.getAttribute('data-question-index'));
+            currentQuestionIndex = idx;
+            loadQuestion();
+            saveExamState();
+        });
+    });
+}
+
+// Clear response button handler
+const clearResponseBtn = document.getElementById('clear-response-btn');
+if (clearResponseBtn) {
+    clearResponseBtn.addEventListener('click', function() {
+        if (currentQuestionIndex !== undefined && userAnswers) {
+            userAnswers[currentQuestionIndex] = undefined;
+            loadQuestion();
+            saveExamState();
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('Response cleared', 'info');
+            }
+        }
+    });
 }
 
 // Question loading - supports both standalone and parent-child grouped questions
@@ -6986,6 +7318,107 @@ function loadQuestion() {
 
         const endScorableNum = currentScorableStartNum + childQuestions.length - 1;
         const passageContent = escapeHtmlForRichContent(question.Question || question['Main Question Text'] || '');
+
+        // ===== UPDATE NEW UI ELEMENTS FOR PARENT-CHILD =====
+        // Update question numbers in new UI
+        const currentQuestionNum = document.getElementById('current-question-num');
+        const totalQuestionsNum = document.getElementById('total-questions-num');
+        if (currentQuestionNum) currentQuestionNum.textContent = `${currentScorableStartNum}-${endScorableNum}`;
+        if (totalQuestionsNum) totalQuestionsNum.textContent = totalScorableQuestions;
+
+        // Show parent passage in the new UI
+        const parentQuestionContainer = document.getElementById('parent-question-container');
+        const parentQuestionText = document.getElementById('parent-question-text');
+        if (parentQuestionContainer && parentQuestionText) {
+            parentQuestionContainer.classList.remove('hidden');
+            parentQuestionText.innerHTML = renderRichContent(question.Question || question['Main Question Text'] || '');
+        }
+
+        // Hide regular question display
+        const questionDisplay = document.getElementById('question-display');
+        if (questionDisplay) {
+            questionDisplay.innerHTML = `<div class="text-sm text-base-content/60">📖 See passage above. Answer the sub-questions below.</div>`;
+        }
+
+        // Sort children by order
+        childQuestions.sort((a, b) => {
+            const orderA = parseInt(a['Sub Question Number']) || parseInt(a['Sub Question Order']) || 0;
+            const orderB = parseInt(b['Sub Question Number']) || parseInt(b['Sub Question Order']) || 0;
+            return orderA - orderB;
+        });
+
+        // Render child questions in the new UI options container
+        const optionsContainer = document.getElementById('options-container');
+        if (optionsContainer) {
+            let childrenHtml = '';
+            childQuestions.forEach((child, childIdx) => {
+                const childIndex = currentExam.questions.indexOf(child);
+                const childAnswer = userAnswers[childIndex];
+                const childNum = childIdx + 1;
+
+                const optionLetters = ['A', 'B', 'C', 'D'];
+                const optionValues = [
+                    child['Option A'] || '',
+                    child['Option B'] || '',
+                    child['Option C'] || '',
+                    child['Option D'] || ''
+                ];
+
+                childrenHtml += `
+                    <div class="card bg-base-200 shadow-sm mb-4 child-question-card" data-child-index="${childIndex}">
+                        <div class="card-body p-4">
+                            <h4 class="font-bold text-primary mb-2">Question ${displayQuestionNum}.${childNum}</h4>
+                            <p class="mb-3">${renderRichContent(child.Question || '')}</p>
+                            <div class="space-y-2 child-options" data-child-index="${childIndex}">
+                                ${optionValues.map((opt, idx) => {
+                                    const isSelected = childAnswer === idx;
+                                    return `
+                                        <div class="option child-option flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-100 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}" data-child-index="${childIndex}">
+                                            <input type="radio" name="child-answer-${childIndex}" class="radio radio-primary option-radio child-radio" ${isSelected ? 'checked' : ''}>
+                                            <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
+                                            <span class="flex-1">${renderRichContent(opt)}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            optionsContainer.innerHTML = childrenHtml;
+
+            // Add click handlers for child options in the new UI
+            optionsContainer.querySelectorAll('.child-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const childIndex = parseInt(this.getAttribute('data-child-index'));
+                    const optionIndex = parseInt(this.getAttribute('data-index'));
+
+                    const siblings = optionsContainer.querySelectorAll(`.child-option[data-child-index="${childIndex}"]`);
+                    const radios = optionsContainer.querySelectorAll(`input[name="child-answer-${childIndex}"]`);
+
+                    if (userAnswers[childIndex] === optionIndex) {
+                        // Deselect
+                        userAnswers[childIndex] = undefined;
+                        this.classList.remove('border-primary', 'bg-primary/10');
+                        this.classList.add('border-base-300');
+                        if (radios[optionIndex]) radios[optionIndex].checked = false;
+                    } else {
+                        // Select
+                        userAnswers[childIndex] = optionIndex;
+                        siblings.forEach(s => {
+                            s.classList.remove('border-primary', 'bg-primary/10');
+                            s.classList.add('border-base-300');
+                        });
+                        this.classList.remove('border-base-300');
+                        this.classList.add('border-primary', 'bg-primary/10');
+                        if (radios[optionIndex]) radios[optionIndex].checked = true;
+                    }
+
+                    updateQuestionNavigator();
+                    saveExamState();
+                });
+            });
+        }
         let groupHtml = `
             <div class="question-container" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e5f5 100%); border: 2px solid #9c27b0; max-height: 65vh; overflow-y: auto;">
                 <!-- Group Header -->
@@ -7109,30 +7542,91 @@ function loadQuestion() {
         standaloneContainer.style.display = 'block';
         parentChildContainer.style.display = 'none';
 
-        document.getElementById('question-subject-display').textContent = question.Subject || 'Unknown';
+        // Update hidden elements for compatibility
+        const subjectDisplay = document.getElementById('question-subject-display');
+        if (subjectDisplay) subjectDisplay.textContent = question.Subject || 'Unknown';
 
-        // Use rich content rendering for math, images, and graphs
-        renderRichContent(question.Question || 'Loading question...', document.getElementById('question-text-display'));
+        const questionTextDisplay = document.getElementById('question-text-display');
+        if (questionTextDisplay) {
+            renderRichContent(question.Question || 'Loading question...', questionTextDisplay);
+        }
 
-        // Render options with rich content support
-        renderRichContent(question['Option A'] || 'Option A', document.getElementById('option-a-display'), true);
-        renderRichContent(question['Option B'] || 'Option B', document.getElementById('option-b-display'), true);
-        renderRichContent(question['Option C'] || 'Option C', document.getElementById('option-c-display'), true);
-        renderRichContent(question['Option D'] || 'Option D', document.getElementById('option-d-display'), true);
+        // Render options to hidden elements for compatibility
+        const optADisplay = document.getElementById('option-a-display');
+        const optBDisplay = document.getElementById('option-b-display');
+        const optCDisplay = document.getElementById('option-c-display');
+        const optDDisplay = document.getElementById('option-d-display');
+        if (optADisplay) renderRichContent(question['Option A'] || 'Option A', optADisplay, true);
+        if (optBDisplay) renderRichContent(question['Option B'] || 'Option B', optBDisplay, true);
+        if (optCDisplay) renderRichContent(question['Option C'] || 'Option C', optCDisplay, true);
+        if (optDDisplay) renderRichContent(question['Option D'] || 'Option D', optDDisplay, true);
 
-        // Update selected option
+        // ===== UPDATE NEW UI ELEMENTS =====
+        // Update the visible question display in exam screen
+        const questionDisplay = document.getElementById('question-display');
+        if (questionDisplay) {
+            questionDisplay.innerHTML = renderRichContent(question.Question || 'Loading question...');
+        }
+
+        // Update question number in new UI
+        const currentQuestionNum = document.getElementById('current-question-num');
+        const totalQuestionsNum = document.getElementById('total-questions-num');
+        if (currentQuestionNum) currentQuestionNum.textContent = currentScorableStartNum;
+        if (totalQuestionsNum) totalQuestionsNum.textContent = totalScorableQuestions;
+
+        // Render options to the visible options container
+        const optionsContainer = document.getElementById('options-container');
+        if (optionsContainer) {
+            const optionLetters = ['A', 'B', 'C', 'D'];
+            const optionValues = [
+                question['Option A'] || 'Option A',
+                question['Option B'] || 'Option B',
+                question['Option C'] || 'Option C',
+                question['Option D'] || 'Option D'
+            ];
+
+            optionsContainer.innerHTML = optionValues.map((opt, idx) => {
+                const isSelected = userAnswers[currentQuestionIndex] === idx;
+                return `
+                    <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}">
+                        <input type="radio" name="answer" class="radio radio-primary option-radio" ${isSelected ? 'checked' : ''}>
+                        <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
+                        <span class="flex-1 rich-content">${renderRichContent(opt)}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Add click handlers to options
+            optionsContainer.querySelectorAll('.option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const optionIndex = parseInt(this.getAttribute('data-index'));
+                    selectOptionNewUI(optionIndex);
+                });
+            });
+        }
+
+        // Hide parent question container for standalone questions
+        const parentQuestionContainer = document.getElementById('parent-question-container');
+        if (parentQuestionContainer) {
+            parentQuestionContainer.classList.add('hidden');
+        }
+
+        // Update selected option in hidden standalone-options for compatibility
         const options = document.querySelectorAll('#standalone-options .option');
         const radios = document.querySelectorAll('#standalone-options .option-radio');
         options.forEach((option, index) => {
             if (userAnswers[currentQuestionIndex] === index) {
                 option.classList.add('selected');
-                radios[index].checked = true;
+                if (radios[index]) radios[index].checked = true;
             } else {
                 option.classList.remove('selected');
-                radios[index].checked = false;
+                if (radios[index]) radios[index].checked = false;
             }
         });
     }
+
+    // Update question navigator
+    updateQuestionNavigator();
 
     // Update navigation buttons
     document.getElementById('prev-btn').disabled = (currentQuestionIndex === 0);
