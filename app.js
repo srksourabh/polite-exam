@@ -6123,6 +6123,14 @@ document.getElementById('generate-ai-btn').addEventListener('click', async funct
         document.getElementById('ai-parent-child-result').classList.add('hidden');
 
         // Call backend API
+        console.log('Sending AI generation request:', {
+            subject,
+            difficulty,
+            customPrompt,
+            questionFormat,
+            numSubQuestions
+        });
+
         const response = await fetch(`${API_URL}/gemini/generate-question`, {
             method: 'POST',
             headers: {
@@ -6138,19 +6146,33 @@ document.getElementById('generate-ai-btn').addEventListener('click', async funct
             })
         });
 
+        console.log('API Response status:', response.status);
+
         const data = await response.json();
+        console.log('API Response data:', data);
 
         if (!data.success) {
+            console.error('API returned error:', data.error);
             throw new Error(data.error || 'Failed to generate question');
         }
 
         const qData = data.data;
+        console.log('Question data received:', qData);
 
         // Validate that qData exists and has required properties
         if (!qData) {
             console.error('Invalid API response - missing data:', data);
             throw new Error('Invalid response from AI service - no question data received');
         }
+
+        // Log the properties we're checking
+        console.log('Question properties:', {
+            hasQuestion: !!qData.question,
+            hasOptions: !!(qData.optionA && qData.optionB && qData.optionC && qData.optionD),
+            hasCorrect: !!qData.correct,
+            hasSubject: !!qData.subject,
+            hasDifficulty: !!qData.difficulty
+        });
 
         if (qData.isParentChild) {
             // Handle Parent-Child format
