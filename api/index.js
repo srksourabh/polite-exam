@@ -1640,11 +1640,28 @@ Generate a question that could appear in actual ${difficultyText === 'easy' ? 'R
 
                 const data = await response.json();
 
+                console.log('Gemini API Response Status:', response.status);
+                console.log('Gemini API Response:', JSON.stringify(data).substring(0, 500));
+
                 if (!response.ok) {
+                    console.error('Gemini API Error:', data);
                     throw new Error(data.error?.message || 'Gemini API request failed');
                 }
 
+                // Check if response has the expected structure
+                if (!data.candidates || data.candidates.length === 0) {
+                    console.error('No candidates in Gemini response:', data);
+                    throw new Error('Gemini returned no candidates. The AI might have filtered the content or the request failed.');
+                }
+
                 let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+                console.log('Extracted text from Gemini (first 500 chars):', text.substring(0, 500));
+
+                if (!text || text.trim().length === 0) {
+                    console.error('Empty text from Gemini. Full response:', JSON.stringify(data));
+                    throw new Error('Gemini returned empty response. Please try again.');
+                }
 
                 // Remove markdown code blocks if present (```json ... ``` or ``` ... ```)
                 text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
@@ -1740,6 +1757,32 @@ Generate a question that could appear in actual ${difficultyText === 'easy' ? 'R
                     }
                 }
 
+                // Validate the parsed question data
+                console.log('Parsed question data:', JSON.stringify(questionData).substring(0, 300));
+
+                // Ensure required fields exist for standalone questions
+                if (!questionData.isParentChild) {
+                    if (!questionData.question) {
+                        console.error('Missing question field in parsed data:', questionData);
+                        throw new Error('AI response missing question field');
+                    }
+
+                    // Ensure all options exist
+                    questionData.optionA = questionData.optionA || 'Option A not provided';
+                    questionData.optionB = questionData.optionB || 'Option B not provided';
+                    questionData.optionC = questionData.optionC || 'Option C not provided';
+                    questionData.optionD = questionData.optionD || 'Option D not provided';
+                    questionData.correct = questionData.correct || 'A';
+                    questionData.explanation = questionData.explanation || 'No explanation provided';
+                    questionData.subject = questionData.subject || 'General';
+                    questionData.difficulty = questionData.difficulty || 'medium';
+                }
+
+                console.log('Sending response to frontend:', JSON.stringify({
+                    success: true,
+                    data: questionData
+                }).substring(0, 500));
+
                 return res.status(200).json({
                     success: true,
                     data: questionData
@@ -1747,6 +1790,7 @@ Generate a question that could appear in actual ${difficultyText === 'easy' ? 'R
 
             } catch (error) {
                 console.error('Gemini generation error:', error);
+                console.error('Error stack:', error.stack);
                 return res.status(500).json({
                     success: false,
                     error: error.message || 'Failed to generate question'
