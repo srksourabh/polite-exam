@@ -1270,6 +1270,12 @@ function deleteOCRQuestion(index) {
 
 function closeOCRReviewModal() {
     document.getElementById('ocr-review-modal').style.display = 'none';
+
+    // If modal was closed without saving, go back to step 1
+    if (document.getElementById('upload-step-2') && !document.getElementById('upload-step-2').classList.contains('hidden')) {
+        document.getElementById('upload-step-2').classList.add('hidden');
+        document.getElementById('upload-step-1').classList.remove('hidden');
+    }
 }
 
 function saveOCRReviewedQuestions() {
@@ -1391,8 +1397,14 @@ function saveOCRReviewedQuestions() {
     // Update the global extractedQuestions array
     extractedQuestions = updatedQuestions;
 
-    // Close modal and show the questions in ready-questions area
-    closeOCRReviewModal();
+    // Close modal
+    document.getElementById('ocr-review-modal').style.display = 'none';
+
+    // Show step 3 (Review and Select Questions)
+    document.getElementById('upload-step-2').classList.add('hidden');
+    document.getElementById('upload-step-3').classList.remove('hidden');
+
+    // Display the questions in ready-questions area
     displayReadyQuestions(extractedQuestions);
 
     // Generate summary message
@@ -1411,7 +1423,6 @@ function saveOCRReviewedQuestions() {
 
 function displayReadyQuestions(questions) {
     const readyQuestions = document.getElementById('ready-questions');
-    const uploadResultContainer = document.getElementById('upload-result-container');
 
     if (!readyQuestions) return;
 
@@ -1494,17 +1505,6 @@ function displayReadyQuestions(questions) {
             this.style.background = originalBg;
         });
     });
-
-    // Show the results container
-    if (uploadResultContainer) {
-        uploadResultContainer.classList.remove('hidden');
-    }
-
-    // Hide the raw text area
-    const extractedText = document.getElementById('extracted-text');
-    const cleanTextBtn = document.getElementById('clean-text-btn');
-    if (extractedText) extractedText.style.display = 'none';
-    if (cleanTextBtn) cleanTextBtn.style.display = 'none';
 }
 
 // Wait for DOM to be ready before attaching event listeners
@@ -4150,7 +4150,15 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
                     totalQuestions += 1;
                 }
             });
-            document.getElementById('selected-count').textContent = totalQuestions + ' Questions Selected';
+            const selectedCountElement = document.getElementById('selected-count-text');
+            if (selectedCountElement) {
+                selectedCountElement.textContent = `${totalQuestions} selected`;
+            }
+            // Also update the legacy element if it exists
+            const legacyElement = document.getElementById('selected-count');
+            if (legacyElement) {
+                legacyElement.textContent = totalQuestions + ' Questions Selected';
+            }
         }
 
         // Function to attach event listeners
@@ -5611,6 +5619,7 @@ document.getElementById('paper-upload').addEventListener('change', function(e) {
         const fileName = e.target.files[0].name;
         document.getElementById('selected-file-info').classList.remove('hidden');
         document.getElementById('file-name').textContent = fileName;
+        document.getElementById('process-upload-btn').classList.remove('hidden');
     }
 });
 
@@ -5626,6 +5635,7 @@ document.getElementById('paper-upload-file').addEventListener('change', function
 
         document.getElementById('selected-file-info').classList.remove('hidden');
         document.getElementById('file-name').textContent = fileName;
+        document.getElementById('process-upload-btn').classList.remove('hidden');
     }
 });
 
@@ -5642,12 +5652,14 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
         }
 
         const file = fileInput.files[0];
-        const ocrProgress = document.getElementById('ocr-progress');
         const ocrProgressBar = document.getElementById('ocr-progress-bar');
         const ocrStatus = document.getElementById('ocr-status');
 
+        // Show step 2 (AI Processing)
+        document.getElementById('upload-step-1').classList.add('hidden');
+        document.getElementById('upload-step-2').classList.remove('hidden');
+
         // Show progress
-        ocrProgress.classList.remove('hidden');
         ocrProgressBar.style.width = '30%';
         ocrStatus.textContent = 'Reading image...';
         // Convert file to base64
@@ -5678,12 +5690,7 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
                 }
 
                 ocrProgressBar.style.width = '100%';
-                ocrStatus.textContent = 'Extraction complete!';
-
-                // Hide progress after a brief delay
-                setTimeout(() => {
-                    ocrProgress.classList.add('hidden');
-                }, 500);
+                ocrStatus.textContent = 'Extraction complete! Opening review...';
 
                 // Process AI-detected hierarchical questions
                 const timestamp = Date.now();
@@ -5783,7 +5790,10 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
 
             } catch (error) {
                 console.error('Gemini extraction error:', error);
-                ocrProgress.classList.add('hidden');
+
+                // Go back to step 1
+                document.getElementById('upload-step-2').classList.add('hidden');
+                document.getElementById('upload-step-1').classList.remove('hidden');
 
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                     window.PoliteCCAPI.showNotification(`❌ Failed to extract questions: ${error.message}`, 'error');
@@ -5792,7 +5802,10 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
         };
 
         reader.onerror = function() {
-            ocrProgress.classList.add('hidden');
+            // Go back to step 1
+            document.getElementById('upload-step-2').classList.add('hidden');
+            document.getElementById('upload-step-1').classList.remove('hidden');
+
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                 window.PoliteCCAPI.showNotification('❌ Failed to read file', 'error');
             }
@@ -5802,7 +5815,10 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
 
     } catch (error) {
         console.error('OCR Error:', error);
-        ocrProgress.classList.add('hidden');
+
+        // Go back to step 1
+        document.getElementById('upload-step-2').classList.add('hidden');
+        document.getElementById('upload-step-1').classList.remove('hidden');
 
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
             window.PoliteCCAPI.showNotification(`❌ OCR failed: ${error.message}`, 'error');
@@ -5810,89 +5826,68 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
     }
 });
 
-// Clean text
-document.getElementById('clean-text-btn').addEventListener('click', function() {
-    const extractedText = document.getElementById('extracted-text');
-    if (!extractedText) return;
-    
-    const rawText = extractedText.value;
-    extractedQuestions = [];
-    
-    // Simple text cleaning and parsing
-    const questionBlocks = rawText.split(/\n\s*\n/).filter(block => block.trim() !== '');
-    
-    questionBlocks.forEach((block, index) => {
-        // Extract question number and text
-        const lines = block.split('\n').filter(line => line.trim() !== '');
-        if (lines.length < 6) return;
-        
-        const questionLine = lines[0].replace(/^\d+\.\s*/, '').trim();
-        const options = lines.slice(1, 5).map(line => line.replace(/^[A-D]\)\s*/, '').trim());
-        const answerLine = lines[5] || '';
-        const correctAns = answerLine.match(/Answer:\s*([A-D])/i)?.[1] || 'A';
-        
-        const question = {
-            id: `Q${Date.now()}_${index}`,
-            subject: 'Others',
-            question: questionLine,
-            options: options,
-            correct: ['A', 'B', 'C', 'D'].indexOf(correctAns)
-        };
-        
-        extractedQuestions.push(question);
-    });
-    
-    // Display questions with checkboxes for selection
-    const readyQuestions = document.getElementById('ready-questions');
-    if (readyQuestions) {
-        if (extractedQuestions.length === 0) {
-            readyQuestions.innerHTML = '<p style="text-align: center; color: var(--danger);">❌ No valid questions found.</p>';
-        } else {
-            let html = '<div style="max-height: 400px; overflow-y: auto;">';
-            extractedQuestions.forEach((q, index) => {
-                html += `
-                <label class="extracted-question-item" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary); cursor: pointer; transition: all 0.2s;">
-                    <input type="checkbox" class="extracted-question-checkbox" value="${index}" checked style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
-                    <div style="flex: 1;">
-                        <p style="margin-bottom: 10px; font-weight: 500;">${q.question}</p>
-                        <div style="margin-left: 25px; margin-bottom: 8px;">
-                            <div>A) ${q.options[0]}</div>
-                            <div>B) ${q.options[1]}</div>
-                            <div>C) ${q.options[2]}</div>
-                            <div>D) ${q.options[3]}</div>
-                        </div>
-                        <div style="color: var(--success); font-weight: 500;">
-                            Correct Answer: ${String.fromCharCode(65 + q.correct)}
-                        </div>
-                    </div>
-                </label>
-                `;
-            });
-            html += '</div>';
-            readyQuestions.innerHTML = html;
+// Legacy clean text handler - no longer used with Gemini AI OCR
+// Keeping for backwards compatibility if needed
+if (document.getElementById('clean-text-btn')) {
+    document.getElementById('clean-text-btn').addEventListener('click', function() {
+        const extractedText = document.getElementById('extracted-text');
+        if (!extractedText) return;
 
-            // Add hover effects
-            document.querySelectorAll('.extracted-question-item').forEach(item => {
-                item.addEventListener('mouseenter', function() {
-                    this.style.background = '#e8f4fd';
-                });
-                item.addEventListener('mouseleave', function() {
-                    this.style.background = '#f8f9fa';
-                });
-            });
+        const rawText = extractedText.value;
+        extractedQuestions = [];
+
+        // Simple text cleaning and parsing
+        const questionBlocks = rawText.split(/\n\s*\n/).filter(block => block.trim() !== '');
+
+        questionBlocks.forEach((block, index) => {
+            // Extract question number and text
+            const lines = block.split('\n').filter(line => line.trim() !== '');
+            if (lines.length < 6) return;
+
+            const questionLine = lines[0].replace(/^\d+\.\s*/, '').trim();
+            const options = lines.slice(1, 5).map(line => line.replace(/^[A-D]\)\s*/, '').trim());
+            const answerLine = lines[5] || '';
+            const correctAns = answerLine.match(/Answer:\s*([A-D])/i)?.[1] || 'A';
+
+            const question = {
+                id: `Q${Date.now()}_${index}`,
+                subject: 'Others',
+                question: questionLine,
+                options: options,
+                correct: ['A', 'B', 'C', 'D'].indexOf(correctAns)
+            };
+
+            extractedQuestions.push(question);
+        });
+
+        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+            window.PoliteCCAPI.showNotification(`✅ ${extractedQuestions.length} questions parsed`, 'success');
         }
+    });
+}
+
+// Upload new button - reset to step 1
+document.getElementById('upload-new-btn').addEventListener('click', function() {
+    // Hide step 3, show step 1
+    document.getElementById('upload-step-3').classList.add('hidden');
+    document.getElementById('upload-step-1').classList.remove('hidden');
+
+    // Clear file selection
+    const fileInput = document.getElementById('paper-upload');
+    const fileInputBrowser = document.getElementById('paper-upload-file');
+    if (fileInput) fileInput.value = '';
+    if (fileInputBrowser) fileInputBrowser.value = '';
+
+    // Hide file info and scan button
+    document.getElementById('selected-file-info').classList.add('hidden');
+    document.getElementById('process-upload-btn').classList.add('hidden');
+
+    // Clear extracted questions
+    extractedQuestions = [];
+
+    if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+        window.PoliteCCAPI.showNotification('📤 Ready to upload new question paper', 'info');
     }
-    
-    const notification = document.createElement('div');
-    notification.className = 'notification success';
-    notification.innerHTML = `✅ ${extractedQuestions.length} questions parsed successfully!`;
-    document.getElementById('notification-container').appendChild(notification);
-    
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-        }
-    }, 3000);
 });
 
 // Select All extracted questions button
@@ -5950,15 +5945,23 @@ document.getElementById('add-extracted-btn').addEventListener('click', async fun
             if (success) successCount++;
         }
 
-        // Hide upload result and show question bank
-        const uploadResultContainer = document.getElementById('upload-result-container');
-        if (uploadResultContainer) {
-            uploadResultContainer.classList.add('hidden');
-        }
-
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
             window.PoliteCCAPI.showNotification(`✅ ${successCount} questions added to bank!`, 'success');
         }
+
+        // Reset to step 1 and clear extracted questions
+        document.getElementById('upload-step-3').classList.add('hidden');
+        document.getElementById('upload-step-1').classList.remove('hidden');
+
+        // Clear file selection
+        const fileInput = document.getElementById('paper-upload');
+        const fileInputBrowser = document.getElementById('paper-upload-file');
+        if (fileInput) fileInput.value = '';
+        if (fileInputBrowser) fileInputBrowser.value = '';
+        document.getElementById('selected-file-info').classList.add('hidden');
+        document.getElementById('process-upload-btn').classList.add('hidden');
+
+        extractedQuestions = [];
 
         // Refresh question bank
         document.getElementById('question-bank-btn').click();
@@ -6061,12 +6064,6 @@ document.getElementById('add-selected-btn').addEventListener('click', async func
             }
         }
 
-        // Hide upload result and show question bank
-        const uploadResultContainer = document.getElementById('upload-result-container');
-        if (uploadResultContainer) {
-            uploadResultContainer.classList.add('hidden');
-        }
-
         // Generate appropriate success message
         let message = `✅ ${successCount} questions added to bank!`;
         if (passageCount > 0) {
@@ -6076,6 +6073,20 @@ document.getElementById('add-selected-btn').addEventListener('click', async func
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
             window.PoliteCCAPI.showNotification(message, 'success');
         }
+
+        // Reset to step 1 and clear extracted questions
+        document.getElementById('upload-step-3').classList.add('hidden');
+        document.getElementById('upload-step-1').classList.remove('hidden');
+
+        // Clear file selection
+        const fileInput = document.getElementById('paper-upload');
+        const fileInputBrowser = document.getElementById('paper-upload-file');
+        if (fileInput) fileInput.value = '';
+        if (fileInputBrowser) fileInputBrowser.value = '';
+        document.getElementById('selected-file-info').classList.add('hidden');
+        document.getElementById('process-upload-btn').classList.add('hidden');
+
+        extractedQuestions = [];
 
         // Refresh question bank
         document.getElementById('question-bank-btn').click();
@@ -7448,7 +7459,7 @@ function loadQuestion() {
                     <div class="card bg-base-200 shadow-sm mb-4 child-question-card" data-child-index="${childIndex}">
                         <div class="card-body p-4">
                             <h4 class="font-bold text-primary mb-2">Question ${displayQuestionNum}.${childNum}</h4>
-                            <p class="mb-3">${renderRichContent(child.Question || '')}</p>
+                            <p class="mb-3 rich-content">${escapeHtmlForRichContent(child.Question || '')}</p>
                             <div class="space-y-2 child-options" data-child-index="${childIndex}">
                                 ${optionValues.map((opt, idx) => {
                                     const isSelected = childAnswer === idx;
@@ -7456,7 +7467,7 @@ function loadQuestion() {
                                         <div class="option child-option flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-100 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}" data-child-index="${childIndex}">
                                             <input type="radio" name="child-answer-${childIndex}" class="radio radio-primary option-radio child-radio" ${isSelected ? 'checked' : ''}>
                                             <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
-                                            <span class="flex-1">${renderRichContent(opt)}</span>
+                                            <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>
                                         </div>
                                     `;
                                 }).join('')}
@@ -7671,7 +7682,7 @@ function loadQuestion() {
                     <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}">
                         <input type="radio" name="answer" class="radio radio-primary option-radio" ${isSelected ? 'checked' : ''}>
                         <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
-                        <span class="flex-1 rich-content">${renderRichContent(opt)}</span>
+                        <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>
                     </div>
                 `;
             }).join('');

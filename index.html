@@ -1041,51 +1041,82 @@
                         <div id="upload-section" class="hidden">
                             <div class="card bg-base-100 shadow-xl">
                                 <div class="card-body">
-                                    <h3 class="card-title mb-4">Upload Question Paper (OCR)</h3>
+                                    <!-- Step 1: Upload Question Paper -->
+                                    <div id="upload-step-1">
+                                        <h3 class="card-title mb-4">Upload Question Paper (OCR)</h3>
+                                        <p class="text-base-content/60 mb-4">Step 1: Select your question paper image or PDF</p>
 
-                                    <div class="border-2 border-dashed border-base-300 rounded-lg p-8 text-center mb-4">
-                                        <div class="text-4xl mb-4">📸</div>
-                                        <p class="mb-4">Upload an image or PDF of your question paper</p>
-                                        <div class="flex flex-wrap justify-center gap-3">
-                                            <button id="capture-photo-btn" class="btn btn-primary">
-                                                📷 Capture Photo
+                                        <div class="border-2 border-dashed border-base-300 rounded-lg p-8 text-center mb-4">
+                                            <div class="text-4xl mb-4">📸</div>
+                                            <p class="mb-4">Upload an image or PDF of your question paper</p>
+                                            <div class="flex flex-wrap justify-center gap-3">
+                                                <button id="capture-photo-btn" class="btn btn-primary">
+                                                    📷 Capture Photo
+                                                </button>
+                                                <button id="choose-file-btn" class="btn btn-secondary">
+                                                    📁 Choose File
+                                                </button>
+                                            </div>
+                                            <input type="file" id="paper-upload" accept="image/*,.pdf" capture="environment" class="hidden">
+                                            <input type="file" id="paper-upload-file" accept="image/*,.pdf" class="hidden">
+                                        </div>
+
+                                        <!-- Selected File Info -->
+                                        <div id="selected-file-info" class="hidden mb-4">
+                                            <div class="alert alert-success">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                <div>
+                                                    <h3 class="font-bold">File Selected</h3>
+                                                    <div class="text-xs" id="file-name"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Scan with AI Button -->
+                                        <button id="process-upload-btn" class="btn btn-success btn-lg w-full hidden">
+                                            🤖 Scan with AI
+                                        </button>
+                                    </div>
+
+                                    <!-- Step 2: AI Processing -->
+                                    <div id="upload-step-2" class="hidden">
+                                        <h3 class="card-title mb-4">Scanning Question Paper</h3>
+                                        <p class="text-base-content/60 mb-4">Step 2: AI is extracting questions from your paper...</p>
+
+                                        <div class="text-center py-12">
+                                            <div class="text-6xl mb-4">🤖</div>
+                                            <div id="ocr-status" class="text-lg font-semibold mb-4">Processing...</div>
+                                            <div class="w-full bg-base-300 rounded-full h-4 mb-4">
+                                                <div id="ocr-progress-bar" class="bg-success h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 3: Review and Select Questions -->
+                                    <div id="upload-step-3" class="hidden">
+                                        <h3 class="card-title mb-4">Review & Select Questions</h3>
+                                        <p class="text-base-content/60 mb-4">Step 3: Review the extracted questions and add them to your question bank</p>
+
+                                        <div class="flex gap-2 mb-4">
+                                            <button id="select-all-extracted-btn" class="btn btn-sm btn-info">✓ Select All</button>
+                                            <button id="select-none-extracted-btn" class="btn btn-sm btn-ghost">✗ Select None</button>
+                                            <button id="upload-new-btn" class="btn btn-sm btn-outline ml-auto">📤 Upload New</button>
+                                        </div>
+
+                                        <div id="ready-questions" class="space-y-2 mb-4">
+                                            <!-- Questions will be displayed here -->
+                                        </div>
+
+                                        <div class="divider"></div>
+
+                                        <div class="flex gap-3">
+                                            <button id="add-selected-btn" class="btn btn-primary flex-1">
+                                                ➕ Add Selected Questions
                                             </button>
-                                            <button id="choose-file-btn" class="btn btn-secondary">
-                                                📁 Choose File
+                                            <button id="add-extracted-btn" class="btn btn-success flex-1">
+                                                ➕ Add All Questions
                                             </button>
                                         </div>
-                                        <input type="file" id="paper-upload" accept="image/*,.pdf" capture="environment" class="hidden">
-                                        <input type="file" id="paper-upload-file" accept="image/*,.pdf" class="hidden">
-                                    </div>
-
-                                    <div id="ocr-preview-container" class="mb-4 hidden">
-                                        <label class="label"><span class="label-text font-medium">Selected Image</span></label>
-                                        <img id="preview-image" class="w-full max-h-64 object-contain rounded-lg border" src="" alt="Preview">
-                                    </div>
-
-                                    <div class="form-control">
-                                        <label class="label"><span class="label-text font-medium">Extracted Text</span></label>
-                                        <textarea id="extracted-text" class="textarea textarea-bordered h-48 font-mono" placeholder="Extracted text will appear here..."></textarea>
-                                    </div>
-
-                                    <button id="clean-text-btn" class="btn btn-secondary mt-4 hidden">
-                                        Clean & Format Text
-                                    </button>
-
-                                    <div class="divider">Ready to Add Questions</div>
-
-                                    <div class="flex gap-2 mb-4">
-                                        <button id="select-all-extracted-btn" class="btn btn-sm btn-info">Select All</button>
-                                        <button id="select-none-extracted-btn" class="btn btn-sm btn-ghost">Select None</button>
-                                    </div>
-
-                                    <div id="ready-questions" class="space-y-2 mb-4">
-                                        <p class="text-center text-base-content/60">Click 'Clean & Format Text' to see questions</p>
-                                    </div>
-
-                                    <div class="flex gap-3">
-                                        <button id="add-extracted-btn" class="btn btn-success flex-1">Add All Questions to Bank</button>
-                                        <button id="add-selected-btn" class="btn btn-primary">Add Selected Questions</button>
                                     </div>
                                 </div>
                             </div>
@@ -1783,16 +1814,6 @@
         <span id="total-exams-given">0</span>
         <span id="average-score">0</span>
 
-        <!-- OCR Elements -->
-        <div id="ocr-progress" class="hidden">
-            <div id="ocr-progress-bar" style="width: 0%"></div>
-        </div>
-        <div id="ocr-status"></div>
-        <button id="process-upload-btn">Process Upload</button>
-        <div id="selected-file-info">
-            <span id="file-name"></span>
-        </div>
-        <div id="upload-result-container"></div>
 
         <!-- Timer Display -->
         <span id="timer-display">00:00</span>
