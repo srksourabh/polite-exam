@@ -760,10 +760,16 @@
                                     </div>
 
                                     <!-- Questions List -->
-                                    <div id="questions-list" class="space-y-3">
+                                    <div id="questions-list" class="space-y-3 max-h-[600px] overflow-y-auto border border-base-300 rounded-lg p-4 bg-base-50">
                                         <div class="flex justify-center py-8">
                                             <span class="loading loading-spinner loading-lg text-primary"></span>
                                         </div>
+                                    </div>
+
+                                    <!-- Loading More Indicator -->
+                                    <div id="questions-loading-more" class="hidden text-center py-4">
+                                        <span class="loading loading-spinner loading-md text-primary"></span>
+                                        <span class="ml-2 text-sm">Loading more questions...</span>
                                     </div>
                                 </div>
                             </div>
@@ -1741,7 +1747,6 @@
     <!-- Hidden Elements for JavaScript Compatibility -->
     <div class="hidden">
         <!-- Question Bank Additional Elements -->
-        <div id="questions-loading-more">Loading more questions...</div>
         <select id="question-type-select">
             <option value="standalone">Standalone</option>
             <option value="parent-child">Parent-Child</option>
