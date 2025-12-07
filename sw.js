@@ -1,6 +1,6 @@
 // Service Worker for Polite Exam PWA
 // Version timestamp - update this on each deployment to bust cache
-const CACHE_VERSION = 'v2-' + '20251201';
+const CACHE_VERSION = 'v3-' + '20251207-fix1';
 const CACHE_NAME = 'polite-exam-' + CACHE_VERSION;
 
 // Static assets that rarely change (cache-first)
@@ -14,7 +14,9 @@ const STATIC_ASSETS = [
 const DYNAMIC_ASSETS = [
   '/',
   '/index.html',
-  '/api-integration.js'
+  '/app.js',
+  '/api-integration.js',
+  '/styles.css'
 ];
 
 // Install event - cache static resources immediately
