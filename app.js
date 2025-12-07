@@ -5179,25 +5179,45 @@ async function showExamCandidates(examCode) {
             }
         });
 
-        document.getElementById('selected-exam-title').textContent = `${examCode} - ${title}`;
-        document.getElementById('selected-exam-info').innerHTML = `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; margin-bottom: 20px;">
-                <div><strong>Exam Code:</strong> ${examCode}</div>
-                <div><strong>Title:</strong> ${title}</div>
-                <div><strong>Expiry:</strong> ${expiryDateStr}</div>
-                <div><strong>Duration:</strong> ${duration} min</div>
-                <div><strong>Questions:</strong> ${questionCount}</div>
-            </div>
-        `;
+        // Update exam info display
+        const examInfoEl = document.getElementById('selected-exam-info');
+        if (examInfoEl) {
+            examInfoEl.innerHTML = `
+                <h4 class="font-bold mb-2">${examCode} - ${title}</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; margin-bottom: 20px;">
+                    <div><strong>Exam Code:</strong> ${examCode}</div>
+                    <div><strong>Title:</strong> ${title}</div>
+                    <div><strong>Expiry:</strong> ${expiryDateStr}</div>
+                    <div><strong>Duration:</strong> ${duration} min</div>
+                    <div><strong>Questions:</strong> ${questionCount}</div>
+                </div>
+            `;
+        }
 
         // Use the candidates view inside the modal
         const candidatesContainer = document.getElementById('results-candidates-view');
-        candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">Loading candidates...</p>';
+        if (!candidatesContainer) {
+            console.error('❌ results-candidates-view element not found!');
+            return;
+        }
+
+        candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">⏳ Loading candidates...</p>';
+        console.log('📊 Set loading message, fetching results...');
 
         // Get results from API
         let results = [];
-        if (window.PoliteCCAPI && window.PoliteCCAPI.getExamResults) {
-            results = await window.PoliteCCAPI.getExamResults(examCode) || [];
+        try {
+            if (window.PoliteCCAPI && window.PoliteCCAPI.getExamResults) {
+                console.log('📊 Calling getExamResults API for:', examCode);
+                results = await window.PoliteCCAPI.getExamResults(examCode) || [];
+                console.log('📊 API returned', results.length, 'results');
+            } else {
+                console.error('❌ getExamResults API not available');
+            }
+        } catch (apiError) {
+            console.error('❌ API error:', apiError);
+            candidatesContainer.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 40px;">❌ Error fetching results: ${apiError.message}</p>`;
+            return;
         }
 
         // Store for export
@@ -5205,7 +5225,7 @@ async function showExamCandidates(examCode) {
         currentExamCodeForResults = examCode;
 
         if (results.length === 0) {
-            candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">No candidates have taken this exam yet.</p>';
+            candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">📭 No candidates have taken this exam yet.</p>';
             return;
         }
 
