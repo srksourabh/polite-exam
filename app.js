@@ -5066,7 +5066,7 @@ document.getElementById('view-results-btn').addEventListener('click', async func
             const candidateCount = examResultCounts[examCode] || 0;
 
             examsHTML += `
-                <div class="exam-result-card" data-exam-code="${examCode}" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 3px 15px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s; border: 2px solid transparent;" onmouseenter="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'; this.style.borderColor='var(--secondary)';" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 15px rgba(0,0,0,0.1)'; this.style.borderColor='transparent';">
+                <div class="exam-result-card" data-exam-code="${examCode}">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
                         <div style="font-weight: 700; font-size: 1.1rem; color: var(--secondary);">${examCode}</div>
                         ${statusBadge}
@@ -5226,7 +5226,7 @@ async function showExamCandidates(examCode) {
             const rankBadge = index < 3 ? ['🥇', '🥈', '🥉'][index] : `#${index + 1}`;
 
             candidatesHTML += `
-                <div class="candidate-result-card" data-result-index="${index}" style="background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s; border: 2px solid #e0e0e0;" onmouseenter="this.style.transform='translateY(-2px)'; this.style.borderColor='var(--primary)';" onmouseleave="this.style.transform='translateY(0)'; this.style.borderColor='#e0e0e0';">
+                <div class="candidate-result-card" data-result-index="${index}">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="font-weight: 700; font-size: 1rem; color: #333;">${rankBadge} ${name}</div>
                     </div>
