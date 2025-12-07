@@ -5146,9 +5146,10 @@ async function showExamCandidates(examCode) {
             modal.style.display = 'flex';
         }
 
-        // Show main view with candidates
+        // Show main view with candidates, hide detail content
         document.getElementById('results-main-view').classList.remove('hidden');
-        document.getElementById('results-candidates-view').classList.remove('hidden');
+        document.getElementById('results-detail-content').classList.add('hidden');
+        document.getElementById('back-to-exams-btn').classList.add('hidden');
 
         // Get exam details
         const exam = exams.find(e => (e['Exam Code'] || e.examCode) === examCode);
@@ -5193,17 +5194,18 @@ async function showExamCandidates(examCode) {
 
         document.getElementById('selected-exam-title').textContent = `${examCode} - ${title}`;
         document.getElementById('selected-exam-info').innerHTML = `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; margin-bottom: 20px;">
                 <div><strong>Exam Code:</strong> ${examCode}</div>
                 <div><strong>Title:</strong> ${title}</div>
-                <div><strong>Expiry Date:</strong> ${expiryDateStr}</div>
-                <div><strong>Duration:</strong> ${duration} minutes</div>
-                <div><strong>Total Questions:</strong> ${questionCount}</div>
+                <div><strong>Expiry:</strong> ${expiryDateStr}</div>
+                <div><strong>Duration:</strong> ${duration} min</div>
+                <div><strong>Questions:</strong> ${questionCount}</div>
             </div>
         `;
 
-        const candidatesContainer = document.getElementById('candidates-grid-container');
-        candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1/-1; padding: 40px;">Loading candidates...</p>';
+        // Use the candidates view inside the modal
+        const candidatesContainer = document.getElementById('results-candidates-view');
+        candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">Loading candidates...</p>';
 
         // Get results from API
         let results = [];
@@ -5216,14 +5218,21 @@ async function showExamCandidates(examCode) {
         currentExamCodeForResults = examCode;
 
         if (results.length === 0) {
-            candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1/-1; padding: 40px;">No candidates have taken this exam yet.</p>';
+            candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">No candidates have taken this exam yet.</p>';
             return;
         }
 
         // Sort by score (highest first)
         results.sort((a, b) => (b.Score || b.score || 0) - (a.Score || a.score || 0));
 
-        let candidatesHTML = '';
+        // Build candidates list with better layout
+        let candidatesHTML = `
+            <h4 style="margin-bottom: 15px; color: var(--primary); font-weight: 600;">
+                📋 Candidates (${results.length} total) - Sorted by Rank
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 5px;">
+        `;
+
         results.forEach((result, index) => {
             const name = result.Name || result.name || 'Unknown';
             const score = parseFloat(result.Score || result.score || 0);
@@ -5232,35 +5241,36 @@ async function showExamCandidates(examCode) {
             const dateStr = submittedAt ? formatDateForDisplay(submittedAt) : 'N/A';
 
             const scoreColor = score >= 0 ? '#27ae60' : '#e74c3c';
+            const scoreBg = score >= 0 ? '#e8f5e9' : '#ffebee';
             const rankBadge = index < 3 ? ['🥇', '🥈', '🥉'][index] : `#${index + 1}`;
 
             candidatesHTML += `
-                <div class="candidate-result-card" data-result-index="${index}" style="background: white; border-radius: 12px; padding: 18px; box-shadow: 0 3px 12px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s; border: 2px solid transparent;" onmouseenter="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.12)'; this.style.borderColor='var(--primary)';" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 12px rgba(0,0,0,0.08)'; this.style.borderColor='transparent';">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <div style="font-weight: 700; font-size: 1.1rem; color: #333;">${name}</div>
-                        <div style="font-size: 1.2rem;">${rankBadge}</div>
+                <div class="candidate-result-card" data-result-index="${index}" style="background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s; border: 2px solid #e0e0e0;" onmouseenter="this.style.transform='translateY(-2px)'; this.style.borderColor='var(--primary)';" onmouseleave="this.style.transform='translateY(0)'; this.style.borderColor='#e0e0e0';">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="font-weight: 700; font-size: 1rem; color: #333;">${rankBadge} ${name}</div>
                     </div>
-                    <div style="display: flex; justify-content: center; margin-bottom: 12px;">
-                        <div style="background: linear-gradient(135deg, ${scoreColor}, ${score >= 0 ? '#2ecc71' : '#c0392b'}); color: white; padding: 12px 25px; border-radius: 10px; text-align: center;">
-                            <div style="font-size: 1.8rem; font-weight: 700;">${score.toFixed(2)}</div>
-                            <div style="font-size: 0.8rem; opacity: 0.9;">Score</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.8rem; color: #666;"><strong>Mobile:</strong> ${mobile}</div>
+                            <div style="font-size: 0.8rem; color: #666;"><strong>Date:</strong> ${dateStr}</div>
+                        </div>
+                        <div style="background: ${scoreBg}; padding: 10px 15px; border-radius: 8px; text-align: center; border-left: 3px solid ${scoreColor};">
+                            <div style="font-size: 1.4rem; font-weight: 700; color: ${scoreColor};">${score.toFixed(2)}</div>
+                            <div style="font-size: 0.7rem; color: #666;">Score</div>
                         </div>
                     </div>
-                    <div style="font-size: 0.85rem; color: #666; display: grid; gap: 5px;">
-                        <div><strong>Exam Code:</strong> ${examCode}</div>
-                        <div><strong>Date:</strong> ${dateStr}</div>
-                    </div>
-                    <div style="margin-top: 12px; text-align: center; color: var(--primary); font-size: 0.85rem; font-weight: 600;">
-                        Click to view detailed results →
+                    <div style="margin-top: 10px; text-align: center; color: var(--primary); font-size: 0.8rem; font-weight: 600; padding-top: 8px; border-top: 1px solid #eee;">
+                        Click for detailed results →
                     </div>
                 </div>
             `;
         });
 
+        candidatesHTML += '</div>';
         candidatesContainer.innerHTML = candidatesHTML;
 
         // Add click handlers for candidate cards
-        document.querySelectorAll('.candidate-result-card').forEach(card => {
+        candidatesContainer.querySelectorAll('.candidate-result-card').forEach(card => {
             card.addEventListener('click', function() {
                 const resultIndex = parseInt(this.getAttribute('data-result-index'));
                 showCandidateDetailedResults(results[resultIndex], examCode);
@@ -5279,6 +5289,11 @@ async function showExamCandidates(examCode) {
 function showCandidateDetailedResults(result, examCode) {
     const modal = document.getElementById('results-detail-modal');
     const content = document.getElementById('results-detail-content');
+
+    // Hide main view and show detail content
+    document.getElementById('results-main-view').classList.add('hidden');
+    content.classList.remove('hidden');
+    document.getElementById('back-to-exams-btn').classList.remove('hidden');
 
     const name = result.Name || result.name || 'Unknown';
     const score = parseFloat(result.Score || result.score || 0);
@@ -5543,10 +5558,12 @@ function showCandidateDetailedResults(result, examCode) {
     modal.style.display = 'block';
 }
 
-// Back to exams button handler
+// Back to candidates button handler
 document.getElementById('back-to-exams-btn').addEventListener('click', function() {
+    // Show main view with candidates list, hide detail content
     document.getElementById('results-main-view').classList.remove('hidden');
-    document.getElementById('results-candidates-view').classList.add('hidden');
+    document.getElementById('results-detail-content').classList.add('hidden');
+    this.classList.add('hidden');
 });
 
 // Close detail modal handler
