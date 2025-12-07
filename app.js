@@ -5089,15 +5089,20 @@ document.getElementById('view-results-btn').addEventListener('click', async func
         }
 
         // Wrap in a grid container for proper display
-        examsContainer.innerHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">${examsHTML}</div>`;
+        examsContainer.innerHTML = `<div id="exams-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">${examsHTML}</div>`;
 
-        // Add click handlers for exam cards
-        document.querySelectorAll('.exam-result-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const examCode = this.getAttribute('data-exam-code');
-                showExamCandidates(examCode);
+        // Use event delegation for more reliable click handling
+        const gridContainer = document.getElementById('exams-grid-container');
+        if (gridContainer) {
+            gridContainer.addEventListener('click', function(e) {
+                const card = e.target.closest('.exam-result-card');
+                if (card) {
+                    const examCode = card.getAttribute('data-exam-code');
+                    console.log('📊 Exam card clicked:', examCode);
+                    showExamCandidates(examCode);
+                }
             });
-        });
+        }
 
     } catch (error) {
         console.error('❌ Event handler error:', error);
@@ -5110,16 +5115,28 @@ document.getElementById('view-results-btn').addEventListener('click', async func
 // Function to show candidates for a selected exam
 async function showExamCandidates(examCode) {
     try {
+        console.log('📊 showExamCandidates called for:', examCode);
+
         // Show the results detail modal
         const modal = document.getElementById('results-detail-modal');
         if (modal) {
             modal.style.display = 'flex';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+            console.log('📊 Modal displayed');
+        } else {
+            console.error('❌ Modal element not found!');
+            return;
         }
 
         // Show main view with candidates, hide detail content
-        document.getElementById('results-main-view').classList.remove('hidden');
-        document.getElementById('results-detail-content').classList.add('hidden');
-        document.getElementById('back-to-exams-btn').classList.add('hidden');
+        const mainView = document.getElementById('results-main-view');
+        const detailContent = document.getElementById('results-detail-content');
+        const backBtn = document.getElementById('back-to-exams-btn');
+
+        if (mainView) mainView.classList.remove('hidden');
+        if (detailContent) detailContent.classList.add('hidden');
+        if (backBtn) backBtn.classList.add('hidden');
 
         // Get exam details
         const exam = exams.find(e => (e['Exam Code'] || e.examCode) === examCode);
@@ -5239,16 +5256,31 @@ async function showExamCandidates(examCode) {
         candidatesHTML += '</div>';
         candidatesContainer.innerHTML = candidatesHTML;
 
-        // Add click handlers for candidate cards
-        candidatesContainer.querySelectorAll('.candidate-result-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const resultIndex = parseInt(this.getAttribute('data-result-index'));
-                showCandidateDetailedResults(results[resultIndex], examCode);
-            });
-        });
+        console.log('📊 Rendered', results.length, 'candidate cards');
+
+        // Use event delegation for candidate cards - more reliable
+        candidatesContainer.onclick = function(e) {
+            const card = e.target.closest('.candidate-result-card');
+            if (card) {
+                const resultIndex = parseInt(card.getAttribute('data-result-index'));
+                console.log('📊 Candidate card clicked, index:', resultIndex);
+                if (results[resultIndex]) {
+                    showCandidateDetailedResults(results[resultIndex], examCode);
+                }
+            }
+        };
 
     } catch (error) {
         console.error('❌ Error loading candidates:', error);
+        const candidatesContainer = document.getElementById('results-candidates-view');
+        if (candidatesContainer) {
+            candidatesContainer.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #e74c3c;">
+                    <p>❌ Error loading candidates: ${error.message}</p>
+                    <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">Please try again or contact support.</p>
+                </div>
+            `;
+        }
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
             window.PoliteCCAPI.showNotification('❌ Failed to load candidates: ' + error.message, 'error');
         }
@@ -5257,13 +5289,23 @@ async function showExamCandidates(examCode) {
 
 // Function to show detailed results for a candidate with full questions and options
 function showCandidateDetailedResults(result, examCode) {
+    console.log('📊 showCandidateDetailedResults called for:', result.Name || result.name);
+
     const modal = document.getElementById('results-detail-modal');
     const content = document.getElementById('results-detail-content');
 
+    if (!content) {
+        console.error('❌ results-detail-content element not found!');
+        return;
+    }
+
     // Hide main view and show detail content
-    document.getElementById('results-main-view').classList.add('hidden');
+    const mainView = document.getElementById('results-main-view');
+    const backBtn = document.getElementById('back-to-exams-btn');
+
+    if (mainView) mainView.classList.add('hidden');
     content.classList.remove('hidden');
-    document.getElementById('back-to-exams-btn').classList.remove('hidden');
+    if (backBtn) backBtn.classList.remove('hidden');
 
     const name = result.Name || result.name || 'Unknown';
     const score = parseFloat(result.Score || result.score || 0);
