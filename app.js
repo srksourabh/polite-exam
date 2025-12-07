@@ -2029,13 +2029,33 @@ async function showCandidateDashboard(userData) {
     const examHistory = await window.PoliteCCAPI.getCandidateExamHistory(userData.email);
 
     if (examHistory && examHistory.examsGiven > 0) {
-        document.getElementById('total-exams-given').textContent = examHistory.examsGiven;
+        // Update stats in the visible dashboard
+        document.getElementById('dashboard-exams-taken').textContent = examHistory.examsGiven;
 
-        // Calculate average score
-        const avgScore = examHistory.examHistory.reduce((sum, exam) => sum + (exam.score || 0), 0) / examHistory.examsGiven;
-        document.getElementById('average-score').textContent = avgScore.toFixed(1);
+        // Calculate scores
+        const scores = examHistory.examHistory.map(exam => exam.score || 0);
+        const avgScore = scores.reduce((sum, s) => sum + s, 0) / examHistory.examsGiven;
+        const bestScore = Math.max(...scores);
 
-        // Display exam history
+        document.getElementById('dashboard-avg-score').textContent = avgScore.toFixed(1);
+        document.getElementById('dashboard-best-score').textContent = bestScore.toFixed(1);
+
+        // Show last exam date
+        if (examHistory.examHistory.length > 0) {
+            const lastExam = examHistory.examHistory[examHistory.examHistory.length - 1];
+            document.getElementById('dashboard-last-exam').textContent = formatDateForDisplay(lastExam.timestamp || lastExam.date);
+        }
+
+        // Also update hidden elements for compatibility
+        const totalExamsGiven = document.getElementById('total-exams-given');
+        const averageScore = document.getElementById('average-score');
+        if (totalExamsGiven) totalExamsGiven.textContent = examHistory.examsGiven;
+        if (averageScore) averageScore.textContent = avgScore.toFixed(1);
+
+        // Display recent results in the visible dashboard card
+        const recentResultsContainer = document.getElementById('dashboard-recent-results');
+
+        // Also update hidden container for compatibility
         const container = document.getElementById('exam-history-container');
         let historyHTML = '';
 
@@ -2134,17 +2154,48 @@ async function showCandidateDashboard(userData) {
             `;
         });
 
-        container.innerHTML = historyHTML;
+        if (container) {
+            container.innerHTML = historyHTML;
 
-        // Add click handlers for expanding/collapsing cards
-        container.querySelectorAll('.exam-history-card').forEach(card => {
-            card.addEventListener('click', function() {
-                this.classList.toggle('expanded');
+            // Add click handlers for expanding/collapsing cards
+            container.querySelectorAll('.exam-history-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    this.classList.toggle('expanded');
+                });
             });
-        });
+        }
+
+        // Also update the visible recent results card in dashboard
+        if (recentResultsContainer) {
+            let recentHTML = '';
+            // Show last 5 exams in a simple format
+            const recentExams = examHistory.examHistory.slice(-5).reverse();
+            recentExams.forEach(exam => {
+                const date = formatDateForDisplay(exam.timestamp || exam.date);
+                const scoreClass = (exam.score || 0) >= 0 ? 'text-success' : 'text-error';
+                recentHTML += `
+                    <div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
+                        <div>
+                            <div class="font-semibold">${exam.examCode || 'Exam'}</div>
+                            <div class="text-sm text-base-content/60">${date}</div>
+                        </div>
+                        <div class="text-lg font-bold ${scoreClass}">${exam.score || 0}</div>
+                    </div>
+                `;
+            });
+            recentResultsContainer.innerHTML = recentHTML || '<p class="text-base-content/60">No recent results found.</p>';
+        }
     } else {
-        document.getElementById('total-exams-given').textContent = '0';
-        document.getElementById('average-score').textContent = '0';
+        // No exam history
+        document.getElementById('dashboard-exams-taken').textContent = '0';
+        document.getElementById('dashboard-avg-score').textContent = '-';
+        document.getElementById('dashboard-best-score').textContent = '-';
+        document.getElementById('dashboard-last-exam').textContent = '-';
+
+        const totalExamsGiven = document.getElementById('total-exams-given');
+        const averageScore = document.getElementById('average-score');
+        if (totalExamsGiven) totalExamsGiven.textContent = '0';
+        if (averageScore) averageScore.textContent = '0';
     }
 }
 
@@ -2439,19 +2490,34 @@ document.getElementById('save-profile-btn').addEventListener('click', async func
 // CHANGE PASSWORD HANDLERS
 // =====================================================
 
-// Open change password modal
+// Toggle password form inside profile modal
 document.getElementById('change-password-btn').addEventListener('click', function() {
-    // Clear form
-    document.getElementById('current-password').value = '';
-    document.getElementById('new-password').value = '';
-    document.getElementById('confirm-new-password').value = '';
-    document.getElementById('change-password-modal').style.display = 'flex';
+    const passwordForm = document.getElementById('password-change-form');
+    const changePasswordSection = document.getElementById('change-password-section');
+
+    if (passwordForm) {
+        // Toggle the form visibility
+        if (passwordForm.classList.contains('hidden')) {
+            passwordForm.classList.remove('hidden');
+            if (changePasswordSection) changePasswordSection.classList.add('hidden');
+            // Clear form fields
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-new-password').value = '';
+        } else {
+            passwordForm.classList.add('hidden');
+            if (changePasswordSection) changePasswordSection.classList.remove('hidden');
+        }
+    }
 });
 
-// Close password modal
-document.getElementById('close-password-modal').addEventListener('click', function() {
-    document.getElementById('change-password-modal').style.display = 'none';
-});
+// Close password modal (for the old separate modal - keep for compatibility)
+const closePasswordModal = document.getElementById('close-password-modal');
+if (closePasswordModal) {
+    closePasswordModal.addEventListener('click', function() {
+        document.getElementById('change-password-modal').style.display = 'none';
+    });
+}
 
 // Save new password
 document.getElementById('save-password-btn').addEventListener('click', async function() {
@@ -2493,14 +2559,21 @@ document.getElementById('save-password-btn').addEventListener('click', async fun
     );
 
     btn.disabled = false;
-    btn.textContent = 'Change Password';
+    btn.textContent = 'Update Password';
 
     if (result) {
-        // Clear form and close modal
+        // Clear form and hide password section
         document.getElementById('current-password').value = '';
         document.getElementById('new-password').value = '';
         document.getElementById('confirm-new-password').value = '';
-        document.getElementById('change-password-modal').style.display = 'none';
+
+        // Hide password form, show change password button
+        const passwordForm = document.getElementById('password-change-form');
+        const changePasswordSection = document.getElementById('change-password-section');
+        if (passwordForm) passwordForm.classList.add('hidden');
+        if (changePasswordSection) changePasswordSection.classList.remove('hidden');
+
+        window.PoliteCCAPI.showNotification('Password changed successfully!', 'success');
     }
 });
 
@@ -6777,6 +6850,16 @@ if (submitExamBtn) {
     });
 }
 
+// Floating submit button handler
+const floatingSubmitBtn = document.getElementById('floating-submit-btn');
+if (floatingSubmitBtn) {
+    floatingSubmitBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to submit the exam? You cannot change your answers after submission.')) {
+            submitExam();
+        }
+    });
+}
+
 // Function to show candidate's own detailed results (used by results modal)
 function showCandidateOwnResults() {
     const modal = document.getElementById('results-detail-modal');
@@ -7741,12 +7824,16 @@ function loadQuestion() {
         }
     }
 
-    if (isLastQuestion) {
-        document.getElementById('next-btn').style.display = 'none';
-        document.getElementById('submit-btn').style.display = 'block';
-    } else {
-        document.getElementById('next-btn').style.display = 'block';
-        document.getElementById('submit-btn').style.display = 'none';
+    // Show/hide floating submit button based on whether this is the last question
+    const floatingSubmitContainer = document.getElementById('floating-submit-container');
+    if (floatingSubmitContainer) {
+        if (isLastQuestion) {
+            floatingSubmitContainer.classList.remove('hidden');
+            document.getElementById('next-btn').style.display = 'none';
+        } else {
+            floatingSubmitContainer.classList.add('hidden');
+            document.getElementById('next-btn').style.display = 'block';
+        }
     }
 }
 

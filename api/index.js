@@ -1322,57 +1322,83 @@ module.exports = async (req, res) => {
                             contents: [{
                                 parts: [
                                     {
-                                        text: `You are an expert question extraction system for Indian competitive exams.
-Extract ALL questions from this image and AUTOMATICALLY DETECT if they are STANDALONE or PARENT-CHILD questions.
+                                        text: `You are an expert question extraction system for Indian competitive exams (IBPS, SSC, RRB, UPSC, Bank PO/Clerk, etc.).
 
-CRITICAL: DETECT QUESTION STRUCTURE
-================================
-PARENT-CHILD QUESTIONS (Grouped):
-- Look for PASSAGES, COMPREHENSIONS, DIRECTIONS, DATA TABLES, CHARTS, PUZZLES, or SCENARIOS followed by multiple questions
-- Indicators: "Directions (Q.1-5):", "Read the following passage and answer...", "Based on the following data...", "Study the arrangement and answer..."
-- The parent/passage has NO answer options - it's just context/reference text
-- Each child question references the parent and HAS answer options (A, B, C, D)
+Extract ALL questions from this image and AUTOMATICALLY DETECT the question structure.
+
+===== CRITICAL: IDENTIFYING PARENT-CHILD vs STANDALONE =====
+
+PARENT-CHILD QUESTIONS (MOST COMMON in competitive exams):
+These are questions that share common context/passage/data. Look for these patterns:
+
+1. COMPREHENSION PASSAGES:
+   - "Read the following passage and answer questions 1-5"
+   - "Directions: Read the passage carefully and answer..."
+   - Long text paragraph followed by multiple MCQs
+
+2. DATA INTERPRETATION (DI):
+   - "Study the following table/chart/graph and answer..."
+   - "The following pie chart/bar graph shows..."
+   - Tables, charts, or graphs followed by multiple questions
+
+3. REASONING PUZZLES:
+   - "Directions: Study the following arrangement..."
+   - "Eight persons A, B, C, D, E, F, G, H are sitting in a row..."
+   - Seating arrangements, blood relations, floor puzzles
+   - "Based on the following information, answer Q.1-5"
+
+4. CLOZE TEST (English):
+   - "Fill in the blanks from the options given..."
+   - Paragraph with numbered blanks (1), (2), (3)...
+   - Each blank has 4 options
+
+5. SENTENCE REARRANGEMENT:
+   - "Rearrange the following sentences..."
+   - Multiple related questions about same set of sentences
+
+IDENTIFICATION RULES:
+- If text mentions "Q.X to Q.Y" or "Questions X-Y" → It's a PARENT with CHILDREN
+- If there's a passage/data followed by numbered questions → PARENT-CHILD
+- PARENT has NO options (A,B,C,D) - it's context only
+- CHILDREN have options and reference the parent context
+- Each group needs unique groupId (group_1, group_2, etc.)
 
 STANDALONE QUESTIONS (Independent):
-- Single questions with their own context
-- Has all 4 options (A, B, C, D) and a correct answer
-- Does not depend on any passage or external context
+- Single MCQ with complete context in the question itself
+- Examples: "What is the capital of India?", "Solve: 15 + 27 = ?"
+- Has its own 4 options (A, B, C, D)
+- No reference to any passage or external context
+- groupId: null, subType: null
 
-QUESTION TYPES IN OUTPUT:
-- "Parent-child" with subtype "parent" - Reference passage/scenario (no options)
-- "Parent-child" with subtype "child" - Sub-questions with options (linked to parent)
-- "Standalone" - Regular independent questions with options
-
-Return the data in this EXACT JSON format:
+===== OUTPUT FORMAT (STRICT JSON) =====
 {
   "questions": [
     {
-      "question": "Question or passage text (full text)",
-      "optionA": "Option A (empty string for parent passages)",
-      "optionB": "Option B (empty string for parent passages)",
-      "optionC": "Option C (empty string for parent passages)",
-      "optionD": "Option D (empty string for parent passages)",
-      "correct": "A/B/C/D (empty string for parent passages)",
-      "subject": "Subject category",
-      "questionType": "Standalone or Parent-child",
-      "subType": "parent/child/null",
-      "groupId": "group_1, group_2, etc. (for grouping parent with its children)",
-      "subQuestionNumber": 1, 2, 3... (order within group, null for standalone/parent)
+      "question": "Full text of question or passage",
+      "optionA": "Option A text (EMPTY STRING \"\" for parent passages)",
+      "optionB": "Option B text (EMPTY STRING \"\" for parent passages)",
+      "optionC": "Option C text (EMPTY STRING \"\" for parent passages)",
+      "optionD": "Option D text (EMPTY STRING \"\" for parent passages)",
+      "correct": "A or B or C or D (EMPTY STRING \"\" for parent passages)",
+      "subject": "One of: Quantitative Aptitude, Reasoning Ability, English Language, General Awareness, Current Affairs, Banking Awareness, Computer Knowledge, Data Interpretation, Logical Reasoning, Others",
+      "questionType": "Parent-child OR Standalone",
+      "subType": "parent OR child OR null",
+      "groupId": "group_1 OR group_2 OR null",
+      "subQuestionNumber": 1 OR 2 OR 3 OR null
     }
   ]
 }
 
-SUBJECT CATEGORIES: Quantitative Aptitude, Reasoning Ability, English Language, General Awareness, Current Affairs, History, Geography, Economics, Mathematics, Law, Polity, Science, Banking Awareness, Computer Knowledge, Data Interpretation, Logical Reasoning, Others
+===== MANDATORY RULES =====
+1. PARENT passages: optionA="", optionB="", optionC="", optionD="", correct=""
+2. CHILD questions: MUST have all 4 options filled and correct answer
+3. STANDALONE: All 4 options filled, correct answer, groupId=null, subType=null
+4. Same group = same groupId (parent + all its children)
+5. Extract EVERY visible question - do not skip any
+6. Detect correct answer from marking/highlighting if visible
+7. If answer not visible, make educated guess based on question type
 
-IMPORTANT RULES:
-1. Parent questions (passages) MUST have empty optionA, optionB, optionC, optionD, and correct
-2. Child questions MUST have all 4 options and a correct answer
-3. All questions in a group MUST share the same groupId
-4. Standalone questions have subType: null and groupId: null
-5. Extract EVERY question visible in the image
-6. Be accurate with the correct answer detection
-
-Return ONLY valid JSON with no extra text.`
+Return ONLY the JSON object, no explanation or markdown.`
                                     },
                                     {
                                         inline_data: {
