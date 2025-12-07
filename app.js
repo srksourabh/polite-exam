@@ -5369,7 +5369,7 @@ function showCandidateDetailedResults(result, examCode) {
             </div>
         `;
         content.innerHTML = html;
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
         return;
     }
 
@@ -5581,7 +5581,8 @@ function showCandidateDetailedResults(result, examCode) {
     // Process rich content (render math expressions) in the results modal
     processRichContentInContainer(content);
 
-    modal.style.display = 'block';
+    // Ensure modal is visible (should already be open from showExamCandidates)
+    modal.style.display = 'flex';
 }
 
 // Back to candidates button handler
