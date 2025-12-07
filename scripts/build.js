@@ -14,6 +14,8 @@ const WWW_DIR = path.join(ROOT_DIR, 'www');
 // Files and directories to copy to www
 const filesToCopy = [
   'index.html',
+  'app.js',
+  'styles.css',
   'api-integration.js',
   'sw.js',
   'manifest.json',

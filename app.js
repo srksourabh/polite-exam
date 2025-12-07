@@ -2170,20 +2170,37 @@ async function showCandidateDashboard(userData) {
             let recentHTML = '';
             // Show last 5 exams in a simple format
             const recentExams = examHistory.examHistory.slice(-5).reverse();
-            recentExams.forEach(exam => {
+            recentExams.forEach((exam, index) => {
                 const date = formatDateForDisplay(exam.timestamp || exam.date);
                 const scoreClass = (exam.score || 0) >= 0 ? 'text-success' : 'text-error';
                 recentHTML += `
-                    <div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
+                    <div class="recent-result-card flex justify-between items-center p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-base-300 transition-all" data-exam-index="${index}">
                         <div>
                             <div class="font-semibold">${exam.examCode || 'Exam'}</div>
                             <div class="text-sm text-base-content/60">${date}</div>
                         </div>
-                        <div class="text-lg font-bold ${scoreClass}">${exam.score || 0}</div>
+                        <div class="flex items-center gap-2">
+                            <div class="text-lg font-bold ${scoreClass}">${exam.score || 0}</div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
                     </div>
                 `;
             });
             recentResultsContainer.innerHTML = recentHTML || '<p class="text-base-content/60">No recent results found.</p>';
+
+            // Add click handlers for recent results
+            recentResultsContainer.querySelectorAll('.recent-result-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const examIndex = parseInt(this.getAttribute('data-exam-index'));
+                    const recentExamsList = examHistory.examHistory.slice(-5).reverse();
+                    const selectedExam = recentExamsList[examIndex];
+                    if (selectedExam) {
+                        showCandidateExamDetails(selectedExam);
+                    }
+                });
+            });
         }
     } else {
         // No exam history
@@ -6916,6 +6933,101 @@ function showCandidateOwnResults() {
     // Close modal handler is already set up for results-detail-modal
 }
 
+// Function to show detailed results for a candidate's exam history item
+function showCandidateExamDetails(exam) {
+    const modal = document.getElementById('results-detail-modal');
+    const content = document.getElementById('results-detail-content');
+
+    if (!modal || !content) return;
+
+    const date = formatDateForDisplay(exam.timestamp || exam.date);
+    const score = exam.score || 0;
+    const scoreColor = score >= 0 ? '#27ae60' : '#e74c3c';
+
+    // Build detailed view
+    let html = `
+        <h3 style="color: var(--secondary); margin-bottom: 20px;">Exam Details</h3>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; flex-wrap: wrap; gap: 15px;">
+            <div><strong>Exam Code:</strong> ${exam.examCode || 'N/A'}</div>
+            <div><strong>Date:</strong> ${date}</div>
+            <div><strong>Score:</strong> <span style="color: ${scoreColor}; font-weight: 700; font-size: 1.2rem;">${score}</span></div>
+        </div>
+        <div style="max-height: 500px; overflow-y: auto;">
+    `;
+
+    // Parse answers to build question details
+    try {
+        const answers = typeof exam.answers === 'string' ? JSON.parse(exam.answers) : exam.answers || [];
+
+        if (answers && answers.length > 0) {
+            // Check if it's detailed format (array of objects with question data)
+            if (typeof answers[0] === 'object' && answers[0].question) {
+                answers.forEach((answer, index) => {
+                    const isCorrect = answer.isCorrect;
+                    const userAnswered = answer.userAnswer !== 'Not Answered';
+
+                    html += `
+                        <div style="background: ${isCorrect ? '#e8f5e9' : (userAnswered ? '#ffebee' : '#f5f5f5')}; border-left: 4px solid ${isCorrect ? '#27ae60' : (userAnswered ? '#e74c3c' : '#95a5a6')}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                            <div style="font-weight: 600; margin-bottom: 8px; color: var(--secondary);">Question ${index + 1}</div>
+                            <div style="margin-bottom: 12px; font-size: 1.05rem;">${answer.question}</div>
+
+                            <div style="margin-bottom: 12px;">
+                                <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'A' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>A:</strong> ${answer.optionA || 'N/A'} ${answer.userAnswer === 'A' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'A' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
+                                <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'B' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>B:</strong> ${answer.optionB || 'N/A'} ${answer.userAnswer === 'B' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'B' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
+                                <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'C' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>C:</strong> ${answer.optionC || 'N/A'} ${answer.userAnswer === 'C' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'C' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
+                                <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'D' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>D:</strong> ${answer.optionD || 'N/A'} ${answer.userAnswer === 'D' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'D' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
+                            </div>
+
+                            <div style="font-weight: 600; font-size: 1.1rem;">
+                                ${isCorrect ? '✅ Correct (+1 point)' : (userAnswered ? '❌ Incorrect (-0.25 points)' : '⚪ Not Answered (0 points)')}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                // Legacy format - just show basic info
+                html += `
+                    <div style="text-align: center; padding: 40px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                        <div style="font-size: 2rem; margin-bottom: 15px;">📊</div>
+                        <h4 style="color: #1565c0; margin-bottom: 10px;">Exam Summary</h4>
+                        <p style="color: #1565c0;">You answered ${answers.length} questions in this exam.</p>
+                        <p style="color: #1565c0; font-size: 1.2rem; margin-top: 15px;">Final Score: <strong style="font-size: 1.5rem;">${score}</strong></p>
+                    </div>
+                `;
+            }
+        } else {
+            html += `
+                <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <div style="font-size: 2rem; margin-bottom: 15px;">⚠️</div>
+                    <h4 style="color: #856404; margin-bottom: 10px;">No Detailed Data Available</h4>
+                    <p style="color: #856404;">Question-level details are not available for this exam.</p>
+                </div>
+            `;
+        }
+    } catch (e) {
+        console.error('Error parsing exam answers:', e);
+        html += `
+            <div style="text-align: center; padding: 40px; background: #ffebee; border-radius: 8px; border-left: 4px solid #e74c3c;">
+                <div style="font-size: 2rem; margin-bottom: 15px;">❌</div>
+                <h4 style="color: #c62828; margin-bottom: 10px;">Error Loading Details</h4>
+                <p style="color: #c62828;">Unable to load question details for this exam.</p>
+            </div>
+        `;
+    }
+
+    html += '</div>';
+    content.innerHTML = html;
+    modal.style.display = 'flex';
+}
+
 // Result screen navigation handlers
 const backToDashboardBtn = document.getElementById('back-to-dashboard-btn');
 if (backToDashboardBtn) {
@@ -7273,7 +7385,7 @@ function selectOptionNewUI(optionIndex) {
     if (userAnswers[currentQuestionIndex] === optionIndex) {
         // Deselect - user wants to not answer this question
         userAnswers[currentQuestionIndex] = undefined;
-        options[optionIndex].classList.remove('border-primary', 'bg-primary/10');
+        options[optionIndex].classList.remove('selected', 'border-primary');
         options[optionIndex].classList.add('border-base-300');
         radios[optionIndex].checked = false;
     } else {
@@ -7282,10 +7394,10 @@ function selectOptionNewUI(optionIndex) {
         options.forEach((option, i) => {
             if (i === optionIndex) {
                 option.classList.remove('border-base-300');
-                option.classList.add('border-primary', 'bg-primary/10');
+                option.classList.add('selected', 'border-primary');
                 radios[i].checked = true;
             } else {
-                option.classList.remove('border-primary', 'bg-primary/10');
+                option.classList.remove('selected', 'border-primary');
                 option.classList.add('border-base-300');
                 radios[i].checked = false;
             }
@@ -7766,23 +7878,28 @@ function loadQuestion() {
                 question['Option D'] || 'Option D'
             ];
 
-            optionsContainer.innerHTML = optionValues.map((opt, idx) => {
+            // Clone container to remove old event listeners
+            const newOptionsContainer = optionsContainer.cloneNode(false);
+            optionsContainer.parentNode.replaceChild(newOptionsContainer, optionsContainer);
+
+            newOptionsContainer.innerHTML = optionValues.map((opt, idx) => {
                 const isSelected = userAnswers[currentQuestionIndex] === idx;
                 return `
-                    <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}">
-                        <input type="radio" name="answer" class="radio radio-primary option-radio" ${isSelected ? 'checked' : ''}>
+                    <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'selected border-primary' : 'border-base-300'}" data-index="${idx}">
+                        <input type="radio" name="answer" class="radio radio-primary option-radio" style="pointer-events: none;" ${isSelected ? 'checked' : ''}>
                         <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
                         <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>
                     </div>
                 `;
             }).join('');
 
-            // Add click handlers to options
-            optionsContainer.querySelectorAll('.option').forEach(option => {
-                option.addEventListener('click', function() {
-                    const optionIndex = parseInt(this.getAttribute('data-index'));
+            // Add click handler to the new container
+            newOptionsContainer.addEventListener('click', function(e) {
+                const option = e.target.closest('.option');
+                if (option) {
+                    const optionIndex = parseInt(option.getAttribute('data-index'));
                     selectOptionNewUI(optionIndex);
-                });
+                }
             });
         }
 
