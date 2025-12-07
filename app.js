@@ -2167,38 +2167,141 @@ async function showCandidateDashboard(userData) {
 
         // Also update the visible recent results card in dashboard
         if (recentResultsContainer) {
+            // Sort exams by date descending (latest first)
+            const sortedExams = [...examHistory.examHistory].sort((a, b) => {
+                const dateA = new Date(a.timestamp || a.date || 0);
+                const dateB = new Date(b.timestamp || b.date || 0);
+                return dateB - dateA; // Descending order
+            });
+
             let recentHTML = '';
-            // Show last 5 exams in a simple format
-            const recentExams = examHistory.examHistory.slice(-5).reverse();
-            recentExams.forEach((exam, index) => {
+            sortedExams.forEach((exam, index) => {
                 const date = formatDateForDisplay(exam.timestamp || exam.date);
-                const scoreClass = (exam.score || 0) >= 0 ? 'text-success' : 'text-error';
+                const score = exam.score || 0;
+                const scoreClass = score >= 0 ? 'text-success' : 'text-error';
+                const scoreBg = score >= 0 ? 'bg-success/10' : 'bg-error/10';
+
+                // Parse answers to build question details
+                let questionDetailsHTML = '';
+                let totalQuestions = 0;
+                let correctCount = 0;
+                let incorrectCount = 0;
+                let unansweredCount = 0;
+
+                try {
+                    const answers = typeof exam.answers === 'string' ? JSON.parse(exam.answers) : exam.answers || [];
+                    if (answers && answers.length > 0 && typeof answers[0] === 'object' && answers[0] !== null) {
+                        answers.forEach((answer, qIndex) => {
+                            const isMainPassage = answer.isMainPassage || (!answer.optionA && !answer.optionB);
+                            if (isMainPassage) return; // Skip passages in count
+
+                            totalQuestions++;
+                            const isCorrect = answer.isCorrect;
+                            const userAnswered = answer.userAnswer !== 'Not Answered' && answer.userAnswer !== 'N/A (Passage)';
+
+                            if (isCorrect) correctCount++;
+                            else if (userAnswered) incorrectCount++;
+                            else unansweredCount++;
+
+                            const userAnswerLetter = answer.userAnswer || 'Not Answered';
+                            const correctAnswerLetter = answer.correctAnswer || '-';
+                            const marks = isCorrect ? '+1' : (userAnswered ? '-0.25' : '0');
+                            const marksClass = isCorrect ? 'text-success' : (userAnswered ? 'text-error' : 'text-base-content/50');
+                            const rowBg = isCorrect ? 'bg-success/5' : (userAnswered ? 'bg-error/5' : 'bg-base-200');
+
+                            questionDetailsHTML += `
+                                <div class="p-3 ${rowBg} rounded-lg mb-2">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="font-semibold text-primary">Q${qIndex + 1}</span>
+                                        <span class="font-bold ${marksClass}">${marks}</span>
+                                    </div>
+                                    <p class="text-sm mb-3 text-base-content/80">${answer.question || 'Question text not available'}</p>
+                                    <div class="grid grid-cols-2 gap-2 text-sm">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-base-content/60">Your Answer:</span>
+                                            <span class="font-semibold ${userAnswered ? (isCorrect ? 'text-success' : 'text-error') : 'text-base-content/50'}">${userAnswerLetter}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-base-content/60">Correct:</span>
+                                            <span class="font-semibold text-success">${correctAnswerLetter}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        questionDetailsHTML = '<p class="text-base-content/60 text-center py-4">Detailed question data not available for this exam.</p>';
+                    }
+                } catch (e) {
+                    console.error('Error parsing exam answers:', e);
+                    questionDetailsHTML = '<p class="text-base-content/60 text-center py-4">Unable to load question details.</p>';
+                }
+
                 recentHTML += `
-                    <div class="recent-result-card flex justify-between items-center p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-base-300 transition-all" data-exam-index="${index}">
-                        <div>
-                            <div class="font-semibold">${exam.examCode || 'Exam'}</div>
-                            <div class="text-sm text-base-content/60">${date}</div>
+                    <div class="exam-accordion-card border border-base-300 rounded-lg overflow-hidden mb-3" data-exam-index="${index}">
+                        <div class="exam-accordion-header flex justify-between items-center p-4 cursor-pointer hover:bg-base-200 transition-all">
+                            <div class="flex-1">
+                                <div class="font-bold text-lg">${exam.examCode || 'Exam'}</div>
+                                <div class="text-sm text-base-content/60">${date}</div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="text-center ${scoreBg} px-4 py-2 rounded-lg">
+                                    <div class="text-xl font-bold ${scoreClass}">${score}</div>
+                                    <div class="text-xs text-base-content/60">Score</div>
+                                </div>
+                                <svg class="accordion-chevron h-5 w-5 text-base-content/40 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="text-lg font-bold ${scoreClass}">${exam.score || 0}</div>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
+                        <div class="exam-accordion-content hidden bg-base-100 border-t border-base-300">
+                            <div class="p-4">
+                                <!-- Summary Stats -->
+                                <div class="grid grid-cols-3 gap-2 mb-4">
+                                    <div class="text-center p-2 bg-success/10 rounded-lg">
+                                        <div class="text-lg font-bold text-success">${correctCount}</div>
+                                        <div class="text-xs text-base-content/60">Correct</div>
+                                    </div>
+                                    <div class="text-center p-2 bg-error/10 rounded-lg">
+                                        <div class="text-lg font-bold text-error">${incorrectCount}</div>
+                                        <div class="text-xs text-base-content/60">Wrong</div>
+                                    </div>
+                                    <div class="text-center p-2 bg-base-200 rounded-lg">
+                                        <div class="text-lg font-bold text-base-content/60">${unansweredCount}</div>
+                                        <div class="text-xs text-base-content/60">Skipped</div>
+                                    </div>
+                                </div>
+                                <!-- Question Details -->
+                                <h4 class="font-semibold mb-3 text-primary">Question-wise Details</h4>
+                                <div class="max-h-96 overflow-y-auto">
+                                    ${questionDetailsHTML}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
             });
-            recentResultsContainer.innerHTML = recentHTML || '<p class="text-base-content/60">No recent results found.</p>';
 
-            // Add click handlers for recent results
-            recentResultsContainer.querySelectorAll('.recent-result-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    const examIndex = parseInt(this.getAttribute('data-exam-index'));
-                    const recentExamsList = examHistory.examHistory.slice(-5).reverse();
-                    const selectedExam = recentExamsList[examIndex];
-                    if (selectedExam) {
-                        showCandidateExamDetails(selectedExam);
-                    }
+            recentResultsContainer.innerHTML = recentHTML || '<p class="text-base-content/60">No exam results found.</p>';
+
+            // Add click handlers for accordion
+            recentResultsContainer.querySelectorAll('.exam-accordion-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    const card = this.closest('.exam-accordion-card');
+                    const content = card.querySelector('.exam-accordion-content');
+                    const chevron = card.querySelector('.accordion-chevron');
+
+                    // Toggle current card
+                    content.classList.toggle('hidden');
+                    chevron.classList.toggle('rotate-180');
+
+                    // Optionally close other cards
+                    recentResultsContainer.querySelectorAll('.exam-accordion-card').forEach(otherCard => {
+                        if (otherCard !== card) {
+                            otherCard.querySelector('.exam-accordion-content').classList.add('hidden');
+                            otherCard.querySelector('.accordion-chevron').classList.remove('rotate-180');
+                        }
+                    });
                 });
             });
         }
