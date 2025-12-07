@@ -7273,7 +7273,7 @@ function selectOptionNewUI(optionIndex) {
     if (userAnswers[currentQuestionIndex] === optionIndex) {
         // Deselect - user wants to not answer this question
         userAnswers[currentQuestionIndex] = undefined;
-        options[optionIndex].classList.remove('border-primary', 'bg-primary/10');
+        options[optionIndex].classList.remove('selected', 'border-primary');
         options[optionIndex].classList.add('border-base-300');
         radios[optionIndex].checked = false;
     } else {
@@ -7282,10 +7282,10 @@ function selectOptionNewUI(optionIndex) {
         options.forEach((option, i) => {
             if (i === optionIndex) {
                 option.classList.remove('border-base-300');
-                option.classList.add('border-primary', 'bg-primary/10');
+                option.classList.add('selected', 'border-primary');
                 radios[i].checked = true;
             } else {
-                option.classList.remove('border-primary', 'bg-primary/10');
+                option.classList.remove('selected', 'border-primary');
                 option.classList.add('border-base-300');
                 radios[i].checked = false;
             }
@@ -7769,7 +7769,7 @@ function loadQuestion() {
             optionsContainer.innerHTML = optionValues.map((opt, idx) => {
                 const isSelected = userAnswers[currentQuestionIndex] === idx;
                 return `
-                    <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}">
+                    <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'selected border-primary' : 'border-base-300'}" data-index="${idx}">
                         <input type="radio" name="answer" class="radio radio-primary option-radio" ${isSelected ? 'checked' : ''}>
                         <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
                         <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>

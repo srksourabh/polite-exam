@@ -1270,6 +1270,12 @@ function deleteOCRQuestion(index) {
 
 function closeOCRReviewModal() {
     document.getElementById('ocr-review-modal').style.display = 'none';
+
+    // If modal was closed without saving, go back to step 1
+    if (document.getElementById('upload-step-2') && !document.getElementById('upload-step-2').classList.contains('hidden')) {
+        document.getElementById('upload-step-2').classList.add('hidden');
+        document.getElementById('upload-step-1').classList.remove('hidden');
+    }
 }
 
 function saveOCRReviewedQuestions() {
@@ -1391,8 +1397,14 @@ function saveOCRReviewedQuestions() {
     // Update the global extractedQuestions array
     extractedQuestions = updatedQuestions;
 
-    // Close modal and show the questions in ready-questions area
-    closeOCRReviewModal();
+    // Close modal
+    document.getElementById('ocr-review-modal').style.display = 'none';
+
+    // Show step 3 (Review and Select Questions)
+    document.getElementById('upload-step-2').classList.add('hidden');
+    document.getElementById('upload-step-3').classList.remove('hidden');
+
+    // Display the questions in ready-questions area
     displayReadyQuestions(extractedQuestions);
 
     // Generate summary message
@@ -1411,7 +1423,6 @@ function saveOCRReviewedQuestions() {
 
 function displayReadyQuestions(questions) {
     const readyQuestions = document.getElementById('ready-questions');
-    const uploadResultContainer = document.getElementById('upload-result-container');
 
     if (!readyQuestions) return;
 
@@ -1494,17 +1505,6 @@ function displayReadyQuestions(questions) {
             this.style.background = originalBg;
         });
     });
-
-    // Show the results container
-    if (uploadResultContainer) {
-        uploadResultContainer.classList.remove('hidden');
-    }
-
-    // Hide the raw text area
-    const extractedText = document.getElementById('extracted-text');
-    const cleanTextBtn = document.getElementById('clean-text-btn');
-    if (extractedText) extractedText.style.display = 'none';
-    if (cleanTextBtn) cleanTextBtn.style.display = 'none';
 }
 
 // Wait for DOM to be ready before attaching event listeners
@@ -2029,13 +2029,33 @@ async function showCandidateDashboard(userData) {
     const examHistory = await window.PoliteCCAPI.getCandidateExamHistory(userData.email);
 
     if (examHistory && examHistory.examsGiven > 0) {
-        document.getElementById('total-exams-given').textContent = examHistory.examsGiven;
+        // Update stats in the visible dashboard
+        document.getElementById('dashboard-exams-taken').textContent = examHistory.examsGiven;
 
-        // Calculate average score
-        const avgScore = examHistory.examHistory.reduce((sum, exam) => sum + (exam.score || 0), 0) / examHistory.examsGiven;
-        document.getElementById('average-score').textContent = avgScore.toFixed(1);
+        // Calculate scores
+        const scores = examHistory.examHistory.map(exam => exam.score || 0);
+        const avgScore = scores.reduce((sum, s) => sum + s, 0) / examHistory.examsGiven;
+        const bestScore = Math.max(...scores);
 
-        // Display exam history
+        document.getElementById('dashboard-avg-score').textContent = avgScore.toFixed(1);
+        document.getElementById('dashboard-best-score').textContent = bestScore.toFixed(1);
+
+        // Show last exam date
+        if (examHistory.examHistory.length > 0) {
+            const lastExam = examHistory.examHistory[examHistory.examHistory.length - 1];
+            document.getElementById('dashboard-last-exam').textContent = formatDateForDisplay(lastExam.timestamp || lastExam.date);
+        }
+
+        // Also update hidden elements for compatibility
+        const totalExamsGiven = document.getElementById('total-exams-given');
+        const averageScore = document.getElementById('average-score');
+        if (totalExamsGiven) totalExamsGiven.textContent = examHistory.examsGiven;
+        if (averageScore) averageScore.textContent = avgScore.toFixed(1);
+
+        // Display recent results in the visible dashboard card
+        const recentResultsContainer = document.getElementById('dashboard-recent-results');
+
+        // Also update hidden container for compatibility
         const container = document.getElementById('exam-history-container');
         let historyHTML = '';
 
@@ -2134,17 +2154,48 @@ async function showCandidateDashboard(userData) {
             `;
         });
 
-        container.innerHTML = historyHTML;
+        if (container) {
+            container.innerHTML = historyHTML;
 
-        // Add click handlers for expanding/collapsing cards
-        container.querySelectorAll('.exam-history-card').forEach(card => {
-            card.addEventListener('click', function() {
-                this.classList.toggle('expanded');
+            // Add click handlers for expanding/collapsing cards
+            container.querySelectorAll('.exam-history-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    this.classList.toggle('expanded');
+                });
             });
-        });
+        }
+
+        // Also update the visible recent results card in dashboard
+        if (recentResultsContainer) {
+            let recentHTML = '';
+            // Show last 5 exams in a simple format
+            const recentExams = examHistory.examHistory.slice(-5).reverse();
+            recentExams.forEach(exam => {
+                const date = formatDateForDisplay(exam.timestamp || exam.date);
+                const scoreClass = (exam.score || 0) >= 0 ? 'text-success' : 'text-error';
+                recentHTML += `
+                    <div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
+                        <div>
+                            <div class="font-semibold">${exam.examCode || 'Exam'}</div>
+                            <div class="text-sm text-base-content/60">${date}</div>
+                        </div>
+                        <div class="text-lg font-bold ${scoreClass}">${exam.score || 0}</div>
+                    </div>
+                `;
+            });
+            recentResultsContainer.innerHTML = recentHTML || '<p class="text-base-content/60">No recent results found.</p>';
+        }
     } else {
-        document.getElementById('total-exams-given').textContent = '0';
-        document.getElementById('average-score').textContent = '0';
+        // No exam history
+        document.getElementById('dashboard-exams-taken').textContent = '0';
+        document.getElementById('dashboard-avg-score').textContent = '-';
+        document.getElementById('dashboard-best-score').textContent = '-';
+        document.getElementById('dashboard-last-exam').textContent = '-';
+
+        const totalExamsGiven = document.getElementById('total-exams-given');
+        const averageScore = document.getElementById('average-score');
+        if (totalExamsGiven) totalExamsGiven.textContent = '0';
+        if (averageScore) averageScore.textContent = '0';
     }
 }
 
@@ -2439,19 +2490,34 @@ document.getElementById('save-profile-btn').addEventListener('click', async func
 // CHANGE PASSWORD HANDLERS
 // =====================================================
 
-// Open change password modal
+// Toggle password form inside profile modal
 document.getElementById('change-password-btn').addEventListener('click', function() {
-    // Clear form
-    document.getElementById('current-password').value = '';
-    document.getElementById('new-password').value = '';
-    document.getElementById('confirm-new-password').value = '';
-    document.getElementById('change-password-modal').style.display = 'flex';
+    const passwordForm = document.getElementById('password-change-form');
+    const changePasswordSection = document.getElementById('change-password-section');
+
+    if (passwordForm) {
+        // Toggle the form visibility
+        if (passwordForm.classList.contains('hidden')) {
+            passwordForm.classList.remove('hidden');
+            if (changePasswordSection) changePasswordSection.classList.add('hidden');
+            // Clear form fields
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-new-password').value = '';
+        } else {
+            passwordForm.classList.add('hidden');
+            if (changePasswordSection) changePasswordSection.classList.remove('hidden');
+        }
+    }
 });
 
-// Close password modal
-document.getElementById('close-password-modal').addEventListener('click', function() {
-    document.getElementById('change-password-modal').style.display = 'none';
-});
+// Close password modal (for the old separate modal - keep for compatibility)
+const closePasswordModal = document.getElementById('close-password-modal');
+if (closePasswordModal) {
+    closePasswordModal.addEventListener('click', function() {
+        document.getElementById('change-password-modal').style.display = 'none';
+    });
+}
 
 // Save new password
 document.getElementById('save-password-btn').addEventListener('click', async function() {
@@ -2493,14 +2559,21 @@ document.getElementById('save-password-btn').addEventListener('click', async fun
     );
 
     btn.disabled = false;
-    btn.textContent = 'Change Password';
+    btn.textContent = 'Update Password';
 
     if (result) {
-        // Clear form and close modal
+        // Clear form and hide password section
         document.getElementById('current-password').value = '';
         document.getElementById('new-password').value = '';
         document.getElementById('confirm-new-password').value = '';
-        document.getElementById('change-password-modal').style.display = 'none';
+
+        // Hide password form, show change password button
+        const passwordForm = document.getElementById('password-change-form');
+        const changePasswordSection = document.getElementById('change-password-section');
+        if (passwordForm) passwordForm.classList.add('hidden');
+        if (changePasswordSection) changePasswordSection.classList.remove('hidden');
+
+        window.PoliteCCAPI.showNotification('Password changed successfully!', 'success');
     }
 });
 
@@ -4150,7 +4223,15 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
                     totalQuestions += 1;
                 }
             });
-            document.getElementById('selected-count').textContent = totalQuestions + ' Questions Selected';
+            const selectedCountElement = document.getElementById('selected-count-text');
+            if (selectedCountElement) {
+                selectedCountElement.textContent = `${totalQuestions} selected`;
+            }
+            // Also update the legacy element if it exists
+            const legacyElement = document.getElementById('selected-count');
+            if (legacyElement) {
+                legacyElement.textContent = totalQuestions + ' Questions Selected';
+            }
         }
 
         // Function to attach event listeners
@@ -4815,8 +4896,8 @@ document.getElementById('view-results-btn').addEventListener('click', async func
         document.getElementById('active-exams-count').textContent = activeCount;
         document.getElementById('expired-exams-count').textContent = expiredCount;
 
-        // Display exams in grid
-        const examsContainer = document.getElementById('exams-grid-container');
+        // Display exams in grid - use results-list container in the visible view-results-section
+        const examsContainer = document.getElementById('results-list');
 
         if (exams.length === 0) {
             examsContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1/-1; padding: 40px;">No exams found. Create an exam first.</p>';
@@ -4917,7 +4998,8 @@ document.getElementById('view-results-btn').addEventListener('click', async func
             `;
         }
 
-        examsContainer.innerHTML = examsHTML;
+        // Wrap in a grid container for proper display
+        examsContainer.innerHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">${examsHTML}</div>`;
 
         // Add click handlers for exam cards
         document.querySelectorAll('.exam-result-card').forEach(card => {
@@ -4938,8 +5020,14 @@ document.getElementById('view-results-btn').addEventListener('click', async func
 // Function to show candidates for a selected exam
 async function showExamCandidates(examCode) {
     try {
-        // Hide main view, show candidates view
-        document.getElementById('results-main-view').classList.add('hidden');
+        // Show the results detail modal
+        const modal = document.getElementById('results-detail-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+
+        // Show main view with candidates
+        document.getElementById('results-main-view').classList.remove('hidden');
         document.getElementById('results-candidates-view').classList.remove('hidden');
 
         // Get exam details
@@ -5611,6 +5699,7 @@ document.getElementById('paper-upload').addEventListener('change', function(e) {
         const fileName = e.target.files[0].name;
         document.getElementById('selected-file-info').classList.remove('hidden');
         document.getElementById('file-name').textContent = fileName;
+        document.getElementById('process-upload-btn').classList.remove('hidden');
     }
 });
 
@@ -5626,6 +5715,7 @@ document.getElementById('paper-upload-file').addEventListener('change', function
 
         document.getElementById('selected-file-info').classList.remove('hidden');
         document.getElementById('file-name').textContent = fileName;
+        document.getElementById('process-upload-btn').classList.remove('hidden');
     }
 });
 
@@ -5642,12 +5732,14 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
         }
 
         const file = fileInput.files[0];
-        const ocrProgress = document.getElementById('ocr-progress');
         const ocrProgressBar = document.getElementById('ocr-progress-bar');
         const ocrStatus = document.getElementById('ocr-status');
 
+        // Show step 2 (AI Processing)
+        document.getElementById('upload-step-1').classList.add('hidden');
+        document.getElementById('upload-step-2').classList.remove('hidden');
+
         // Show progress
-        ocrProgress.classList.remove('hidden');
         ocrProgressBar.style.width = '30%';
         ocrStatus.textContent = 'Reading image...';
         // Convert file to base64
@@ -5678,12 +5770,7 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
                 }
 
                 ocrProgressBar.style.width = '100%';
-                ocrStatus.textContent = 'Extraction complete!';
-
-                // Hide progress after a brief delay
-                setTimeout(() => {
-                    ocrProgress.classList.add('hidden');
-                }, 500);
+                ocrStatus.textContent = 'Extraction complete! Opening review...';
 
                 // Process AI-detected hierarchical questions
                 const timestamp = Date.now();
@@ -5783,7 +5870,10 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
 
             } catch (error) {
                 console.error('Gemini extraction error:', error);
-                ocrProgress.classList.add('hidden');
+
+                // Go back to step 1
+                document.getElementById('upload-step-2').classList.add('hidden');
+                document.getElementById('upload-step-1').classList.remove('hidden');
 
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                     window.PoliteCCAPI.showNotification(`❌ Failed to extract questions: ${error.message}`, 'error');
@@ -5792,7 +5882,10 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
         };
 
         reader.onerror = function() {
-            ocrProgress.classList.add('hidden');
+            // Go back to step 1
+            document.getElementById('upload-step-2').classList.add('hidden');
+            document.getElementById('upload-step-1').classList.remove('hidden');
+
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                 window.PoliteCCAPI.showNotification('❌ Failed to read file', 'error');
             }
@@ -5802,7 +5895,10 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
 
     } catch (error) {
         console.error('OCR Error:', error);
-        ocrProgress.classList.add('hidden');
+
+        // Go back to step 1
+        document.getElementById('upload-step-2').classList.add('hidden');
+        document.getElementById('upload-step-1').classList.remove('hidden');
 
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
             window.PoliteCCAPI.showNotification(`❌ OCR failed: ${error.message}`, 'error');
@@ -5810,89 +5906,68 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
     }
 });
 
-// Clean text
-document.getElementById('clean-text-btn').addEventListener('click', function() {
-    const extractedText = document.getElementById('extracted-text');
-    if (!extractedText) return;
-    
-    const rawText = extractedText.value;
-    extractedQuestions = [];
-    
-    // Simple text cleaning and parsing
-    const questionBlocks = rawText.split(/\n\s*\n/).filter(block => block.trim() !== '');
-    
-    questionBlocks.forEach((block, index) => {
-        // Extract question number and text
-        const lines = block.split('\n').filter(line => line.trim() !== '');
-        if (lines.length < 6) return;
-        
-        const questionLine = lines[0].replace(/^\d+\.\s*/, '').trim();
-        const options = lines.slice(1, 5).map(line => line.replace(/^[A-D]\)\s*/, '').trim());
-        const answerLine = lines[5] || '';
-        const correctAns = answerLine.match(/Answer:\s*([A-D])/i)?.[1] || 'A';
-        
-        const question = {
-            id: `Q${Date.now()}_${index}`,
-            subject: 'Others',
-            question: questionLine,
-            options: options,
-            correct: ['A', 'B', 'C', 'D'].indexOf(correctAns)
-        };
-        
-        extractedQuestions.push(question);
-    });
-    
-    // Display questions with checkboxes for selection
-    const readyQuestions = document.getElementById('ready-questions');
-    if (readyQuestions) {
-        if (extractedQuestions.length === 0) {
-            readyQuestions.innerHTML = '<p style="text-align: center; color: var(--danger);">❌ No valid questions found.</p>';
-        } else {
-            let html = '<div style="max-height: 400px; overflow-y: auto;">';
-            extractedQuestions.forEach((q, index) => {
-                html += `
-                <label class="extracted-question-item" style="display: flex; align-items: flex-start; background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--secondary); cursor: pointer; transition: all 0.2s;">
-                    <input type="checkbox" class="extracted-question-checkbox" value="${index}" checked style="margin-right: 12px; margin-top: 4px; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
-                    <div style="flex: 1;">
-                        <p style="margin-bottom: 10px; font-weight: 500;">${q.question}</p>
-                        <div style="margin-left: 25px; margin-bottom: 8px;">
-                            <div>A) ${q.options[0]}</div>
-                            <div>B) ${q.options[1]}</div>
-                            <div>C) ${q.options[2]}</div>
-                            <div>D) ${q.options[3]}</div>
-                        </div>
-                        <div style="color: var(--success); font-weight: 500;">
-                            Correct Answer: ${String.fromCharCode(65 + q.correct)}
-                        </div>
-                    </div>
-                </label>
-                `;
-            });
-            html += '</div>';
-            readyQuestions.innerHTML = html;
+// Legacy clean text handler - no longer used with Gemini AI OCR
+// Keeping for backwards compatibility if needed
+if (document.getElementById('clean-text-btn')) {
+    document.getElementById('clean-text-btn').addEventListener('click', function() {
+        const extractedText = document.getElementById('extracted-text');
+        if (!extractedText) return;
 
-            // Add hover effects
-            document.querySelectorAll('.extracted-question-item').forEach(item => {
-                item.addEventListener('mouseenter', function() {
-                    this.style.background = '#e8f4fd';
-                });
-                item.addEventListener('mouseleave', function() {
-                    this.style.background = '#f8f9fa';
-                });
-            });
+        const rawText = extractedText.value;
+        extractedQuestions = [];
+
+        // Simple text cleaning and parsing
+        const questionBlocks = rawText.split(/\n\s*\n/).filter(block => block.trim() !== '');
+
+        questionBlocks.forEach((block, index) => {
+            // Extract question number and text
+            const lines = block.split('\n').filter(line => line.trim() !== '');
+            if (lines.length < 6) return;
+
+            const questionLine = lines[0].replace(/^\d+\.\s*/, '').trim();
+            const options = lines.slice(1, 5).map(line => line.replace(/^[A-D]\)\s*/, '').trim());
+            const answerLine = lines[5] || '';
+            const correctAns = answerLine.match(/Answer:\s*([A-D])/i)?.[1] || 'A';
+
+            const question = {
+                id: `Q${Date.now()}_${index}`,
+                subject: 'Others',
+                question: questionLine,
+                options: options,
+                correct: ['A', 'B', 'C', 'D'].indexOf(correctAns)
+            };
+
+            extractedQuestions.push(question);
+        });
+
+        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+            window.PoliteCCAPI.showNotification(`✅ ${extractedQuestions.length} questions parsed`, 'success');
         }
+    });
+}
+
+// Upload new button - reset to step 1
+document.getElementById('upload-new-btn').addEventListener('click', function() {
+    // Hide step 3, show step 1
+    document.getElementById('upload-step-3').classList.add('hidden');
+    document.getElementById('upload-step-1').classList.remove('hidden');
+
+    // Clear file selection
+    const fileInput = document.getElementById('paper-upload');
+    const fileInputBrowser = document.getElementById('paper-upload-file');
+    if (fileInput) fileInput.value = '';
+    if (fileInputBrowser) fileInputBrowser.value = '';
+
+    // Hide file info and scan button
+    document.getElementById('selected-file-info').classList.add('hidden');
+    document.getElementById('process-upload-btn').classList.add('hidden');
+
+    // Clear extracted questions
+    extractedQuestions = [];
+
+    if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+        window.PoliteCCAPI.showNotification('📤 Ready to upload new question paper', 'info');
     }
-    
-    const notification = document.createElement('div');
-    notification.className = 'notification success';
-    notification.innerHTML = `✅ ${extractedQuestions.length} questions parsed successfully!`;
-    document.getElementById('notification-container').appendChild(notification);
-    
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-        }
-    }, 3000);
 });
 
 // Select All extracted questions button
@@ -5950,15 +6025,23 @@ document.getElementById('add-extracted-btn').addEventListener('click', async fun
             if (success) successCount++;
         }
 
-        // Hide upload result and show question bank
-        const uploadResultContainer = document.getElementById('upload-result-container');
-        if (uploadResultContainer) {
-            uploadResultContainer.classList.add('hidden');
-        }
-
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
             window.PoliteCCAPI.showNotification(`✅ ${successCount} questions added to bank!`, 'success');
         }
+
+        // Reset to step 1 and clear extracted questions
+        document.getElementById('upload-step-3').classList.add('hidden');
+        document.getElementById('upload-step-1').classList.remove('hidden');
+
+        // Clear file selection
+        const fileInput = document.getElementById('paper-upload');
+        const fileInputBrowser = document.getElementById('paper-upload-file');
+        if (fileInput) fileInput.value = '';
+        if (fileInputBrowser) fileInputBrowser.value = '';
+        document.getElementById('selected-file-info').classList.add('hidden');
+        document.getElementById('process-upload-btn').classList.add('hidden');
+
+        extractedQuestions = [];
 
         // Refresh question bank
         document.getElementById('question-bank-btn').click();
@@ -6061,12 +6144,6 @@ document.getElementById('add-selected-btn').addEventListener('click', async func
             }
         }
 
-        // Hide upload result and show question bank
-        const uploadResultContainer = document.getElementById('upload-result-container');
-        if (uploadResultContainer) {
-            uploadResultContainer.classList.add('hidden');
-        }
-
         // Generate appropriate success message
         let message = `✅ ${successCount} questions added to bank!`;
         if (passageCount > 0) {
@@ -6076,6 +6153,20 @@ document.getElementById('add-selected-btn').addEventListener('click', async func
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
             window.PoliteCCAPI.showNotification(message, 'success');
         }
+
+        // Reset to step 1 and clear extracted questions
+        document.getElementById('upload-step-3').classList.add('hidden');
+        document.getElementById('upload-step-1').classList.remove('hidden');
+
+        // Clear file selection
+        const fileInput = document.getElementById('paper-upload');
+        const fileInputBrowser = document.getElementById('paper-upload-file');
+        if (fileInput) fileInput.value = '';
+        if (fileInputBrowser) fileInputBrowser.value = '';
+        document.getElementById('selected-file-info').classList.add('hidden');
+        document.getElementById('process-upload-btn').classList.add('hidden');
+
+        extractedQuestions = [];
 
         // Refresh question bank
         document.getElementById('question-bank-btn').click();
@@ -6239,13 +6330,13 @@ function displayStandaloneQuestion(qData) {
     }
 
     // Use renderRichContent for KaTeX/LaTeX rendering
-    document.getElementById('ai-question-text').innerHTML = renderRichContent(question);
-    document.getElementById('ai-option-a').innerHTML = renderRichContent(optionA);
-    document.getElementById('ai-option-b').innerHTML = renderRichContent(optionB);
-    document.getElementById('ai-option-c').innerHTML = renderRichContent(optionC);
-    document.getElementById('ai-option-d').innerHTML = renderRichContent(optionD);
+    renderRichContent(question, document.getElementById('ai-question-text'));
+    renderRichContent(optionA, document.getElementById('ai-option-a'));
+    renderRichContent(optionB, document.getElementById('ai-option-b'));
+    renderRichContent(optionC, document.getElementById('ai-option-c'));
+    renderRichContent(optionD, document.getElementById('ai-option-d'));
     document.getElementById('ai-correct-answer').textContent = correct;
-    document.getElementById('ai-explanation').innerHTML = renderRichContent(explanation);
+    renderRichContent(explanation, document.getElementById('ai-explanation'));
     document.getElementById('ai-display-subject').textContent = subject;
     document.getElementById('ai-display-difficulty').textContent = difficulty.toUpperCase();
 
@@ -6282,7 +6373,7 @@ function displayParentChildQuestion(qData) {
     document.getElementById('ai-pc-difficulty').textContent = difficulty.toUpperCase();
 
     // Display passage with KaTeX rendering
-    document.getElementById('ai-pc-passage').innerHTML = renderRichContent(mainQuestionText);
+    renderRichContent(mainQuestionText, document.getElementById('ai-pc-passage'));
 
     // Display sub-questions with KaTeX rendering
     const container = document.getElementById('ai-pc-subquestions-container');
@@ -6302,15 +6393,15 @@ function displayParentChildQuestion(qData) {
             const sqHtml = `
                 <div style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #dee2e6;">
                     <h5 style="margin: 0 0 10px 0; color: #495057;">Sub-Question ${idx + 1}:</h5>
-                    <p style="font-weight: 500; margin-bottom: 10px;">${renderRichContent(question)}</p>
+                    <p style="font-weight: 500; margin-bottom: 10px;">${getRichContentHtml(question)}</p>
                     <div style="margin-left: 20px; margin-bottom: 10px;">
-                        <div>A) ${renderRichContent(optionA)}</div>
-                        <div>B) ${renderRichContent(optionB)}</div>
-                        <div>C) ${renderRichContent(optionC)}</div>
-                        <div>D) ${renderRichContent(optionD)}</div>
+                        <div>A) ${getRichContentHtml(optionA)}</div>
+                        <div>B) ${getRichContentHtml(optionB)}</div>
+                        <div>C) ${getRichContentHtml(optionC)}</div>
+                        <div>D) ${getRichContentHtml(optionD)}</div>
                     </div>
                     <div style="background: #e8f5e9; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem;">
-                        <strong>Answer:</strong> ${correct} | <strong>Explanation:</strong> ${renderRichContent(explanation)}
+                        <strong>Answer:</strong> ${correct} | <strong>Explanation:</strong> ${getRichContentHtml(explanation)}
                     </div>
                 </div>
             `;
@@ -6759,6 +6850,16 @@ if (submitExamBtn) {
     });
 }
 
+// Floating submit button handler
+const floatingSubmitBtn = document.getElementById('floating-submit-btn');
+if (floatingSubmitBtn) {
+    floatingSubmitBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to submit the exam? You cannot change your answers after submission.')) {
+            submitExam();
+        }
+    });
+}
+
 // Function to show candidate's own detailed results (used by results modal)
 function showCandidateOwnResults() {
     const modal = document.getElementById('results-detail-modal');
@@ -7172,7 +7273,7 @@ function selectOptionNewUI(optionIndex) {
     if (userAnswers[currentQuestionIndex] === optionIndex) {
         // Deselect - user wants to not answer this question
         userAnswers[currentQuestionIndex] = undefined;
-        options[optionIndex].classList.remove('border-primary', 'bg-primary/10');
+        options[optionIndex].classList.remove('selected', 'border-primary');
         options[optionIndex].classList.add('border-base-300');
         radios[optionIndex].checked = false;
     } else {
@@ -7181,10 +7282,10 @@ function selectOptionNewUI(optionIndex) {
         options.forEach((option, i) => {
             if (i === optionIndex) {
                 option.classList.remove('border-base-300');
-                option.classList.add('border-primary', 'bg-primary/10');
+                option.classList.add('selected', 'border-primary');
                 radios[i].checked = true;
             } else {
-                option.classList.remove('border-primary', 'bg-primary/10');
+                option.classList.remove('selected', 'border-primary');
                 option.classList.add('border-base-300');
                 radios[i].checked = false;
             }
@@ -7411,7 +7512,7 @@ function loadQuestion() {
         const parentQuestionText = document.getElementById('parent-question-text');
         if (parentQuestionContainer && parentQuestionText) {
             parentQuestionContainer.classList.remove('hidden');
-            parentQuestionText.innerHTML = renderRichContent(question.Question || question['Main Question Text'] || '');
+            renderRichContent(question.Question || question['Main Question Text'] || '', parentQuestionText);
         }
 
         // Hide regular question display
@@ -7448,7 +7549,7 @@ function loadQuestion() {
                     <div class="card bg-base-200 shadow-sm mb-4 child-question-card" data-child-index="${childIndex}">
                         <div class="card-body p-4">
                             <h4 class="font-bold text-primary mb-2">Question ${displayQuestionNum}.${childNum}</h4>
-                            <p class="mb-3">${renderRichContent(child.Question || '')}</p>
+                            <p class="mb-3 rich-content">${escapeHtmlForRichContent(child.Question || '')}</p>
                             <div class="space-y-2 child-options" data-child-index="${childIndex}">
                                 ${optionValues.map((opt, idx) => {
                                     const isSelected = childAnswer === idx;
@@ -7456,7 +7557,7 @@ function loadQuestion() {
                                         <div class="option child-option flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-100 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}" data-child-index="${childIndex}">
                                             <input type="radio" name="child-answer-${childIndex}" class="radio radio-primary option-radio child-radio" ${isSelected ? 'checked' : ''}>
                                             <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
-                                            <span class="flex-1">${renderRichContent(opt)}</span>
+                                            <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>
                                         </div>
                                     `;
                                 }).join('')}
@@ -7645,7 +7746,7 @@ function loadQuestion() {
         // Update the visible question display in exam screen
         const questionDisplay = document.getElementById('question-display');
         if (questionDisplay) {
-            questionDisplay.innerHTML = renderRichContent(question.Question || 'Loading question...');
+            renderRichContent(question.Question || 'Loading question...', questionDisplay);
         }
 
         // Update question number in new UI
@@ -7668,10 +7769,10 @@ function loadQuestion() {
             optionsContainer.innerHTML = optionValues.map((opt, idx) => {
                 const isSelected = userAnswers[currentQuestionIndex] === idx;
                 return `
-                    <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}">
+                    <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'selected border-primary' : 'border-base-300'}" data-index="${idx}">
                         <input type="radio" name="answer" class="radio radio-primary option-radio" ${isSelected ? 'checked' : ''}>
                         <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
-                        <span class="flex-1 rich-content">${renderRichContent(opt)}</span>
+                        <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>
                     </div>
                 `;
             }).join('');
@@ -7723,12 +7824,16 @@ function loadQuestion() {
         }
     }
 
-    if (isLastQuestion) {
-        document.getElementById('next-btn').style.display = 'none';
-        document.getElementById('submit-btn').style.display = 'block';
-    } else {
-        document.getElementById('next-btn').style.display = 'block';
-        document.getElementById('submit-btn').style.display = 'none';
+    // Show/hide floating submit button based on whether this is the last question
+    const floatingSubmitContainer = document.getElementById('floating-submit-container');
+    if (floatingSubmitContainer) {
+        if (isLastQuestion) {
+            floatingSubmitContainer.classList.remove('hidden');
+            document.getElementById('next-btn').style.display = 'none';
+        } else {
+            floatingSubmitContainer.classList.add('hidden');
+            document.getElementById('next-btn').style.display = 'block';
+        }
     }
 }
 
