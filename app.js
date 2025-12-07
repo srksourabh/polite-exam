@@ -4823,8 +4823,8 @@ document.getElementById('view-results-btn').addEventListener('click', async func
         document.getElementById('active-exams-count').textContent = activeCount;
         document.getElementById('expired-exams-count').textContent = expiredCount;
 
-        // Display exams in grid
-        const examsContainer = document.getElementById('exams-grid-container');
+        // Display exams in grid - use results-list container in the visible view-results-section
+        const examsContainer = document.getElementById('results-list');
 
         if (exams.length === 0) {
             examsContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1/-1; padding: 40px;">No exams found. Create an exam first.</p>';
@@ -4925,7 +4925,8 @@ document.getElementById('view-results-btn').addEventListener('click', async func
             `;
         }
 
-        examsContainer.innerHTML = examsHTML;
+        // Wrap in a grid container for proper display
+        examsContainer.innerHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">${examsHTML}</div>`;
 
         // Add click handlers for exam cards
         document.querySelectorAll('.exam-result-card').forEach(card => {
@@ -4946,8 +4947,14 @@ document.getElementById('view-results-btn').addEventListener('click', async func
 // Function to show candidates for a selected exam
 async function showExamCandidates(examCode) {
     try {
-        // Hide main view, show candidates view
-        document.getElementById('results-main-view').classList.add('hidden');
+        // Show the results detail modal
+        const modal = document.getElementById('results-detail-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+
+        // Show main view with candidates
+        document.getElementById('results-main-view').classList.remove('hidden');
         document.getElementById('results-candidates-view').classList.remove('hidden');
 
         // Get exam details
