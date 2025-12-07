@@ -803,14 +803,14 @@ function startExamTimer() {
         clearInterval(examTimer);
     }
 
+    // Initial display update
+    updateTimerDisplay();
+
     examTimer = setInterval(function() {
         timeRemaining--;
 
-        // Update timer display
-        const mins = Math.floor(timeRemaining / 60);
-        const secs = timeRemaining % 60;
-        document.getElementById('timer-display').textContent =
-            `⏱️ Time Remaining: ${mins}:${secs.toString().padStart(2, '0')}`;
+        // Update timer display - both old and new elements
+        updateTimerDisplay();
 
         // Save state every 30 seconds
         if (timeRemaining % 30 === 0) {
@@ -2209,22 +2209,48 @@ async function showCandidateDashboard(userData) {
                             const marksClass = isCorrect ? 'text-success' : (userAnswered ? 'text-error' : 'text-base-content/50');
                             const rowBg = isCorrect ? 'bg-success/5' : (userAnswered ? 'bg-error/5' : 'bg-base-200');
 
+                            // Helper function to get option background class
+                            const getOptBg = (opt) => {
+                                if (userAnswerLetter === opt && correctAnswerLetter === opt) return 'bg-success/20 border-l-4 border-success';
+                                if (userAnswerLetter === opt && correctAnswerLetter !== opt) return 'bg-error/20 border-l-4 border-error';
+                                if (correctAnswerLetter === opt) return 'bg-success/10 border-l-4 border-success';
+                                return 'bg-base-200';
+                            };
+
                             questionDetailsHTML += `
-                                <div class="p-3 ${rowBg} rounded-lg mb-2">
+                                <div class="p-3 ${rowBg} rounded-lg mb-3 border border-base-300">
                                     <div class="flex justify-between items-start mb-2">
                                         <span class="font-semibold text-primary">Q${qIndex + 1}</span>
-                                        <span class="font-bold ${marksClass}">${marks}</span>
+                                        <span class="badge ${isCorrect ? 'badge-success' : (userAnswered ? 'badge-error' : 'badge-ghost')}">${marks}</span>
                                     </div>
-                                    <p class="text-sm mb-3 text-base-content/80">${answer.question || 'Question text not available'}</p>
-                                    <div class="grid grid-cols-2 gap-2 text-sm">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-base-content/60">Your Answer:</span>
-                                            <span class="font-semibold ${userAnswered ? (isCorrect ? 'text-success' : 'text-error') : 'text-base-content/50'}">${userAnswerLetter}</span>
+                                    <p class="text-sm mb-3 text-base-content/80 font-medium">${answer.question || 'Question text not available'}</p>
+
+                                    <!-- All Options -->
+                                    <div class="space-y-1 text-sm mb-2">
+                                        <div class="p-2 rounded ${getOptBg('A')}">
+                                            <span class="font-bold">A:</span> ${answer.optionA || 'N/A'}
+                                            ${userAnswerLetter === 'A' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
+                                            ${correctAnswerLetter === 'A' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
                                         </div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-base-content/60">Correct:</span>
-                                            <span class="font-semibold text-success">${correctAnswerLetter}</span>
+                                        <div class="p-2 rounded ${getOptBg('B')}">
+                                            <span class="font-bold">B:</span> ${answer.optionB || 'N/A'}
+                                            ${userAnswerLetter === 'B' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
+                                            ${correctAnswerLetter === 'B' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
                                         </div>
+                                        <div class="p-2 rounded ${getOptBg('C')}">
+                                            <span class="font-bold">C:</span> ${answer.optionC || 'N/A'}
+                                            ${userAnswerLetter === 'C' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
+                                            ${correctAnswerLetter === 'C' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
+                                        </div>
+                                        <div class="p-2 rounded ${getOptBg('D')}">
+                                            <span class="font-bold">D:</span> ${answer.optionD || 'N/A'}
+                                            ${userAnswerLetter === 'D' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
+                                            ${correctAnswerLetter === 'D' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
+                                        </div>
+                                    </div>
+
+                                    <div class="text-xs text-base-content/60 text-right">
+                                        ${isCorrect ? '✅ Correct (+1)' : (userAnswered ? '❌ Wrong (-0.25)' : '⚪ Skipped (0)')}
                                     </div>
                                 </div>
                             `;
@@ -8000,6 +8026,7 @@ function loadQuestion() {
 
             // Clone container to remove old event listeners
             const newOptionsContainer = optionsContainer.cloneNode(false);
+            newOptionsContainer.id = 'options-container'; // Preserve the ID
             optionsContainer.parentNode.replaceChild(newOptionsContainer, optionsContainer);
 
             newOptionsContainer.innerHTML = optionValues.map((opt, idx) => {
