@@ -5274,9 +5274,16 @@ async function showExamCandidates(examCode) {
         });
 
         candidatesHTML += '</div>';
+
+        // Ensure container is visible and set content
+        candidatesContainer.style.display = 'block';
+        candidatesContainer.style.minHeight = '200px';
+        candidatesContainer.style.visibility = 'visible';
         candidatesContainer.innerHTML = candidatesHTML;
 
         console.log('📊 Rendered', results.length, 'candidate cards');
+        console.log('📊 Container element:', candidatesContainer);
+        console.log('📊 Container innerHTML length:', candidatesContainer.innerHTML.length);
 
         // Use event delegation for candidate cards - more reliable
         candidatesContainer.onclick = function(e) {
