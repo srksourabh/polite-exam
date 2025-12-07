@@ -1036,12 +1036,49 @@
 
                         <!-- View Results Section -->
                         <div id="view-results-section" class="hidden">
-                            <div class="card bg-base-100 shadow-xl">
+                            <!-- View 1: Exams List -->
+                            <div id="results-exams-view" class="card bg-base-100 shadow-xl">
                                 <div class="card-body">
-                                    <h3 class="card-title mb-4">Exam Results</h3>
+                                    <h3 class="card-title mb-4">📊 Exam Results</h3>
                                     <div id="results-list" class="space-y-3">
                                         <div class="flex justify-center py-8">
                                             <span class="loading loading-spinner loading-lg text-primary"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- View 2: Candidates List (for selected exam) -->
+                            <div id="results-candidates-section" class="hidden">
+                                <div class="card bg-base-100 shadow-xl">
+                                    <div class="card-body">
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <button id="back-to-exams" class="btn btn-ghost btn-sm">← Back</button>
+                                            <h3 class="card-title" id="candidates-section-title">Candidates</h3>
+                                        </div>
+                                        <div id="selected-exam-details" class="mb-4"></div>
+                                        <div id="candidates-list-container">
+                                            <div class="flex justify-center py-8">
+                                                <span class="loading loading-spinner loading-lg text-primary"></span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4">
+                                            <button id="export-exam-results" class="btn btn-accent">📥 Export Results</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- View 3: Detailed Results (for selected candidate) -->
+                            <div id="results-detail-section" class="hidden">
+                                <div class="card bg-base-100 shadow-xl">
+                                    <div class="card-body">
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <button id="back-to-candidates" class="btn btn-ghost btn-sm">← Back</button>
+                                            <h3 class="card-title" id="detail-section-title">Detailed Results</h3>
+                                        </div>
+                                        <div id="candidate-detail-container">
+                                            <!-- Detailed results will be rendered here -->
                                         </div>
                                     </div>
                                 </div>

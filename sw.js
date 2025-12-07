@@ -1,6 +1,6 @@
 // Service Worker for Polite Exam PWA
 // Version timestamp - update this on each deployment to bust cache
-const CACHE_VERSION = 'v3-' + '20251207-fix2';
+const CACHE_VERSION = 'v5-' + '20251207-csp-fix';
 const CACHE_NAME = 'polite-exam-' + CACHE_VERSION;
 
 // Static assets that rarely change (cache-first)

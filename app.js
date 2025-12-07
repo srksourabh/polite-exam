@@ -5066,7 +5066,7 @@ document.getElementById('view-results-btn').addEventListener('click', async func
             const candidateCount = examResultCounts[examCode] || 0;
 
             examsHTML += `
-                <div class="exam-result-card" data-exam-code="${examCode}" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 3px 15px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s; border: 2px solid transparent;" onmouseenter="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'; this.style.borderColor='var(--secondary)';" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 15px rgba(0,0,0,0.1)'; this.style.borderColor='transparent';">
+                <div class="exam-result-card" data-exam-code="${examCode}">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
                         <div style="font-weight: 700; font-size: 1.1rem; color: var(--secondary);">${examCode}</div>
                         ${statusBadge}
@@ -5112,49 +5112,31 @@ document.getElementById('view-results-btn').addEventListener('click', async func
     }
 });
 
-// Function to show candidates for a selected exam
+// Function to show candidates for a selected exam (INLINE VIEW - not modal)
 async function showExamCandidates(examCode) {
     try {
         console.log('📊 showExamCandidates called for:', examCode);
 
-        // Show the results detail modal
-        const modal = document.getElementById('results-detail-modal');
-        if (modal) {
-            modal.style.display = 'flex';
-            modal.style.justifyContent = 'center';
-            modal.style.alignItems = 'center';
-            console.log('📊 Modal displayed');
-        } else {
-            console.error('❌ Modal element not found!');
-            return;
-        }
-
-        // Show main view with candidates, hide detail content
-        const mainView = document.getElementById('results-main-view');
-        const detailContent = document.getElementById('results-detail-content');
-        const backBtn = document.getElementById('back-to-exams-btn');
-
-        if (mainView) mainView.classList.remove('hidden');
-        if (detailContent) detailContent.classList.add('hidden');
-        if (backBtn) backBtn.classList.add('hidden');
+        // Hide exams view, show candidates section (INLINE)
+        document.getElementById('results-exams-view').classList.add('hidden');
+        document.getElementById('results-candidates-section').classList.remove('hidden');
+        document.getElementById('results-detail-section').classList.add('hidden');
 
         // Get exam details
         const exam = exams.find(e => (e['Exam Code'] || e.examCode) === examCode);
         const title = exam ? (exam['Title'] || exam.title || 'Untitled') : 'Unknown';
         const expiryDateStr = exam && exam['Expiry (IST)'] ? formatDateForDisplay(exam['Expiry (IST)']) : 'No Expiry';
         const duration = exam ? (exam['Duration (mins)'] || exam['Duration'] || exam.duration || 60) : 60;
-        // 'Questions' is the correct Airtable field name for linked records
         const examQuestionIds = exam ? (exam['Questions'] || exam['Question IDs'] || exam['QuestionIDs'] || exam.questionIds || []) : [];
-        // Calculate actual scorable questions count
-        // A scorable question has options (Option A) OR is a parent with subQuestions
+
+        // Calculate question count
         let questionCount = 0;
         const idsArray = Array.isArray(examQuestionIds) ? examQuestionIds : (typeof examQuestionIds === 'string' && examQuestionIds.trim() ? examQuestionIds.split(',').filter(id => id.trim()) : []);
-        const countedIds = new Set(); // Track counted question IDs to avoid double counting
+        const countedIds = new Set();
 
         idsArray.forEach(qId => {
             const q = questions.find(question => question.id === qId || question.ID === qId);
             if (q) {
-                // If this is a parent with subQuestions, count the subQuestions
                 if (q.subQuestions && q.subQuestions.length > 0) {
                     q.subQuestions.forEach(sq => {
                         const sqId = sq.id || sq.ID;
@@ -5164,14 +5146,12 @@ async function showExamCandidates(examCode) {
                         }
                     });
                 } else if (q['Option A'] && q['Option A'].trim() !== '') {
-                    // Standalone or child question with options
                     if (!countedIds.has(qId)) {
                         countedIds.add(qId);
                         questionCount += 1;
                     }
                 }
             } else {
-                // Question not found in local cache, count as 1
                 if (!countedIds.has(qId)) {
                     countedIds.add(qId);
                     questionCount += 1;
@@ -5179,29 +5159,23 @@ async function showExamCandidates(examCode) {
             }
         });
 
-        // Update exam info display
-        const examInfoEl = document.getElementById('selected-exam-info');
-        if (examInfoEl) {
-            examInfoEl.innerHTML = `
-                <h4 class="font-bold mb-2">${examCode} - ${title}</h4>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; margin-bottom: 20px;">
-                    <div><strong>Exam Code:</strong> ${examCode}</div>
-                    <div><strong>Title:</strong> ${title}</div>
-                    <div><strong>Expiry:</strong> ${expiryDateStr}</div>
-                    <div><strong>Duration:</strong> ${duration} min</div>
-                    <div><strong>Questions:</strong> ${questionCount}</div>
-                </div>
-            `;
-        }
+        // Update section title
+        document.getElementById('candidates-section-title').textContent = `${examCode} - ${title}`;
 
-        // Use the candidates view inside the modal
-        const candidatesContainer = document.getElementById('results-candidates-view');
-        if (!candidatesContainer) {
-            console.error('❌ results-candidates-view element not found!');
-            return;
-        }
+        // Update exam details display
+        document.getElementById('selected-exam-details').innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
+                <div><strong>Exam Code:</strong> ${examCode}</div>
+                <div><strong>Title:</strong> ${title}</div>
+                <div><strong>Expiry:</strong> ${expiryDateStr}</div>
+                <div><strong>Duration:</strong> ${duration} min</div>
+                <div><strong>Questions:</strong> ${questionCount}</div>
+            </div>
+        `;
 
-        candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">⏳ Loading candidates...</p>';
+        // Show loading in candidates container
+        const candidatesContainer = document.getElementById('candidates-list-container');
+        candidatesContainer.innerHTML = '<div class="flex justify-center py-8"><span class="loading loading-spinner loading-lg text-primary"></span><span class="ml-3">Loading candidates...</span></div>';
         console.log('📊 Set loading message, fetching results...');
 
         // Get results from API
@@ -5252,7 +5226,7 @@ async function showExamCandidates(examCode) {
             const rankBadge = index < 3 ? ['🥇', '🥈', '🥉'][index] : `#${index + 1}`;
 
             candidatesHTML += `
-                <div class="candidate-result-card" data-result-index="${index}" style="background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s; border: 2px solid #e0e0e0;" onmouseenter="this.style.transform='translateY(-2px)'; this.style.borderColor='var(--primary)';" onmouseleave="this.style.transform='translateY(0)'; this.style.borderColor='#e0e0e0';">
+                <div class="candidate-result-card" data-result-index="${index}">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="font-weight: 700; font-size: 1rem; color: #333;">${rankBadge} ${name}</div>
                     </div>
@@ -5299,7 +5273,7 @@ async function showExamCandidates(examCode) {
 
     } catch (error) {
         console.error('❌ Error loading candidates:', error);
-        const candidatesContainer = document.getElementById('results-candidates-view');
+        const candidatesContainer = document.getElementById('candidates-list-container');
         if (candidatesContainer) {
             candidatesContainer.innerHTML = `
                 <div style="text-align: center; padding: 40px; color: #e74c3c;">
@@ -5314,27 +5288,25 @@ async function showExamCandidates(examCode) {
     }
 }
 
-// Function to show detailed results for a candidate with full questions and options
+// Function to show detailed results for a candidate with full questions and options (INLINE)
 function showCandidateDetailedResults(result, examCode) {
     console.log('📊 showCandidateDetailedResults called for:', result.Name || result.name);
 
-    const modal = document.getElementById('results-detail-modal');
-    const content = document.getElementById('results-detail-content');
+    // Hide candidates section, show detail section (INLINE)
+    document.getElementById('results-exams-view').classList.add('hidden');
+    document.getElementById('results-candidates-section').classList.add('hidden');
+    document.getElementById('results-detail-section').classList.remove('hidden');
 
+    const content = document.getElementById('candidate-detail-container');
     if (!content) {
-        console.error('❌ results-detail-content element not found!');
+        console.error('❌ candidate-detail-container element not found!');
         return;
     }
 
-    // Hide main view and show detail content
-    const mainView = document.getElementById('results-main-view');
-    const backBtn = document.getElementById('back-to-exams-btn');
-
-    if (mainView) mainView.classList.add('hidden');
-    content.classList.remove('hidden');
-    if (backBtn) backBtn.classList.remove('hidden');
-
     const name = result.Name || result.name || 'Unknown';
+
+    // Update section title
+    document.getElementById('detail-section-title').textContent = `Results: ${name}`;
     const score = parseFloat(result.Score || result.score || 0);
     const mobile = result.Mobile || result.mobile || 'N/A';
     const submittedAt = result['Submitted At'] || result.submittedAt || '';
@@ -5382,7 +5354,8 @@ function showCandidateDetailedResults(result, examCode) {
             </div>
         `;
         content.innerHTML = html;
-        modal.style.display = 'flex';
+        // Process any rich content
+        processRichContentInContainer(content);
         return;
     }
 
@@ -5591,20 +5564,45 @@ function showCandidateDetailedResults(result, examCode) {
     html += '</div>';
     content.innerHTML = html;
 
-    // Process rich content (render math expressions) in the results modal
+    // Process rich content (render math expressions) in the results
     processRichContentInContainer(content);
-
-    // Ensure modal is visible (should already be open from showExamCandidates)
-    modal.style.display = 'flex';
 }
 
-// Back to candidates button handler
-document.getElementById('back-to-exams-btn').addEventListener('click', function() {
-    // Show main view with candidates list, hide detail content
-    document.getElementById('results-main-view').classList.remove('hidden');
-    document.getElementById('results-detail-content').classList.add('hidden');
-    this.classList.add('hidden');
+// Back to exams button handler (from candidates view)
+document.getElementById('back-to-exams').addEventListener('click', function() {
+    document.getElementById('results-exams-view').classList.remove('hidden');
+    document.getElementById('results-candidates-section').classList.add('hidden');
+    document.getElementById('results-detail-section').classList.add('hidden');
 });
+
+// Back to candidates button handler (from detail view)
+document.getElementById('back-to-candidates').addEventListener('click', function() {
+    document.getElementById('results-exams-view').classList.add('hidden');
+    document.getElementById('results-candidates-section').classList.remove('hidden');
+    document.getElementById('results-detail-section').classList.add('hidden');
+});
+
+// Export exam results button handler
+document.getElementById('export-exam-results').addEventListener('click', function() {
+    if (currentExamResults.length > 0) {
+        exportResultsToCSV(currentExamResults, currentExamCodeForResults);
+    } else {
+        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+            window.PoliteCCAPI.showNotification('No results to export', 'error');
+        }
+    }
+});
+
+// Legacy back button handler (keep for compatibility)
+const legacyBackBtn = document.getElementById('back-to-exams-btn');
+if (legacyBackBtn) {
+    legacyBackBtn.addEventListener('click', function() {
+        // Show main view with candidates list, hide detail content
+        document.getElementById('results-main-view')?.classList.remove('hidden');
+        document.getElementById('results-detail-content')?.classList.add('hidden');
+        this.classList.add('hidden');
+    });
+}
 
 // Close detail modal handler
 document.getElementById('close-detail-modal-btn').addEventListener('click', function() {
