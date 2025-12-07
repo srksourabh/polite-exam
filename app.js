@@ -63,124 +63,19 @@ const APP_VERSION_KEY = 'polite_app_version';
 /**
  * Converts simple/natural math syntax to LaTeX
  * Makes it easy for non-technical users to write math expressions
- * Automatically detects and converts mathematical notation
+ * Only converts clear mathematical patterns, leaves everything else as-is
  * @param {string} text - The text with simple math syntax
  * @returns {string} - Text with LaTeX math expressions
  */
 function convertSimpleMathToLatex(text) {
     if (!text || typeof text !== 'string') return text;
 
-    let result = text;
-
-    // Store protected regions (URLs, code blocks, existing LaTeX, etc.)
-    const protectedRegions = [];
-
-    // Protect existing LaTeX expressions
-    result = result.replace(/\$\$[^$]+\$\$/g, (match) => {
-        protectedRegions.push(match);
-        return `__PROTECTED_${protectedRegions.length - 1}__`;
-    });
-    result = result.replace(/\$[^$]+\$/g, (match) => {
-        protectedRegions.push(match);
-        return `__PROTECTED_${protectedRegions.length - 1}__`;
-    });
-    result = result.replace(/\\\([^)]+\\\)/g, (match) => {
-        protectedRegions.push(match);
-        return `__PROTECTED_${protectedRegions.length - 1}__`;
-    });
-    result = result.replace(/\\\[[^\]]+\\\]/g, (match) => {
-        protectedRegions.push(match);
-        return `__PROTECTED_${protectedRegions.length - 1}__`;
-    });
-
-    // Protect image, graph, table placeholders
-    result = result.replace(/\[img:[^\]]+\]|\[graph:[^\]]+\]|\[table:[^\]]+\]/gi, (match) => {
-        protectedRegions.push(match);
-        return `__PROTECTED_${protectedRegions.length - 1}__`;
-    });
-
-    // Convert common symbols first (outside of math context)
-    const symbolMap = {
-        ' pi ': ' $\\pi$ ',
-        ' PI ': ' $\\pi$ ',
-        '(pi)': '($\\pi$)',
-        ' alpha ': ' $\\alpha$ ',
-        ' beta ': ' $\\beta$ ',
-        ' theta ': ' $\\theta$ ',
-        ' gamma ': ' $\\gamma$ ',
-        ' delta ': ' $\\delta$ ',
-        ' sigma ': ' $\\sigma$ ',
-        ' omega ': ' $\\omega$ ',
-        ' lambda ': ' $\\lambda$ ',
-        ' mu ': ' $\\mu$ ',
-        ' phi ': ' $\\phi$ ',
-        ' epsilon ': ' $\\epsilon$ ',
-        ' infinity ': ' $\\infty$ ',
-        ' inf ': ' $\\infty$ ',
-        '>=': '$\\geq$',
-        '<=': '$\\leq$',
-        '!=': '$\\neq$',
-        '<>': '$\\neq$',
-        '+-': '$\\pm$',
-        '-+': '$\\mp$',
-        '...': '$\\ldots$',
-        ' x ': ' $\\times$ ',
-        '×': '$\\times$',
-        '÷': '$\\div$',
-        '√': '$\\sqrt{}$',
-        '∞': '$\\infty$',
-        '≈': '$\\approx$',
-        '≠': '$\\neq$',
-        '≤': '$\\leq$',
-        '≥': '$\\geq$',
-        '±': '$\\pm$',
-        '∓': '$\\mp$',
-        '→': '$\\rightarrow$',
-        '←': '$\\leftarrow$',
-        '↔': '$\\leftrightarrow$',
-        '⇒': '$\\Rightarrow$',
-        '⇐': '$\\Leftarrow$',
-        '∈': '$\\in$',
-        '∉': '$\\notin$',
-        '⊂': '$\\subset$',
-        '⊃': '$\\supset$',
-        '∪': '$\\cup$',
-        '∩': '$\\cap$',
-        '∴': '$\\therefore$',
-        '∵': '$\\because$',
-        '∠': '$\\angle$',
-        '⊥': '$\\perp$',
-        '∥': '$\\parallel$',
-    };
-
-    for (const [simple, latex] of Object.entries(symbolMap)) {
-        result = result.split(simple).join(latex);
+    // If already contains LaTeX delimiters, don't process - return as-is
+    if (text.includes('$') || text.includes('\\(') || text.includes('\\[')) {
+        return text;
     }
 
-    // Convert trigonometric and mathematical functions
-    // sin, cos, tan, cot, sec, csc
-    result = result.replace(/\b(sin|cos|tan|cot|sec|csc|sinh|cosh|tanh)\s*\(([^)]+)\)/gi, (match, func, arg) => {
-        return `$\\${func.toLowerCase()}(${arg.trim()})$`;
-    });
-
-    // sin^2, cos^2, tan^2 (with power)
-    result = result.replace(/\b(sin|cos|tan|cot|sec|csc)\^(\d+)\s*\(([^)]+)\)/gi, (match, func, power, arg) => {
-        return `$\\${func.toLowerCase()}^{${power}}(${arg.trim()})$`;
-    });
-
-    // log, ln, exp functions
-    result = result.replace(/\blog\s*\(([^)]+)\)/gi, (match, arg) => {
-        return `$\\log(${arg.trim()})$`;
-    });
-    result = result.replace(/\blog_(\d+)\s*\(([^)]+)\)/gi, (match, base, arg) => {
-        return `$\\log_{${base}}(${arg.trim()})$`;
-    });
-    result = result.replace(/\bln\s*\(([^)]+)\)/gi, (match, arg) => {
-        return `$\\ln(${arg.trim()})$`;
-    });
-    result = result.replace(/\bexp\s*\(([^)]+)\)/gi, (match, arg) => {
-        return `$e^{${arg.trim()}}$`;
-    });
+    let result = text;
 
     // Convert sqrt(expression) to $\sqrt{expression}$
     result = result.replace(/sqrt\(([^)]+)\)/gi, (match, expr) => {
@@ -192,70 +87,9 @@ function convertSimpleMathToLatex(text) {
         return `$\\sqrt[3]{${expr.trim()}}$`;
     });
 
-    // Convert nthroot(n, expression)
-    result = result.replace(/(\d+)root\(([^)]+)\)/gi, (match, n, expr) => {
-        return `$\\sqrt[${n}]{${expr.trim()}}$`;
-    });
-
-    // Convert abs(x) to |x|
-    result = result.replace(/\babs\(([^)]+)\)/gi, (match, expr) => {
-        return `$|${expr.trim()}|$`;
-    });
-
-    // Convert fractions - more aggressive
-    // Pattern: (expression)/(expression) with parentheses
-    result = result.replace(/\(([^)]+)\)\/\(([^)]+)\)/g, (match, num, den) => {
-        return `$\\frac{${num.trim()}}{${den.trim()}}$`;
-    });
-
-    // Convert simple fractions like 1/2, 3/4, a/b
-    result = result.replace(/\b(\d+)\/(\d+)\b/g, (match, num, den) => {
-        // Convert most fractions (skip potential dates like 12/25/2024)
-        const numVal = parseInt(num);
-        const denVal = parseInt(den);
-        // If denominator is 0, don't convert
-        if (denVal === 0) return match;
-        // Convert common and mathematical fractions
-        return `$\\frac{${num}}{${den}}$`;
-    });
-
-    // Convert variable fractions like a/b, x/y
-    result = result.replace(/\b([a-zA-Z])\/([a-zA-Z])\b/g, (match, num, den) => {
-        return `$\\frac{${num}}{${den}}$`;
-    });
-
     // Convert frac(a,b) to $\frac{a}{b}$
     result = result.replace(/frac\(([^,]+),([^)]+)\)/gi, (match, num, den) => {
         return `$\\frac{${num.trim()}}{${den.trim()}}$`;
-    });
-
-    // Convert power expressions: x^2, x^10, x^{n+1}, (x+1)^2
-    result = result.replace(/\(([^)]+)\)\^(\d+)/g, (match, base, exp) => {
-        return `$(${base})^{${exp}}$`;
-    });
-    result = result.replace(/\(([^)]+)\)\^\{([^}]+)\}/g, (match, base, exp) => {
-        return `$(${base})^{${exp}}$`;
-    });
-    result = result.replace(/([a-zA-Z0-9])\^(\d+)/g, (match, base, exp) => {
-        return `$${base}^{${exp}}$`;
-    });
-    result = result.replace(/([a-zA-Z0-9])\^\{([^}]+)\}/g, (match, base, exp) => {
-        return `$${base}^{${exp}}$`;
-    });
-    // x^n, a^b (single letter exponents)
-    result = result.replace(/([a-zA-Z0-9])\^([a-zA-Z])\b/g, (match, base, exp) => {
-        return `$${base}^{${exp}}$`;
-    });
-
-    // Convert subscript expressions: x_1, a_n, x_{12}
-    result = result.replace(/([a-zA-Z])_(\d+)/g, (match, base, sub) => {
-        return `$${base}_{${sub}}$`;
-    });
-    result = result.replace(/([a-zA-Z])_\{([^}]+)\}/g, (match, base, sub) => {
-        return `$${base}_{${sub}}$`;
-    });
-    result = result.replace(/([a-zA-Z])_([a-zA-Z])\b/g, (match, base, sub) => {
-        return `$${base}_{${sub}}$`;
     });
 
     // Convert sum(i=1,n) to $\sum_{i=1}^{n}$
@@ -268,68 +102,31 @@ function convertSimpleMathToLatex(text) {
         return `$\\int_{${from.trim()}}^{${to.trim()}}$`;
     });
 
-    // Convert lim(x->a) to $\lim_{x \to a}$
-    result = result.replace(/lim\(([^-]+)->([^)]+)\)/gi, (match, var1, to) => {
-        return `$\\lim_{${var1.trim()} \\to ${to.trim()}}$`;
+    // Convert power expressions: x^2, x^10
+    result = result.replace(/([a-zA-Z0-9])\^(\d+)/g, (match, base, exp) => {
+        return `$${base}^{${exp}}$`;
     });
 
-    // Convert nCr and nPr (combinations and permutations)
-    result = result.replace(/(\d+)C(\d+)/g, (match, n, r) => {
-        return `$\\binom{${n}}{${r}}$`;
+    // Convert subscript expressions: x_1, a_n
+    result = result.replace(/([a-zA-Z])_(\d+)/g, (match, base, sub) => {
+        return `$${base}_{${sub}}$`;
     });
-    result = result.replace(/(\d+)P(\d+)/g, (match, n, r) => {
-        return `$^{${n}}P_{${r}}$`;
-    });
-    result = result.replace(/C\((\d+),(\d+)\)/gi, (match, n, r) => {
-        return `$\\binom{${n}}{${r}}$`;
+    result = result.replace(/([a-zA-Z])_([a-zA-Z])\b/g, (match, base, sub) => {
+        return `$${base}_{${sub}}$`;
     });
 
-    // Convert factorial: n! or 5!
-    result = result.replace(/(\d+)!/g, (match, n) => {
-        return `$${n}!$`;
-    });
-    result = result.replace(/\b([a-zA-Z])!/g, (match, n) => {
-        return `$${n}!$`;
+    // Convert common fractions like 1/2, 1/3, 1/4, 2/3, 3/4
+    result = result.replace(/\b(1|2|3|4|5|6|7)\/(2|3|4|5|6|8)\b/g, (match, num, den) => {
+        return `$\\frac{${num}}{${den}}$`;
     });
 
-    // Convert degrees: 90deg or 90° to $90^\circ$
+    // Convert degrees: 90deg to $90^\circ$
     result = result.replace(/(\d+)\s*deg\b/gi, (match, num) => {
         return `$${num}^\\circ$`;
     });
-    result = result.replace(/(\d+)°/g, (match, num) => {
-        return `$${num}^\\circ$`;
-    });
-
-    // Convert percentage in math context
-    result = result.replace(/(\d+)\s*%/g, (match, num) => {
-        return `$${num}\\%$`;
-    });
-
-    // Convert common equation patterns
-    // ax + b = c pattern
-    result = result.replace(/\b(\d*)([a-zA-Z])\s*\+\s*(\d+)\s*=\s*(\d+)\b/g, (match, coef, var1, b, c) => {
-        const coefficient = coef || '';
-        return `$${coefficient}${var1} + ${b} = ${c}$`;
-    });
-
-    // ax^2 + bx + c pattern (quadratic)
-    result = result.replace(/\b(\d*)([a-zA-Z])\^2\s*([+-])\s*(\d*)([a-zA-Z])\s*([+-])\s*(\d+)\b/g,
-        (match, a, var1, op1, b, var2, op2, c) => {
-            const coefA = a || '';
-            const coefB = b || '';
-            return `$${coefA}${var1}^2 ${op1} ${coefB}${var2} ${op2} ${c}$`;
-        });
 
     // Merge adjacent math expressions: $a$ $b$ → $a b$
     result = result.replace(/\$([^$]+)\$\s*\$([^$]+)\$/g, '$$$1 $2$$');
-    // Apply multiple times to catch chains
-    result = result.replace(/\$([^$]+)\$\s*\$([^$]+)\$/g, '$$$1 $2$$');
-    result = result.replace(/\$([^$]+)\$\s*\$([^$]+)\$/g, '$$$1 $2$$');
-
-    // Restore protected regions
-    protectedRegions.forEach((region, index) => {
-        result = result.replace(`__PROTECTED_${index}__`, region);
-    });
 
     return result;
 }
