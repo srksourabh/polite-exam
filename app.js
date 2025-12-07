@@ -2310,6 +2310,9 @@ async function showCandidateDashboard(userData) {
 
             recentResultsContainer.innerHTML = recentHTML || '<p class="text-base-content/60">No exam results found.</p>';
 
+            // Process LaTeX/math content in results
+            processRichContentInContainer(recentResultsContainer);
+
             // Add click handlers for accordion
             recentResultsContainer.querySelectorAll('.exam-accordion-header').forEach(header => {
                 header.addEventListener('click', function() {
@@ -7172,6 +7175,10 @@ function showCandidateExamDetails(exam) {
 
     html += '</div>';
     content.innerHTML = html;
+
+    // Process LaTeX/math content in results
+    processRichContentInContainer(content);
+
     modal.style.display = 'flex';
 }
 
@@ -8049,6 +8056,9 @@ function loadQuestion() {
                     selectOptionNewUI(optionIndex);
                 }
             });
+
+            // Process LaTeX/math content in options
+            processRichContentInContainer(newOptionsContainer);
         }
 
         // Hide parent question container for standalone questions
