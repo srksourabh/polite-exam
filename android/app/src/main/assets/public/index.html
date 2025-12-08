@@ -511,12 +511,18 @@
                             </button>
                         </div>
 
-                        <!-- Recent Results -->
+                        <!-- My Exam Results -->
                         <div class="card bg-base-100 shadow-xl">
                             <div class="card-body">
-                                <h3 class="card-title">Recent Results</h3>
-                                <div id="dashboard-recent-results" class="space-y-2">
-                                    <p class="text-base-content/60">No recent results found.</p>
+                                <h3 class="card-title flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    My Exam Results
+                                </h3>
+                                <p class="text-sm text-base-content/60 mb-3">Click on any exam to view detailed results</p>
+                                <div id="dashboard-recent-results" class="space-y-2 max-h-[500px] overflow-y-auto">
+                                    <p class="text-base-content/60">No exam results found.</p>
                                 </div>
                             </div>
                         </div>
@@ -760,10 +766,16 @@
                                     </div>
 
                                     <!-- Questions List -->
-                                    <div id="questions-list" class="space-y-3">
+                                    <div id="questions-list" class="space-y-3 max-h-[600px] overflow-y-auto border border-base-300 rounded-lg p-4 bg-base-50">
                                         <div class="flex justify-center py-8">
                                             <span class="loading loading-spinner loading-lg text-primary"></span>
                                         </div>
+                                    </div>
+
+                                    <!-- Loading More Indicator -->
+                                    <div id="questions-loading-more" class="hidden text-center py-4">
+                                        <span class="loading loading-spinner loading-md text-primary"></span>
+                                        <span class="ml-2 text-sm">Loading more questions...</span>
                                     </div>
                                 </div>
                             </div>
@@ -928,23 +940,22 @@
 
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                         <div class="form-control">
+                                            <label class="label">
+                                                <span class="label-text font-bold text-primary">Exam Code</span>
+                                                <span class="label-text-alt badge badge-warning badge-sm">Unique</span>
+                                            </label>
+                                            <input type="text" id="exam-code" class="input input-bordered input-primary font-bold uppercase" placeholder="e.g., RRCLK001">
+                                        </div>
+                                        <div class="form-control">
                                             <label class="label"><span class="label-text font-medium">Exam Title</span></label>
                                             <input type="text" id="exam-title" class="input input-bordered" placeholder="e.g., Railway Clerk Mock Test 1">
                                         </div>
-                                        <div class="form-control">
-                                            <label class="label"><span class="label-text font-medium">Exam Code</span></label>
-                                            <input type="text" id="exam-code" class="input input-bordered" placeholder="e.g., RRCLK001">
-                                        </div>
                                     </div>
 
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                         <div class="form-control">
                                             <label class="label"><span class="label-text font-medium">Duration (minutes)</span></label>
                                             <input type="number" id="exam-duration" class="input input-bordered" placeholder="60" value="60">
-                                        </div>
-                                        <div class="form-control">
-                                            <label class="label"><span class="label-text font-medium">Total Questions</span></label>
-                                            <input type="number" id="exam-total-questions" class="input input-bordered" placeholder="50" value="50">
                                         </div>
                                         <div class="form-control">
                                             <label class="label"><span class="label-text font-medium">Expiry Date</span></label>
@@ -1041,51 +1052,82 @@
                         <div id="upload-section" class="hidden">
                             <div class="card bg-base-100 shadow-xl">
                                 <div class="card-body">
-                                    <h3 class="card-title mb-4">Upload Question Paper (OCR)</h3>
+                                    <!-- Step 1: Upload Question Paper -->
+                                    <div id="upload-step-1">
+                                        <h3 class="card-title mb-4">Upload Question Paper (OCR)</h3>
+                                        <p class="text-base-content/60 mb-4">Step 1: Select your question paper image or PDF</p>
 
-                                    <div class="border-2 border-dashed border-base-300 rounded-lg p-8 text-center mb-4">
-                                        <div class="text-4xl mb-4">📸</div>
-                                        <p class="mb-4">Upload an image or PDF of your question paper</p>
-                                        <div class="flex flex-wrap justify-center gap-3">
-                                            <button id="capture-photo-btn" class="btn btn-primary">
-                                                📷 Capture Photo
+                                        <div class="border-2 border-dashed border-base-300 rounded-lg p-8 text-center mb-4">
+                                            <div class="text-4xl mb-4">📸</div>
+                                            <p class="mb-4">Upload an image or PDF of your question paper</p>
+                                            <div class="flex flex-wrap justify-center gap-3">
+                                                <button id="capture-photo-btn" class="btn btn-primary">
+                                                    📷 Capture Photo
+                                                </button>
+                                                <button id="choose-file-btn" class="btn btn-secondary">
+                                                    📁 Choose File
+                                                </button>
+                                            </div>
+                                            <input type="file" id="paper-upload" accept="image/*,.pdf" capture="environment" class="hidden">
+                                            <input type="file" id="paper-upload-file" accept="image/*,.pdf" class="hidden">
+                                        </div>
+
+                                        <!-- Selected File Info -->
+                                        <div id="selected-file-info" class="hidden mb-4">
+                                            <div class="alert alert-success">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                <div>
+                                                    <h3 class="font-bold">File Selected</h3>
+                                                    <div class="text-xs" id="file-name"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Scan with AI Button -->
+                                        <button id="process-upload-btn" class="btn btn-success btn-lg w-full hidden">
+                                            🤖 Scan with AI
+                                        </button>
+                                    </div>
+
+                                    <!-- Step 2: AI Processing -->
+                                    <div id="upload-step-2" class="hidden">
+                                        <h3 class="card-title mb-4">Scanning Question Paper</h3>
+                                        <p class="text-base-content/60 mb-4">Step 2: AI is extracting questions from your paper...</p>
+
+                                        <div class="text-center py-12">
+                                            <div class="text-6xl mb-4">🤖</div>
+                                            <div id="ocr-status" class="text-lg font-semibold mb-4">Processing...</div>
+                                            <div class="w-full bg-base-300 rounded-full h-4 mb-4">
+                                                <div id="ocr-progress-bar" class="bg-success h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 3: Review and Select Questions -->
+                                    <div id="upload-step-3" class="hidden">
+                                        <h3 class="card-title mb-4">Review & Select Questions</h3>
+                                        <p class="text-base-content/60 mb-4">Step 3: Review the extracted questions and add them to your question bank</p>
+
+                                        <div class="flex gap-2 mb-4">
+                                            <button id="select-all-extracted-btn" class="btn btn-sm btn-info">✓ Select All</button>
+                                            <button id="select-none-extracted-btn" class="btn btn-sm btn-ghost">✗ Select None</button>
+                                            <button id="upload-new-btn" class="btn btn-sm btn-outline ml-auto">📤 Upload New</button>
+                                        </div>
+
+                                        <div id="ready-questions" class="space-y-2 mb-4">
+                                            <!-- Questions will be displayed here -->
+                                        </div>
+
+                                        <div class="divider"></div>
+
+                                        <div class="flex gap-3">
+                                            <button id="add-selected-btn" class="btn btn-primary flex-1">
+                                                ➕ Add Selected Questions
                                             </button>
-                                            <button id="choose-file-btn" class="btn btn-secondary">
-                                                📁 Choose File
+                                            <button id="add-extracted-btn" class="btn btn-success flex-1">
+                                                ➕ Add All Questions
                                             </button>
                                         </div>
-                                        <input type="file" id="paper-upload" accept="image/*,.pdf" capture="environment" class="hidden">
-                                        <input type="file" id="paper-upload-file" accept="image/*,.pdf" class="hidden">
-                                    </div>
-
-                                    <div id="ocr-preview-container" class="mb-4 hidden">
-                                        <label class="label"><span class="label-text font-medium">Selected Image</span></label>
-                                        <img id="preview-image" class="w-full max-h-64 object-contain rounded-lg border" src="" alt="Preview">
-                                    </div>
-
-                                    <div class="form-control">
-                                        <label class="label"><span class="label-text font-medium">Extracted Text</span></label>
-                                        <textarea id="extracted-text" class="textarea textarea-bordered h-48 font-mono" placeholder="Extracted text will appear here..."></textarea>
-                                    </div>
-
-                                    <button id="clean-text-btn" class="btn btn-secondary mt-4 hidden">
-                                        Clean & Format Text
-                                    </button>
-
-                                    <div class="divider">Ready to Add Questions</div>
-
-                                    <div class="flex gap-2 mb-4">
-                                        <button id="select-all-extracted-btn" class="btn btn-sm btn-info">Select All</button>
-                                        <button id="select-none-extracted-btn" class="btn btn-sm btn-ghost">Select None</button>
-                                    </div>
-
-                                    <div id="ready-questions" class="space-y-2 mb-4">
-                                        <p class="text-center text-base-content/60">Click 'Clean & Format Text' to see questions</p>
-                                    </div>
-
-                                    <div class="flex gap-3">
-                                        <button id="add-extracted-btn" class="btn btn-success flex-1">Add All Questions to Bank</button>
-                                        <button id="add-selected-btn" class="btn btn-primary">Add Selected Questions</button>
                                     </div>
                                 </div>
                             </div>
@@ -1382,6 +1424,16 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Floating Submit Button -->
+                        <div id="floating-submit-container" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 hidden">
+                            <button id="floating-submit-btn" class="btn btn-error btn-lg shadow-xl gap-2 px-8">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Submit Exam
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1682,8 +1734,8 @@
                 <div id="results-detail-content" class="hidden">
                     <!-- Individual result details will be rendered here -->
                 </div>
-                <div class="mt-4">
-                    <button id="back-to-exams-btn" class="btn btn-ghost hidden">← Back to Exams</button>
+                <div class="mt-4 flex gap-2">
+                    <button id="back-to-exams-btn" class="btn btn-ghost hidden">← Back to Candidates</button>
                     <button id="export-results-btn-new" class="btn btn-accent">Export Results</button>
                 </div>
             </div>
@@ -1710,7 +1762,6 @@
     <!-- Hidden Elements for JavaScript Compatibility -->
     <div class="hidden">
         <!-- Question Bank Additional Elements -->
-        <div id="questions-loading-more">Loading more questions...</div>
         <select id="question-type-select">
             <option value="standalone">Standalone</option>
             <option value="parent-child">Parent-Child</option>
@@ -1783,16 +1834,6 @@
         <span id="total-exams-given">0</span>
         <span id="average-score">0</span>
 
-        <!-- OCR Elements -->
-        <div id="ocr-progress" class="hidden">
-            <div id="ocr-progress-bar" style="width: 0%"></div>
-        </div>
-        <div id="ocr-status"></div>
-        <button id="process-upload-btn">Process Upload</button>
-        <div id="selected-file-info">
-            <span id="file-name"></span>
-        </div>
-        <div id="upload-result-container"></div>
 
         <!-- Timer Display -->
         <span id="timer-display">00:00</span>

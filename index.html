@@ -511,12 +511,18 @@
                             </button>
                         </div>
 
-                        <!-- Recent Results -->
+                        <!-- My Exam Results -->
                         <div class="card bg-base-100 shadow-xl">
                             <div class="card-body">
-                                <h3 class="card-title">Recent Results</h3>
-                                <div id="dashboard-recent-results" class="space-y-2">
-                                    <p class="text-base-content/60">No recent results found.</p>
+                                <h3 class="card-title flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    My Exam Results
+                                </h3>
+                                <p class="text-sm text-base-content/60 mb-3">Click on any exam to view detailed results</p>
+                                <div id="dashboard-recent-results" class="space-y-2 max-h-[500px] overflow-y-auto">
+                                    <p class="text-base-content/60">No exam results found.</p>
                                 </div>
                             </div>
                         </div>
@@ -934,23 +940,22 @@
 
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                         <div class="form-control">
+                                            <label class="label">
+                                                <span class="label-text font-bold text-primary">Exam Code</span>
+                                                <span class="label-text-alt badge badge-warning badge-sm">Unique</span>
+                                            </label>
+                                            <input type="text" id="exam-code" class="input input-bordered input-primary font-bold uppercase" placeholder="e.g., RRCLK001">
+                                        </div>
+                                        <div class="form-control">
                                             <label class="label"><span class="label-text font-medium">Exam Title</span></label>
                                             <input type="text" id="exam-title" class="input input-bordered" placeholder="e.g., Railway Clerk Mock Test 1">
                                         </div>
-                                        <div class="form-control">
-                                            <label class="label"><span class="label-text font-medium">Exam Code</span></label>
-                                            <input type="text" id="exam-code" class="input input-bordered" placeholder="e.g., RRCLK001">
-                                        </div>
                                     </div>
 
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                         <div class="form-control">
                                             <label class="label"><span class="label-text font-medium">Duration (minutes)</span></label>
                                             <input type="number" id="exam-duration" class="input input-bordered" placeholder="60" value="60">
-                                        </div>
-                                        <div class="form-control">
-                                            <label class="label"><span class="label-text font-medium">Total Questions</span></label>
-                                            <input type="number" id="exam-total-questions" class="input input-bordered" placeholder="50" value="50">
                                         </div>
                                         <div class="form-control">
                                             <label class="label"><span class="label-text font-medium">Expiry Date</span></label>
@@ -1031,12 +1036,49 @@
 
                         <!-- View Results Section -->
                         <div id="view-results-section" class="hidden">
-                            <div class="card bg-base-100 shadow-xl">
+                            <!-- View 1: Exams List -->
+                            <div id="results-exams-view" class="card bg-base-100 shadow-xl">
                                 <div class="card-body">
-                                    <h3 class="card-title mb-4">Exam Results</h3>
+                                    <h3 class="card-title mb-4">📊 Exam Results</h3>
                                     <div id="results-list" class="space-y-3">
                                         <div class="flex justify-center py-8">
                                             <span class="loading loading-spinner loading-lg text-primary"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- View 2: Candidates List (for selected exam) -->
+                            <div id="results-candidates-section" class="hidden">
+                                <div class="card bg-base-100 shadow-xl">
+                                    <div class="card-body">
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <button id="back-to-exams" class="btn btn-ghost btn-sm">← Back</button>
+                                            <h3 class="card-title" id="candidates-section-title">Candidates</h3>
+                                        </div>
+                                        <div id="selected-exam-details" class="mb-4"></div>
+                                        <div id="candidates-list-container">
+                                            <div class="flex justify-center py-8">
+                                                <span class="loading loading-spinner loading-lg text-primary"></span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4">
+                                            <button id="export-exam-results" class="btn btn-accent">📥 Export Results</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- View 3: Detailed Results (for selected candidate) -->
+                            <div id="results-detail-section" class="hidden">
+                                <div class="card bg-base-100 shadow-xl">
+                                    <div class="card-body">
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <button id="back-to-candidates" class="btn btn-ghost btn-sm">← Back</button>
+                                            <h3 class="card-title" id="detail-section-title">Detailed Results</h3>
+                                        </div>
+                                        <div id="candidate-detail-container">
+                                            <!-- Detailed results will be rendered here -->
                                         </div>
                                     </div>
                                 </div>
@@ -1420,6 +1462,16 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Floating Submit Button -->
+                        <div id="floating-submit-container" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 hidden">
+                            <button id="floating-submit-btn" class="btn btn-error btn-lg shadow-xl gap-2 px-8">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Submit Exam
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1712,15 +1764,15 @@
                     <div id="selected-exam-info" class="mb-4">
                         <h4 class="font-bold" id="selected-exam-title">Exam Title</h4>
                     </div>
-                    <div id="results-candidates-view" class="space-y-2">
+                    <div id="results-candidates-view" style="min-height: 100px; display: block;">
                         <!-- Candidates list will be rendered here -->
                     </div>
                 </div>
                 <div id="results-detail-content" class="hidden">
                     <!-- Individual result details will be rendered here -->
                 </div>
-                <div class="mt-4">
-                    <button id="back-to-exams-btn" class="btn btn-ghost hidden">← Back to Exams</button>
+                <div class="mt-4 flex gap-2">
+                    <button id="back-to-exams-btn" class="btn btn-ghost hidden">← Back to Candidates</button>
                     <button id="export-results-btn-new" class="btn btn-accent">Export Results</button>
                 </div>
             </div>

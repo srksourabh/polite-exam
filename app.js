@@ -63,52 +63,19 @@ const APP_VERSION_KEY = 'polite_app_version';
 /**
  * Converts simple/natural math syntax to LaTeX
  * Makes it easy for non-technical users to write math expressions
+ * Only converts clear mathematical patterns, leaves everything else as-is
  * @param {string} text - The text with simple math syntax
  * @returns {string} - Text with LaTeX math expressions
  */
 function convertSimpleMathToLatex(text) {
     if (!text || typeof text !== 'string') return text;
 
-    // Don't process if already contains LaTeX delimiters
+    // If already contains LaTeX delimiters, don't process - return as-is
     if (text.includes('$') || text.includes('\\(') || text.includes('\\[')) {
         return text;
     }
 
     let result = text;
-
-    // Store protected regions (URLs, code blocks, etc.)
-    const protectedRegions = [];
-    result = result.replace(/\[img:[^\]]+\]|\[graph:[^\]]+\]|\[table:[^\]]+\]/gi, (match) => {
-        protectedRegions.push(match);
-        return `__PROTECTED_${protectedRegions.length - 1}__`;
-    });
-
-    // Convert common symbols first (outside of math context)
-    const symbolMap = {
-        ' pi ': ' $\\pi$ ',
-        ' PI ': ' $\\pi$ ',
-        '(pi)': '($\\pi$)',
-        ' alpha ': ' $\\alpha$ ',
-        ' beta ': ' $\\beta$ ',
-        ' theta ': ' $\\theta$ ',
-        ' gamma ': ' $\\gamma$ ',
-        ' delta ': ' $\\delta$ ',
-        ' sigma ': ' $\\sigma$ ',
-        ' omega ': ' $\\omega$ ',
-        ' infinity ': ' $\\infty$ ',
-        ' inf ': ' $\\infty$ ',
-        '>=': '$\\geq$',
-        '<=': '$\\leq$',
-        '!=': '$\\neq$',
-        '<>': '$\\neq$',
-        '+-': '$\\pm$',
-        '-+': '$\\mp$',
-        '...': '$\\ldots$',
-    };
-
-    for (const [simple, latex] of Object.entries(symbolMap)) {
-        result = result.split(simple).join(latex);
-    }
 
     // Convert sqrt(expression) to $\sqrt{expression}$
     result = result.replace(/sqrt\(([^)]+)\)/gi, (match, expr) => {
@@ -120,43 +87,9 @@ function convertSimpleMathToLatex(text) {
         return `$\\sqrt[3]{${expr.trim()}}$`;
     });
 
-    // Convert simple fractions like 1/2, 3/4 (but not dates or ratios in context)
-    // Only convert when it looks like a math fraction (digits or simple vars)
-    result = result.replace(/\b(\d+)\/(\d+)\b/g, (match, num, den) => {
-        // Don't convert if it looks like a date (e.g., 12/25)
-        if (parseInt(num) > 31 || parseInt(den) > 12 || parseInt(den) > 31) {
-            return `$\\frac{${num}}{${den}}$`;
-        }
-        // For common fractions, convert them
-        if (['1/2', '1/3', '1/4', '1/5', '1/6', '1/8', '2/3', '3/4', '2/5', '3/5', '4/5', '5/6', '7/8'].includes(match)) {
-            return `$\\frac{${num}}{${den}}$`;
-        }
-        return match;
-    });
-
     // Convert frac(a,b) to $\frac{a}{b}$
     result = result.replace(/frac\(([^,]+),([^)]+)\)/gi, (match, num, den) => {
         return `$\\frac{${num.trim()}}{${den.trim()}}$`;
-    });
-
-    // Convert power expressions: x^2, x^10, x^{n+1}
-    // Match: letter or number followed by ^ and digits or {expression}
-    result = result.replace(/([a-zA-Z0-9])\^(\d+)/g, (match, base, exp) => {
-        return `$${base}^{${exp}}$`;
-    });
-    result = result.replace(/([a-zA-Z0-9])\^\{([^}]+)\}/g, (match, base, exp) => {
-        return `$${base}^{${exp}}$`;
-    });
-
-    // Convert subscript expressions: x_1, a_n, x_{12}
-    result = result.replace(/([a-zA-Z])_(\d+)/g, (match, base, sub) => {
-        return `$${base}_{${sub}}$`;
-    });
-    result = result.replace(/([a-zA-Z])_\{([^}]+)\}/g, (match, base, sub) => {
-        return `$${base}_{${sub}}$`;
-    });
-    result = result.replace(/([a-zA-Z])_([a-zA-Z])\b/g, (match, base, sub) => {
-        return `$${base}_{${sub}}$`;
     });
 
     // Convert sum(i=1,n) to $\sum_{i=1}^{n}$
@@ -169,23 +102,31 @@ function convertSimpleMathToLatex(text) {
         return `$\\int_{${from.trim()}}^{${to.trim()}}$`;
     });
 
-    // Convert degrees: 90deg or 90° to $90^\circ$
+    // Convert power expressions: x^2, x^10
+    result = result.replace(/([a-zA-Z0-9])\^(\d+)/g, (match, base, exp) => {
+        return `$${base}^{${exp}}$`;
+    });
+
+    // Convert subscript expressions: x_1, a_n
+    result = result.replace(/([a-zA-Z])_(\d+)/g, (match, base, sub) => {
+        return `$${base}_{${sub}}$`;
+    });
+    result = result.replace(/([a-zA-Z])_([a-zA-Z])\b/g, (match, base, sub) => {
+        return `$${base}_{${sub}}$`;
+    });
+
+    // Convert common fractions like 1/2, 1/3, 1/4, 2/3, 3/4
+    result = result.replace(/\b(1|2|3|4|5|6|7)\/(2|3|4|5|6|8)\b/g, (match, num, den) => {
+        return `$\\frac{${num}}{${den}}$`;
+    });
+
+    // Convert degrees: 90deg to $90^\circ$
     result = result.replace(/(\d+)\s*deg\b/gi, (match, num) => {
         return `$${num}^\\circ$`;
     });
 
-    // Convert percentage in math context
-    result = result.replace(/(\d+)\s*%/g, (match, num) => {
-        return `$${num}\\%$`;
-    });
-
     // Merge adjacent math expressions: $a$ $b$ → $a b$
     result = result.replace(/\$([^$]+)\$\s*\$([^$]+)\$/g, '$$$1 $2$$');
-
-    // Restore protected regions
-    protectedRegions.forEach((region, index) => {
-        result = result.replace(`__PROTECTED_${index}__`, region);
-    });
 
     return result;
 }
@@ -803,14 +744,14 @@ function startExamTimer() {
         clearInterval(examTimer);
     }
 
+    // Initial display update
+    updateTimerDisplay();
+
     examTimer = setInterval(function() {
         timeRemaining--;
 
-        // Update timer display
-        const mins = Math.floor(timeRemaining / 60);
-        const secs = timeRemaining % 60;
-        document.getElementById('timer-display').textContent =
-            `⏱️ Time Remaining: ${mins}:${secs.toString().padStart(2, '0')}`;
+        // Update timer display - both old and new elements
+        updateTimerDisplay();
 
         // Save state every 30 seconds
         if (timeRemaining % 30 === 0) {
@@ -2029,13 +1970,33 @@ async function showCandidateDashboard(userData) {
     const examHistory = await window.PoliteCCAPI.getCandidateExamHistory(userData.email);
 
     if (examHistory && examHistory.examsGiven > 0) {
-        document.getElementById('total-exams-given').textContent = examHistory.examsGiven;
+        // Update stats in the visible dashboard
+        document.getElementById('dashboard-exams-taken').textContent = examHistory.examsGiven;
 
-        // Calculate average score
-        const avgScore = examHistory.examHistory.reduce((sum, exam) => sum + (exam.score || 0), 0) / examHistory.examsGiven;
-        document.getElementById('average-score').textContent = avgScore.toFixed(1);
+        // Calculate scores
+        const scores = examHistory.examHistory.map(exam => exam.score || 0);
+        const avgScore = scores.reduce((sum, s) => sum + s, 0) / examHistory.examsGiven;
+        const bestScore = Math.max(...scores);
 
-        // Display exam history
+        document.getElementById('dashboard-avg-score').textContent = avgScore.toFixed(1);
+        document.getElementById('dashboard-best-score').textContent = bestScore.toFixed(1);
+
+        // Show last exam date
+        if (examHistory.examHistory.length > 0) {
+            const lastExam = examHistory.examHistory[examHistory.examHistory.length - 1];
+            document.getElementById('dashboard-last-exam').textContent = formatDateForDisplay(lastExam.timestamp || lastExam.date);
+        }
+
+        // Also update hidden elements for compatibility
+        const totalExamsGiven = document.getElementById('total-exams-given');
+        const averageScore = document.getElementById('average-score');
+        if (totalExamsGiven) totalExamsGiven.textContent = examHistory.examsGiven;
+        if (averageScore) averageScore.textContent = avgScore.toFixed(1);
+
+        // Display recent results in the visible dashboard card
+        const recentResultsContainer = document.getElementById('dashboard-recent-results');
+
+        // Also update hidden container for compatibility
         const container = document.getElementById('exam-history-container');
         let historyHTML = '';
 
@@ -2134,17 +2095,197 @@ async function showCandidateDashboard(userData) {
             `;
         });
 
-        container.innerHTML = historyHTML;
+        if (container) {
+            container.innerHTML = historyHTML;
 
-        // Add click handlers for expanding/collapsing cards
-        container.querySelectorAll('.exam-history-card').forEach(card => {
-            card.addEventListener('click', function() {
-                this.classList.toggle('expanded');
+            // Add click handlers for expanding/collapsing cards
+            container.querySelectorAll('.exam-history-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    this.classList.toggle('expanded');
+                });
             });
-        });
+        }
+
+        // Also update the visible recent results card in dashboard
+        if (recentResultsContainer) {
+            // Sort exams by date descending (latest first)
+            const sortedExams = [...examHistory.examHistory].sort((a, b) => {
+                const dateA = new Date(a.timestamp || a.date || 0);
+                const dateB = new Date(b.timestamp || b.date || 0);
+                return dateB - dateA; // Descending order
+            });
+
+            let recentHTML = '';
+            sortedExams.forEach((exam, index) => {
+                const date = formatDateForDisplay(exam.timestamp || exam.date);
+                const score = exam.score || 0;
+                const scoreClass = score >= 0 ? 'text-success' : 'text-error';
+                const scoreBg = score >= 0 ? 'bg-success/10' : 'bg-error/10';
+
+                // Parse answers to build question details
+                let questionDetailsHTML = '';
+                let totalQuestions = 0;
+                let correctCount = 0;
+                let incorrectCount = 0;
+                let unansweredCount = 0;
+
+                try {
+                    const answers = typeof exam.answers === 'string' ? JSON.parse(exam.answers) : exam.answers || [];
+                    if (answers && answers.length > 0 && typeof answers[0] === 'object' && answers[0] !== null) {
+                        answers.forEach((answer, qIndex) => {
+                            const isMainPassage = answer.isMainPassage || (!answer.optionA && !answer.optionB);
+                            if (isMainPassage) return; // Skip passages in count
+
+                            totalQuestions++;
+                            const isCorrect = answer.isCorrect;
+                            const userAnswered = answer.userAnswer !== 'Not Answered' && answer.userAnswer !== 'N/A (Passage)';
+
+                            if (isCorrect) correctCount++;
+                            else if (userAnswered) incorrectCount++;
+                            else unansweredCount++;
+
+                            const userAnswerLetter = answer.userAnswer || 'Not Answered';
+                            const correctAnswerLetter = answer.correctAnswer || '-';
+                            const marks = isCorrect ? '+1' : (userAnswered ? '-0.25' : '0');
+                            const marksClass = isCorrect ? 'text-success' : (userAnswered ? 'text-error' : 'text-base-content/50');
+                            const rowBg = isCorrect ? 'bg-success/5' : (userAnswered ? 'bg-error/5' : 'bg-base-200');
+
+                            // Helper function to get option background class
+                            const getOptBg = (opt) => {
+                                if (userAnswerLetter === opt && correctAnswerLetter === opt) return 'bg-success/20 border-l-4 border-success';
+                                if (userAnswerLetter === opt && correctAnswerLetter !== opt) return 'bg-error/20 border-l-4 border-error';
+                                if (correctAnswerLetter === opt) return 'bg-success/10 border-l-4 border-success';
+                                return 'bg-base-200';
+                            };
+
+                            questionDetailsHTML += `
+                                <div class="p-3 ${rowBg} rounded-lg mb-3 border border-base-300">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="font-semibold text-primary">Q${qIndex + 1}</span>
+                                        <span class="badge ${isCorrect ? 'badge-success' : (userAnswered ? 'badge-error' : 'badge-ghost')}">${marks}</span>
+                                    </div>
+                                    <p class="text-sm mb-3 text-base-content/80 font-medium">${answer.question || 'Question text not available'}</p>
+
+                                    <!-- All Options -->
+                                    <div class="space-y-1 text-sm mb-2">
+                                        <div class="p-2 rounded ${getOptBg('A')}">
+                                            <span class="font-bold">A:</span> ${answer.optionA || 'N/A'}
+                                            ${userAnswerLetter === 'A' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
+                                            ${correctAnswerLetter === 'A' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
+                                        </div>
+                                        <div class="p-2 rounded ${getOptBg('B')}">
+                                            <span class="font-bold">B:</span> ${answer.optionB || 'N/A'}
+                                            ${userAnswerLetter === 'B' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
+                                            ${correctAnswerLetter === 'B' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
+                                        </div>
+                                        <div class="p-2 rounded ${getOptBg('C')}">
+                                            <span class="font-bold">C:</span> ${answer.optionC || 'N/A'}
+                                            ${userAnswerLetter === 'C' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
+                                            ${correctAnswerLetter === 'C' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
+                                        </div>
+                                        <div class="p-2 rounded ${getOptBg('D')}">
+                                            <span class="font-bold">D:</span> ${answer.optionD || 'N/A'}
+                                            ${userAnswerLetter === 'D' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
+                                            ${correctAnswerLetter === 'D' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
+                                        </div>
+                                    </div>
+
+                                    <div class="text-xs text-base-content/60 text-right">
+                                        ${isCorrect ? '✅ Correct (+1)' : (userAnswered ? '❌ Wrong (-0.25)' : '⚪ Skipped (0)')}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        questionDetailsHTML = '<p class="text-base-content/60 text-center py-4">Detailed question data not available for this exam.</p>';
+                    }
+                } catch (e) {
+                    console.error('Error parsing exam answers:', e);
+                    questionDetailsHTML = '<p class="text-base-content/60 text-center py-4">Unable to load question details.</p>';
+                }
+
+                recentHTML += `
+                    <div class="exam-accordion-card border border-base-300 rounded-lg overflow-hidden mb-3" data-exam-index="${index}">
+                        <div class="exam-accordion-header flex justify-between items-center p-4 cursor-pointer hover:bg-base-200 transition-all">
+                            <div class="flex-1">
+                                <div class="font-bold text-lg">${exam.examCode || 'Exam'}</div>
+                                <div class="text-sm text-base-content/60">${date}</div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="text-center ${scoreBg} px-4 py-2 rounded-lg">
+                                    <div class="text-xl font-bold ${scoreClass}">${score}</div>
+                                    <div class="text-xs text-base-content/60">Score</div>
+                                </div>
+                                <svg class="accordion-chevron h-5 w-5 text-base-content/40 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="exam-accordion-content hidden bg-base-100 border-t border-base-300">
+                            <div class="p-4">
+                                <!-- Summary Stats -->
+                                <div class="grid grid-cols-3 gap-2 mb-4">
+                                    <div class="text-center p-2 bg-success/10 rounded-lg">
+                                        <div class="text-lg font-bold text-success">${correctCount}</div>
+                                        <div class="text-xs text-base-content/60">Correct</div>
+                                    </div>
+                                    <div class="text-center p-2 bg-error/10 rounded-lg">
+                                        <div class="text-lg font-bold text-error">${incorrectCount}</div>
+                                        <div class="text-xs text-base-content/60">Wrong</div>
+                                    </div>
+                                    <div class="text-center p-2 bg-base-200 rounded-lg">
+                                        <div class="text-lg font-bold text-base-content/60">${unansweredCount}</div>
+                                        <div class="text-xs text-base-content/60">Skipped</div>
+                                    </div>
+                                </div>
+                                <!-- Question Details -->
+                                <h4 class="font-semibold mb-3 text-primary">Question-wise Details</h4>
+                                <div class="max-h-96 overflow-y-auto">
+                                    ${questionDetailsHTML}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            recentResultsContainer.innerHTML = recentHTML || '<p class="text-base-content/60">No exam results found.</p>';
+
+            // Process LaTeX/math content in results
+            processRichContentInContainer(recentResultsContainer);
+
+            // Add click handlers for accordion
+            recentResultsContainer.querySelectorAll('.exam-accordion-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    const card = this.closest('.exam-accordion-card');
+                    const content = card.querySelector('.exam-accordion-content');
+                    const chevron = card.querySelector('.accordion-chevron');
+
+                    // Toggle current card
+                    content.classList.toggle('hidden');
+                    chevron.classList.toggle('rotate-180');
+
+                    // Optionally close other cards
+                    recentResultsContainer.querySelectorAll('.exam-accordion-card').forEach(otherCard => {
+                        if (otherCard !== card) {
+                            otherCard.querySelector('.exam-accordion-content').classList.add('hidden');
+                            otherCard.querySelector('.accordion-chevron').classList.remove('rotate-180');
+                        }
+                    });
+                });
+            });
+        }
     } else {
-        document.getElementById('total-exams-given').textContent = '0';
-        document.getElementById('average-score').textContent = '0';
+        // No exam history
+        document.getElementById('dashboard-exams-taken').textContent = '0';
+        document.getElementById('dashboard-avg-score').textContent = '-';
+        document.getElementById('dashboard-best-score').textContent = '-';
+        document.getElementById('dashboard-last-exam').textContent = '-';
+
+        const totalExamsGiven = document.getElementById('total-exams-given');
+        const averageScore = document.getElementById('average-score');
+        if (totalExamsGiven) totalExamsGiven.textContent = '0';
+        if (averageScore) averageScore.textContent = '0';
     }
 }
 
@@ -2439,19 +2580,34 @@ document.getElementById('save-profile-btn').addEventListener('click', async func
 // CHANGE PASSWORD HANDLERS
 // =====================================================
 
-// Open change password modal
+// Toggle password form inside profile modal
 document.getElementById('change-password-btn').addEventListener('click', function() {
-    // Clear form
-    document.getElementById('current-password').value = '';
-    document.getElementById('new-password').value = '';
-    document.getElementById('confirm-new-password').value = '';
-    document.getElementById('change-password-modal').style.display = 'flex';
+    const passwordForm = document.getElementById('password-change-form');
+    const changePasswordSection = document.getElementById('change-password-section');
+
+    if (passwordForm) {
+        // Toggle the form visibility
+        if (passwordForm.classList.contains('hidden')) {
+            passwordForm.classList.remove('hidden');
+            if (changePasswordSection) changePasswordSection.classList.add('hidden');
+            // Clear form fields
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-new-password').value = '';
+        } else {
+            passwordForm.classList.add('hidden');
+            if (changePasswordSection) changePasswordSection.classList.remove('hidden');
+        }
+    }
 });
 
-// Close password modal
-document.getElementById('close-password-modal').addEventListener('click', function() {
-    document.getElementById('change-password-modal').style.display = 'none';
-});
+// Close password modal (for the old separate modal - keep for compatibility)
+const closePasswordModal = document.getElementById('close-password-modal');
+if (closePasswordModal) {
+    closePasswordModal.addEventListener('click', function() {
+        document.getElementById('change-password-modal').style.display = 'none';
+    });
+}
 
 // Save new password
 document.getElementById('save-password-btn').addEventListener('click', async function() {
@@ -2493,14 +2649,21 @@ document.getElementById('save-password-btn').addEventListener('click', async fun
     );
 
     btn.disabled = false;
-    btn.textContent = 'Change Password';
+    btn.textContent = 'Update Password';
 
     if (result) {
-        // Clear form and close modal
+        // Clear form and hide password section
         document.getElementById('current-password').value = '';
         document.getElementById('new-password').value = '';
         document.getElementById('confirm-new-password').value = '';
-        document.getElementById('change-password-modal').style.display = 'none';
+
+        // Hide password form, show change password button
+        const passwordForm = document.getElementById('password-change-form');
+        const changePasswordSection = document.getElementById('change-password-section');
+        if (passwordForm) passwordForm.classList.add('hidden');
+        if (changePasswordSection) changePasswordSection.classList.remove('hidden');
+
+        window.PoliteCCAPI.showNotification('Password changed successfully!', 'success');
     }
 });
 
@@ -4823,8 +4986,8 @@ document.getElementById('view-results-btn').addEventListener('click', async func
         document.getElementById('active-exams-count').textContent = activeCount;
         document.getElementById('expired-exams-count').textContent = expiredCount;
 
-        // Display exams in grid
-        const examsContainer = document.getElementById('exams-grid-container');
+        // Display exams in grid - use results-list container in the visible view-results-section
+        const examsContainer = document.getElementById('results-list');
 
         if (exams.length === 0) {
             examsContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1/-1; padding: 40px;">No exams found. Create an exam first.</p>';
@@ -4903,7 +5066,7 @@ document.getElementById('view-results-btn').addEventListener('click', async func
             const candidateCount = examResultCounts[examCode] || 0;
 
             examsHTML += `
-                <div class="exam-result-card" data-exam-code="${examCode}" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 3px 15px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s; border: 2px solid transparent;" onmouseenter="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'; this.style.borderColor='var(--secondary)';" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 15px rgba(0,0,0,0.1)'; this.style.borderColor='transparent';">
+                <div class="exam-result-card" data-exam-code="${examCode}">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
                         <div style="font-weight: 700; font-size: 1.1rem; color: var(--secondary);">${examCode}</div>
                         ${statusBadge}
@@ -4925,15 +5088,21 @@ document.getElementById('view-results-btn').addEventListener('click', async func
             `;
         }
 
-        examsContainer.innerHTML = examsHTML;
+        // Wrap in a grid container for proper display
+        examsContainer.innerHTML = `<div id="exams-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">${examsHTML}</div>`;
 
-        // Add click handlers for exam cards
-        document.querySelectorAll('.exam-result-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const examCode = this.getAttribute('data-exam-code');
-                showExamCandidates(examCode);
+        // Use event delegation for more reliable click handling
+        const gridContainer = document.getElementById('exams-grid-container');
+        if (gridContainer) {
+            gridContainer.addEventListener('click', function(e) {
+                const card = e.target.closest('.exam-result-card');
+                if (card) {
+                    const examCode = card.getAttribute('data-exam-code');
+                    console.log('📊 Exam card clicked:', examCode);
+                    showExamCandidates(examCode);
+                }
             });
-        });
+        }
 
     } catch (error) {
         console.error('❌ Event handler error:', error);
@@ -4943,30 +5112,31 @@ document.getElementById('view-results-btn').addEventListener('click', async func
     }
 });
 
-// Function to show candidates for a selected exam
+// Function to show candidates for a selected exam (INLINE VIEW - not modal)
 async function showExamCandidates(examCode) {
     try {
-        // Hide main view, show candidates view
-        document.getElementById('results-main-view').classList.add('hidden');
-        document.getElementById('results-candidates-view').classList.remove('hidden');
+        console.log('📊 showExamCandidates called for:', examCode);
+
+        // Hide exams view, show candidates section (INLINE)
+        document.getElementById('results-exams-view').classList.add('hidden');
+        document.getElementById('results-candidates-section').classList.remove('hidden');
+        document.getElementById('results-detail-section').classList.add('hidden');
 
         // Get exam details
         const exam = exams.find(e => (e['Exam Code'] || e.examCode) === examCode);
         const title = exam ? (exam['Title'] || exam.title || 'Untitled') : 'Unknown';
         const expiryDateStr = exam && exam['Expiry (IST)'] ? formatDateForDisplay(exam['Expiry (IST)']) : 'No Expiry';
         const duration = exam ? (exam['Duration (mins)'] || exam['Duration'] || exam.duration || 60) : 60;
-        // 'Questions' is the correct Airtable field name for linked records
         const examQuestionIds = exam ? (exam['Questions'] || exam['Question IDs'] || exam['QuestionIDs'] || exam.questionIds || []) : [];
-        // Calculate actual scorable questions count
-        // A scorable question has options (Option A) OR is a parent with subQuestions
+
+        // Calculate question count
         let questionCount = 0;
         const idsArray = Array.isArray(examQuestionIds) ? examQuestionIds : (typeof examQuestionIds === 'string' && examQuestionIds.trim() ? examQuestionIds.split(',').filter(id => id.trim()) : []);
-        const countedIds = new Set(); // Track counted question IDs to avoid double counting
+        const countedIds = new Set();
 
         idsArray.forEach(qId => {
             const q = questions.find(question => question.id === qId || question.ID === qId);
             if (q) {
-                // If this is a parent with subQuestions, count the subQuestions
                 if (q.subQuestions && q.subQuestions.length > 0) {
                     q.subQuestions.forEach(sq => {
                         const sqId = sq.id || sq.ID;
@@ -4976,14 +5146,12 @@ async function showExamCandidates(examCode) {
                         }
                     });
                 } else if (q['Option A'] && q['Option A'].trim() !== '') {
-                    // Standalone or child question with options
                     if (!countedIds.has(qId)) {
                         countedIds.add(qId);
                         questionCount += 1;
                     }
                 }
             } else {
-                // Question not found in local cache, count as 1
                 if (!countedIds.has(qId)) {
                     countedIds.add(qId);
                     questionCount += 1;
@@ -4991,24 +5159,39 @@ async function showExamCandidates(examCode) {
             }
         });
 
-        document.getElementById('selected-exam-title').textContent = `${examCode} - ${title}`;
-        document.getElementById('selected-exam-info').innerHTML = `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+        // Update section title
+        document.getElementById('candidates-section-title').textContent = `${examCode} - ${title}`;
+
+        // Update exam details display
+        document.getElementById('selected-exam-details').innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
                 <div><strong>Exam Code:</strong> ${examCode}</div>
                 <div><strong>Title:</strong> ${title}</div>
-                <div><strong>Expiry Date:</strong> ${expiryDateStr}</div>
-                <div><strong>Duration:</strong> ${duration} minutes</div>
-                <div><strong>Total Questions:</strong> ${questionCount}</div>
+                <div><strong>Expiry:</strong> ${expiryDateStr}</div>
+                <div><strong>Duration:</strong> ${duration} min</div>
+                <div><strong>Questions:</strong> ${questionCount}</div>
             </div>
         `;
 
-        const candidatesContainer = document.getElementById('candidates-grid-container');
-        candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1/-1; padding: 40px;">Loading candidates...</p>';
+        // Show loading in candidates container
+        const candidatesContainer = document.getElementById('candidates-list-container');
+        candidatesContainer.innerHTML = '<div class="flex justify-center py-8"><span class="loading loading-spinner loading-lg text-primary"></span><span class="ml-3">Loading candidates...</span></div>';
+        console.log('📊 Set loading message, fetching results...');
 
         // Get results from API
         let results = [];
-        if (window.PoliteCCAPI && window.PoliteCCAPI.getExamResults) {
-            results = await window.PoliteCCAPI.getExamResults(examCode) || [];
+        try {
+            if (window.PoliteCCAPI && window.PoliteCCAPI.getExamResults) {
+                console.log('📊 Calling getExamResults API for:', examCode);
+                results = await window.PoliteCCAPI.getExamResults(examCode) || [];
+                console.log('📊 API returned', results.length, 'results');
+            } else {
+                console.error('❌ getExamResults API not available');
+            }
+        } catch (apiError) {
+            console.error('❌ API error:', apiError);
+            candidatesContainer.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 40px;">❌ Error fetching results: ${apiError.message}</p>`;
+            return;
         }
 
         // Store for export
@@ -5016,14 +5199,21 @@ async function showExamCandidates(examCode) {
         currentExamCodeForResults = examCode;
 
         if (results.length === 0) {
-            candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1/-1; padding: 40px;">No candidates have taken this exam yet.</p>';
+            candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">📭 No candidates have taken this exam yet.</p>';
             return;
         }
 
         // Sort by score (highest first)
         results.sort((a, b) => (b.Score || b.score || 0) - (a.Score || a.score || 0));
 
-        let candidatesHTML = '';
+        // Build candidates list with better layout
+        let candidatesHTML = `
+            <h4 style="margin-bottom: 15px; color: var(--primary); font-weight: 600;">
+                📋 Candidates (${results.length} total) - Sorted by Rank
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 5px;">
+        `;
+
         results.forEach((result, index) => {
             const name = result.Name || result.name || 'Unknown';
             const score = parseFloat(result.Score || result.score || 0);
@@ -5032,55 +5222,91 @@ async function showExamCandidates(examCode) {
             const dateStr = submittedAt ? formatDateForDisplay(submittedAt) : 'N/A';
 
             const scoreColor = score >= 0 ? '#27ae60' : '#e74c3c';
+            const scoreBg = score >= 0 ? '#e8f5e9' : '#ffebee';
             const rankBadge = index < 3 ? ['🥇', '🥈', '🥉'][index] : `#${index + 1}`;
 
             candidatesHTML += `
-                <div class="candidate-result-card" data-result-index="${index}" style="background: white; border-radius: 12px; padding: 18px; box-shadow: 0 3px 12px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s; border: 2px solid transparent;" onmouseenter="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.12)'; this.style.borderColor='var(--primary)';" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 12px rgba(0,0,0,0.08)'; this.style.borderColor='transparent';">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <div style="font-weight: 700; font-size: 1.1rem; color: #333;">${name}</div>
-                        <div style="font-size: 1.2rem;">${rankBadge}</div>
+                <div class="candidate-result-card" data-result-index="${index}">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="font-weight: 700; font-size: 1rem; color: #333;">${rankBadge} ${name}</div>
                     </div>
-                    <div style="display: flex; justify-content: center; margin-bottom: 12px;">
-                        <div style="background: linear-gradient(135deg, ${scoreColor}, ${score >= 0 ? '#2ecc71' : '#c0392b'}); color: white; padding: 12px 25px; border-radius: 10px; text-align: center;">
-                            <div style="font-size: 1.8rem; font-weight: 700;">${score.toFixed(2)}</div>
-                            <div style="font-size: 0.8rem; opacity: 0.9;">Score</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.8rem; color: #666;"><strong>Mobile:</strong> ${mobile}</div>
+                            <div style="font-size: 0.8rem; color: #666;"><strong>Date:</strong> ${dateStr}</div>
+                        </div>
+                        <div style="background: ${scoreBg}; padding: 10px 15px; border-radius: 8px; text-align: center; border-left: 3px solid ${scoreColor};">
+                            <div style="font-size: 1.4rem; font-weight: 700; color: ${scoreColor};">${score.toFixed(2)}</div>
+                            <div style="font-size: 0.7rem; color: #666;">Score</div>
                         </div>
                     </div>
-                    <div style="font-size: 0.85rem; color: #666; display: grid; gap: 5px;">
-                        <div><strong>Exam Code:</strong> ${examCode}</div>
-                        <div><strong>Date:</strong> ${dateStr}</div>
-                    </div>
-                    <div style="margin-top: 12px; text-align: center; color: var(--primary); font-size: 0.85rem; font-weight: 600;">
-                        Click to view detailed results →
+                    <div style="margin-top: 10px; text-align: center; color: var(--primary); font-size: 0.8rem; font-weight: 600; padding-top: 8px; border-top: 1px solid #eee;">
+                        Click for detailed results →
                     </div>
                 </div>
             `;
         });
 
+        candidatesHTML += '</div>';
+
+        // Ensure container is visible and set content
+        candidatesContainer.style.display = 'block';
+        candidatesContainer.style.minHeight = '200px';
+        candidatesContainer.style.visibility = 'visible';
         candidatesContainer.innerHTML = candidatesHTML;
 
-        // Add click handlers for candidate cards
-        document.querySelectorAll('.candidate-result-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const resultIndex = parseInt(this.getAttribute('data-result-index'));
-                showCandidateDetailedResults(results[resultIndex], examCode);
-            });
-        });
+        console.log('📊 Rendered', results.length, 'candidate cards');
+        console.log('📊 Container element:', candidatesContainer);
+        console.log('📊 Container innerHTML length:', candidatesContainer.innerHTML.length);
+
+        // Use event delegation for candidate cards - more reliable
+        candidatesContainer.onclick = function(e) {
+            const card = e.target.closest('.candidate-result-card');
+            if (card) {
+                const resultIndex = parseInt(card.getAttribute('data-result-index'));
+                console.log('📊 Candidate card clicked, index:', resultIndex);
+                if (results[resultIndex]) {
+                    showCandidateDetailedResults(results[resultIndex], examCode);
+                }
+            }
+        };
 
     } catch (error) {
         console.error('❌ Error loading candidates:', error);
+        const candidatesContainer = document.getElementById('candidates-list-container');
+        if (candidatesContainer) {
+            candidatesContainer.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #e74c3c;">
+                    <p>❌ Error loading candidates: ${error.message}</p>
+                    <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">Please try again or contact support.</p>
+                </div>
+            `;
+        }
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
             window.PoliteCCAPI.showNotification('❌ Failed to load candidates: ' + error.message, 'error');
         }
     }
 }
 
-// Function to show detailed results for a candidate with full questions and options
+// Function to show detailed results for a candidate with full questions and options (INLINE)
 function showCandidateDetailedResults(result, examCode) {
-    const modal = document.getElementById('results-detail-modal');
-    const content = document.getElementById('results-detail-content');
+    console.log('📊 showCandidateDetailedResults called for:', result.Name || result.name);
+
+    // Hide candidates section, show detail section (INLINE)
+    document.getElementById('results-exams-view').classList.add('hidden');
+    document.getElementById('results-candidates-section').classList.add('hidden');
+    document.getElementById('results-detail-section').classList.remove('hidden');
+
+    const content = document.getElementById('candidate-detail-container');
+    if (!content) {
+        console.error('❌ candidate-detail-container element not found!');
+        return;
+    }
 
     const name = result.Name || result.name || 'Unknown';
+
+    // Update section title
+    document.getElementById('detail-section-title').textContent = `Results: ${name}`;
     const score = parseFloat(result.Score || result.score || 0);
     const mobile = result.Mobile || result.mobile || 'N/A';
     const submittedAt = result['Submitted At'] || result.submittedAt || '';
@@ -5128,7 +5354,8 @@ function showCandidateDetailedResults(result, examCode) {
             </div>
         `;
         content.innerHTML = html;
-        modal.style.display = 'block';
+        // Process any rich content
+        processRichContentInContainer(content);
         return;
     }
 
@@ -5337,17 +5564,45 @@ function showCandidateDetailedResults(result, examCode) {
     html += '</div>';
     content.innerHTML = html;
 
-    // Process rich content (render math expressions) in the results modal
+    // Process rich content (render math expressions) in the results
     processRichContentInContainer(content);
-
-    modal.style.display = 'block';
 }
 
-// Back to exams button handler
-document.getElementById('back-to-exams-btn').addEventListener('click', function() {
-    document.getElementById('results-main-view').classList.remove('hidden');
-    document.getElementById('results-candidates-view').classList.add('hidden');
+// Back to exams button handler (from candidates view)
+document.getElementById('back-to-exams').addEventListener('click', function() {
+    document.getElementById('results-exams-view').classList.remove('hidden');
+    document.getElementById('results-candidates-section').classList.add('hidden');
+    document.getElementById('results-detail-section').classList.add('hidden');
 });
+
+// Back to candidates button handler (from detail view)
+document.getElementById('back-to-candidates').addEventListener('click', function() {
+    document.getElementById('results-exams-view').classList.add('hidden');
+    document.getElementById('results-candidates-section').classList.remove('hidden');
+    document.getElementById('results-detail-section').classList.add('hidden');
+});
+
+// Export exam results button handler
+document.getElementById('export-exam-results').addEventListener('click', function() {
+    if (currentExamResults.length > 0) {
+        exportResultsToCSV(currentExamResults, currentExamCodeForResults);
+    } else {
+        if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+            window.PoliteCCAPI.showNotification('No results to export', 'error');
+        }
+    }
+});
+
+// Legacy back button handler (keep for compatibility)
+const legacyBackBtn = document.getElementById('back-to-exams-btn');
+if (legacyBackBtn) {
+    legacyBackBtn.addEventListener('click', function() {
+        // Show main view with candidates list, hide detail content
+        document.getElementById('results-main-view')?.classList.remove('hidden');
+        document.getElementById('results-detail-content')?.classList.add('hidden');
+        this.classList.add('hidden');
+    });
+}
 
 // Close detail modal handler
 document.getElementById('close-detail-modal-btn').addEventListener('click', function() {
@@ -6770,6 +7025,16 @@ if (submitExamBtn) {
     });
 }
 
+// Floating submit button handler
+const floatingSubmitBtn = document.getElementById('floating-submit-btn');
+if (floatingSubmitBtn) {
+    floatingSubmitBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to submit the exam? You cannot change your answers after submission.')) {
+            submitExam();
+        }
+    });
+}
+
 // Function to show candidate's own detailed results (used by results modal)
 function showCandidateOwnResults() {
     const modal = document.getElementById('results-detail-modal');
@@ -6824,6 +7089,105 @@ function showCandidateOwnResults() {
     modal.style.display = 'block';
 
     // Close modal handler is already set up for results-detail-modal
+}
+
+// Function to show detailed results for a candidate's exam history item
+function showCandidateExamDetails(exam) {
+    const modal = document.getElementById('results-detail-modal');
+    const content = document.getElementById('results-detail-content');
+
+    if (!modal || !content) return;
+
+    const date = formatDateForDisplay(exam.timestamp || exam.date);
+    const score = exam.score || 0;
+    const scoreColor = score >= 0 ? '#27ae60' : '#e74c3c';
+
+    // Build detailed view
+    let html = `
+        <h3 style="color: var(--secondary); margin-bottom: 20px;">Exam Details</h3>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; flex-wrap: wrap; gap: 15px;">
+            <div><strong>Exam Code:</strong> ${exam.examCode || 'N/A'}</div>
+            <div><strong>Date:</strong> ${date}</div>
+            <div><strong>Score:</strong> <span style="color: ${scoreColor}; font-weight: 700; font-size: 1.2rem;">${score}</span></div>
+        </div>
+        <div style="max-height: 500px; overflow-y: auto;">
+    `;
+
+    // Parse answers to build question details
+    try {
+        const answers = typeof exam.answers === 'string' ? JSON.parse(exam.answers) : exam.answers || [];
+
+        if (answers && answers.length > 0) {
+            // Check if it's detailed format (array of objects with question data)
+            if (typeof answers[0] === 'object' && answers[0].question) {
+                answers.forEach((answer, index) => {
+                    const isCorrect = answer.isCorrect;
+                    const userAnswered = answer.userAnswer !== 'Not Answered';
+
+                    html += `
+                        <div style="background: ${isCorrect ? '#e8f5e9' : (userAnswered ? '#ffebee' : '#f5f5f5')}; border-left: 4px solid ${isCorrect ? '#27ae60' : (userAnswered ? '#e74c3c' : '#95a5a6')}; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                            <div style="font-weight: 600; margin-bottom: 8px; color: var(--secondary);">Question ${index + 1}</div>
+                            <div style="margin-bottom: 12px; font-size: 1.05rem;">${answer.question}</div>
+
+                            <div style="margin-bottom: 12px;">
+                                <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'A' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>A:</strong> ${answer.optionA || 'N/A'} ${answer.userAnswer === 'A' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'A' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
+                                <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'B' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>B:</strong> ${answer.optionB || 'N/A'} ${answer.userAnswer === 'B' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'B' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
+                                <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'C' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>C:</strong> ${answer.optionC || 'N/A'} ${answer.userAnswer === 'C' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'C' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
+                                <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'D' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
+                                    <strong>D:</strong> ${answer.optionD || 'N/A'} ${answer.userAnswer === 'D' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'D' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                </div>
+                            </div>
+
+                            <div style="font-weight: 600; font-size: 1.1rem;">
+                                ${isCorrect ? '✅ Correct (+1 point)' : (userAnswered ? '❌ Incorrect (-0.25 points)' : '⚪ Not Answered (0 points)')}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                // Legacy format - just show basic info
+                html += `
+                    <div style="text-align: center; padding: 40px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                        <div style="font-size: 2rem; margin-bottom: 15px;">📊</div>
+                        <h4 style="color: #1565c0; margin-bottom: 10px;">Exam Summary</h4>
+                        <p style="color: #1565c0;">You answered ${answers.length} questions in this exam.</p>
+                        <p style="color: #1565c0; font-size: 1.2rem; margin-top: 15px;">Final Score: <strong style="font-size: 1.5rem;">${score}</strong></p>
+                    </div>
+                `;
+            }
+        } else {
+            html += `
+                <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <div style="font-size: 2rem; margin-bottom: 15px;">⚠️</div>
+                    <h4 style="color: #856404; margin-bottom: 10px;">No Detailed Data Available</h4>
+                    <p style="color: #856404;">Question-level details are not available for this exam.</p>
+                </div>
+            `;
+        }
+    } catch (e) {
+        console.error('Error parsing exam answers:', e);
+        html += `
+            <div style="text-align: center; padding: 40px; background: #ffebee; border-radius: 8px; border-left: 4px solid #e74c3c;">
+                <div style="font-size: 2rem; margin-bottom: 15px;">❌</div>
+                <h4 style="color: #c62828; margin-bottom: 10px;">Error Loading Details</h4>
+                <p style="color: #c62828;">Unable to load question details for this exam.</p>
+            </div>
+        `;
+    }
+
+    html += '</div>';
+    content.innerHTML = html;
+
+    // Process LaTeX/math content in results
+    processRichContentInContainer(content);
+
+    modal.style.display = 'flex';
 }
 
 // Result screen navigation handlers
@@ -7183,7 +7547,7 @@ function selectOptionNewUI(optionIndex) {
     if (userAnswers[currentQuestionIndex] === optionIndex) {
         // Deselect - user wants to not answer this question
         userAnswers[currentQuestionIndex] = undefined;
-        options[optionIndex].classList.remove('border-primary', 'bg-primary/10');
+        options[optionIndex].classList.remove('selected', 'border-primary');
         options[optionIndex].classList.add('border-base-300');
         radios[optionIndex].checked = false;
     } else {
@@ -7192,10 +7556,10 @@ function selectOptionNewUI(optionIndex) {
         options.forEach((option, i) => {
             if (i === optionIndex) {
                 option.classList.remove('border-base-300');
-                option.classList.add('border-primary', 'bg-primary/10');
+                option.classList.add('selected', 'border-primary');
                 radios[i].checked = true;
             } else {
-                option.classList.remove('border-primary', 'bg-primary/10');
+                option.classList.remove('selected', 'border-primary');
                 option.classList.add('border-base-300');
                 radios[i].checked = false;
             }
@@ -7676,24 +8040,33 @@ function loadQuestion() {
                 question['Option D'] || 'Option D'
             ];
 
-            optionsContainer.innerHTML = optionValues.map((opt, idx) => {
+            // Clone container to remove old event listeners
+            const newOptionsContainer = optionsContainer.cloneNode(false);
+            newOptionsContainer.id = 'options-container'; // Preserve the ID
+            optionsContainer.parentNode.replaceChild(newOptionsContainer, optionsContainer);
+
+            newOptionsContainer.innerHTML = optionValues.map((opt, idx) => {
                 const isSelected = userAnswers[currentQuestionIndex] === idx;
                 return `
-                    <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}">
-                        <input type="radio" name="answer" class="radio radio-primary option-radio" ${isSelected ? 'checked' : ''}>
+                    <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'selected border-primary' : 'border-base-300'}" data-index="${idx}">
+                        <input type="radio" name="answer" class="radio radio-primary option-radio" style="pointer-events: none;" ${isSelected ? 'checked' : ''}>
                         <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
                         <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>
                     </div>
                 `;
             }).join('');
 
-            // Add click handlers to options
-            optionsContainer.querySelectorAll('.option').forEach(option => {
-                option.addEventListener('click', function() {
-                    const optionIndex = parseInt(this.getAttribute('data-index'));
+            // Add click handler to the new container
+            newOptionsContainer.addEventListener('click', function(e) {
+                const option = e.target.closest('.option');
+                if (option) {
+                    const optionIndex = parseInt(option.getAttribute('data-index'));
                     selectOptionNewUI(optionIndex);
-                });
+                }
             });
+
+            // Process LaTeX/math content in options
+            processRichContentInContainer(newOptionsContainer);
         }
 
         // Hide parent question container for standalone questions
@@ -7734,12 +8107,16 @@ function loadQuestion() {
         }
     }
 
-    if (isLastQuestion) {
-        document.getElementById('next-btn').style.display = 'none';
-        document.getElementById('submit-btn').style.display = 'block';
-    } else {
-        document.getElementById('next-btn').style.display = 'block';
-        document.getElementById('submit-btn').style.display = 'none';
+    // Show/hide floating submit button based on whether this is the last question
+    const floatingSubmitContainer = document.getElementById('floating-submit-container');
+    if (floatingSubmitContainer) {
+        if (isLastQuestion) {
+            floatingSubmitContainer.classList.remove('hidden');
+            document.getElementById('next-btn').style.display = 'none';
+        } else {
+            floatingSubmitContainer.classList.add('hidden');
+            document.getElementById('next-btn').style.display = 'block';
+        }
     }
 }
 
