@@ -239,6 +239,1172 @@
                     </div>
                 </div>
 
+            <div id="candidate-signup-screen" class="screen">
+                <a href="#" id="back-to-hero-from-signup" class="back-link">← Back</a>
+                <div class="auth-form">
+                    <h2 class="form-title">Create Your Account</h2>
+                    <div class="form-group">
+                        <label for="signup-name">Full Name *</label>
+                        <input type="text" id="signup-name" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email Address *</label>
+                        <input type="email" id="signup-email" placeholder="your@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-mobile">Mobile Number (Optional)</label>
+                        <input type="tel" id="signup-mobile" placeholder="10-digit mobile number">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password *</label>
+                        <input type="password" id="signup-password" placeholder="Create a strong password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-confirm-password">Confirm Password *</label>
+                        <input type="password" id="signup-confirm-password" placeholder="Re-enter your password" required>
+                    </div>
+                    <button id="signup-submit-btn" class="success-btn">Create Account</button>
+                    <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 15px;">
+                        A verification link will be sent to your email
+                    </p>
+                    <div class="form-link">
+                        Already have an account? <a id="goto-signin-link">Sign In</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Verification Success Screen -->
+            <div id="verification-success-screen" class="screen">
+                <div class="auth-form" style="text-align: center;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
+                    <h2 class="form-title" style="color: var(--success);">Email Verified!</h2>
+                    <p style="color: #666; margin-bottom: 25px;">
+                        Your email has been verified successfully. You can now login to your account.
+                    </p>
+                    <button id="goto-signin-after-verify" class="success-btn">Go to Sign In</button>
+                </div>
+            </div>
+
+            <!-- Verification Pending Screen -->
+            <div id="verification-pending-screen" class="screen">
+                <div class="auth-form" style="text-align: center;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">📧</div>
+                    <h2 class="form-title">Check Your Email!</h2>
+                    <p style="color: #666; margin-bottom: 15px;">
+                        We've sent a verification link to:
+                    </p>
+                    <p style="font-weight: 600; color: var(--primary); margin-bottom: 25px;" id="pending-verification-email"></p>
+                    <p style="color: #666; margin-bottom: 25px;">
+                        Click the link in the email to verify your account. Once verified, you can login.
+                    </p>
+                    <button id="resend-verification-btn" class="success-btn" style="margin-bottom: 15px;">Resend Verification Email</button>
+                    <div class="form-link">
+                        <a id="goto-signin-from-pending">Already verified? Sign In</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidate Login Screen -->
+            <div id="candidate-signin-screen" class="screen">
+                <a href="#" id="back-to-hero-from-signin" class="back-link">← Back</a>
+                <div class="auth-form">
+                    <h2 class="form-title">Welcome Back!</h2>
+                    <div class="form-group">
+                        <label for="signin-email">Email Address *</label>
+                        <input type="email" id="signin-email" placeholder="your@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signin-password">Password *</label>
+                        <input type="password" id="signin-password" placeholder="Enter your password" required>
+                    </div>
+                    <button id="signin-submit-btn">Sign In</button>
+                    <div class="form-link">
+                        <a id="forgot-password-link">Forgot Password?</a>
+                    </div>
+                    <div class="form-link">
+                        Don't have an account? <a id="goto-signup-link">Create Account</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forgot Password Screen -->
+            <div id="forgot-password-screen" class="screen">
+                <a href="#" id="back-to-signin-from-forgot" class="back-link">← Back to Sign In</a>
+                <div class="auth-form">
+                    <h2 class="form-title">Reset Your Password</h2>
+                    <p style="text-align: center; color: #666; margin-bottom: 25px;">
+                        Enter your email address and we'll generate a new temporary password for you.
+                    </p>
+                    <div class="form-group">
+                        <label for="forgot-email">Email Address *</label>
+                        <input type="email" id="forgot-email" placeholder="your@email.com" required>
+                    </div>
+                    <button id="reset-password-btn" class="success-btn">Reset Password</button>
+                    <div id="reset-result" style="display: none; margin-top: 20px; padding: 20px; background: #e8f5e9; border-radius: 10px; border-left: 4px solid #27ae60;">
+                        <p style="font-weight: 600; color: #27ae60; margin-bottom: 10px;">✅ Password Reset Successful!</p>
+                        <p style="color: #666; margin-bottom: 10px;">Your new temporary password is:</p>
+                        <div style="background: white; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 1.2rem; font-weight: 700; color: #2c3e50; text-align: center; letter-spacing: 2px;" id="new-temp-password"></div>
+                        <p style="color: #666; margin-top: 15px; font-size: 0.9rem;">
+                            Please save this password and use it to sign in. We recommend changing it after logging in.
+                        </p>
+                        <button id="goto-signin-after-reset" style="margin-top: 15px; background: var(--success);">Go to Sign In</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidate Dashboard -->
+            <div id="candidate-dashboard" class="screen">
+                <div class="dashboard-header">
+                    <a href="#" id="candidate-logout-link" class="logout-link">Logout</a>
+                    <h2 class="dashboard-title">Welcome, <span id="dashboard-name"></span>!</h2>
+                </div>
+
+                <!-- Profile Section -->
+                <div class="profile-section" style="background: white; border-radius: 15px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <div style="display: flex; align-items: center; gap: 25px; flex-wrap: wrap;">
+                        <!-- Profile Image -->
+                        <div class="profile-image-container" style="position: relative;">
+                            <div id="profile-image-display" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--primary)); display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem; font-weight: bold; overflow: hidden;">
+                                <span id="profile-initials"></span>
+                            </div>
+                            <label for="profile-image-input" style="position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 0.9rem; border: 2px solid white;">
+                                📷
+                            </label>
+                            <input type="file" id="profile-image-input" accept="image/*" style="display: none;">
+                        </div>
+                        <!-- Profile Info -->
+                        <div style="flex: 1; min-width: 200px;">
+                            <div style="font-size: 1.3rem; font-weight: 600; color: var(--primary); margin-bottom: 5px;" id="profile-name-display"></div>
+                            <div style="color: #666; margin-bottom: 3px;"><span style="font-weight: 500;">Email:</span> <span id="dashboard-email"></span></div>
+                            <div style="color: #666;"><span style="font-weight: 500;">Mobile:</span> <span id="dashboard-mobile"></span> <a href="#" id="edit-mobile-link" style="color: var(--secondary); font-size: 0.85rem; margin-left: 5px;">Edit</a></div>
+                        </div>
+                        <!-- Edit Profile Button -->
+                        <div>
+                            <button id="edit-profile-btn" style="background: var(--secondary); color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 500; cursor: pointer;">Edit Profile</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-exams-given">0</div>
+                        <div class="stat-label">Exams Taken</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="average-score">0</div>
+                        <div class="stat-label">Average Score</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px;">
+                    <button id="take-exam-dashboard-btn" class="success-btn" style="flex: 1; min-width: 150px;">Take a New Exam</button>
+                    <button id="change-password-btn" style="flex: 1; min-width: 150px; background: var(--accent);">Change Password</button>
+                </div>
+
+                <h3 style="color: var(--primary); margin-bottom: 20px;">Your Exam History</h3>
+                <div id="exam-history-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <p>No exams taken yet. Start your first exam!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Profile Modal -->
+            <div id="edit-profile-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+                <div class="modal-content" style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h3 style="color: var(--primary); margin: 0;">Edit Profile</h3>
+                        <button id="close-profile-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Profile Image</label>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div id="modal-profile-preview" style="width: 80px; height: 80px; border-radius: 50%; background: var(--secondary); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; overflow: hidden;"></div>
+                            <div>
+                                <label for="modal-profile-image" style="display: inline-block; background: var(--secondary); color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Choose Image</label>
+                                <input type="file" id="modal-profile-image" accept="image/*" style="display: none;">
+                                <p style="font-size: 0.8rem; color: #999; margin-top: 5px;">Max size: 500KB</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-profile-name">Full Name</label>
+                        <input type="text" id="edit-profile-name" placeholder="Enter your full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-profile-mobile">Mobile Number</label>
+                        <input type="tel" id="edit-profile-mobile" placeholder="10-digit mobile number">
+                    </div>
+                    <button id="save-profile-btn" class="success-btn">Save Changes</button>
+                </div>
+            </div>
+
+            <!-- Change Password Modal -->
+            <div id="change-password-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+                <div class="modal-content" style="background: white; border-radius: 15px; padding: 30px; max-width: 450px; width: 90%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h3 style="color: var(--primary); margin: 0;">Change Password</h3>
+                        <button id="close-password-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="current-password">Current Password *</label>
+                        <input type="password" id="current-password" placeholder="Enter current password">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">New Password *</label>
+                        <input type="password" id="new-password" placeholder="Enter new password (min 6 characters)">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-new-password">Confirm New Password *</label>
+                        <input type="password" id="confirm-new-password" placeholder="Re-enter new password">
+                    </div>
+                    <button id="save-password-btn" class="success-btn">Change Password</button>
+                </div>
+            </div>
+
+            <!-- Admin Login Screen -->
+            <div id="admin-login-screen" class="screen">
+                <a href="#" id="back-to-hero-from-admin" class="back-link">← Back</a>
+                <div class="auth-form">
+                    <h2 class="form-title">Admin Access</h2>
+                    <div class="form-group">
+                        <label for="admin-username">Username</label>
+                        <input type="text" id="admin-username" placeholder="Enter admin username">
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-password">Password</label>
+                        <input type="password" id="admin-password" placeholder="Enter admin password">
+                    </div>
+                    <button id="admin-login-btn" class="admin-btn">Login to Admin Panel</button>
+                    <p class="error" id="admin-login-error"></p>
+                </div>
+            </div>
+
+            <!-- Admin Panel -->
+            <div id="admin-panel" class="screen">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h2 style="color: var(--primary);">Admin Dashboard</h2>
+                    <button style="width: auto; padding: 8px 15px; background: var(--danger);" id="logout-btn">Logout</button>
+                </div>
+                
+                <!-- System Status - Actual Information -->
+                <div class="system-status">
+                    <h3>📊 System Status</h3>
+                    <div class="status-grid">
+                        <div class="status-item" id="db-status-item">
+                            <div class="status-icon">☁️</div>
+                            <div class="status-title">Airtable Database</div>
+                            <div class="status-text" id="db-status-text">✅ Connected</div>
+                        </div>
+                        <div class="status-item" id="gemini-status-item">
+                            <div class="status-icon">🤖</div>
+                            <div class="status-title">Gemini AI</div>
+                            <div class="status-text" id="gemini-status-text">✅ Active</div>
+                        </div>
+                        <div class="status-item" id="ocr-status-item">
+                            <div class="status-icon">📸</div>
+                            <div class="status-title">OCR Service</div>
+                            <div class="status-text" id="ocr-status-text">✅ Ready</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 30px;">
+                    <button class="admin-btn" id="question-bank-btn">📚 Question Bank</button>
+                    <button class="admin-btn" id="create-exam-btn">✏️ Create New Exam</button>
+                    <button class="admin-btn" id="view-results-btn">📊 View Results</button>
+                    <button class="upload-btn" id="upload-btn">📸 Upload Question Paper</button>
+                    <button class="ai-btn" id="ai-btn">🤖 AI Question Generator</button>
+                </div>
+
+
+                <!-- Question Bank Section -->
+                <div id="question-bank-section" class="hidden">
+                    <h3 style="margin: 0 0 15px 0; color: var(--secondary);">Question Bank</h3>
+
+                    <!-- Stats Bar -->
+                    <div id="question-bank-stats" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                            <span>📊 Total: <strong id="total-questions-count">0</strong></span>
+                            <span>✅ Selected: <strong id="selected-questions-count">0</strong></span>
+                            <span>📄 Showing: <strong id="showing-questions-count">0</strong></span>
+                            <span style="background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 12px;">🛒 Cart: <strong id="cart-questions-count">0</strong></span>
+                        </div>
+                        <div style="font-size: 0.85rem; opacity: 0.9;">
+                            Scroll down to load more questions
+                        </div>
+                    </div>
+
+                    <!-- Search and Filter Row -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <input type="text" id="question-search-input" placeholder="🔍 Search questions..." style="flex: 1; min-width: 200px; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem;">
+                        <select id="question-filter-subject" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
+                            <option value="">All Subjects</option>
+                            <option value="Quantitative Aptitude">Quantitative Aptitude</option>
+                            <option value="Reasoning Ability">Reasoning Ability</option>
+                            <option value="English Language">English Language</option>
+                            <option value="General Awareness">General Awareness</option>
+                            <option value="Current Affairs">Current Affairs</option>
+                            <option value="History">History</option>
+                            <option value="Geography">Geography</option>
+                            <option value="Political Science">Political Science</option>
+                            <option value="Economics">Economics</option>
+                            <option value="Constitution">Constitution</option>
+                            <option value="Law">Law</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Science">Science</option>
+                            <option value="Polity">Polity</option>
+                            <option value="Banking Awareness">Banking Awareness</option>
+                            <option value="Computer Knowledge">Computer Knowledge</option>
+                            <option value="Descriptive Writing">Descriptive Writing</option>
+                            <option value="Data Interpretation">Data Interpretation</option>
+                            <option value="Logical Reasoning">Logical Reasoning</option>
+                            <option value="Analytical Ability">Analytical Ability</option>
+                            <option value="Verbal Ability">Verbal Ability</option>
+                            <option value="Technical Subjects">Technical Subjects</option>
+                            <option value="Legal Reasoning">Legal Reasoning</option>
+                            <option value="Pedagogy">Pedagogy</option>
+                            <option value="Others">Others</option>
+                        </select>
+                        <select id="question-filter-difficulty" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
+                            <option value="">All Difficulty</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Buttons Row -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px; background: #f8f9fa; border-radius: 8px; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button id="select-all-questions-btn" style="background: #3498db; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                                ☑️ Select All
+                            </button>
+                            <button id="deselect-all-questions-btn" style="background: #95a5a6; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                                ☐ Deselect All
+                            </button>
+                            <button id="bulk-delete-questions-btn" style="background: #e74c3c; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                                🗑️ Delete Selected
+                            </button>
+                            <button id="sanitize-question-bank-btn" style="background: #9b59b6; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                                🧹 Sanitize (Remove Duplicates)
+                            </button>
+                            <button id="export-questions-btn" style="background: #27ae60; color: white; padding: 6px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                                📥 Export CSV
+                            </button>
+                        </div>
+                        <button id="toggle-add-question-btn" style="background: var(--success); padding: 8px 16px; font-size: 0.9rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                            ➕ Add New Question
+                        </button>
+                    </div>
+
+                    <!-- Add Question Form (Initially Hidden) -->
+                    <div id="add-question-form" class="hidden" style="background: #f0f8ff; padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 2px solid var(--primary);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <h4 style="margin: 0; color: var(--primary);">Add New Question</h4>
+                                <a href="#" id="math-syntax-help-link" style="color: var(--secondary); font-size: 0.85rem; text-decoration: none; background: #e3f2fd; padding: 4px 10px; border-radius: 15px; display: flex; align-items: center; gap: 5px;" title="Click to see how to add math, images & graphs">
+                                    <span style="font-size: 1rem;">📐</span> Math & Image Syntax Help
+                                </a>
+                            </div>
+                            <button id="close-add-question-btn" style="background: #e74c3c; color: white; padding: 5px 12px; border-radius: 5px; border: none; cursor: pointer; font-size: 0.85rem;">✖ Close</button>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <div class="form-group" style="flex: 1; min-width: 150px;">
+                                <label>Subject</label>
+                                <select id="question-subject">
+                                    <option value="Quantitative Aptitude">Quantitative Aptitude</option>
+                                    <option value="Reasoning Ability">Reasoning Ability</option>
+                                    <option value="English Language">English Language</option>
+                                    <option value="General Awareness">General Awareness</option>
+                                    <option value="Current Affairs">Current Affairs</option>
+                                    <option value="History">History</option>
+                                    <option value="Geography">Geography</option>
+                                    <option value="Political Science">Political Science</option>
+                                    <option value="Economics">Economics</option>
+                                    <option value="Constitution">Constitution</option>
+                                    <option value="Law">Law</option>
+                                    <option value="Mathematics">Mathematics</option>
+                                    <option value="Science">Science</option>
+                                    <option value="Polity">Polity</option>
+                                    <option value="Banking Awareness">Banking Awareness</option>
+                                    <option value="Computer Knowledge">Computer Knowledge</option>
+                                    <option value="Descriptive Writing">Descriptive Writing</option>
+                                    <option value="Data Interpretation">Data Interpretation</option>
+                                    <option value="Logical Reasoning">Logical Reasoning</option>
+                                    <option value="Analytical Ability">Analytical Ability</option>
+                                    <option value="Verbal Ability">Verbal Ability</option>
+                                    <option value="Technical Subjects">Technical Subjects</option>
+                                    <option value="Legal Reasoning">Legal Reasoning</option>
+                                    <option value="Pedagogy">Pedagogy</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1; min-width: 150px;">
+                                <label>Difficulty</label>
+                                <select id="question-difficulty">
+                                    <option value="Easy">Easy</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Hard">Hard</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Question Type Selection -->
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label>Question Type</label>
+                            <select id="question-type" onchange="handleQuestionTypeChange()">
+                                <option value="standalone">Standalone Question</option>
+                                <option value="parent-child">Parent-child Question (Passage with Sub-questions)</option>
+                            </select>
+                        </div>
+
+                        <!-- Standalone Question Info -->
+                        <div id="standalone-question-info" style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                            <div style="color: #1565c0; font-weight: 600; margin-bottom: 5px;">📝 Standalone Question</div>
+                            <div style="color: #666; font-size: 0.9rem;">A single MCQ with 4 options. Marks: +1 correct, -0.25 wrong, 0 unanswered.</div>
+                        </div>
+
+                        <!-- Parent-child Question Info -->
+                        <div id="parent-child-question-info" style="display: none; background: #fff3e0; border: 1px solid #ff9800; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                            <div style="color: #e65100; font-weight: 600; margin-bottom: 5px;">📋 Parent-child Question</div>
+                            <div style="color: #666; font-size: 0.9rem;">A passage/scenario with multiple sub-questions. The parent (passage) is not scored. Each child question is scored individually.</div>
+                        </div>
+
+                        <!-- Standalone Question Form -->
+                        <div id="standalone-form-container">
+                            <div class="form-group">
+                                <label>Question Text</label>
+                                <textarea id="question-text" rows="3" placeholder="Enter the question here..."></textarea>
+                            </div>
+                            <div id="question-options-container">
+                                <div class="form-group">
+                                    <label>Option A</label>
+                                    <input type="text" id="option-a" placeholder="Option A">
+                                </div>
+                                <div class="form-group">
+                                    <label>Option B</label>
+                                    <input type="text" id="option-b" placeholder="Option B">
+                                </div>
+                                <div class="form-group">
+                                    <label>Option C</label>
+                                    <input type="text" id="option-c" placeholder="Option C">
+                                </div>
+                                <div class="form-group">
+                                    <label>Option D</label>
+                                    <input type="text" id="option-d" placeholder="Option D">
+                                </div>
+                                <div class="form-group">
+                                    <label>Correct Answer</label>
+                                    <select id="correct-answer">
+                                        <option value="0">A</option>
+                                        <option value="1">B</option>
+                                        <option value="2">C</option>
+                                        <option value="3">D</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button id="add-question-btn">Add Question to Bank</button>
+                        </div>
+
+                        <!-- Parent-child Question Form -->
+                        <div id="parent-child-form-container" style="display: none;">
+                            <!-- Parent Question Section -->
+                            <div style="background: #fff8e1; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin-bottom: 15px;">
+                                <h5 style="margin: 0 0 10px 0; color: #856404;">📖 Parent Question (Passage/Scenario)</h5>
+                                <div class="form-group">
+                                    <label>Passage/Scenario Text</label>
+                                    <textarea id="parent-question-text" rows="6" placeholder="Enter the passage, scenario, or context that the sub-questions will refer to..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Child Questions Section -->
+                            <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50; margin-bottom: 15px;">
+                                <h5 style="margin: 0 0 10px 0; color: #2e7d32;">👶 Child Questions (Minimum 1 required)</h5>
+                                <div id="bank-children-container">
+                                    <!-- Child questions will be added here dynamically -->
+                                </div>
+                                <button type="button" id="bank-add-child-btn" style="background: #4caf50; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: 600;">
+                                    ➕ Add Another Child Question
+                                </button>
+                            </div>
+
+                            <button id="add-parent-child-btn" style="background: var(--primary); color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: 600; font-size: 1rem;">
+                                Create Parent-child Question Set
+                            </button>
+                        </div>
+                        <div class="error" id="question-error"></div>
+                        <div class="success" id="question-success"></div>
+                    </div>
+
+                    <!-- Existing Questions List -->
+                    <div>
+                        <h4 style="margin: 20px 0 15px; color: var(--secondary);">Existing Questions</h4>
+                        <div id="questions-list" style="max-height: 70vh; overflow-y: auto; padding-right: 5px;">
+                            <p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>
+                        </div>
+                        <div id="questions-loading-more" style="display: none; text-align: center; padding: 20px;">
+                            <div style="display: inline-block; width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid var(--secondary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                            <p style="margin-top: 10px; color: #7f8c8d;">Loading more questions...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Exam Section -->
+                <div id="create-exam-section" class="hidden">
+                    <h3 style="margin-bottom: 15px; color: var(--secondary);">New Exam Setup</h3>
+                    <div class="form-group">
+                        <label>Exam Code (Unique)</label>
+                        <input type="text" id="exam-code" placeholder="e.g., REASONING_JULY_01" value="SAMPLE01">
+                    </div>
+                    <div class="form-group">
+                        <label>Exam Title</label>
+                        <input type="text" id="exam-title" placeholder="e.g., Logical Reasoning Test for Banking" value="Sample Exam">
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (Minutes)</label>
+                        <input type="number" id="exam-duration" min="5" value="10" placeholder="e.g., 60">
+                    </div>
+                    <div class="form-group">
+                        <label>Expiry Date (IST)</label>
+                        <input type="text" id="exam-expiry" placeholder="Select or enter date (dd-mm-yyyy)">
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; flex-wrap: wrap; gap: 10px;">
+                            <label style="margin: 0; color: white; font-size: 1.1rem; font-weight: 600;">Select Questions for Exam</label>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 8px;">
+                                    <input type="number" id="random-count" min="1" value="5" placeholder="#" style="width: 60px; padding: 5px; border: none; border-radius: 5px; text-align: center; font-weight: 600;">
+                                    <button id="random-select-btn" style="background: #f39c12; color: white; padding: 6px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">
+                                        🎲 Random
+                                    </button>
+                                </div>
+                                <button id="show-cart-btn" style="background: #27ae60; color: white; padding: 6px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
+                                    🛒 Cart (<span id="exam-cart-count">0</span>)
+                                </button>
+                                <button id="reset-selection-btn" style="background: #e74c3c; color: white; padding: 6px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">
+                                    🔄 Reset
+                                </button>
+                                <div id="selected-count" style="background: white; color: #667eea; padding: 8px 20px; border-radius: 25px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2); min-width: 120px; text-align: center;">
+                                    0 Selected
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Filter controls for exam question selector -->
+                        <div id="exam-question-filters" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                            <input type="text" id="exam-question-search" placeholder="🔍 Search questions..." style="flex: 1; min-width: 180px; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem;">
+                            <select id="exam-question-filter-subject" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
+                                <option value="">All Subjects</option>
+                                <option value="Quantitative Aptitude">Quantitative Aptitude</option>
+                                <option value="Reasoning Ability">Reasoning Ability</option>
+                                <option value="English Language">English Language</option>
+                                <option value="General Awareness">General Awareness</option>
+                                <option value="Current Affairs">Current Affairs</option>
+                                <option value="History">History</option>
+                                <option value="Geography">Geography</option>
+                                <option value="Political Science">Political Science</option>
+                                <option value="Economics">Economics</option>
+                                <option value="Constitution">Constitution</option>
+                                <option value="Law">Law</option>
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="Science">Science</option>
+                                <option value="Polity">Polity</option>
+                                <option value="Banking Awareness">Banking Awareness</option>
+                                <option value="Computer Knowledge">Computer Knowledge</option>
+                                <option value="Descriptive Writing">Descriptive Writing</option>
+                                <option value="Data Interpretation">Data Interpretation</option>
+                                <option value="Logical Reasoning">Logical Reasoning</option>
+                                <option value="Analytical Ability">Analytical Ability</option>
+                                <option value="Verbal Ability">Verbal Ability</option>
+                                <option value="Technical Subjects">Technical Subjects</option>
+                                <option value="Legal Reasoning">Legal Reasoning</option>
+                                <option value="Pedagogy">Pedagogy</option>
+                                <option value="Others">Others</option>
+                            </select>
+                            <select id="exam-question-filter-difficulty" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
+                                <option value="">All Difficulty</option>
+                                <option value="Easy">Easy</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                        </div>
+                        <div id="exam-questions-list">
+                            <p style="text-align: center; color: #7f8c8d;">Loading questions from database...</p>
+                        </div>
+                    </div>
+                    <button id="create-exam-submit-btn">Create Exam</button>
+                    <div class="error" id="exam-error"></div>
+                    <div class="success" id="exam-success"></div>
+                </div>
+
+                <!-- Cart Modal -->
+                <div id="cart-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto;">
+                    <div style="background: white; margin: 30px auto; max-width: 800px; border-radius: 12px; padding: 25px; position: relative; max-height: 90vh; overflow-y: auto;">
+                        <button id="close-cart-modal-btn" style="position: absolute; top: 15px; right: 15px; background: var(--danger); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; z-index: 10;">✖ Close</button>
+
+                        <h3 style="color: var(--secondary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.5rem;">🛒</span> Question Cart
+                        </h3>
+
+                        <!-- Cart Stats Summary -->
+                        <div id="cart-stats-summary" style="margin-bottom: 20px;">
+                            <!-- Stats will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Cart Action Buttons -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                            <button id="cart-select-all-btn" style="background: #3498db; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                ☑️ Select All
+                            </button>
+                            <button id="cart-deselect-all-btn" style="background: #95a5a6; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                ☐ Deselect All
+                            </button>
+                            <button id="cart-clear-btn" style="background: #e74c3c; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                🗑️ Clear Cart
+                            </button>
+                        </div>
+
+                        <!-- Cart Questions List -->
+                        <div id="cart-questions-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                            <!-- Questions will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Add to Exam Button -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 2px solid #e0e0e0;">
+                            <span id="cart-selected-info" style="color: #666; font-weight: 500;">0 questions selected</span>
+                            <button id="add-cart-to-exam-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                                ➕ Add Selected to Exam
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Results Section -->
+                <div id="view-results-section" class="hidden">
+                    <div id="results-main-view">
+                        <h3 style="margin-bottom: 20px; color: var(--secondary); display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.5rem;">📊</span> Exam Results Dashboard
+                        </h3>
+                        <div id="results-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700;" id="total-exams-count">0</div>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">Total Exams</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700;" id="active-exams-count">0</div>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">Active Exams</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #eb3349, #f45c43); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700;" id="expired-exams-count">0</div>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">Expired Exams</div>
+                            </div>
+                        </div>
+                        <h4 style="margin-bottom: 15px; color: var(--primary);">Click on an exam to view candidates</h4>
+                        <div id="exams-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                            <p style="text-align: center; color: #7f8c8d; grid-column: 1/-1;">Loading exams...</p>
+                        </div>
+                    </div>
+
+                    <div id="results-candidates-view" class="hidden">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                            <button id="back-to-exams-btn" style="background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                <span>←</span> Back to Exams
+                            </button>
+                            <h3 style="color: var(--secondary); margin: 0;" id="selected-exam-title">Exam Results</h3>
+                        </div>
+                        <div id="selected-exam-info" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid var(--secondary);">
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 style="color: var(--primary); margin: 0;">Candidates who took this exam</h4>
+                            <button id="export-results-btn-new" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                📥 Export to CSV
+                            </button>
+                        </div>
+                        <div id="candidates-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+                            <p style="text-align: center; color: #7f8c8d; grid-column: 1/-1;">Loading candidates...</p>
+                        </div>
+                    </div>
+
+                    <div id="results-detail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto;">
+                        <div style="background: white; margin: 30px auto; max-width: 950px; border-radius: 12px; padding: 30px; position: relative; max-height: 90vh; overflow-y: auto;">
+                            <button id="close-detail-modal-btn" style="position: absolute; top: 15px; right: 15px; background: var(--danger); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; z-index: 10;">✖ Close</button>
+                            <div id="results-detail-content"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Question Section -->
+                <div id="create-question-section" class="content-section" style="display: none;">
+                    <h3 style="margin: 0 0 20px 0; color: var(--secondary);">➕ Create New Question</h3>
+                    
+                    <!-- Question Type Selector -->
+                    <div class="form-group">
+                        <label for="question-type-select">Question Type:</label>
+                        <select id="question-type-select" style="padding: 12px; font-size: 16px;">
+                            <option value="">-- Select Type --</option>
+                            <option value="standalone">Standalone Question (Single MCQ)</option>
+                            <option value="parent-child">Parent-Child Question (Passage/Scenario with Sub-Questions)</option>
+                        </select>
+                    </div>
+
+                    <!-- Standalone Question Form -->
+                    <div id="standalone-form" style="display: none; margin-top: 20px;">
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid var(--secondary);">
+                            <h4 style="margin-top: 0; color: var(--secondary);">Standalone Question</h4>
+                            
+                            <div class="form-group">
+                                <label>Question ID:</label>
+                                <input type="text" id="standalone-id" placeholder="e.g., Q0001 (auto-generated if empty)">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Subject:</label>
+                                <select id="standalone-subject">
+                                    <option value="">-- Select Subject --</option>
+                                    <option value="Quantitative Aptitude">Quantitative Aptitude</option>
+                                    <option value="Reasoning Ability">Reasoning Ability</option>
+                                    <option value="English Language">English Language</option>
+                                    <option value="General Awareness">General Awareness</option>
+                                    <option value="Current Affairs">Current Affairs</option>
+                                    <option value="History">History</option>
+                                    <option value="Geography">Geography</option>
+                                    <option value="Political Science">Political Science</option>
+                                    <option value="Economics">Economics</option>
+                                    <option value="Constitution">Constitution</option>
+                                    <option value="Law">Law</option>
+                                    <option value="Mathematics">Mathematics</option>
+                                    <option value="Science">Science</option>
+                                    <option value="Polity">Polity</option>
+                                    <option value="Banking Awareness">Banking Awareness</option>
+                                    <option value="Computer Knowledge">Computer Knowledge</option>
+                                    <option value="Data Interpretation">Data Interpretation</option>
+                                    <option value="Logical Reasoning">Logical Reasoning</option>
+                                    <option value="Technical Subjects">Technical Subjects</option>
+                                    <option value="Legal Reasoning">Legal Reasoning</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Question:</label>
+                                <textarea id="standalone-question" rows="3" placeholder="Enter your question here..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Option A:</label>
+                                <input type="text" id="standalone-option-a" placeholder="Enter option A">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Option B:</label>
+                                <input type="text" id="standalone-option-b" placeholder="Enter option B">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Option C:</label>
+                                <input type="text" id="standalone-option-c" placeholder="Enter option C">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Option D:</label>
+                                <input type="text" id="standalone-option-d" placeholder="Enter option D">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Correct Answer:</label>
+                                <select id="standalone-correct">
+                                    <option value="">-- Select Correct Answer --</option>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="D">D</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Difficulty:</label>
+                                <select id="standalone-difficulty">
+                                    <option value="Easy">Easy</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Hard">Hard</option>
+                                </select>
+                            </div>
+
+                            <button class="btn primary-btn" id="create-standalone-btn" style="width: 100%; margin-top: 10px;">
+                                Create Standalone Question
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Parent-Child Question Form -->
+                    <div id="parent-child-form" style="display: none; margin-top: 20px;">
+                        
+                        <!-- Parent Question Section -->
+                        <div style="background: #fff3cd; padding: 20px; border-radius: 10px; border-left: 4px solid #ffc107; margin-bottom: 20px;">
+                            <h4 style="margin-top: 0; color: #856404;">📖 Parent Question (Passage/Scenario)</h4>
+                            <p style="color: #856404; font-size: 14px; margin-bottom: 15px;">
+                                This is the main passage, scenario, or context that children questions will refer to. It will NOT be scored itself.
+                            </p>
+
+                            <div class="form-group">
+                                <label>Parent ID:</label>
+                                <input type="text" id="parent-id" placeholder="e.g., Q0001 (auto-generated if empty)">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Subject:</label>
+                                <select id="parent-subject">
+                                    <option value="">-- Select Subject --</option>
+                                    <option value="Quantitative Aptitude">Quantitative Aptitude</option>
+                                    <option value="Reasoning Ability">Reasoning Ability</option>
+                                    <option value="English Language">English Language</option>
+                                    <option value="General Awareness">General Awareness</option>
+                                    <option value="Current Affairs">Current Affairs</option>
+                                    <option value="History">History</option>
+                                    <option value="Geography">Geography</option>
+                                    <option value="Political Science">Political Science</option>
+                                    <option value="Economics">Economics</option>
+                                    <option value="Constitution">Constitution</option>
+                                    <option value="Law">Law</option>
+                                    <option value="Mathematics">Mathematics</option>
+                                    <option value="Science">Science</option>
+                                    <option value="Polity">Polity</option>
+                                    <option value="Banking Awareness">Banking Awareness</option>
+                                    <option value="Computer Knowledge">Computer Knowledge</option>
+                                    <option value="Data Interpretation">Data Interpretation</option>
+                                    <option value="Logical Reasoning">Logical Reasoning</option>
+                                    <option value="Technical Subjects">Technical Subjects</option>
+                                    <option value="Legal Reasoning">Legal Reasoning</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Parent Question Text (Passage/Scenario):</label>
+                                <textarea id="parent-text" rows="8" placeholder="Enter the full passage, scenario, or context here...
+
+Example:
+Read the following passage about artificial intelligence:
+
+Artificial Intelligence has revolutionized..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Difficulty:</label>
+                                <select id="parent-difficulty">
+                                    <option value="Easy">Easy</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Hard">Hard</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Children Questions Section -->
+                        <div style="background: #d1ecf1; padding: 20px; border-radius: 10px; border-left: 4px solid #17a2b8;">
+                            <h4 style="margin-top: 0; color: #0c5460;">👶 Child Questions (Minimum 1 Required)</h4>
+                            <p style="color: #0c5460; font-size: 14px; margin-bottom: 15px;">
+                                These are the actual questions that refer to the parent passage/scenario. Each will be scored individually.
+                            </p>
+
+                            <div id="children-container">
+                                <!-- Child questions will be added here dynamically -->
+                            </div>
+
+                            <button class="btn" id="add-child-btn" style="background: #17a2b8; color: white; width: 100%; margin-top: 15px;">
+                                ➕ Add Another Child Question
+                            </button>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button class="btn primary-btn" id="create-parent-child-btn" style="width: 100%; margin-top: 20px; padding: 15px; font-size: 18px;">
+                            ✅ Create Parent-Child Question Set
+                        </button>
+                    </div>
+
+                    <!-- Back Button -->
+                    <button class="btn" id="back-from-create-btn" style="background: #6c757d; color: white; width: 100%; margin-top: 20px;">
+                        ⬅ Back to Dashboard
+                    </button>
+                </div>
+
+                <!-- Upload Question Paper Section -->
+                <div id="upload-section" class="hidden">
+                    <h3>📸 Upload Question Paper</h3>
+                    <p>Capture questions directly with your camera or upload an existing image/PDF!</p>
+
+                    <div style="display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap;">
+                        <button class="upload-btn" id="capture-photo-btn" style="flex: 1; min-width: 200px;">
+                            📷 Capture with Camera
+                        </button>
+                        <button class="admin-btn" id="choose-file-btn" style="flex: 1; min-width: 200px;">
+                            📁 Choose from Files
+                        </button>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 10px;">
+                        <input type="file" id="paper-upload" accept="image/*,.pdf" capture="environment" style="display: none;">
+                        <input type="file" id="paper-upload-file" accept="image/*,.pdf" style="display: none;">
+                        <div id="selected-file-info" class="hidden" style="padding: 12px; background: #e8f5e9; border-radius: 8px; margin-top: 10px;">
+                            <strong>Selected:</strong> <span id="file-name"></span>
+                        </div>
+                    </div>
+
+                    <button class="upload-btn" id="process-upload-btn">🤖 Extract Questions with Gemini AI</button>
+                    <div id="ocr-progress" class="hidden" style="margin-top: 15px; padding: 15px; background: #e3f2fd; border-radius: 8px; text-align: center;">
+                        <p style="color: var(--secondary); font-weight: 600; margin-bottom: 10px;">Processing with Gemini AI...</p>
+                        <div style="background: #ddd; border-radius: 10px; overflow: hidden; height: 20px;">
+                            <div id="ocr-progress-bar" style="background: var(--secondary); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <p id="ocr-status" style="margin-top: 10px; font-size: 0.9rem; color: #666;"></p>
+                    </div>
+                    
+                    <div id="upload-result-container" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #e0e0e0;">
+                        <h4 style="color: var(--primary); margin-bottom: 15px;">Extracted Text</h4>
+                        <textarea id="extracted-text" rows="10" style="font-family: monospace; margin-bottom: 20px; resize: vertical;"></textarea>
+                        
+                        <button class="admin-btn" style="margin-bottom: 15px;" id="clean-text-btn">🧹 Clean & Format Text</button>
+                        
+                        <h4 style="margin: 20px 0 15px; color: var(--secondary);">Ready to Add Questions</h4>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                            <button class="admin-btn" id="select-all-extracted-btn" style="background: #2196f3;">☑️ Select All</button>
+                            <button class="admin-btn" id="select-none-extracted-btn" style="background: #9e9e9e;">☐ Select None</button>
+                        </div>
+                        <div id="ready-questions">
+                            <p style="text-align: center; color: #7f8c8d;">Click 'Clean & Format Text' to see questions</p>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                            <button class="success-btn" id="add-extracted-btn">✅ Add All Questions to Bank</button>
+                            <button class="admin-btn" id="add-selected-btn">➕ Add Selected Questions</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Question Generator Section -->
+                <div id="ai-generator-section" class="hidden">
+                    <h3>🤖 AI Question Generator</h3>
+                    <p>Create high-quality MCQs in seconds with AI. Perfect for job aspirants!</p>
+
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>Subject Category</label>
+                        <select id="ai-subject">
+                            <option value="Quantitative Aptitude">Quantitative Aptitude</option>
+                            <option value="Reasoning Ability">Reasoning Ability</option>
+                            <option value="English Language">English Language</option>
+                            <option value="General Awareness">General Awareness</option>
+                            <option value="Current Affairs">Current Affairs</option>
+                            <option value="History">History</option>
+                            <option value="Geography">Geography</option>
+                            <option value="Political Science">Political Science</option>
+                            <option value="Economics">Economics</option>
+                            <option value="Constitution">Constitution</option>
+                            <option value="Law">Law</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Polity">Polity</option>
+                            <option value="Science">Science</option>
+                            <option value="Banking Awareness">Banking Awareness</option>
+                            <option value="Computer Knowledge">Computer Knowledge</option>
+                            <option value="Data Interpretation">Data Interpretation</option>
+                            <option value="Logical Reasoning">Logical Reasoning</option>
+                            <option value="Analytical Ability">Analytical Ability</option>
+                            <option value="Verbal Ability">Verbal Ability</option>
+                            <option value="Technical Subjects">Technical Subjects</option>
+                            <option value="Legal Reasoning">Legal Reasoning</option>
+                            <option value="Pedagogy">Pedagogy</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Difficulty Level</label>
+                        <select id="ai-difficulty">
+                            <option value="easy">Easy (Railway Group D, SSC MTS)</option>
+                            <option value="medium" selected>Medium (Bank Clerk, SSC CHSL)</option>
+                            <option value="hard">Hard (Bank PO, SSC CGL)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Question Format</label>
+                        <select id="ai-question-format">
+                            <option value="standalone">Standalone (Single Question)</option>
+                            <option value="parent-child">Parent-Child (Passage + Sub-Questions)</option>
+                        </select>
+                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">💡 Parent-Child format creates a passage/context with multiple related questions (like Reading Comprehension, Data Interpretation)</p>
+                    </div>
+
+                    <div class="form-group" id="sub-questions-count-group" style="display: none;">
+                        <label>Number of Sub-Questions</label>
+                        <select id="ai-sub-questions-count">
+                            <option value="3" selected>3 Questions</option>
+                            <option value="4">4 Questions</option>
+                            <option value="5">5 Questions</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Custom Prompt (Optional)</label>
+                        <textarea id="ai-custom-prompt" rows="3" placeholder="Example: Generate questions for Railway Clerk exam on quantitative aptitude&#10;OR: Generate reading comprehension passage about Indian economy&#10;&#10;Leave empty to auto-generate based on subject and difficulty"></textarea>
+                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">💡 Add specific instructions like exam type (Railway, Banking, SSC), topic focus</p>
+                    </div>
+
+                    <button class="ai-btn" id="generate-ai-btn">✨ Generate Question with AI</button>
+                    <div class="error" id="ai-error"></div>
+                    
+                    <!-- Standalone Question Result -->
+                    <div id="ai-result-container" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #e0e0e0;">
+                        <h4 style="color: var(--primary); margin-bottom: 10px;">AI Generated Question</h4>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <span class="question-tag" id="ai-display-subject">Subject</span>
+                            <span class="question-tag" id="ai-display-difficulty" style="background: #e3f2fd;">Difficulty</span>
+                        </div>
+                        <div id="ai-question-text" style="font-weight: 500; margin-bottom: 15px; font-size: 1.05rem;"></div>
+
+                        <div style="margin-left: 25px; margin-bottom: 15px;">
+                            <div>A) <span id="ai-option-a"></span></div>
+                            <div>B) <span id="ai-option-b"></span></div>
+                            <div>C) <span id="ai-option-c"></span></div>
+                            <div>D) <span id="ai-option-d"></span></div>
+                        </div>
+
+                        <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin: 15px 0;">
+                            <strong>Correct Answer:</strong> <span id="ai-correct-answer"></span><br>
+                            <strong>Explanation:</strong> <span id="ai-explanation"></span>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <button class="success-btn" style="flex: 1;" id="accept-ai-btn">Accept & Add to Bank</button>
+                            <button class="admin-btn" style="flex: 1;" id="regenerate-ai-btn">Generate New Question</button>
+                        </div>
+                    </div>
+
+                    <!-- Parent-Child Question Result -->
+                    <div id="ai-parent-child-result" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 2px solid #17a2b8;">
+                        <h4 style="color: #0c5460; margin-bottom: 10px;">AI Generated Passage-Based Questions</h4>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <span class="question-tag" id="ai-pc-subject">Subject</span>
+                            <span class="question-tag" id="ai-pc-difficulty" style="background: #e3f2fd;">Difficulty</span>
+                            <span class="question-tag" style="background: #d1ecf1; color: #0c5460;">Parent-Child</span>
+                        </div>
+
+                        <!-- Main Passage -->
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
+                            <h5 style="margin: 0 0 10px 0; color: #0c5460;">Main Passage / Context:</h5>
+                            <div id="ai-pc-passage" style="line-height: 1.6; white-space: pre-wrap;"></div>
+                        </div>
+
+                        <!-- Sub Questions Container -->
+                        <div id="ai-pc-subquestions-container">
+                            <!-- Sub-questions will be rendered here by JavaScript -->
+                        </div>
+
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <button class="success-btn" style="flex: 1;" id="accept-ai-pc-btn">Accept & Add All to Bank</button>
+                            <button class="admin-btn" style="flex: 1;" id="regenerate-ai-pc-btn">Generate New Set</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidate Login Screen -->
+            <div id="candidate-login-screen" class="screen">
+                <h2 style="text-align: center; margin-bottom: 25px; color: var(--primary);">Start Your Exam</h2>
+                <div class="form-group">
+                    <label for="exam-code-input">Select Exam</label>
+                    <select id="exam-code-input" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; background: white;">
+                        <option value="">-- Select an Active Exam --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="candidate-name">Your Full Name</label>
+                    <input type="text" id="candidate-name" placeholder="As per your application">
+                </div>
+                <div class="form-group">
+                    <label for="candidate-mobile">Mobile Number *</label>
+                    <input type="tel" id="candidate-mobile" placeholder="Enter your 10-digit mobile number" required>
+                </div>
+                <button id="start-exam-btn">Begin Exam</button>
+                <p class="error" id="login-error"></p>
+            </div>
+
+            <!-- Exam Screen -->
+            <div id="exam-screen" class="screen">
+                <!-- Floating Timer -->
+                <div class="timer" id="timer-display">⏱️ Time Remaining: 10:00</div>
+
+                <!-- Dynamic Question Container - supports both standalone and parent-child groups -->
+                <div id="exam-question-container">
+                    <!-- Standalone question template (default) -->
+                    <div class="question-container" id="standalone-question-container">
+                        <div class="question-tag" id="question-subject-display">Reasoning</div>
+                        <div class="question-number">Question <span id="current-q-num">1</span> of <span id="total-questions">5</span></div>
+                        <div class="question-text" id="question-text-display">Loading question...</div>
+
+                        <div class="options" id="standalone-options">
+                            <div class="option" data-index="0">
+                                <input type="radio" name="exam-answer" class="option-radio" id="option-radio-0">
+                                <span class="option-letter">A</span>
+                                <span id="option-a-display">Loading...</span>
+                            </div>
+                            <div class="option" data-index="1">
+                                <input type="radio" name="exam-answer" class="option-radio" id="option-radio-1">
+                                <span class="option-letter">B</span>
+                                <span id="option-b-display">Loading...</span>
+                            </div>
+                            <div class="option" data-index="2">
+                                <input type="radio" name="exam-answer" class="option-radio" id="option-radio-2">
+                                <span class="option-letter">C</span>
+                                <span id="option-c-display">Loading...</span>
+                            </div>
+                            <div class="option" data-index="3">
+                                <input type="radio" name="exam-answer" class="option-radio" id="option-radio-3">
+                                <span class="option-letter">D</span>
+                                <span id="option-d-display">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parent-Child Group Container (hidden by default, shown for grouped questions) -->
+                    <div id="parent-child-question-container" style="display: none;">
+                        <!-- Will be dynamically populated with passage + all sub-questions -->
+                    </div>
+                </div>
+
+                <div class="progress">Question <span id="progress-num">1</span> of <span id="progress-total">5</span></div>
+
+                <div class="navigation">
+                    <button id="prev-btn" disabled>← Previous</button>
+                    <button id="next-btn">Next →</button>
+                    <button id="submit-btn" class="success-btn" style="display: none;">Submit Exam</button>
+                </div>
+            </div>
+
+            <!-- Result Screen -->
+            <div id="result-screen" class="screen">
+                <div class="result-container">
+                    <h2>✅ Exam Completed!</h2>
+                    <p style="font-size: 1.2rem; margin: 15px 0; color: var(--dark);">Thank you for attempting Polite Coaching Centre test.</p>
+
+                    <div class="score-display" id="final-score">0.00</div>
+                    <p style="font-size: 1.1rem; color: var(--primary); margin-bottom: 25px;">Your Final Score</p>
+
+                    <div style="background: #e8f4fc; padding: 20px; border-radius: 12px; margin: 25px 0;">
+                        <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Exam Code:</strong> <span id="result-exam-code">REASONING_01</span></p>
+                        <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Name:</strong> <span id="result-name">Candidate Name</span></p>
+                        <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Mobile:</strong> <span id="result-mobile">9876543210</span></p>
+                    </div>
+
+                    <p style="margin: 20px 0; font-weight: 500; line-height: 1.6;">
+                        Your score has been recorded successfully.
+                    </p>
+
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <button class="primary-btn" id="result-logout-btn" style="background: var(--primary); color: white; padding: 15px 40px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1.1rem; transition: all 0.3s;">🚪 Log Out / Close</button>
+                    </div>
+                </div>
+            </div>
                 <!-- All other screens defined by app.js via innerHTML -->
                 <!-- This includes: signin, signup, admin-login, candidate-login, exam-screen, result-screen, etc. -->
 
