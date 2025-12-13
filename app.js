@@ -1705,11 +1705,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Navigation: Hero Landing <-> Signup
-    document.getElementById('signup-btn').addEventListener('click', function() {
-        document.getElementById('hero-landing').classList.remove('active');
-        document.getElementById('candidate-signup-screen').classList.add('active');
-        updateHeaderNav('candidate-signup-screen');
-    });
+    const signupBtn = document.getElementById('signup-btn');
+    if (signupBtn) {
+        signupBtn.addEventListener('click', function() {
+            const heroLanding = document.getElementById('hero-landing');
+            const signupScreen = document.getElementById('candidate-signup-screen');
+            if (heroLanding) heroLanding.classList.remove('active');
+            if (signupScreen) signupScreen.classList.add('active');
+            updateHeaderNav('candidate-signup-screen');
+        });
+    }
 
     const backToHeroFromSignup = document.getElementById('back-to-hero-from-signup');
     if (backToHeroFromSignup) {
@@ -1722,11 +1727,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Navigation: Hero Landing <-> Signin
-    document.getElementById('signin-btn').addEventListener('click', function() {
-        document.getElementById('hero-landing').classList.remove('active');
-        document.getElementById('candidate-signin-screen').classList.add('active');
-        updateHeaderNav('candidate-signin-screen');
-    });
+    const signinBtn = document.getElementById('signin-btn');
+    if (signinBtn) {
+        signinBtn.addEventListener('click', function() {
+            const heroLanding = document.getElementById('hero-landing');
+            const signinScreen = document.getElementById('candidate-signin-screen');
+            if (heroLanding) heroLanding.classList.remove('active');
+            if (signinScreen) signinScreen.classList.add('active');
+            updateHeaderNav('candidate-signin-screen');
+        });
+    }
 
     const backToHeroFromSignin = document.getElementById('back-to-hero-from-signin');
     if (backToHeroFromSignin) {
@@ -1796,11 +1806,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Navigation: Hero Landing <-> Admin Login
-    document.getElementById('admin-link').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('hero-landing').classList.remove('active');
-        document.getElementById('admin-login-screen').classList.add('active');
-    });
+    const adminLink = document.getElementById('admin-link');
+    if (adminLink) {
+        adminLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            const heroLanding = document.getElementById('hero-landing');
+            const adminLoginScreen = document.getElementById('admin-login-screen');
+            if (heroLanding) heroLanding.classList.remove('active');
+            if (adminLoginScreen) adminLoginScreen.classList.add('active');
+        });
+    }
 
     const backToHeroFromAdmin = document.getElementById('back-to-hero-from-admin');
     if (backToHeroFromAdmin) {
@@ -1812,7 +1827,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 // Candidate Signup
-document.getElementById('signup-submit-btn').addEventListener('click', async function() {
+const signupSubmitBtn = document.getElementById('signup-submit-btn');
+if (signupSubmitBtn) {
+    signupSubmitBtn.addEventListener('click', async function() {
     try {
         const name = document.getElementById('signup-name').value.trim();
         const email = document.getElementById('signup-email').value.trim();
@@ -1864,10 +1881,13 @@ document.getElementById('signup-submit-btn').addEventListener('click', async fun
             window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
-});
+    });
+}
 
 // Candidate Login
-document.getElementById('signin-submit-btn').addEventListener('click', async function() {
+const signinSubmitBtn = document.getElementById('signin-submit-btn');
+if (signinSubmitBtn) {
+    signinSubmitBtn.addEventListener('click', async function() {
     try {
         const email = document.getElementById('signin-email').value.trim();
         const password = document.getElementById('signin-password').value;
@@ -1919,10 +1939,13 @@ document.getElementById('signin-submit-btn').addEventListener('click', async fun
             window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
-});
+    });
+}
 
 // Password Reset
-document.getElementById('reset-password-btn').addEventListener('click', async function() {
+const resetPasswordBtn = document.getElementById('reset-password-btn');
+if (resetPasswordBtn) {
+    resetPasswordBtn.addEventListener('click', async function() {
     try {
         const email = document.getElementById('forgot-email').value.trim();
 
@@ -1992,7 +2015,8 @@ document.getElementById('reset-password-btn').addEventListener('click', async fu
             window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
-});
+    });
+}
 
 // Store current user data globally for profile operations
 let currentUserData = null;
