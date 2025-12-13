@@ -741,7 +741,60 @@ function resumeExam(savedState, remainingSeconds) {
 // Start or restart the exam timer
 function startExamTimer() {
     if (examTimer) {
-        clearInterval(examTimer);\n    }\n\n    // Initial display update\n    updateTimerDisplay();\n\n    examTimer = setInterval(function() {\n        timeRemaining--;\n\n        // Update timer display - both old and new elements\n        updateTimerDisplay();\n\n        // Update mobile floating timer if present\n        const mobileTimer = document.getElementById('mobile-floating-timer');\n        if (mobileTimer) {\n            const minutes = Math.floor(timeRemaining / 60);\n            const seconds = timeRemaining % 60;\n            const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;\n            mobileTimer.textContent = timeStr;\n            \n            // Update styling based on time remaining\n            if (timeRemaining <= 60) {\n                mobileTimer.classList.remove('badge-primary', 'badge-warning');\n                mobileTimer.classList.add('badge-error');\n            } else if (timeRemaining <= 300) {\n                mobileTimer.classList.remove('badge-primary', 'badge-error');\n                mobileTimer.classList.add('badge-warning');\n            }\n        }\n\n        // Save state every 30 seconds\n        if (timeRemaining % 30 === 0) {\n            saveExamState();\n        }\n\n        // Auto-submit when time runs out\n        if (timeRemaining <= 0) {\n            clearInterval(examTimer);\n\n            const notification = document.createElement('div');\n            notification.className = 'notification error';\n            notification.innerHTML = '⏰ Time\\'s up! Submitting your exam automatically...';\n            document.getElementById('notification-container').appendChild(notification);\n\n            setTimeout(() => {\n                if (notification.parentNode) {\n                    notification.parentNode.removeChild(notification);\n                }\n            }, 3000);\n\n            submitExam(true);\n        }\n    }, 1000);\n}
+        clearInterval(examTimer);
+    }
+
+    // Initial display update
+    updateTimerDisplay();
+
+    examTimer = setInterval(function() {
+        timeRemaining--;
+
+        // Update timer display - both old and new elements
+        updateTimerDisplay();
+
+        // Update mobile floating timer if present
+        const mobileTimer = document.getElementById('mobile-floating-timer');
+        if (mobileTimer) {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            mobileTimer.textContent = timeStr;
+
+            // Update styling based on time remaining
+            if (timeRemaining <= 60) {
+                mobileTimer.classList.remove('badge-primary', 'badge-warning');
+                mobileTimer.classList.add('badge-error');
+            } else if (timeRemaining <= 300) {
+                mobileTimer.classList.remove('badge-primary', 'badge-error');
+                mobileTimer.classList.add('badge-warning');
+            }
+        }
+
+        // Save state every 30 seconds
+        if (timeRemaining % 30 === 0) {
+            saveExamState();
+        }
+
+        // Auto-submit when time runs out
+        if (timeRemaining <= 0) {
+            clearInterval(examTimer);
+
+            const notification = document.createElement('div');
+            notification.className = 'notification error';
+            notification.innerHTML = '⏰ Time\'s up! Submitting your exam automatically...';
+            document.getElementById('notification-container').appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+
+            submitExam(true);
+        }
+    }, 1000);
+}
 // ========== END EXAM SESSION TRACKING ==========
 
 // Function to manage header navigation visibility (global scope)
@@ -7538,7 +7591,8 @@ function selectOptionNewUI(optionIndex) {
                 option.classList.remove('selected', 'border-primary', 'bg-primary/5');
                 option.classList.add('border-base-300');
                 radios[i].checked = false;
-            }\n        });
+            }
+        });
     }
 
     // Update question navigator
