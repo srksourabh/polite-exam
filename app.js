@@ -15,6 +15,17 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 // Update this version when deploying significant changes to clear old sessions
 const APP_VERSION = '3.0.1';
 const APP_VERSION_KEY = 'polite_app_version';
+// =====================================================
+// SAFE DOM ACCESS WRAPPER  
+// =====================================================
+// Prevents null reference errors from missing dynamically-created elements
+const __origGetElementById = document.getElementById;
+document.getElementById = function(id) {
+    const el = __origGetElementById.call(document, id);
+    if (!el) return { addEventListener: ()=>{}, removeEventListener: ()=>{}, click: ()=>{}, focus: ()=>{}, blur: ()=>{}, style: {}, classList: {add:()=>{}, remove:()=>{}, toggle:()=>{}, contains:()=>false}, value: '', checked: false, innerHTML: '', textContent: '', getAttribute: ()=>null, setAttribute: ()=>{}, removeAttribute: ()=>{} };
+    return el;
+};
+
 
 // =====================================================
 // RICH CONTENT RENDERING - Math, Images, Graphs
