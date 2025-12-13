@@ -2372,7 +2372,9 @@ async function showCandidateDashboard(userData) {
 }
 
 // Candidate Dashboard - Take Exam
-document.getElementById('take-exam-dashboard-btn').addEventListener('click', async function() {
+const takeExamDashboardBtn = document.getElementById('take-exam-dashboard-btn');
+if (takeExamDashboardBtn) {
+    takeExamDashboardBtn.addEventListener('click', async function() {
     const session = getSession();
     if (session && session.userType === 'candidate') {
         // Pre-fill candidate info
@@ -2422,14 +2424,19 @@ document.getElementById('take-exam-dashboard-btn').addEventListener('click', asy
     document.getElementById('candidate-dashboard').classList.remove('active');
     document.getElementById('candidate-login-screen').classList.add('active');
     updateHeaderNav('candidate-login-screen');
-});
+    });
+}
 
 // Hero - Start Exam (for non-logged-in users)
-document.getElementById('start-exam-hero-btn').addEventListener('click', function() {
-    document.getElementById('hero-landing').classList.remove('active');
-    document.getElementById('candidate-signin-screen').classList.add('active');
-    updateHeaderNav('candidate-signin-screen');
-});
+const startExamHeroBtn = document.getElementById('start-exam-hero-btn');
+if (startExamHeroBtn) {
+    startExamHeroBtn.addEventListener('click', function() {
+        document.getElementById('hero-landing').classList.remove('active');
+        const signinScreen = document.getElementById('candidate-signin-screen');
+        if (signinScreen) signinScreen.classList.add('active');
+        updateHeaderNav('candidate-signin-screen');
+    });
+}
 
 // Dashboard - View Results
 const dashboardViewResultsBtn = document.getElementById('dashboard-view-results-btn');
@@ -2764,7 +2771,9 @@ document.getElementById('change-password-modal').addEventListener('click', funct
 });
 
 // Admin Login
-document.getElementById('admin-login-btn').addEventListener('click', async function() {
+const adminLoginBtn = document.getElementById('admin-login-btn');
+if (adminLoginBtn) {
+    adminLoginBtn.addEventListener('click', async function() {
     try {
         const username = document.getElementById('admin-username').value.trim();
         const password = document.getElementById('admin-password').value;
@@ -2806,10 +2815,13 @@ document.getElementById('admin-login-btn').addEventListener('click', async funct
             window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
-});
+    });
+}
 
 // Admin logout function
-document.getElementById('logout-btn').addEventListener('click', function() {
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', function() {
     // Clear any running timers
     if (typeof examTimer !== 'undefined' && examTimer) {
         clearInterval(examTimer);
@@ -2822,7 +2834,8 @@ document.getElementById('logout-btn').addEventListener('click', function() {
     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
         window.PoliteCCAPI.showNotification('Logged out successfully', 'success');
     }
-});
+    });
+}
 
 // Exam screen logout function (for candidates taking exams)
 const candidateLogoutBtn = document.getElementById('candidate-logout-btn');
