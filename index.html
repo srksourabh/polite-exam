@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="polite">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,10 +14,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Polite Exam">
     <!-- Main Stylesheet -->
-    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.tailwindcss.com"></script><link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" /><script>tailwind.config={theme:{extend:{colors:{primary:"#4F46E5",secondary:"#7C3AED",accent:"#10B981","base-100":"#FFFFFF",success:"#10B981",error:"#EF4444"}}},daisyui:{themes:[{polite:{primary:"#4F46E5",secondary:"#7C3AED",accent:"#10B981","base-100":"#FFFFFF","base-200":"#F3F4F6",success:"#10B981",error:"#EF4444"}}]}}</script>
 
     <!-- Flatpickr CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"><style>::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:#f1f1f1}::-webkit-scrollbar-thumb{background:#c1c1c1;border-radius:4px}.card-hover{transition:transform 0.2s,box-shadow 0.2s}.card-hover:hover{transform:translateY(-2px);box-shadow:0 10px 25px -5px rgba(0,0,0,0.1)}.gradient-primary{background:linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)}.gradient-success{background:linear-gradient(135deg, #10B981 0%, #059669 100%)}</style>
 
     <!-- Flatpickr JS -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -32,7 +32,7 @@
 
     <script src="api-integration.js"></script>
 </head>
-<body>
+<body class="bg-base-200">
     <div class="container">
         <header style="position: relative;">
             <a href="#" id="admin-link" class="admin-link">Admin Login</a>
@@ -1476,3 +1476,5 @@ Artificial Intelligence has revolutionized..."></textarea>
     </script>
 </body>
 </html>
+
+
