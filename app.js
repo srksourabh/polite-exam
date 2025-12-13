@@ -1,4 +1,4 @@
-﻿// Global variables
+// Global variables
 let isAdminLoggedIn = false;
 let currentExam = null;
 let currentQuestionIndex = 0;
@@ -98,6 +98,333 @@ function convertSimpleMathToLatex(text) {
         return `$\\sqrt[3]{${expr.trim()}}$`;
     });
 
+
+// =====================================================
+// DAISYUI SCREEN GENERATION HELPERS
+// =====================================================
+
+function createDaisyUISignInScreen() {
+    return 
+    <div id="candidate-signin-screen" class="screen">
+        <div class="min-h-screen flex items-center justify-center px-4">
+            <div class="card w-full max-w-md bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title text-2xl mb-6 text-center">Sign In</h2>
+                    <form id="signin-form" class="space-y-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Email Address</span></label>
+                            <input type="email" id="signin-email" placeholder="your@email.com" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Password</span></label>
+                            <input type="password" id="signin-password" placeholder="��������" class="input input-bordered" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-full">Sign In</button>
+                    </form>
+                    <div class="divider">OR</div>
+                    <button id="back-to-hero-from-signin" class="btn btn-ghost w-full">Back to Home</button>
+                    <p class="text-center text-sm mt-4">Don't have an account? <button id="goto-signup-from-signin" class="link link-primary">Create one</button></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    ;
+}
+
+function createDaisyUIAdminLoginScreen() {
+    return 
+    <div id="admin-login-screen" class="screen">
+        <div class="min-h-screen flex items-center justify-center px-4">
+            <div class="card w-full max-w-md bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title text-2xl mb-6 text-center">Admin Access</h2>
+                    <form id="admin-login-form" class="space-y-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Username</span></label>
+                            <input type="text" id="admin-username" placeholder="admin" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Password</span></label>
+                            <input type="password" id="admin-password" placeholder="��������" class="input input-bordered" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-full">Login</button>
+                    </form>
+                    <button id="back-to-hero-from-admin" class="btn btn-ghost w-full mt-4">Back to Home</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    ;
+}
+
+// Inject DaisyUI screens after hero-landing
+function injectDaisyUIScreens() {
+    const mainContent = document.querySelector('main .max-w-4xl');
+    if (!mainContent) return;
+    
+    const screens = [
+        { id: 'candidate-signin-screen', fn: createDaisyUISignInScreen },
+        { id: 'candidate-signup-screen', fn: createDaisyUISignUpScreen },
+        { id: 'admin-login-screen', fn: createDaisyUIAdminLoginScreen },
+        { id: 'candidate-dashboard', fn: createDaisyUIDashboardScreen },
+        { id: 'admin-panel', fn: createDaisyUIAdminPanel },
+        { id: 'exam-screen', fn: createDaisyUIExamScreen },
+        { id: 'result-screen', fn: createDaisyUIResultScreen },
+    ];
+
+    screens.forEach(screen => {
+        if (!document.getElementById(screen.id)) {
+            mainContent.insertAdjacentHTML('afterend', screen.fn());
+        }
+    });
+}
+    if (!document.getElementById('candidate-signup-screen')) {
+        mainContent.insertAdjacentHTML('afterend', createDaisyUISignUpScreen());
+    }
+    if (!document.getElementById('admin-login-screen')) {
+        mainContent.insertAdjacentHTML('afterend', createDaisyUIAdminLoginScreen());
+    }
+    if (!document.getElementById('candidate-dashboard')) {
+        mainContent.insertAdjacentHTML('afterend', createDaisyUIDashboardScreen());
+    }
+}
+}
+
+
+function createDaisyUISignUpScreen() {
+    return \
+    <div id="candidate-signup-screen" class="screen">
+        <div class="min-h-screen flex items-center justify-center px-4 py-8">
+            <div class="card w-full max-w-md bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title text-2xl mb-6 text-center">Create Account</h2>
+                    <form id="signup-form" class="space-y-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Full Name</span></label>
+                            <input type="text" id="signup-name" placeholder="John Doe" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Email Address</span></label>
+                            <input type="email" id="signup-email" placeholder="your@email.com" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Mobile Number</span></label>
+                            <input type="tel" id="signup-mobile" placeholder="10-digit number" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Password</span></label>
+                            <input type="password" id="signup-password" placeholder="Min 6 characters" class="input input-bordered" required>
+                        </div>
+                        <button type="submit" class="btn btn-secondary w-full">Create Account</button>
+                    </form>
+                    <button id="back-to-hero-from-signup" class="btn btn-ghost w-full mt-4">Back to Home</button>
+                    <p class="text-center text-sm mt-4">Already have an account? <button id="goto-signin-from-signup" class="link link-primary">Sign In</button></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    \;
+}
+
+function createDaisyUIDashboardScreen() {
+    return \
+    <div id="candidate-dashboard" class="screen">
+        <div class="space-y-6">
+            <div class="card bg-base-100 shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-2xl mb-4">Welcome, <span id="dashboard-name">Candidate</span>!</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                        <div class="stat bg-base-200 rounded-lg p-4">
+                            <div class="stat-title">Exams Taken</div>
+                            <div class="stat-value text-primary" id="total-exams-given">0</div>
+                        </div>
+                        <div class="stat bg-base-200 rounded-lg p-4">
+                            <div class="stat-title">Average Score</div>
+                            <div class="stat-value text-secondary" id="average-score">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="take-exam-dashboard-btn" class="btn btn-primary flex-1">Take New Exam</button>
+                <button id="change-password-btn" class="btn btn-accent flex-1">Change Password</button>
+                <button id="candidate-logout-link" class="btn btn-error flex-1">Logout</button>
+            </div>
+
+            <div class="card bg-base-100 shadow-lg">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">Recent Exams</h3>
+                    <div id="exam-history-container" class="text-center text-base-content/60 py-8">
+                        <p>No exams taken yet. Start your first exam!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    \;
+}
+
+function createDaisyUIAdminPanel() {
+    return \
+    <div id="admin-panel" class="screen">
+        <div class="space-y-6">
+            <div class="card bg-base-100 shadow-lg">
+                <div class="card-body">
+                    <div class="flex justify-between items-center">
+                        <h2 class="card-title text-2xl">Admin Dashboard</h2>
+                        <button id="logout-btn" class="btn btn-error btn-sm">Logout</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="card bg-gradient-to-br from-primary/10 to-primary/5 p-6">
+                    <div class="text-4xl mb-2">??</div>
+                    <h3 class="font-bold text-lg">Question Bank</h3>
+                    <button id="question-bank-btn" class="btn btn-primary btn-sm mt-3 w-full">Manage</button>
+                </div>
+                <div class="card bg-gradient-to-br from-secondary/10 to-secondary/5 p-6">
+                    <div class="text-4xl mb-2">??</div>
+                    <h3 class="font-bold text-lg">Create Exam</h3>
+                    <button id="create-exam-btn" class="btn btn-secondary btn-sm mt-3 w-full">Create</button>
+                </div>
+                <div class="card bg-gradient-to-br from-accent/10 to-accent/5 p-6">
+                    <div class="text-4xl mb-2">??</div>
+                    <h3 class="font-bold text-lg">View Results</h3>
+                    <button id="view-results-btn" class="btn btn-accent btn-sm mt-3 w-full">Results</button>
+                </div>
+            </div>
+
+            <div class="divider">Advanced Options</div>
+            
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="upload-btn" class="btn btn-info flex-1">Upload Paper</button>
+                <button id="ai-btn" class="btn btn-warning flex-1">AI Generator</button>
+            </div>
+
+            <div id="question-bank-section" class="hidden card bg-base-100 shadow-lg p-6">
+                <h3 class="card-title mb-4">Question Bank</h3>
+                <div id="question-bank-stats" class="bg-gradient-to-r from-primary to-secondary text-white p-4 rounded-lg mb-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div><span class="text-xs opacity-75">Total</span><br><strong id="total-questions-count">0</strong></div>
+                        <div><span class="text-xs opacity-75">Selected</span><br><strong id="selected-questions-count">0</strong></div>
+                        <div><span class="text-xs opacity-75">Showing</span><br><strong id="showing-questions-count">0</strong></div>
+                        <div><span class="text-xs opacity-75">Cart</span><br><strong id="cart-questions-count">0</strong></div>
+                    </div>
+                </div>
+                <div id="question-list" class="space-y-3">
+                    <!-- Questions will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    \;
+}
+
+function createDaisyUIExamScreen() {
+    return \
+    <div id="exam-screen" class="screen">
+        <div class="space-y-4">
+            <!-- Exam Header -->
+            <div class="card bg-base-100 shadow-lg">
+                <div class="card-body p-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                        <div>
+                            <h2 class="card-title text-2xl" id="exam-title">Exam</h2>
+                            <p class="text-sm text-base-content/60">Question <span id="current-question-number">1</span> of <span id="total-questions-number">0</span></p>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xl font-bold" id="exam-timer">00:00</div>
+                            <p class="text-xs text-base-content/60">Remaining</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Display -->
+            <div class="card bg-base-100 shadow-lg">
+                <div class="card-body">
+                    <h3 class="text-lg font-bold mb-4" id="question-text">Question will appear here</h3>
+                    <div id="options-container" class="space-y-3">
+                        <!-- Options will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="prev-question-btn" class="btn btn-outline flex-1">Previous</button>
+                <button id="next-question-btn" class="btn btn-primary flex-1">Next</button>
+                <button id="submit-exam-btn" class="btn btn-success flex-1">Submit Exam</button>
+            </div>
+
+            <!-- Question Navigator (optional) -->
+            <div class="card bg-base-100 shadow-lg hidden">
+                <div class="card-body">
+                    <h3 class="card-title mb-3">Questions</h3>
+                    <div id="question-navigator" class="grid grid-cols-6 sm:grid-cols-10 gap-2">
+                        <!-- Question buttons will be generated -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    \;
+}
+
+function createDaisyUIResultScreen() {
+    return \
+    <div id="result-screen" class="screen">
+        <div class="space-y-6">
+            <div class="card bg-gradient-to-r from-primary to-secondary text-white shadow-xl">
+                <div class="card-body text-center">
+                    <h2 class="card-title justify-center text-3xl">Exam Completed!</h2>
+                    <p class="text-lg mt-2" id="result-message">Your results are ready</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="card bg-base-100 shadow-lg">
+                    <div class="card-body text-center">
+                        <div class="text-4xl font-bold text-primary" id="final-score">0</div>
+                        <p class="text-base-content/60">Score</p>
+                    </div>
+                </div>
+                <div class="card bg-base-100 shadow-lg">
+                    <div class="card-body text-center">
+                        <div class="text-4xl font-bold text-success" id="correct-answers">0</div>
+                        <p class="text-base-content/60">Correct</p>
+                    </div>
+                </div>
+                <div class="card bg-base-100 shadow-lg">
+                    <div class="card-body text-center">
+                        <div class="text-4xl font-bold text-error" id="incorrect-answers">0</div>
+                        <p class="text-base-content/60">Incorrect</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-base-100 shadow-lg">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">Answer Review</h3>
+                    <div id="answer-review-container" class="space-y-3">
+                        <!-- Answer details will be shown here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="back-to-dashboard-btn" class="btn btn-primary flex-1">Back to Dashboard</button>
+                <button id="take-another-exam-btn" class="btn btn-secondary flex-1">Take Another Exam</button>
+            </div>
+        </div>
+    </div>
+    \;
+}
+// Call after DOM is ready
+document.addEventListener('DOMContentLoaded', injectDaisyUIScreens, { once: true });
+
     // Convert frac(a,b) to $\frac{a}{b}$
     result = result.replace(/frac\(([^,]+),([^)]+)\)/gi, (match, num, den) => {
         return `$\\frac{${num.trim()}}{${den.trim()}}$`;
@@ -136,7 +463,7 @@ function convertSimpleMathToLatex(text) {
         return `$${num}^\\circ$`;
     });
 
-    // Merge adjacent math expressions: $a$ $b$ â†’ $a b$
+    // Merge adjacent math expressions: $a$ $b$ → $a b$
     result = result.replace(/\$([^$]+)\$\s*\$([^$]+)\$/g, '$$$1 $2$$');
 
     return result;
@@ -689,7 +1016,7 @@ function checkAndResumeExam() {
     if (remainingSeconds <= 0) {
         // Exam time expired
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âš ï¸ Your previous exam has expired. Please start a new one.', 'error');
+            window.PoliteCCAPI.showNotification('⚠️ Your previous exam has expired. Please start a new one.', 'error');
         }
         clearExamState();
         return;
@@ -745,7 +1072,7 @@ function resumeExam(savedState, remainingSeconds) {
     loadQuestion();
 
     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-        window.PoliteCCAPI.showNotification('âœ… Exam resumed successfully!', 'success');
+        window.PoliteCCAPI.showNotification('✅ Exam resumed successfully!', 'success');
     }
 }
 
@@ -793,7 +1120,7 @@ function startExamTimer() {
 
             const notification = document.createElement('div');
             notification.className = 'notification error';
-            notification.innerHTML = 'â° Time\'s up! Submitting your exam automatically...';
+            notification.innerHTML = '⏰ Time\'s up! Submitting your exam automatically...';
             document.getElementById('notification-container').appendChild(notification);
 
             setTimeout(() => {
@@ -866,7 +1193,7 @@ questions = [
     {
         ID: "Q1",
         Subject: "Math",
-        Question: "What is 5 Ã— 6?",
+        Question: "What is 5 × 6?",
         'Option A': "25",
         'Option B': "30",
         'Option C': "35",
@@ -896,11 +1223,11 @@ questions = [
     {
         ID: "Q4",
         Subject: "Math",
-        Question: "If a shirt costs â‚¹800 after a 20% discount, what was its original price?",
-        'Option A': "â‚¹900",
-        'Option B': "â‚¹960",
-        'Option C': "â‚¹1000",
-        'Option D': "â‚¹1200",
+        Question: "If a shirt costs ₹800 after a 20% discount, what was its original price?",
+        'Option A': "₹900",
+        'Option B': "₹960",
+        'Option C': "₹1000",
+        'Option D': "₹1200",
         Correct: "C"
     },
     {
@@ -1011,7 +1338,7 @@ function openOCRReviewModal(questions) {
     // Add summary header and editing instructions
     html += `
         <div style="background: linear-gradient(135deg, #2196f3, #1976d2); color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-            <h4 style="margin: 0 0 10px 0;">âœï¸ Review & Edit Question Structure</h4>
+            <h4 style="margin: 0 0 10px 0;">✏️ Review & Edit Question Structure</h4>
             <p style="margin: 0; font-size: 0.9rem; opacity: 0.95;">
                 AI has analyzed the text. You can now <strong>edit question types</strong> and <strong>assign parent-child relationships</strong> if the AI detection was incorrect.
             </p>
@@ -1023,9 +1350,9 @@ function openOCRReviewModal(questions) {
         <div style="background: linear-gradient(135deg, #9c27b0, #7b1fa2); color: white; padding: 12px 15px; border-radius: 10px; margin-bottom: 20px;">
             <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
                 <span style="font-weight: 600;">Current Structure:</span>
-                <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 15px;">ðŸ“– ${passages} Passage(s)</span>
-                <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 15px;">ðŸ“ ${subQs} Child Question(s)</span>
-                <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 15px;">âœ… ${standalone} Standalone</span>
+                <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 15px;">📖 ${passages} Passage(s)</span>
+                <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 15px;">📝 ${subQs} Child Question(s)</span>
+                <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 15px;">✅ ${standalone} Standalone</span>
             </div>
         </div>
     `;
@@ -1058,17 +1385,17 @@ function openOCRReviewModal(questions) {
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                         <!-- Question Type Selector -->
                         <select id="ocr-type-${index}" onchange="updateOCRQuestionType(${index})" style="padding: 6px 12px; border-radius: 5px; border: 2px solid #666; font-weight: 600; cursor: pointer;">
-                            <option value="Standalone" ${questionType === 'Standalone' ? 'selected' : ''}>âœ… Standalone</option>
-                            <option value="Main Question" ${questionType === 'Main Question' ? 'selected' : ''}>ðŸ“– Parent (Passage)</option>
-                            <option value="Sub Question" ${questionType === 'Sub Question' ? 'selected' : ''}>ðŸ“ Child Question</option>
+                            <option value="Standalone" ${questionType === 'Standalone' ? 'selected' : ''}>✅ Standalone</option>
+                            <option value="Main Question" ${questionType === 'Main Question' ? 'selected' : ''}>📖 Parent (Passage)</option>
+                            <option value="Sub Question" ${questionType === 'Sub Question' ? 'selected' : ''}>📝 Child Question</option>
                         </select>
-                        <button class="ocr-delete-btn" onclick="deleteOCRQuestion(${index})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">ðŸ—‘ï¸</button>
+                        <button class="ocr-delete-btn" onclick="deleteOCRQuestion(${index})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">🗑️</button>
                     </div>
                 </div>
 
                 <!-- Parent Selection (only for Child questions) -->
                 <div id="ocr-parent-select-${index}" class="ocr-form-group" style="margin-bottom: 10px; display: ${isSubQuestion ? 'block' : 'none'}; background: #e1bee7; padding: 10px; border-radius: 8px;">
-                    <label style="font-weight: 600; margin-bottom: 5px; display: block; color: #7b1fa2;">ðŸ”— Link to Parent Passage:</label>
+                    <label style="font-weight: 600; margin-bottom: 5px; display: block; color: #7b1fa2;">🔗 Link to Parent Passage:</label>
                     <select id="ocr-parent-${index}" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #9c27b0;">
                         ${parentDropdownOptions}
                     </select>
@@ -1119,7 +1446,7 @@ function openOCRReviewModal(questions) {
                         </div>
                     </div>
                     <div class="ocr-correct-answer" style="display: flex; align-items: center; gap: 10px;">
-                        <label style="font-weight: 600;">âœ“ Correct Answer:</label>
+                        <label style="font-weight: 600;">✓ Correct Answer:</label>
                         <select id="ocr-correct-${index}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #ddd;">
                             <option value="0" ${q.correct === 0 ? 'selected' : ''}>A</option>
                             <option value="1" ${q.correct === 1 ? 'selected' : ''}>B</option>
@@ -1131,7 +1458,7 @@ function openOCRReviewModal(questions) {
 
                 <!-- Passage info (shown only for passages) -->
                 <div id="ocr-passage-info-${index}" style="display: ${isPassage ? 'block' : 'none'}; color: #ff9800; font-weight: 500; margin-top: 10px; padding: 10px; background: #fff8e1; border-radius: 8px;">
-                    ðŸ“– This is a parent passage - no marks. Add child questions below that reference this passage.
+                    📖 This is a parent passage - no marks. Add child questions below that reference this passage.
                 </div>
             </div>`;
     });
@@ -1231,7 +1558,7 @@ function deleteOCRQuestion(index) {
     if (extractedQuestions.length === 0) {
         closeOCRReviewModal();
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ All questions deleted. Please upload again.', 'error');
+            window.PoliteCCAPI.showNotification('❌ All questions deleted. Please upload again.', 'error');
         }
     } else {
         openOCRReviewModal(extractedQuestions);
@@ -1347,7 +1674,7 @@ function saveOCRReviewedQuestions() {
 
     if (updatedQuestions.length === 0) {
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ No valid questions to save.', 'error');
+            window.PoliteCCAPI.showNotification('❌ No valid questions to save.', 'error');
         }
         return;
     }
@@ -1359,7 +1686,7 @@ function saveOCRReviewedQuestions() {
 
     if (orphanChildren.length > 0) {
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification(`âš ï¸ ${orphanChildren.length} child question(s) have no parent assigned. Please select a parent passage for all child questions.`, 'warning');
+            window.PoliteCCAPI.showNotification(`⚠️ ${orphanChildren.length} child question(s) have no parent assigned. Please select a parent passage for all child questions.`, 'warning');
         }
         return;
     }
@@ -1381,9 +1708,9 @@ function saveOCRReviewedQuestions() {
     const passages = updatedQuestions.filter(q => q.questionType === 'Main Question').length;
     const subQs = updatedQuestions.filter(q => q.questionType === 'Sub Question').length;
     const standalone = updatedQuestions.filter(q => q.questionType === 'Standalone').length;
-    let message = `âœ… ${updatedQuestions.length} questions reviewed and ready to add!`;
+    let message = `✅ ${updatedQuestions.length} questions reviewed and ready to add!`;
     if (passages > 0) {
-        message = `âœ… ${updatedQuestions.length} questions ready! (${passages} passage(s), ${subQs} child question(s), ${standalone} standalone)`;
+        message = `✅ ${updatedQuestions.length} questions ready! (${passages} passage(s), ${subQs} child question(s), ${standalone} standalone)`;
     }
 
     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
@@ -1406,7 +1733,7 @@ function displayReadyQuestions(questions) {
     if (passages > 0) {
         html += `
             <div style="background: linear-gradient(135deg, #9c27b0, #7b1fa2); color: white; padding: 12px; border-radius: 10px; margin-bottom: 15px;">
-                <strong>ðŸ“‹ Hierarchical Structure Detected:</strong> ${passages} passage(s) with ${subQs} sub-question(s)
+                <strong>📋 Hierarchical Structure Detected:</strong> ${passages} passage(s) with ${subQs} sub-question(s)
             </div>
         `;
     }
@@ -1420,8 +1747,8 @@ function displayReadyQuestions(questions) {
         const borderColor = isPassage ? '#ff9800' : isSubQuestion ? '#9c27b0' : 'var(--secondary)';
         const marginLeft = isSubQuestion ? 'margin-left: 25px;' : '';
 
-        const typeLabel = isPassage ? '<span style="background: #ff9800; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-right: 8px;">ðŸ“– Passage</span>' :
-                          isSubQuestion ? `<span style="background: #9c27b0; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-right: 8px;">ðŸ“ Sub-Q #${q.subQuestionNumber || '?'}</span>` : '';
+        const typeLabel = isPassage ? '<span style="background: #ff9800; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-right: 8px;">📖 Passage</span>' :
+                          isSubQuestion ? `<span style="background: #9c27b0; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-right: 8px;">📝 Sub-Q #${q.subQuestionNumber || '?'}</span>` : '';
 
         html += `
             <label class="extracted-question-item" data-question-type="${q.questionType || 'Standalone'}" style="display: flex; align-items: flex-start; background: ${bgColor}; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 3px solid ${borderColor}; cursor: pointer; transition: all 0.2s; ${marginLeft}">
@@ -1443,12 +1770,12 @@ function displayReadyQuestions(questions) {
                         <div class="rich-content">D) ${escapeHtmlForRichContent(q.options ? q.options[3] : '')}</div>
                     </div>
                     <div style="color: var(--success); font-weight: 500;">
-                        âœ“ Correct Answer: ${q.correct >= 0 ? String.fromCharCode(65 + q.correct) : 'N/A'}
+                        ✓ Correct Answer: ${q.correct >= 0 ? String.fromCharCode(65 + q.correct) : 'N/A'}
                     </div>`;
         } else {
             html += `
                     <div style="color: #ff9800; font-weight: 500; margin-top: 5px;">
-                        ðŸ“– Reference passage - No marks (marks in sub-questions)
+                        📖 Reference passage - No marks (marks in sub-questions)
                     </div>`;
         }
 
@@ -1485,7 +1812,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const reloadFlag = sessionStorage.getItem('version_reload_done');
 
         if (storedVersion !== APP_VERSION && !reloadFlag) {
-            console.log(`ðŸ”„ App version changed: ${storedVersion} -> ${APP_VERSION}. Clearing all cached data and reloading...`);
+            console.log(`🔄 App version changed: ${storedVersion} -> ${APP_VERSION}. Clearing all cached data and reloading...`);
 
             // Set reload flag to prevent infinite loops
             sessionStorage.setItem('version_reload_done', 'true');
@@ -1498,12 +1825,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 caches.keys().then(names => {
                     names.forEach(name => {
                         caches.delete(name);
-                        console.log('âœ“ Cleared cache:', name);
+                        console.log('✓ Cleared cache:', name);
                     });
                 }).then(() => {
                     // Store new version
                     localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
-                    console.log('âœ“ All caches cleared. Forcing hard reload...');
+                    console.log('✓ All caches cleared. Forcing hard reload...');
 
                     // Force hard reload to get fresh files
                     window.location.reload(true);
@@ -1511,7 +1838,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Store new version
                 localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
-                console.log('âœ“ Cache cleared. Forcing hard reload...');
+                console.log('✓ Cache cleared. Forcing hard reload...');
 
                 // Force hard reload
                 window.location.reload(true);
@@ -1520,7 +1847,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // After reload, clear the flag and store version
             sessionStorage.removeItem('version_reload_done');
             localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
-            console.log('âœ… App updated to version', APP_VERSION);
+            console.log('✅ App updated to version', APP_VERSION);
         }
     })();
 
@@ -1665,7 +1992,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateHeaderNav('hero-landing');
 
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âœ… Logged out successfully', 'success');
+            window.PoliteCCAPI.showNotification('✅ Logged out successfully', 'success');
         }
     });
 
@@ -1887,9 +2214,9 @@ if (signupSubmitBtn) {
             document.getElementById('verification-pending-screen').classList.add('active');
         }
     } catch (error) {
-        console.error('âŒ Event handler error:', error);
+        console.error('❌ Event handler error:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ An error occurred: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
     });
@@ -1945,9 +2272,9 @@ if (signinSubmitBtn) {
             window.PoliteCCAPI.showNotification(data.error || 'Invalid email or password', 'error');
         }
     } catch (error) {
-        console.error('âŒ Event handler error:', error);
+        console.error('❌ Event handler error:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ An error occurred: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
     });
@@ -1992,7 +2319,7 @@ if (resetPasswordBtn) {
             } else {
                 // Production mode - password sent via email
                 document.getElementById('reset-result').innerHTML = `
-                    <p style="font-weight: 600; color: #27ae60; margin-bottom: 10px;">âœ… Password Reset Successful!</p>
+                    <p style="font-weight: 600; color: #27ae60; margin-bottom: 10px;">✅ Password Reset Successful!</p>
                     <p style="color: #666; margin-bottom: 10px;">A new temporary password has been sent to:</p>
                     <div style="background: white; padding: 15px; border-radius: 8px; font-weight: 600; color: #2c3e50; text-align: center;">${email}</div>
                     <p style="color: #666; margin-top: 15px; font-size: 0.9rem;">
@@ -2018,12 +2345,12 @@ if (resetPasswordBtn) {
             document.getElementById('forgot-email').style.display = 'none';
             btn.style.display = 'none';
 
-            window.PoliteCCAPI.showNotification('âœ… Password reset successful! Check your email.', 'success');
+            window.PoliteCCAPI.showNotification('✅ Password reset successful! Check your email.', 'success');
         }
     } catch (error) {
-        console.error('âŒ Event handler error:', error);
+        console.error('❌ Event handler error:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ An error occurred: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
     });
@@ -2117,7 +2444,7 @@ async function showCandidateDashboard(userData) {
                             let statusClass, resultText, resultBadgeClass;
                             if (isMainPassage) {
                                 statusClass = 'passage';
-                                resultText = 'ðŸ“– Reference Passage (No Marks)';
+                                resultText = '📖 Reference Passage (No Marks)';
                                 resultBadgeClass = 'passage';
                             } else {
                                 statusClass = isCorrect ? 'correct' : (userAnswered ? 'incorrect' : 'unanswered');
@@ -2142,16 +2469,16 @@ async function showCandidateDashboard(userData) {
                                 questionDetailsHTML += `
                                     <div class="question-options" style="margin-bottom: 12px;">
                                         <div style="padding: 8px 12px; margin: 4px 0; border-radius: 6px; background: ${userAnswerLetter === 'A' ? (isCorrect || correctAnswerLetter === 'A' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'A' ? '#c8e6c9' : '#f5f5f5')};">
-                                            <strong>A:</strong> ${answer.optionA || ''} ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">âœ“ Correct</span>' : ''}
+                                            <strong>A:</strong> ${answer.optionA || ''} ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                         </div>
                                         <div style="padding: 8px 12px; margin: 4px 0; border-radius: 6px; background: ${userAnswerLetter === 'B' ? (isCorrect || correctAnswerLetter === 'B' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'B' ? '#c8e6c9' : '#f5f5f5')};">
-                                            <strong>B:</strong> ${answer.optionB || ''} ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">âœ“ Correct</span>' : ''}
+                                            <strong>B:</strong> ${answer.optionB || ''} ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                         </div>
                                         <div style="padding: 8px 12px; margin: 4px 0; border-radius: 6px; background: ${userAnswerLetter === 'C' ? (isCorrect || correctAnswerLetter === 'C' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'C' ? '#c8e6c9' : '#f5f5f5')};">
-                                            <strong>C:</strong> ${answer.optionC || ''} ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">âœ“ Correct</span>' : ''}
+                                            <strong>C:</strong> ${answer.optionC || ''} ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                         </div>
                                         <div style="padding: 8px 12px; margin: 4px 0; border-radius: 6px; background: ${userAnswerLetter === 'D' ? (isCorrect || correctAnswerLetter === 'D' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'D' ? '#c8e6c9' : '#f5f5f5')};">
-                                            <strong>D:</strong> ${answer.optionD || ''} ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">âœ“ Correct</span>' : ''}
+                                            <strong>D:</strong> ${answer.optionD || ''} ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                                         </div>
                                     </div>`;
                             }
@@ -2180,7 +2507,7 @@ async function showCandidateDashboard(userData) {
                         <div class="exam-card-date">${date}</div>
                     </div>
                     <div class="exam-details-container">
-                        <div style="font-weight: 600; color: var(--secondary); margin-bottom: 15px; font-size: 1rem;">ðŸ“… Exam Date: ${date}</div>
+                        <div style="font-weight: 600; color: var(--secondary); margin-bottom: 15px; font-size: 1rem;">📅 Exam Date: ${date}</div>
                         <div style="font-weight: 600; color: var(--primary); margin-bottom: 10px;">Question Details (Click anywhere on the card to collapse)</div>
                         ${questionDetailsHTML}
                     </div>
@@ -2264,27 +2591,27 @@ async function showCandidateDashboard(userData) {
                                         <div class="p-2 rounded ${getOptBg('A')}">
                                             <span class="font-bold">A:</span> ${answer.optionA || 'N/A'}
                                             ${userAnswerLetter === 'A' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
-                                            ${correctAnswerLetter === 'A' ? '<span class="text-success font-semibold ml-2">âœ“ Correct</span>' : ''}
+                                            ${correctAnswerLetter === 'A' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
                                         </div>
                                         <div class="p-2 rounded ${getOptBg('B')}">
                                             <span class="font-bold">B:</span> ${answer.optionB || 'N/A'}
                                             ${userAnswerLetter === 'B' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
-                                            ${correctAnswerLetter === 'B' ? '<span class="text-success font-semibold ml-2">âœ“ Correct</span>' : ''}
+                                            ${correctAnswerLetter === 'B' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
                                         </div>
                                         <div class="p-2 rounded ${getOptBg('C')}">
                                             <span class="font-bold">C:</span> ${answer.optionC || 'N/A'}
                                             ${userAnswerLetter === 'C' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
-                                            ${correctAnswerLetter === 'C' ? '<span class="text-success font-semibold ml-2">âœ“ Correct</span>' : ''}
+                                            ${correctAnswerLetter === 'C' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
                                         </div>
                                         <div class="p-2 rounded ${getOptBg('D')}">
                                             <span class="font-bold">D:</span> ${answer.optionD || 'N/A'}
                                             ${userAnswerLetter === 'D' ? '<span class="text-info font-semibold ml-2">(Your Answer)</span>' : ''}
-                                            ${correctAnswerLetter === 'D' ? '<span class="text-success font-semibold ml-2">âœ“ Correct</span>' : ''}
+                                            ${correctAnswerLetter === 'D' ? '<span class="text-success font-semibold ml-2">✓ Correct</span>' : ''}
                                         </div>
                                     </div>
 
                                     <div class="text-xs text-base-content/60 text-right">
-                                        ${isCorrect ? 'âœ… Correct (+1)' : (userAnswered ? 'âŒ Wrong (-0.25)' : 'âšª Skipped (0)')}
+                                        ${isCorrect ? '✅ Correct (+1)' : (userAnswered ? '❌ Wrong (-0.25)' : '⚪ Skipped (0)')}
                                     </div>
                                 </div>
                             `;
@@ -2818,12 +3145,12 @@ if (adminLoginBtn) {
             document.getElementById('admin-password').value = '';
             errorElement.textContent = '';
         } else {
-            errorElement.textContent = 'âŒ Invalid credentials';
+            errorElement.textContent = '❌ Invalid credentials';
         }
     } catch (error) {
-        console.error('âŒ Event handler error:', error);
+        console.error('❌ Event handler error:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ An error occurred: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
     });
@@ -3115,13 +3442,13 @@ function renderQuestionItem(q, index) {
         <!-- Action buttons in top right -->
         <div style="position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 5px;">
             <button class="delete-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Delete Question" style="background: var(--danger); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                ðŸ—‘ï¸
+                🗑️
             </button>
             <button class="edit-question-btn" data-question-id="${q.id || ''}" data-index="${index}" title="Edit Question" style="background: var(--primary); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                âœï¸
+                ✏️
             </button>
             <button class="add-to-cart-btn" data-question-id="${q.id || ''}" data-question-display-id="${q.ID}" data-index="${index}" title="${hasSubQuestions ? 'Add Group to Cart' : 'Add to Cart'}" style="background: ${questionCart.has(q.id || q.ID) ? '#27ae60' : '#f39c12'}; color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                ${questionCart.has(q.id || q.ID) ? 'âœ“' : 'ðŸ›’'}
+                ${questionCart.has(q.id || q.ID) ? '✓' : '🛒'}
             </button>
         </div>
 
@@ -3130,11 +3457,11 @@ function renderQuestionItem(q, index) {
             <span class="question-tag" style="background: var(--secondary); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Subject || 'Unknown'}</span>
             <span class="difficulty-tag" style="background: ${q.Difficulty === 'Easy' ? '#27ae60' : q.Difficulty === 'Medium' ? '#f39c12' : q.Difficulty === 'Hard' ? '#e74c3c' : '#95a5a6'}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">${q.Difficulty || 'Unknown'}</span>
             ${hasSubQuestions ? `
-                <span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">ðŸ“‹ ${subQuestionCount} Sub-Questions</span>
-                <span style="background: #4caf50; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">âš–ï¸ Weightage: ${subQuestionCount} marks</span>
+                <span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📋 ${subQuestionCount} Sub-Questions</span>
+                <span style="background: #4caf50; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">⚖️ Weightage: ${subQuestionCount} marks</span>
             ` : ''}
-            ${isMainPassage && !hasSubQuestions ? `<span style="background: #ff9800; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">ðŸ“– Passage</span>` : ''}
-            ${!hasSubQuestions && !isMainPassage ? `<span style="background: #4caf50; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">âš–ï¸ 1 mark</span>` : ''}
+            ${isMainPassage && !hasSubQuestions ? `<span style="background: #ff9800; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">📖 Passage</span>` : ''}
+            ${!hasSubQuestions && !isMainPassage ? `<span style="background: #4caf50; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">⚖️ 1 mark</span>` : ''}
         </div>
         <p class="rich-content" style="margin-bottom: 10px; font-weight: 500; font-size: 1.1rem;">${escapeHtmlForRichContent(q.Question || '')}</p>`;
 
@@ -3148,12 +3475,12 @@ function renderQuestionItem(q, index) {
             <div class="rich-content" style="margin: 5px 0;">D) ${escapeHtmlForRichContent(q['Option D'] || '')}</div>
         </div>
         <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 8px; border-radius: 6px; display: inline-block;">
-            âœ… Correct Answer: ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}
+            ✅ Correct Answer: ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}
         </div>`;
     } else {
         html += `
         <div style="color: #ff9800; font-weight: 600; background: #fff3e0; padding: 8px; border-radius: 6px; display: inline-block; margin-top: 10px;">
-            ðŸ“– Reference passage - Marks are in sub-questions below
+            📖 Reference passage - Marks are in sub-questions below
         </div>`;
     }
 
@@ -3163,7 +3490,7 @@ function renderQuestionItem(q, index) {
         <div class="sub-questions-container" style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #9c27b0;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; background: #f3e5f5; padding: 10px; border-radius: 8px;">
                 <div style="color: #9c27b0; font-weight: 600; font-size: 0.95rem;">
-                    ðŸ“‹ Sub-Questions (${subQuestionCount})
+                    📋 Sub-Questions (${subQuestionCount})
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <span style="background: #4caf50; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">Max: ${subQuestionCount} marks</span>
@@ -3197,7 +3524,7 @@ function renderQuestionItem(q, index) {
                     <div class="rich-content" style="margin: 4px 0;">D) ${escapeHtmlForRichContent(sq['Option D'] || '')}</div>
                 </div>
                 <div style="color: var(--success); font-weight: 600; background: #e8f5e9; padding: 6px 10px; border-radius: 4px; display: inline-block; font-size: 0.9rem; margin-top: 8px;">
-                    âœ… Correct: ${(sq.Correct || sq['Correct Answer'] || '').toString().toUpperCase()}
+                    ✅ Correct: ${(sq.Correct || sq['Correct Answer'] || '').toString().toUpperCase()}
                 </div>
             </div>`;
         });
@@ -3325,9 +3652,9 @@ function attachQuestionEventListeners(startIndex, endIndex) {
                         }
                     }
                 } catch (error) {
-                    console.error('âŒ Delete error:', error);
+                    console.error('❌ Delete error:', error);
                     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                        window.PoliteCCAPI.showNotification('âŒ An error occurred: ' + error.message, 'error');
+                        window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
                     }
                 }
             });
@@ -3366,9 +3693,9 @@ function attachQuestionEventListeners(startIndex, endIndex) {
 
                     document.getElementById('add-question-form').scrollIntoView({ behavior: 'smooth' });
                 } catch (error) {
-                    console.error('âŒ Edit error:', error);
+                    console.error('❌ Edit error:', error);
                     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                        window.PoliteCCAPI.showNotification('âŒ An error occurred: ' + error.message, 'error');
+                        window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
                     }
                 }
             });
@@ -3391,23 +3718,23 @@ function attachQuestionEventListeners(startIndex, endIndex) {
                     // Update button appearance
                     if (added) {
                         this.style.background = '#27ae60';
-                        this.innerHTML = 'âœ“';
+                        this.innerHTML = '✓';
                         this.title = 'Remove from Cart';
                         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                             window.PoliteCCAPI.showNotification(`Added ${question.ID} to cart`, 'success');
                         }
                     } else {
                         this.style.background = '#f39c12';
-                        this.innerHTML = 'ðŸ›’';
+                        this.innerHTML = '🛒';
                         this.title = 'Add to Cart';
                         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                             window.PoliteCCAPI.showNotification(`Removed ${question.ID} from cart`, 'info');
                         }
                     }
                 } catch (error) {
-                    console.error('âŒ Cart error:', error);
+                    console.error('❌ Cart error:', error);
                     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                        window.PoliteCCAPI.showNotification('âŒ An error occurred: ' + error.message, 'error');
+                        window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
                     }
                 }
             });
@@ -3447,7 +3774,7 @@ document.getElementById('question-bank-btn').addEventListener('click', async fun
         // Group questions hierarchically for display
         // This attaches sub-questions to their parent questions
         allQuestions = groupQuestionsHierarchically(allQuestions);
-        console.log(`ðŸ“‹ Grouped ${questions.length} questions into ${allQuestions.length} display items`);
+        console.log(`📋 Grouped ${questions.length} questions into ${allQuestions.length} display items`);
 
         // Reset search and filter
         document.getElementById('question-search-input').value = '';
@@ -3460,9 +3787,9 @@ document.getElementById('question-bank-btn').addEventListener('click', async fun
             questionsList.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No questions found. Click "Add New Question" button above to add your first question!</p>';
         }
     } catch (error) {
-        console.error('âŒ Question bank error:', error);
+        console.error('❌ Question bank error:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ An error occurred: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
 });
@@ -3511,7 +3838,7 @@ document.getElementById('select-all-questions-btn').addEventListener('click', fu
         }
     });
     updateQuestionBankStats();
-    window.PoliteCCAPI.showNotification(`âœ… Selected ${filteredQuestions.length} questions`, 'success');
+    window.PoliteCCAPI.showNotification(`✅ Selected ${filteredQuestions.length} questions`, 'success');
 });
 
 // Deselect All questions
@@ -3528,13 +3855,13 @@ document.getElementById('deselect-all-questions-btn').addEventListener('click', 
         }
     });
     updateQuestionBankStats();
-    window.PoliteCCAPI.showNotification('âœ… All questions deselected', 'info');
+    window.PoliteCCAPI.showNotification('✅ All questions deselected', 'info');
 });
 
 // Bulk Delete Selected Questions
 document.getElementById('bulk-delete-questions-btn').addEventListener('click', async function() {
     if (selectedQuestionIds.size === 0) {
-        window.PoliteCCAPI.showNotification('âš ï¸ Please select at least one question to delete', 'error');
+        window.PoliteCCAPI.showNotification('⚠️ Please select at least one question to delete', 'error');
         return;
     }
 
@@ -3543,7 +3870,7 @@ document.getElementById('bulk-delete-questions-btn').addEventListener('click', a
 
     const btn = this;
     btn.disabled = true;
-    btn.innerHTML = 'â³ Deleting...';
+    btn.innerHTML = '⏳ Deleting...';
 
     let successCount = 0;
     let failCount = 0;
@@ -3574,12 +3901,12 @@ document.getElementById('bulk-delete-questions-btn').addEventListener('click', a
     applySearchAndFilter();
 
     btn.disabled = false;
-    btn.innerHTML = 'ðŸ—‘ï¸ Delete Selected';
+    btn.innerHTML = '🗑️ Delete Selected';
 
     if (failCount > 0) {
-        window.PoliteCCAPI.showNotification(`âœ… Deleted ${successCount} questions. âŒ ${failCount} failed.`, 'warning');
+        window.PoliteCCAPI.showNotification(`✅ Deleted ${successCount} questions. ❌ ${failCount} failed.`, 'warning');
     } else {
-        window.PoliteCCAPI.showNotification(`âœ… Successfully deleted ${successCount} questions!`, 'success');
+        window.PoliteCCAPI.showNotification(`✅ Successfully deleted ${successCount} questions!`, 'success');
     }
 });
 
@@ -3587,7 +3914,7 @@ document.getElementById('bulk-delete-questions-btn').addEventListener('click', a
 document.getElementById('sanitize-question-bank-btn').addEventListener('click', async function() {
     const btn = this;
     btn.disabled = true;
-    btn.innerHTML = 'â³ Scanning...';
+    btn.innerHTML = '⏳ Scanning...';
 
     try {
         // Find duplicates based on question text and options
@@ -3619,19 +3946,19 @@ document.getElementById('sanitize-question-bank-btn').addEventListener('click', 
 
         if (duplicates.length === 0) {
             btn.disabled = false;
-            btn.innerHTML = 'ðŸ§¹ Sanitize (Remove Duplicates)';
-            window.PoliteCCAPI.showNotification('âœ… No duplicates found! Question bank is clean.', 'success');
+            btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
+            window.PoliteCCAPI.showNotification('✅ No duplicates found! Question bank is clean.', 'success');
             return;
         }
 
         const confirmDelete = confirm(`Found ${duplicates.length} duplicate questions.\n\nDo you want to remove them from the database?\n\nThis action cannot be undone!`);
         if (!confirmDelete) {
             btn.disabled = false;
-            btn.innerHTML = 'ðŸ§¹ Sanitize (Remove Duplicates)';
+            btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
             return;
         }
 
-        btn.innerHTML = `â³ Removing ${duplicates.length} duplicates...`;
+        btn.innerHTML = `⏳ Removing ${duplicates.length} duplicates...`;
 
         let successCount = 0;
         let failCount = 0;
@@ -3659,18 +3986,18 @@ document.getElementById('sanitize-question-bank-btn').addEventListener('click', 
         applySearchAndFilter();
 
         btn.disabled = false;
-        btn.innerHTML = 'ðŸ§¹ Sanitize (Remove Duplicates)';
+        btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
 
         if (failCount > 0) {
-            window.PoliteCCAPI.showNotification(`âœ… Removed ${successCount} duplicates. âŒ ${failCount} failed.`, 'warning');
+            window.PoliteCCAPI.showNotification(`✅ Removed ${successCount} duplicates. ❌ ${failCount} failed.`, 'warning');
         } else {
-            window.PoliteCCAPI.showNotification(`âœ… Successfully removed ${successCount} duplicate questions!`, 'success');
+            window.PoliteCCAPI.showNotification(`✅ Successfully removed ${successCount} duplicate questions!`, 'success');
         }
     } catch (error) {
         console.error('Sanitize error:', error);
         btn.disabled = false;
-        btn.innerHTML = 'ðŸ§¹ Sanitize (Remove Duplicates)';
-        window.PoliteCCAPI.showNotification('âŒ Error during sanitization: ' + error.message, 'error');
+        btn.innerHTML = '🧹 Sanitize (Remove Duplicates)';
+        window.PoliteCCAPI.showNotification('❌ Error during sanitization: ' + error.message, 'error');
     }
 });
 
@@ -3687,7 +4014,7 @@ function exportQuestionsToCSV() {
     }
 
     if (selectedQuestionIds.size === 0) {
-        window.PoliteCCAPI.showNotification('âš ï¸ Please select at least one question to export', 'error');
+        window.PoliteCCAPI.showNotification('⚠️ Please select at least one question to export', 'error');
         return;
     }
 
@@ -3738,7 +4065,7 @@ function exportQuestionsToCSV() {
     link.click();
     document.body.removeChild(link);
 
-    window.PoliteCCAPI.showNotification(`âœ… Exported ${selectedQuestions.length} questions successfully!`, 'success');
+    window.PoliteCCAPI.showNotification(`✅ Exported ${selectedQuestions.length} questions successfully!`, 'success');
 }
 
 // Toggle Add Question Form
@@ -3890,7 +4217,7 @@ if (addParentChildBtn) {
 
             if (!parentText) {
                 if (questionError) {
-                    questionError.textContent = 'âŒ Please enter the parent question/passage text!';
+                    questionError.textContent = '❌ Please enter the parent question/passage text!';
                     setTimeout(() => { questionError.textContent = ''; }, 3000);
                 }
                 return;
@@ -3911,7 +4238,7 @@ if (addParentChildBtn) {
 
                 if (!childQuestion || !childOptionA || !childOptionB || !childOptionC || !childOptionD) {
                     if (questionError) {
-                        questionError.textContent = `âŒ Please fill in all fields for Child Question ${num}!`;
+                        questionError.textContent = `❌ Please fill in all fields for Child Question ${num}!`;
                         setTimeout(() => { questionError.textContent = ''; }, 3000);
                     }
                     return;
@@ -3929,7 +4256,7 @@ if (addParentChildBtn) {
 
             if (childQuestions.length === 0) {
                 if (questionError) {
-                    questionError.textContent = 'âŒ Please add at least one child question!';
+                    questionError.textContent = '❌ Please add at least one child question!';
                     setTimeout(() => { questionError.textContent = ''; }, 3000);
                 }
                 return;
@@ -3952,7 +4279,7 @@ if (addParentChildBtn) {
 
             if (!parentResult) {
                 if (questionError) {
-                    questionError.textContent = 'âŒ Failed to create parent question!';
+                    questionError.textContent = '❌ Failed to create parent question!';
                     setTimeout(() => { questionError.textContent = ''; }, 3000);
                 }
                 this.disabled = false;
@@ -3983,7 +4310,7 @@ if (addParentChildBtn) {
 
             // Success
             if (questionSuccess) {
-                questionSuccess.textContent = `âœ… Parent-child question set created with ${childQuestions.length} sub-questions!`;
+                questionSuccess.textContent = `✅ Parent-child question set created with ${childQuestions.length} sub-questions!`;
                 setTimeout(() => { questionSuccess.textContent = ''; }, 5000);
             }
 
@@ -4006,7 +4333,7 @@ if (addParentChildBtn) {
             console.error('Error creating parent-child question set:', error);
             const questionError = document.getElementById('question-error');
             if (questionError) {
-                questionError.textContent = 'âŒ Failed to create question set: ' + error.message;
+                questionError.textContent = '❌ Failed to create question set: ' + error.message;
                 setTimeout(() => { questionError.textContent = ''; }, 5000);
             }
             this.disabled = false;
@@ -4020,7 +4347,7 @@ async function populateParentQuestionDropdown() {
     const select = document.getElementById('parent-question-select');
     // Skip if element doesn't exist (not using the add-to-parent feature)
     if (!select) {
-        console.log('ðŸ“ parent-question-select not found, skipping dropdown population');
+        console.log('📝 parent-question-select not found, skipping dropdown population');
         return;
     }
     select.innerHTML = '<option value="">-- Loading... --</option>';
@@ -4103,7 +4430,7 @@ document.getElementById('add-question-btn').addEventListener('click', async func
         // Validate inputs for standalone question
         if (!question) {
             if (questionError) {
-                questionError.textContent = 'âŒ Please enter the question text!';
+                questionError.textContent = '❌ Please enter the question text!';
                 setTimeout(() => { questionError.textContent = ''; }, 3000);
             }
             return;
@@ -4111,7 +4438,7 @@ document.getElementById('add-question-btn').addEventListener('click', async func
 
         if (!optionA || !optionB || !optionC || !optionD) {
             if (questionError) {
-                questionError.textContent = 'âŒ Please fill in all options!';
+                questionError.textContent = '❌ Please fill in all options!';
                 setTimeout(() => { questionError.textContent = ''; }, 3000);
             }
             return;
@@ -4140,7 +4467,7 @@ document.getElementById('add-question-btn').addEventListener('click', async func
 
                 if (success) {
                     if (questionSuccess) {
-                        questionSuccess.textContent = 'âœ… Question updated successfully!';
+                        questionSuccess.textContent = '✅ Question updated successfully!';
                         setTimeout(() => { questionSuccess.textContent = ''; }, 3000);
                     }
                 }
@@ -4156,7 +4483,7 @@ document.getElementById('add-question-btn').addEventListener('click', async func
                 questions[editIndex].Correct = correctAnswer;
 
                 if (questionSuccess) {
-                    questionSuccess.textContent = 'âœ… Question updated successfully!';
+                    questionSuccess.textContent = '✅ Question updated successfully!';
                     setTimeout(() => { questionSuccess.textContent = ''; }, 3000);
                 }
             }
@@ -4184,7 +4511,7 @@ document.getElementById('add-question-btn').addEventListener('click', async func
                 const success = await window.PoliteCCAPI.addQuestionToDatabase(questionData);
 
                 if (success && questionSuccess) {
-                    questionSuccess.textContent = 'âœ… Standalone question added successfully!';
+                    questionSuccess.textContent = '✅ Standalone question added successfully!';
                     setTimeout(() => { questionSuccess.textContent = ''; }, 3000);
                 }
             } else {
@@ -4207,7 +4534,7 @@ document.getElementById('add-question-btn').addEventListener('click', async func
                 questions.push(newQuestion);
 
                 if (questionSuccess) {
-                    questionSuccess.textContent = 'âœ… Standalone question added successfully!';
+                    questionSuccess.textContent = '✅ Standalone question added successfully!';
                     setTimeout(() => { questionSuccess.textContent = ''; }, 3000);
                 }
             }
@@ -4226,9 +4553,9 @@ document.getElementById('add-question-btn').addEventListener('click', async func
         document.getElementById('add-question-form').classList.add('hidden');
         document.getElementById('question-bank-btn').click();
     } catch (error) {
-        console.error('âŒ Event handler error:', error);
+        console.error('❌ Event handler error:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ An error occurred: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
 });
@@ -4338,14 +4665,14 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
                                 <span style="background: ${subjectColor}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Subject}</span>
                                 <span style="background: ${difficultyColor}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${q.Difficulty || 'Unknown'}</span>
                                 ${hasSubQuestions ? `
-                                    <span style="background: #9c27b0; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">ðŸ“‹ ${subQuestionCount} Sub-Questions</span>
-                                    <span style="background: #4caf50; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">âš–ï¸ ${subQuestionCount} marks</span>
+                                    <span style="background: #9c27b0; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">📋 ${subQuestionCount} Sub-Questions</span>
+                                    <span style="background: #4caf50; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⚖️ ${subQuestionCount} marks</span>
                                 ` : `
-                                    <span style="background: #4caf50; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">âš–ï¸ 1 mark</span>
+                                    <span style="background: #4caf50; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⚖️ 1 mark</span>
                                 `}
                             </div>
                             <div style="color: #2c3e50; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-size: 0.95rem; margin-bottom: 8px;">
-                                ${isParentQuestion ? '<strong>ðŸ“– Passage:</strong>' : '<strong>Q:</strong>'} ${q.Question}
+                                ${isParentQuestion ? '<strong>📖 Passage:</strong>' : '<strong>Q:</strong>'} ${q.Question}
                             </div>`;
 
                     // Show options only for standalone questions (not parent questions)
@@ -4358,7 +4685,7 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
                                     <div style="margin: 4px 0; color: #555;"><strong>B)</strong> ${q['Option B'] || ''}</div>
                                     <div style="margin: 4px 0; color: #555;"><strong>C)</strong> ${q['Option C'] || ''}</div>
                                     <div style="margin: 4px 0; color: #555;"><strong>D)</strong> ${q['Option D'] || ''}</div>
-                                    <div style="margin-top: 8px; padding: 6px; background: #d4edda; border-radius: 4px; color: #155724; font-weight: 600;"><strong>âœ“ Correct:</strong> ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}</div>
+                                    <div style="margin-top: 8px; padding: 6px; background: #d4edda; border-radius: 4px; color: #155724; font-weight: 600;"><strong>✓ Correct:</strong> ${(q.Correct || q['Correct Answer'] || '').toString().toUpperCase()}</div>
                                 </div>
                             </details>`;
                     }
@@ -4367,7 +4694,7 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
                     if (hasSubQuestions) {
                         html += `
                             <details style="margin-top: 10px; cursor: pointer;" open>
-                                <summary style="color: #9c27b0; font-weight: 600; font-size: 0.85rem; user-select: none; padding: 4px 0;">ðŸ“‹ View ${subQuestionCount} Sub-Questions (All included when selected)</summary>
+                                <summary style="color: #9c27b0; font-weight: 600; font-size: 0.85rem; user-select: none; padding: 4px 0;">📋 View ${subQuestionCount} Sub-Questions (All included when selected)</summary>
                                 <div style="margin-top: 8px; padding: 10px; background: #f3e5f5; border-radius: 6px; border: 1px solid #ce93d8;">`;
 
                         q.subQuestions.forEach((sq, idx) => {
@@ -4385,7 +4712,7 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
                                             <span style="margin-right: 10px;">C) ${sq['Option C'] || ''}</span>
                                             <span>D) ${sq['Option D'] || ''}</span>
                                         </div>
-                                        <div style="color: #27ae60; font-size: 0.8rem; margin-top: 4px;"><strong>âœ“ Answer:</strong> ${(sq.Correct || sq['Correct Answer'] || '').toString().toUpperCase()}</div>
+                                        <div style="color: #27ae60; font-size: 0.8rem; margin-top: 4px;"><strong>✓ Answer:</strong> ${(sq.Correct || sq['Correct Answer'] || '').toString().toUpperCase()}</div>
                                     </div>`;
                         });
 
@@ -4570,7 +4897,7 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
 
             // Show notification with actual count
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                window.PoliteCCAPI.showNotification(`ðŸŽ² Added ${currentTotal} questions to selection (${selectedCheckboxes.length} items)!`, 'success');
+                window.PoliteCCAPI.showNotification(`🎲 Added ${currentTotal} questions to selection (${selectedCheckboxes.length} items)!`, 'success');
             }
         });
 
@@ -4586,7 +4913,7 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
 
             // Show notification
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                window.PoliteCCAPI.showNotification('ðŸ”„ All selections cleared!', 'info');
+                window.PoliteCCAPI.showNotification('🔄 All selections cleared!', 'info');
             }
         });
 
@@ -4603,7 +4930,7 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
             if (stats.total === 0) {
                 cartStatsSummary.innerHTML = `
                     <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; color: #666;">
-                        <span style="font-size: 2rem;">ðŸ›’</span>
+                        <span style="font-size: 2rem;">🛒</span>
                         <p style="margin-top: 10px;">Your cart is empty. Add questions from the Question Bank!</p>
                     </div>
                 `;
@@ -4864,7 +5191,7 @@ document.getElementById('create-exam-submit-btn').addEventListener('click', asyn
         if (!examCode || !examTitle || isNaN(duration) || duration < 5) {
             const examError = document.getElementById('exam-error');
             if (examError) {
-                examError.textContent = 'âŒ Please fill all fields correctly!';
+                examError.textContent = '❌ Please fill all fields correctly!';
                 setTimeout(() => {
                     examError.textContent = '';
                 }, 3000);
@@ -4876,7 +5203,7 @@ document.getElementById('create-exam-submit-btn').addEventListener('click', asyn
         if (!expiryInput) {
             const examError = document.getElementById('exam-error');
             if (examError) {
-                examError.textContent = 'âŒ Please select an expiry date!';
+                examError.textContent = '❌ Please select an expiry date!';
                 setTimeout(() => {
                     examError.textContent = '';
                 }, 3000);
@@ -4906,7 +5233,7 @@ document.getElementById('create-exam-submit-btn').addEventListener('click', asyn
         if (isNaN(expiryDate.getTime())) {
             const examError = document.getElementById('exam-error');
             if (examError) {
-                examError.textContent = 'âŒ Invalid expiry date! Use format: dd-mm-yyyy';
+                examError.textContent = '❌ Invalid expiry date! Use format: dd-mm-yyyy';
                 setTimeout(() => {
                     examError.textContent = '';
                 }, 3000);
@@ -4922,7 +5249,7 @@ document.getElementById('create-exam-submit-btn').addEventListener('click', asyn
         if (expiryDateOnly.getTime() < today.getTime()) {
             const examError = document.getElementById('exam-error');
             if (examError) {
-                examError.textContent = 'âŒ Expiry date must be today or in the future!';
+                examError.textContent = '❌ Expiry date must be today or in the future!';
                 setTimeout(() => {
                     examError.textContent = '';
                 }, 3000);
@@ -4967,7 +5294,7 @@ document.getElementById('create-exam-submit-btn').addEventListener('click', asyn
         if (totalQuestionCount < 5) {
             const examError = document.getElementById('exam-error');
             if (examError) {
-                examError.textContent = `âŒ Please select at least 5 questions! (Currently: ${totalQuestionCount})`;
+                examError.textContent = `❌ Please select at least 5 questions! (Currently: ${totalQuestionCount})`;
                 setTimeout(() => {
                     examError.textContent = '';
                 }, 3000);
@@ -4992,7 +5319,7 @@ document.getElementById('create-exam-submit-btn').addEventListener('click', asyn
                 // Show success
                 const examSuccess = document.getElementById('exam-success');
                 if (examSuccess) {
-                    examSuccess.textContent = `âœ… Exam "${examCode}" created and saved successfully!`;
+                    examSuccess.textContent = `✅ Exam "${examCode}" created and saved successfully!`;
                     setTimeout(() => {
                         examSuccess.textContent = '';
                     }, 5000);
@@ -5015,7 +5342,7 @@ document.getElementById('create-exam-submit-btn').addEventListener('click', asyn
             // Show success
             const examSuccess = document.getElementById('exam-success');
             if (examSuccess) {
-                examSuccess.textContent = `âœ… Exam "${examCode}" created successfully!`;
+                examSuccess.textContent = `✅ Exam "${examCode}" created successfully!`;
                 setTimeout(() => {
                     examSuccess.textContent = '';
                 }, 5000);
@@ -5024,7 +5351,7 @@ document.getElementById('create-exam-submit-btn').addEventListener('click', asyn
             // Show notification
             const notification = document.createElement('div');
             notification.className = 'notification success';
-            notification.innerHTML = `âœ… Exam "${examCode}" created successfully!`;
+            notification.innerHTML = `✅ Exam "${examCode}" created successfully!`;
             document.getElementById('notification-container').appendChild(notification);
 
             setTimeout(() => {
@@ -5034,9 +5361,9 @@ document.getElementById('create-exam-submit-btn').addEventListener('click', asyn
             }, 3000);
         }
     } catch (error) {
-        console.error('âŒ Event handler error:', error);
+        console.error('❌ Event handler error:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ An error occurred: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
 });
@@ -5188,7 +5515,7 @@ document.getElementById('view-results-btn').addEventListener('click', async func
                         <div><strong>Expiry:</strong> ${expiryStr}</div>
                         <div><strong>Duration:</strong> ${duration} min</div>
                         <div><strong>Questions:</strong> ${questionCount}</div>
-                        <div style="color: var(--primary); font-weight: 600;">Click to view results â†’</div>
+                        <div style="color: var(--primary); font-weight: 600;">Click to view results →</div>
                     </div>
                 </div>
             `;
@@ -5204,16 +5531,16 @@ document.getElementById('view-results-btn').addEventListener('click', async func
                 const card = e.target.closest('.exam-result-card');
                 if (card) {
                     const examCode = card.getAttribute('data-exam-code');
-                    console.log('ðŸ“Š Exam card clicked:', examCode);
+                    console.log('📊 Exam card clicked:', examCode);
                     showExamCandidates(examCode);
                 }
             });
         }
 
     } catch (error) {
-        console.error('âŒ Event handler error:', error);
+        console.error('❌ Event handler error:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ An error occurred: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ An error occurred: ' + error.message, 'error');
         }
     }
 });
@@ -5221,7 +5548,7 @@ document.getElementById('view-results-btn').addEventListener('click', async func
 // Function to show candidates for a selected exam (INLINE VIEW - not modal)
 async function showExamCandidates(examCode) {
     try {
-        console.log('ðŸ“Š showExamCandidates called for:', examCode);
+        console.log('📊 showExamCandidates called for:', examCode);
 
         // Hide exams view, show candidates section (INLINE)
         document.getElementById('results-exams-view').classList.add('hidden');
@@ -5282,21 +5609,21 @@ async function showExamCandidates(examCode) {
         // Show loading in candidates container
         const candidatesContainer = document.getElementById('candidates-list-container');
         candidatesContainer.innerHTML = '<div class="flex justify-center py-8"><span class="loading loading-spinner loading-lg text-primary"></span><span class="ml-3">Loading candidates...</span></div>';
-        console.log('ðŸ“Š Set loading message, fetching results...');
+        console.log('📊 Set loading message, fetching results...');
 
         // Get results from API
         let results = [];
         try {
             if (window.PoliteCCAPI && window.PoliteCCAPI.getExamResults) {
-                console.log('ðŸ“Š Calling getExamResults API for:', examCode);
+                console.log('📊 Calling getExamResults API for:', examCode);
                 results = await window.PoliteCCAPI.getExamResults(examCode) || [];
-                console.log('ðŸ“Š API returned', results.length, 'results');
+                console.log('📊 API returned', results.length, 'results');
             } else {
-                console.error('âŒ getExamResults API not available');
+                console.error('❌ getExamResults API not available');
             }
         } catch (apiError) {
-            console.error('âŒ API error:', apiError);
-            candidatesContainer.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 40px;">âŒ Error fetching results: ${apiError.message}</p>`;
+            console.error('❌ API error:', apiError);
+            candidatesContainer.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 40px;">❌ Error fetching results: ${apiError.message}</p>`;
             return;
         }
 
@@ -5305,7 +5632,7 @@ async function showExamCandidates(examCode) {
         currentExamCodeForResults = examCode;
 
         if (results.length === 0) {
-            candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">ðŸ“­ No candidates have taken this exam yet.</p>';
+            candidatesContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">📭 No candidates have taken this exam yet.</p>';
             return;
         }
 
@@ -5315,7 +5642,7 @@ async function showExamCandidates(examCode) {
         // Build candidates list with better layout
         let candidatesHTML = `
             <h4 style="margin-bottom: 15px; color: var(--primary); font-weight: 600;">
-                ðŸ“‹ Candidates (${results.length} total) - Sorted by Rank
+                📋 Candidates (${results.length} total) - Sorted by Rank
             </h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 5px;">
         `;
@@ -5329,7 +5656,7 @@ async function showExamCandidates(examCode) {
 
             const scoreColor = score >= 0 ? '#27ae60' : '#e74c3c';
             const scoreBg = score >= 0 ? '#e8f5e9' : '#ffebee';
-            const rankBadge = index < 3 ? ['ðŸ¥‡', 'ðŸ¥ˆ', 'ðŸ¥‰'][index] : `#${index + 1}`;
+            const rankBadge = index < 3 ? ['🥇', '🥈', '🥉'][index] : `#${index + 1}`;
 
             candidatesHTML += `
                 <div class="candidate-result-card" data-result-index="${index}">
@@ -5347,7 +5674,7 @@ async function showExamCandidates(examCode) {
                         </div>
                     </div>
                     <div style="margin-top: 10px; text-align: center; color: var(--primary); font-size: 0.8rem; font-weight: 600; padding-top: 8px; border-top: 1px solid #eee;">
-                        Click for detailed results â†’
+                        Click for detailed results →
                     </div>
                 </div>
             `;
@@ -5361,16 +5688,16 @@ async function showExamCandidates(examCode) {
         candidatesContainer.style.visibility = 'visible';
         candidatesContainer.innerHTML = candidatesHTML;
 
-        console.log('ðŸ“Š Rendered', results.length, 'candidate cards');
-        console.log('ðŸ“Š Container element:', candidatesContainer);
-        console.log('ðŸ“Š Container innerHTML length:', candidatesContainer.innerHTML.length);
+        console.log('📊 Rendered', results.length, 'candidate cards');
+        console.log('📊 Container element:', candidatesContainer);
+        console.log('📊 Container innerHTML length:', candidatesContainer.innerHTML.length);
 
         // Use event delegation for candidate cards - more reliable
         candidatesContainer.onclick = function(e) {
             const card = e.target.closest('.candidate-result-card');
             if (card) {
                 const resultIndex = parseInt(card.getAttribute('data-result-index'));
-                console.log('ðŸ“Š Candidate card clicked, index:', resultIndex);
+                console.log('📊 Candidate card clicked, index:', resultIndex);
                 if (results[resultIndex]) {
                     showCandidateDetailedResults(results[resultIndex], examCode);
                 }
@@ -5378,25 +5705,25 @@ async function showExamCandidates(examCode) {
         };
 
     } catch (error) {
-        console.error('âŒ Error loading candidates:', error);
+        console.error('❌ Error loading candidates:', error);
         const candidatesContainer = document.getElementById('candidates-list-container');
         if (candidatesContainer) {
             candidatesContainer.innerHTML = `
                 <div style="text-align: center; padding: 40px; color: #e74c3c;">
-                    <p>âŒ Error loading candidates: ${error.message}</p>
+                    <p>❌ Error loading candidates: ${error.message}</p>
                     <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">Please try again or contact support.</p>
                 </div>
             `;
         }
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ Failed to load candidates: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ Failed to load candidates: ' + error.message, 'error');
         }
     }
 }
 
 // Function to show detailed results for a candidate with full questions and options (INLINE)
 function showCandidateDetailedResults(result, examCode) {
-    console.log('ðŸ“Š showCandidateDetailedResults called for:', result.Name || result.name);
+    console.log('📊 showCandidateDetailedResults called for:', result.Name || result.name);
 
     // Hide candidates section, show detail section (INLINE)
     document.getElementById('results-exams-view').classList.add('hidden');
@@ -5405,7 +5732,7 @@ function showCandidateDetailedResults(result, examCode) {
 
     const content = document.getElementById('candidate-detail-container');
     if (!content) {
-        console.error('âŒ candidate-detail-container element not found!');
+        console.error('❌ candidate-detail-container element not found!');
         return;
     }
 
@@ -5454,7 +5781,7 @@ function showCandidateDetailedResults(result, examCode) {
     if (!userAnswers || userAnswers.length === 0) {
         html += `
             <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 12px; border-left: 4px solid #ffc107;">
-                <div style="font-size: 2.5rem; margin-bottom: 15px;">âš ï¸</div>
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">⚠️</div>
                 <h4 style="color: #856404; margin-bottom: 10px;">No Answer Data Available</h4>
                 <p style="color: #856404;">This result does not contain detailed answer information.</p>
             </div>
@@ -5574,20 +5901,20 @@ function showCandidateDetailedResults(result, examCode) {
                     </div>
                     <div style="display: grid; gap: 6px; font-size: 0.95rem;">
                         <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'A' ? (correctAnswerLetter === 'A' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'A' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'A' ? '#27ae60' : (userAnswerLetter === 'A' ? '#e74c3c' : '#e0e0e0')};">
-                            <strong>A:</strong> <span class="rich-content">${optA}</span> ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">âœ“ Correct</span>' : ''}
+                            <strong>A:</strong> <span class="rich-content">${optA}</span> ${userAnswerLetter === 'A' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                         </div>
                         <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'B' ? (correctAnswerLetter === 'B' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'B' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'B' ? '#27ae60' : (userAnswerLetter === 'B' ? '#e74c3c' : '#e0e0e0')};">
-                            <strong>B:</strong> <span class="rich-content">${optB}</span> ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">âœ“ Correct</span>' : ''}
+                            <strong>B:</strong> <span class="rich-content">${optB}</span> ${userAnswerLetter === 'B' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                         </div>
                         <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'C' ? (correctAnswerLetter === 'C' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'C' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'C' ? '#27ae60' : (userAnswerLetter === 'C' ? '#e74c3c' : '#e0e0e0')};">
-                            <strong>C:</strong> <span class="rich-content">${optC}</span> ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">âœ“ Correct</span>' : ''}
+                            <strong>C:</strong> <span class="rich-content">${optC}</span> ${userAnswerLetter === 'C' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                         </div>
                         <div style="padding: 10px 12px; border-radius: 6px; background: ${userAnswerLetter === 'D' ? (correctAnswerLetter === 'D' ? '#c8e6c9' : '#ffcdd2') : (correctAnswerLetter === 'D' ? '#c8e6c9' : 'white')}; border: 2px solid ${correctAnswerLetter === 'D' ? '#27ae60' : (userAnswerLetter === 'D' ? '#e74c3c' : '#e0e0e0')};">
-                            <strong>D:</strong> <span class="rich-content">${optD}</span> ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">âœ“ Correct</span>' : ''}
+                            <strong>D:</strong> <span class="rich-content">${optD}</span> ${userAnswerLetter === 'D' ? '<span style="color: #1976d2; font-weight: 600; margin-left: 8px;">(Your Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '<span style="color: #388e3c; font-weight: 600; margin-left: 8px;">✓ Correct</span>' : ''}
                         </div>
                     </div>
                     <div style="margin-top: 10px; font-weight: 600; font-size: 0.9rem; text-align: right;">
-                        ${isCorrect ? 'âœ… Correct' : (userAnswered ? 'âŒ Incorrect' : 'âšª Unanswered')}
+                        ${isCorrect ? '✅ Correct' : (userAnswered ? '❌ Incorrect' : '⚪ Unanswered')}
                     </div>
                 </div>
             `;
@@ -5616,13 +5943,13 @@ function showCandidateDetailedResults(result, examCode) {
                         <!-- Group Header -->
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                             <div style="font-weight: 700; color: #9c27b0; font-size: 1.1rem;">
-                                ðŸ“‹ Q${questionNumber}. ${parentId || 'Parent-Child Group'}
+                                📋 Q${questionNumber}. ${parentId || 'Parent-Child Group'}
                                 <span style="background: #9c27b0; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">${children.length} Sub-Questions</span>
                             </div>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                <span style="background: #c8e6c9; color: #388e3c; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">âœ“ ${groupCorrect}</span>
-                                <span style="background: #ffcdd2; color: #c62828; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">âœ— ${groupIncorrect}</span>
-                                <span style="background: #e0e0e0; color: #666; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">â—‹ ${groupUnanswered}</span>
+                                <span style="background: #c8e6c9; color: #388e3c; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">✓ ${groupCorrect}</span>
+                                <span style="background: #ffcdd2; color: #c62828; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">✗ ${groupIncorrect}</span>
+                                <span style="background: #e0e0e0; color: #666; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">○ ${groupUnanswered}</span>
                                 <span style="background: ${groupScore >= 0 ? '#4caf50' : '#f44336'}; color: white; padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;">Score: ${groupScore.toFixed(2)}</span>
                             </div>
                         </div>
@@ -5630,7 +5957,7 @@ function showCandidateDetailedResults(result, examCode) {
                         <!-- Parent Passage with rich content support -->
                         ${parent ? `
                         <div style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                            <div style="color: #9c27b0; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">ðŸ“– Passage/Context:</div>
+                            <div style="color: #9c27b0; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">📖 Passage/Context:</div>
                             <div class="rich-content" style="color: #333; font-size: 1rem; line-height: 1.7;">${escapeHtmlForRichContent(parent.question || 'Passage not available')}</div>
                         </div>
                         ` : ''}
@@ -5777,7 +6104,7 @@ function exportResultsToCSV(results, examCode) {
     link.click();
     document.body.removeChild(link);
 
-    window.PoliteCCAPI.showNotification('âœ… Results exported successfully!', 'success');
+    window.PoliteCCAPI.showNotification('✅ Results exported successfully!', 'success');
 }
 
 // Function to show detailed result
@@ -5786,7 +6113,7 @@ async function showDetailedResult(result, examCode) {
     const content = document.getElementById('detailed-result-content');
 
     // Show loading state
-    content.innerHTML = '<p style="text-align: center; padding: 40px; color: #7f8c8d;"><span style="font-size: 2rem;">â³</span><br>Loading detailed results...</p>';
+    content.innerHTML = '<p style="text-align: center; padding: 40px; color: #7f8c8d;"><span style="font-size: 2rem;">⏳</span><br>Loading detailed results...</p>';
     modal.style.display = 'block';
 
     // Get exam questions
@@ -5794,7 +6121,7 @@ async function showDetailedResult(result, examCode) {
     if (!exam) {
         content.innerHTML = `
             <div style="text-align: center; padding: 40px;">
-                <div style="font-size: 3rem; margin-bottom: 20px;">âš ï¸</div>
+                <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
                 <h3 style="color: var(--danger); margin-bottom: 15px;">Exam Not Found</h3>
                 <p style="color: #7f8c8d; margin-bottom: 20px;">Unable to load exam data for: <strong>${examCode}</strong></p>
                 <p style="color: #7f8c8d; font-size: 0.9rem;">The exam may have been deleted or the data is not available.</p>
@@ -5835,7 +6162,7 @@ async function showDetailedResult(result, examCode) {
                 <div><strong>Score:</strong> <span style="color: ${(result.Score || result.score) >= 0 ? '#27ae60' : '#e74c3c'}; font-weight: 700; font-size: 1.2rem;">${parseFloat(result.Score || result.score || 0).toFixed(2)}</span></div>
             </div>
             <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
-                <div style="font-size: 2rem; margin-bottom: 15px;">âš ï¸</div>
+                <div style="font-size: 2rem; margin-bottom: 15px;">⚠️</div>
                 <h4 style="color: #856404; margin-bottom: 10px;">No Answer Data Available</h4>
                 <p style="color: #856404;">This result does not contain detailed answer information.</p>
             </div>
@@ -5872,21 +6199,21 @@ async function showDetailedResult(result, examCode) {
 
                     <div style="margin-bottom: 12px;">
                         <div style="margin: 5px 0; padding: 8px; background: ${userAnswerLetter === 'A' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                            <strong>A:</strong> ${answer.optionA} ${userAnswerLetter === 'A' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                            <strong>A:</strong> ${answer.optionA} ${userAnswerLetter === 'A' ? '👉 <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'A' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                         </div>
                         <div style="margin: 5px 0; padding: 8px; background: ${userAnswerLetter === 'B' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                            <strong>B:</strong> ${answer.optionB} ${userAnswerLetter === 'B' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                            <strong>B:</strong> ${answer.optionB} ${userAnswerLetter === 'B' ? '👉 <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'B' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                         </div>
                         <div style="margin: 5px 0; padding: 8px; background: ${userAnswerLetter === 'C' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                            <strong>C:</strong> ${answer.optionC} ${userAnswerLetter === 'C' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                            <strong>C:</strong> ${answer.optionC} ${userAnswerLetter === 'C' ? '👉 <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'C' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                         </div>
                         <div style="margin: 5px 0; padding: 8px; background: ${userAnswerLetter === 'D' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                            <strong>D:</strong> ${answer.optionD} ${userAnswerLetter === 'D' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                            <strong>D:</strong> ${answer.optionD} ${userAnswerLetter === 'D' ? '👉 <span style="color: #2196f3; font-weight: 600;">(User Answer)</span>' : ''} ${correctAnswerLetter === 'D' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                         </div>
                     </div>
 
                     <div style="font-weight: 600; font-size: 1.1rem;">
-                        ${isCorrect ? 'âœ… Correct (+1)' : (userAnswered ? 'âŒ Incorrect (-0.25)' : 'âšª Not Answered (0)')}
+                        ${isCorrect ? '✅ Correct (+1)' : (userAnswered ? '❌ Incorrect (-0.25)' : '⚪ Not Answered (0)')}
                     </div>
                 </div>
             `;
@@ -5897,7 +6224,7 @@ async function showDetailedResult(result, examCode) {
         if (examQuestions.length === 0) {
             html += `
                 <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
-                    <div style="font-size: 2rem; margin-bottom: 15px;">âš ï¸</div>
+                    <div style="font-size: 2rem; margin-bottom: 15px;">⚠️</div>
                     <h4 style="color: #856404; margin-bottom: 10px;">Question Data Not Available</h4>
                     <p style="color: #856404;">Unable to load question details for this exam.</p>
                     <p style="color: #856404; font-size: 0.9rem; margin-top: 10px;">The candidate answered ${userAnswers.length} questions and scored ${parseFloat(result.Score || result.score || 0).toFixed(2)} points.</p>
@@ -5935,7 +6262,7 @@ async function showDetailedResult(result, examCode) {
                         </div>
                     </div>
                     <div style="font-weight: 600; font-size: 1.1rem;">
-                        ${isCorrect ? 'âœ… Correct (+1)' : (hasAnswered ? 'âŒ Incorrect (-0.25)' : 'âšª Not Answered (0)')}
+                        ${isCorrect ? '✅ Correct (+1)' : (hasAnswered ? '❌ Incorrect (-0.25)' : '⚪ Not Answered (0)')}
                     </div>
                 </div>
             `;
@@ -6007,7 +6334,7 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
 
         if (!fileInput || !fileInput.files[0]) {
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                window.PoliteCCAPI.showNotification('âŒ Please select a file to upload.', 'error');
+                window.PoliteCCAPI.showNotification('❌ Please select a file to upload.', 'error');
             }
             return;
         }
@@ -6132,7 +6459,7 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
 
                 if (extractedQuestions.length === 0) {
                     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                        window.PoliteCCAPI.showNotification('âŒ No valid questions found.', 'error');
+                        window.PoliteCCAPI.showNotification('❌ No valid questions found.', 'error');
                     }
                     return;
                 }
@@ -6141,7 +6468,7 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
                 openOCRReviewModal(extractedQuestions);
 
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                    let message = `âœ… Extracted ${extractedQuestions.length} questions.`;
+                    let message = `✅ Extracted ${extractedQuestions.length} questions.`;
                     if (passages > 0) {
                         message += ` (${passages} passages with ${subQs} sub-questions detected)`;
                     }
@@ -6157,7 +6484,7 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
                 document.getElementById('upload-step-1').classList.remove('hidden');
 
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                    window.PoliteCCAPI.showNotification(`âŒ Failed to extract questions: ${error.message}`, 'error');
+                    window.PoliteCCAPI.showNotification(`❌ Failed to extract questions: ${error.message}`, 'error');
                 }
             }
         };
@@ -6168,7 +6495,7 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
             document.getElementById('upload-step-1').classList.remove('hidden');
 
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                window.PoliteCCAPI.showNotification('âŒ Failed to read file', 'error');
+                window.PoliteCCAPI.showNotification('❌ Failed to read file', 'error');
             }
         };
 
@@ -6182,7 +6509,7 @@ document.getElementById('process-upload-btn').addEventListener('click', async fu
         document.getElementById('upload-step-1').classList.remove('hidden');
 
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification(`âŒ OCR failed: ${error.message}`, 'error');
+            window.PoliteCCAPI.showNotification(`❌ OCR failed: ${error.message}`, 'error');
         }
     }
 });
@@ -6222,7 +6549,7 @@ if (document.getElementById('clean-text-btn')) {
         });
 
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification(`âœ… ${extractedQuestions.length} questions parsed`, 'success');
+            window.PoliteCCAPI.showNotification(`✅ ${extractedQuestions.length} questions parsed`, 'success');
         }
     });
 }
@@ -6247,7 +6574,7 @@ document.getElementById('upload-new-btn').addEventListener('click', function() {
     extractedQuestions = [];
 
     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-        window.PoliteCCAPI.showNotification('ðŸ“¤ Ready to upload new question paper', 'info');
+        window.PoliteCCAPI.showNotification('📤 Ready to upload new question paper', 'info');
     }
 });
 
@@ -6258,7 +6585,7 @@ document.getElementById('select-all-extracted-btn').addEventListener('click', fu
         cb.checked = true;
     });
     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-        window.PoliteCCAPI.showNotification(`âœ… Selected all ${checkboxes.length} questions`, 'success');
+        window.PoliteCCAPI.showNotification(`✅ Selected all ${checkboxes.length} questions`, 'success');
     }
 });
 
@@ -6269,7 +6596,7 @@ document.getElementById('select-none-extracted-btn').addEventListener('click', f
         cb.checked = false;
     });
     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-        window.PoliteCCAPI.showNotification('âœ… Deselected all questions', 'info');
+        window.PoliteCCAPI.showNotification('✅ Deselected all questions', 'info');
     }
 });
 
@@ -6278,7 +6605,7 @@ document.getElementById('add-extracted-btn').addEventListener('click', async fun
     try {
         if (extractedQuestions.length === 0) {
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                window.PoliteCCAPI.showNotification('âŒ No questions to add.', 'error');
+                window.PoliteCCAPI.showNotification('❌ No questions to add.', 'error');
             }
             return;
         }
@@ -6307,7 +6634,7 @@ document.getElementById('add-extracted-btn').addEventListener('click', async fun
         }
 
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification(`âœ… ${successCount} questions added to bank!`, 'success');
+            window.PoliteCCAPI.showNotification(`✅ ${successCount} questions added to bank!`, 'success');
         }
 
         // Reset to step 1 and clear extracted questions
@@ -6327,9 +6654,9 @@ document.getElementById('add-extracted-btn').addEventListener('click', async fun
         // Refresh question bank
         document.getElementById('question-bank-btn').click();
     } catch (error) {
-        console.error('âŒ Error adding extracted questions:', error);
+        console.error('❌ Error adding extracted questions:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ Failed to add questions: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ Failed to add questions: ' + error.message, 'error');
         }
     }
 });
@@ -6339,7 +6666,7 @@ document.getElementById('add-selected-btn').addEventListener('click', async func
     try {
         if (extractedQuestions.length === 0) {
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                window.PoliteCCAPI.showNotification('âŒ No questions to add.', 'error');
+                window.PoliteCCAPI.showNotification('❌ No questions to add.', 'error');
             }
             return;
         }
@@ -6349,7 +6676,7 @@ document.getElementById('add-selected-btn').addEventListener('click', async func
 
         if (selectedCheckboxes.length === 0) {
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                window.PoliteCCAPI.showNotification('âŒ No questions selected. Please select at least one question.', 'error');
+                window.PoliteCCAPI.showNotification('❌ No questions selected. Please select at least one question.', 'error');
             }
             return;
         }
@@ -6405,7 +6732,7 @@ document.getElementById('add-selected-btn').addEventListener('click', async func
                     options: q.options || ['', '', '', ''],  // Also pass array for backup
                     correct: q.correct >= 0 ? ['A', 'B', 'C', 'D'][q.correct] : ''
                 };
-                console.log('ðŸ“¦ Sub-question data:', { questionType: q.questionType, options: q.options, questionData });
+                console.log('📦 Sub-question data:', { questionType: q.questionType, options: q.options, questionData });
 
                 // Add hierarchical fields for sub-questions
                 if (isSubQuestion) {
@@ -6426,9 +6753,9 @@ document.getElementById('add-selected-btn').addEventListener('click', async func
         }
 
         // Generate appropriate success message
-        let message = `âœ… ${successCount} questions added to bank!`;
+        let message = `✅ ${successCount} questions added to bank!`;
         if (passageCount > 0) {
-            message = `âœ… Added ${successCount} questions (${passageCount} passages, ${subQuestionCount} sub-questions)`;
+            message = `✅ Added ${successCount} questions (${passageCount} passages, ${subQuestionCount} sub-questions)`;
         }
 
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
@@ -6452,9 +6779,9 @@ document.getElementById('add-selected-btn').addEventListener('click', async func
         // Refresh question bank
         document.getElementById('question-bank-btn').click();
     } catch (error) {
-        console.error('âŒ Error adding selected questions:', error);
+        console.error('❌ Error adding selected questions:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ Failed to add questions: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ Failed to add questions: ' + error.message, 'error');
         }
     }
 });
@@ -6498,14 +6825,14 @@ document.getElementById('generate-ai-btn').addEventListener('click', async funct
         // Show processing notification
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
             const msg = isParentChild ?
-                'ðŸ¤– AI is generating passage-based questions...' :
-                'ðŸ¤– AI is generating a unique question...';
+                '🤖 AI is generating passage-based questions...' :
+                '🤖 AI is generating a unique question...';
             window.PoliteCCAPI.showNotification(msg, 'info');
         }
 
         // Disable button during generation
         generateBtn.disabled = true;
-        generateBtn.textContent = isParentChild ? 'â³ Generating Passage...' : 'â³ Generating...';
+        generateBtn.textContent = isParentChild ? '⏳ Generating Passage...' : '⏳ Generating...';
 
         // Hide both result containers
         document.getElementById('ai-result-container').classList.add('hidden');
@@ -6573,19 +6900,19 @@ document.getElementById('generate-ai-btn').addEventListener('click', async funct
 
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
             const msg = qData.isParentChild ?
-                'âœ… Passage-based questions generated successfully!' :
-                'âœ… AI question generated successfully!';
+                '✅ Passage-based questions generated successfully!' :
+                '✅ AI question generated successfully!';
             window.PoliteCCAPI.showNotification(msg, 'success');
         }
 
     } catch (error) {
         console.error('AI generation error:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification(`âŒ Failed to generate question: ${error.message}`, 'error');
+            window.PoliteCCAPI.showNotification(`❌ Failed to generate question: ${error.message}`, 'error');
         }
     } finally {
         generateBtn.disabled = false;
-        generateBtn.textContent = 'âœ¨ Generate Question with AI';
+        generateBtn.textContent = '✨ Generate Question with AI';
     }
 });
 
@@ -6703,7 +7030,7 @@ document.getElementById('accept-ai-btn').addEventListener('click', async functio
         if (!aiGeneratedQuestion) return;
 
         acceptBtn.disabled = true;
-        acceptBtn.textContent = 'â³ Saving...';
+        acceptBtn.textContent = '⏳ Saving...';
 
         const success = await window.PoliteCCAPI.addQuestionToDatabase({
             subject: aiGeneratedQuestion.subject,
@@ -6721,14 +7048,14 @@ document.getElementById('accept-ai-btn').addEventListener('click', async functio
             document.getElementById('ai-custom-prompt').value = '';
 
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                window.PoliteCCAPI.showNotification('âœ… AI question added to your bank!', 'success');
+                window.PoliteCCAPI.showNotification('✅ AI question added to your bank!', 'success');
             }
         }
 
     } catch (error) {
         console.error('Error accepting AI question:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification(`âŒ Failed to save question: ${error.message}`, 'error');
+            window.PoliteCCAPI.showNotification(`❌ Failed to save question: ${error.message}`, 'error');
         }
     } finally {
         acceptBtn.disabled = false;
@@ -6743,7 +7070,7 @@ document.getElementById('accept-ai-pc-btn').addEventListener('click', async func
         if (!aiGeneratedParentChild) return;
 
         acceptBtn.disabled = true;
-        acceptBtn.textContent = 'â³ Saving All Questions...';
+        acceptBtn.textContent = '⏳ Saving All Questions...';
 
         // First, add the parent question (passage)
         const parentResult = await window.PoliteCCAPI.addQuestionToDatabase({
@@ -6788,14 +7115,14 @@ document.getElementById('accept-ai-pc-btn').addEventListener('click', async func
             document.getElementById('ai-custom-prompt').value = '';
 
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-                window.PoliteCCAPI.showNotification(`âœ… Parent + ${successCount} sub-questions added to bank!`, 'success');
+                window.PoliteCCAPI.showNotification(`✅ Parent + ${successCount} sub-questions added to bank!`, 'success');
             }
         }
 
     } catch (error) {
         console.error('Error accepting parent-child questions:', error);
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification(`âŒ Failed to save: ${error.message}`, 'error');
+            window.PoliteCCAPI.showNotification(`❌ Failed to save: ${error.message}`, 'error');
         }
     } finally {
         acceptBtn.disabled = false;
@@ -6824,7 +7151,7 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
         if (!examCode || !name || !mobile) {
             const loginError = document.getElementById('login-error');
             if (loginError) {
-                loginError.textContent = 'âŒ Please select an exam, enter your name, and mobile number!';
+                loginError.textContent = '❌ Please select an exam, enter your name, and mobile number!';
                 setTimeout(() => {
                     loginError.textContent = '';
                 }, 3000);
@@ -6836,7 +7163,7 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
         if (!/^\d{10}$/.test(mobile)) {
             const loginError = document.getElementById('login-error');
             if (loginError) {
-                loginError.textContent = 'âŒ Please enter a valid 10-digit mobile number!';
+                loginError.textContent = '❌ Please enter a valid 10-digit mobile number!';
                 setTimeout(() => {
                     loginError.textContent = '';
                 }, 3000);
@@ -6848,7 +7175,7 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
         // This fixes the "Questions not found" bug where sample data blocked API loading
         if (window.PoliteCCAPI) {
             const loginError = document.getElementById('login-error');
-            if (loginError) loginError.textContent = 'ðŸ”„ Loading exam data...';
+            if (loginError) loginError.textContent = '🔄 Loading exam data...';
 
             // Always load fresh data from API
             const apiExams = await window.PoliteCCAPI.loadExams();
@@ -6871,7 +7198,7 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
         if (!exam) {
             const loginError = document.getElementById('login-error');
             if (loginError) {
-                loginError.textContent = 'âŒ Invalid exam code!';
+                loginError.textContent = '❌ Invalid exam code!';
                 setTimeout(() => {
                     loginError.textContent = '';
                 }, 3000);
@@ -6889,7 +7216,7 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
             if (expiryDate.getTime() < today.getTime()) {
                 const loginError = document.getElementById('login-error');
                 if (loginError) {
-                    loginError.textContent = 'âŒ This exam has expired! Only admin can view results.';
+                    loginError.textContent = '❌ This exam has expired! Only admin can view results.';
                     setTimeout(() => {
                         loginError.textContent = '';
                     }, 5000);
@@ -6942,7 +7269,7 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
 
         // Add any missing child questions
         if (additionalChildren.length > 0) {
-            console.log(`ðŸ“‹ Auto-added ${additionalChildren.length} child questions for parent-child groups`);
+            console.log(`📋 Auto-added ${additionalChildren.length} child questions for parent-child groups`);
             examQuestions = [...examQuestions, ...additionalChildren];
         }
 
@@ -6951,9 +7278,9 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
             const loginError = document.getElementById('login-error');
             if (loginError) {
                 if (questionIds.length === 0) {
-                    loginError.textContent = 'âŒ This exam has no questions assigned to it!';
+                    loginError.textContent = '❌ This exam has no questions assigned to it!';
                 } else {
-                    loginError.textContent = `âŒ Could not find questions (${questionIds.length} IDs in exam but none matched)`;
+                    loginError.textContent = `❌ Could not find questions (${questionIds.length} IDs in exam but none matched)`;
                 }
                 setTimeout(() => {
                     loginError.textContent = '';
@@ -7013,7 +7340,7 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
 
         const notification = document.createElement('div');
         notification.className = 'notification success';
-        notification.innerHTML = 'âœ… Exam started successfully!';
+        notification.innerHTML = '✅ Exam started successfully!';
         document.getElementById('notification-container').appendChild(notification);
 
         setTimeout(() => {
@@ -7022,16 +7349,16 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
             }
         }, 3000);
     } catch (error) {
-        console.error('âŒ Error starting exam:', error);
+        console.error('❌ Error starting exam:', error);
         const loginError = document.getElementById('login-error');
         if (loginError) {
-            loginError.textContent = 'âŒ Failed to start exam: ' + error.message;
+            loginError.textContent = '❌ Failed to start exam: ' + error.message;
             setTimeout(() => {
                 loginError.textContent = '';
             }, 5000);
         }
         if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-            window.PoliteCCAPI.showNotification('âŒ Failed to start exam: ' + error.message, 'error');
+            window.PoliteCCAPI.showNotification('❌ Failed to start exam: ' + error.message, 'error');
         }
     }
 });
@@ -7170,21 +7497,21 @@ function showCandidateOwnResults() {
 
                 <div style="margin-bottom: 12px;">
                     <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'A' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                        <strong>A:</strong> ${answer.optionA} ${answer.userAnswer === 'A' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'A' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                        <strong>A:</strong> ${answer.optionA} ${answer.userAnswer === 'A' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'A' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                     </div>
                     <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'B' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                        <strong>B:</strong> ${answer.optionB} ${answer.userAnswer === 'B' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'B' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                        <strong>B:</strong> ${answer.optionB} ${answer.userAnswer === 'B' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'B' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                     </div>
                     <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'C' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                        <strong>C:</strong> ${answer.optionC} ${answer.userAnswer === 'C' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'C' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                        <strong>C:</strong> ${answer.optionC} ${answer.userAnswer === 'C' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'C' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                     </div>
                     <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'D' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                        <strong>D:</strong> ${answer.optionD} ${answer.userAnswer === 'D' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'D' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                        <strong>D:</strong> ${answer.optionD} ${answer.userAnswer === 'D' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'D' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                     </div>
                 </div>
 
                 <div style="font-weight: 600; font-size: 1.1rem;">
-                    ${isCorrect ? 'âœ… Correct (+1 point)' : (userAnswered ? 'âŒ Incorrect (-0.25 points)' : 'âšª Not Answered (0 points)')}
+                    ${isCorrect ? '✅ Correct (+1 point)' : (userAnswered ? '❌ Incorrect (-0.25 points)' : '⚪ Not Answered (0 points)')}
                 </div>
             </div>
         `;
@@ -7237,21 +7564,21 @@ function showCandidateExamDetails(exam) {
 
                             <div style="margin-bottom: 12px;">
                                 <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'A' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                                    <strong>A:</strong> ${answer.optionA || 'N/A'} ${answer.userAnswer === 'A' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'A' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                    <strong>A:</strong> ${answer.optionA || 'N/A'} ${answer.userAnswer === 'A' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'A' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                                 </div>
                                 <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'B' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                                    <strong>B:</strong> ${answer.optionB || 'N/A'} ${answer.userAnswer === 'B' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'B' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                    <strong>B:</strong> ${answer.optionB || 'N/A'} ${answer.userAnswer === 'B' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'B' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                                 </div>
                                 <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'C' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                                    <strong>C:</strong> ${answer.optionC || 'N/A'} ${answer.userAnswer === 'C' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'C' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                    <strong>C:</strong> ${answer.optionC || 'N/A'} ${answer.userAnswer === 'C' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'C' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                                 </div>
                                 <div style="margin: 5px 0; padding: 8px; background: ${answer.userAnswer === 'D' ? (isCorrect ? '#c8e6c9' : '#ffcdd2') : '#f9f9f9'}; border-radius: 4px;">
-                                    <strong>D:</strong> ${answer.optionD || 'N/A'} ${answer.userAnswer === 'D' ? 'ðŸ‘‰ <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'D' ? 'âœ… <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
+                                    <strong>D:</strong> ${answer.optionD || 'N/A'} ${answer.userAnswer === 'D' ? '👉 <span style="color: #2196f3; font-weight: 600;">(Your Answer)</span>' : ''} ${answer.correctAnswer === 'D' ? '✅ <span style="color: #27ae60; font-weight: 600;">(Correct)</span>' : ''}
                                 </div>
                             </div>
 
                             <div style="font-weight: 600; font-size: 1.1rem;">
-                                ${isCorrect ? 'âœ… Correct (+1 point)' : (userAnswered ? 'âŒ Incorrect (-0.25 points)' : 'âšª Not Answered (0 points)')}
+                                ${isCorrect ? '✅ Correct (+1 point)' : (userAnswered ? '❌ Incorrect (-0.25 points)' : '⚪ Not Answered (0 points)')}
                             </div>
                         </div>
                     `;
@@ -7260,7 +7587,7 @@ function showCandidateExamDetails(exam) {
                 // Legacy format - just show basic info
                 html += `
                     <div style="text-align: center; padding: 40px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
-                        <div style="font-size: 2rem; margin-bottom: 15px;">ðŸ“Š</div>
+                        <div style="font-size: 2rem; margin-bottom: 15px;">📊</div>
                         <h4 style="color: #1565c0; margin-bottom: 10px;">Exam Summary</h4>
                         <p style="color: #1565c0;">You answered ${answers.length} questions in this exam.</p>
                         <p style="color: #1565c0; font-size: 1.2rem; margin-top: 15px;">Final Score: <strong style="font-size: 1.5rem;">${score}</strong></p>
@@ -7270,7 +7597,7 @@ function showCandidateExamDetails(exam) {
         } else {
             html += `
                 <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
-                    <div style="font-size: 2rem; margin-bottom: 15px;">âš ï¸</div>
+                    <div style="font-size: 2rem; margin-bottom: 15px;">⚠️</div>
                     <h4 style="color: #856404; margin-bottom: 10px;">No Detailed Data Available</h4>
                     <p style="color: #856404;">Question-level details are not available for this exam.</p>
                 </div>
@@ -7280,7 +7607,7 @@ function showCandidateExamDetails(exam) {
         console.error('Error parsing exam answers:', e);
         html += `
             <div style="text-align: center; padding: 40px; background: #ffebee; border-radius: 8px; border-left: 4px solid #e74c3c;">
-                <div style="font-size: 2rem; margin-bottom: 15px;">âŒ</div>
+                <div style="font-size: 2rem; margin-bottom: 15px;">❌</div>
                 <h4 style="color: #c62828; margin-bottom: 10px;">Error Loading Details</h4>
                 <p style="color: #c62828;">Unable to load question details for this exam.</p>
             </div>
@@ -7351,7 +7678,7 @@ document.getElementById('result-logout-btn').addEventListener('click', function(
 
     // Show notification
     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
-        window.PoliteCCAPI.showNotification('ðŸ‘‹ Session ended successfully', 'success');
+        window.PoliteCCAPI.showNotification('👋 Session ended successfully', 'success');
     }
 });
 
@@ -7380,7 +7707,7 @@ function updateTimerDisplay() {
     const timerDisplayNew = document.getElementById('time-remaining');
     const mobileTimer = document.getElementById('mobile-timer-text');
 
-    if (timerDisplayOld) timerDisplayOld.textContent = `â±ï¸ Time Remaining: ${timeStr}`;
+    if (timerDisplayOld) timerDisplayOld.textContent = `⏱️ Time Remaining: ${timeStr}`;
     if (timerDisplayNew) timerDisplayNew.textContent = timeStr;
     if (mobileTimer) mobileTimer.textContent = timeStr;
 
@@ -7409,7 +7736,7 @@ function updateTimerDisplay() {
 function autoSubmitExam() {
     const notification = document.createElement('div');
     notification.className = 'notification info';
-    notification.innerHTML = 'â° Time is up! Exam submitted automatically.';
+    notification.innerHTML = '⏰ Time is up! Exam submitted automatically.';
     document.getElementById('notification-container').appendChild(notification);
     
     setTimeout(() => {
@@ -7499,7 +7826,7 @@ async function submitExam(isAutoSubmit = false) {
         );
 
         if (duplicate) {
-            window.PoliteCCAPI.showNotification('âš ï¸ You have already submitted this exam!', 'error');
+            window.PoliteCCAPI.showNotification('⚠️ You have already submitted this exam!', 'error');
             return; // Prevent submission
         } else {
             // Ensure score has exactly 2 decimal places without rounding to integer
@@ -7520,7 +7847,7 @@ async function submitExam(isAutoSubmit = false) {
 
             const submitted = await window.PoliteCCAPI.submitResultToDatabase(resultData);
             if (!submitted) {
-                window.PoliteCCAPI.showNotification('âŒ Failed to submit exam. Please try again.', 'error');
+                window.PoliteCCAPI.showNotification('❌ Failed to submit exam. Please try again.', 'error');
                 return; // Don't show result screen if submission failed
             }
         }
@@ -7590,7 +7917,7 @@ async function submitExam(isAutoSubmit = false) {
             if (answer.isMainPassage) return; // Skip passages
 
             const statusColor = answer.isCorrect ? 'success' : (answer.userAnswer !== 'Not Answered' ? 'error' : 'warning');
-            const statusIcon = answer.isCorrect ? 'âœ…' : (answer.userAnswer !== 'Not Answered' ? 'âŒ' : 'âšª');
+            const statusIcon = answer.isCorrect ? '✅' : (answer.userAnswer !== 'Not Answered' ? '❌' : '⚪');
             const statusText = answer.isCorrect ? 'Correct (+1)' : (answer.userAnswer !== 'Not Answered' ? 'Wrong (-0.25)' : 'Unanswered (0)');
 
             detailedHtml += `
@@ -7620,7 +7947,7 @@ async function submitExam(isAutoSubmit = false) {
 
     const notification = document.createElement('div');
     notification.className = 'notification success';
-    notification.innerHTML = `âœ… Exam submitted! Final score: ${displayScore.toFixed(2)} (${correctCount} correct, ${wrongCount} wrong)`;
+    notification.innerHTML = `✅ Exam submitted! Final score: ${displayScore.toFixed(2)} (${correctCount} correct, ${wrongCount} wrong)`;
     document.getElementById('notification-container').appendChild(notification);
 
     setTimeout(() => {
@@ -7909,7 +8236,7 @@ function loadQuestion() {
         // Hide regular question display
         const questionDisplay = document.getElementById('question-display');
         if (questionDisplay) {
-            questionDisplay.innerHTML = `<div class="text-sm text-base-content/60">ðŸ“– See passage above. Answer the sub-questions below.</div>`;
+            questionDisplay.innerHTML = `<div class="text-sm text-base-content/60">📖 See passage above. Answer the sub-questions below.</div>`;
         }
 
         // Sort children by order
@@ -7995,7 +8322,7 @@ function loadQuestion() {
             <div class="question-container" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e5f5 100%); border: 2px solid #9c27b0; max-height: 65vh; overflow-y: auto;">
                 <!-- Group Header -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; position: sticky; top: 0; background: #f3e5f5; padding: 10px; margin: -20px -20px 15px -20px; border-radius: 10px 10px 0 0;">
-                    <div class="question-tag" style="background: #9c27b0;">ðŸ“‹ Question ${currentScorableStartNum} to ${endScorableNum} of ${totalScorableQuestions}</div>
+                    <div class="question-tag" style="background: #9c27b0;">📋 Question ${currentScorableStartNum} to ${endScorableNum} of ${totalScorableQuestions}</div>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <span style="background: #9c27b0; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 600;">${childQuestions.length} Sub-Questions</span>
                         <span style="background: #4caf50; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 600;">Max: ${childQuestions.length} marks</span>
@@ -8004,7 +8331,7 @@ function loadQuestion() {
 
                 <!-- Parent Passage with rich content support -->
                 <div style="background: white; border-left: 4px solid #9c27b0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <div style="color: #9c27b0; font-weight: 700; margin-bottom: 10px; font-size: 1rem;">ðŸ“– Passage / Context:</div>
+                    <div style="color: #9c27b0; font-weight: 700; margin-bottom: 10px; font-size: 1rem;">📖 Passage / Context:</div>
                     <div class="rich-content" style="color: #333; font-size: 1.05rem; line-height: 1.8;">${passageContent}</div>
                 </div>
 
@@ -8585,4 +8912,10 @@ if ('serviceWorker' in navigator) {
         }
     });
 }
+
+
+
+
+
+
 
