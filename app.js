@@ -1575,29 +1575,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Verification success - go to signin handler
-    document.getElementById('goto-signin-after-verify').addEventListener('click', function() {
-        document.getElementById('verification-success-screen').classList.remove('active');
-        document.getElementById('candidate-signin-screen').classList.add('active');
-    });
+    const gotoSigninAfterVerify = document.getElementById('goto-signin-after-verify');
+    if (gotoSigninAfterVerify) {
+        gotoSigninAfterVerify.addEventListener('click', function() {
+            document.getElementById('verification-success-screen').classList.remove('active');
+            document.getElementById('candidate-signin-screen').classList.add('active');
+        });
+    }
 
     // Verification pending - resend verification handler
-    document.getElementById('resend-verification-btn').addEventListener('click', async function() {
-        const email = document.getElementById('pending-verification-email').textContent;
-        if (email) {
-            this.disabled = true;
-            this.textContent = 'Sending...';
-            await window.PoliteCCAPI.resendVerification(email);
-            this.disabled = false;
-            this.textContent = 'Resend Verification Email';
-        }
-    });
+    const resendVerificationBtn = document.getElementById('resend-verification-btn');
+    if (resendVerificationBtn) {
+        resendVerificationBtn.addEventListener('click', async function() {
+            const email = document.getElementById('pending-verification-email').textContent;
+            if (email) {
+                this.disabled = true;
+                this.textContent = 'Sending...';
+                await window.PoliteCCAPI.resendVerification(email);
+                this.disabled = false;
+                this.textContent = 'Resend Verification Email';
+            }
+        });
+    }
 
     // Verification pending - go to signin handler
-    document.getElementById('goto-signin-from-pending').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('verification-pending-screen').classList.remove('active');
-        document.getElementById('candidate-signin-screen').classList.add('active');
-    });
+    const gotoSigninFromPending = document.getElementById('goto-signin-from-pending');
+    if (gotoSigninFromPending) {
+        gotoSigninFromPending.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('verification-pending-screen').classList.remove('active');
+            document.getElementById('candidate-signin-screen').classList.add('active');
+        });
+    }
 
     // Header Back Button Handler
     document.getElementById('header-back-btn').addEventListener('click', function() {
