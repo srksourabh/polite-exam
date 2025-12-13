@@ -1,6 +1,3 @@
-<<<<<<< Updated upstream
-{{PLACEHOLDER_APP_JS}}
-=======
 // Global variables
 let isAdminLoggedIn = false;
 let currentExam = null;
@@ -8446,4 +8443,3 @@ if ('serviceWorker' in navigator) {
         }
     });
 }
->>>>>>> Stashed changes
