@@ -1575,29 +1575,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Verification success - go to signin handler
-    document.getElementById('goto-signin-after-verify').addEventListener('click', function() {
-        document.getElementById('verification-success-screen').classList.remove('active');
-        document.getElementById('candidate-signin-screen').classList.add('active');
-    });
+    const gotoSigninAfterVerify = document.getElementById('goto-signin-after-verify');
+    if (gotoSigninAfterVerify) {
+        gotoSigninAfterVerify.addEventListener('click', function() {
+            document.getElementById('verification-success-screen').classList.remove('active');
+            document.getElementById('candidate-signin-screen').classList.add('active');
+        });
+    }
 
     // Verification pending - resend verification handler
-    document.getElementById('resend-verification-btn').addEventListener('click', async function() {
-        const email = document.getElementById('pending-verification-email').textContent;
-        if (email) {
-            this.disabled = true;
-            this.textContent = 'Sending...';
-            await window.PoliteCCAPI.resendVerification(email);
-            this.disabled = false;
-            this.textContent = 'Resend Verification Email';
-        }
-    });
+    const resendVerificationBtn = document.getElementById('resend-verification-btn');
+    if (resendVerificationBtn) {
+        resendVerificationBtn.addEventListener('click', async function() {
+            const email = document.getElementById('pending-verification-email').textContent;
+            if (email) {
+                this.disabled = true;
+                this.textContent = 'Sending...';
+                await window.PoliteCCAPI.resendVerification(email);
+                this.disabled = false;
+                this.textContent = 'Resend Verification Email';
+            }
+        });
+    }
 
     // Verification pending - go to signin handler
-    document.getElementById('goto-signin-from-pending').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('verification-pending-screen').classList.remove('active');
-        document.getElementById('candidate-signin-screen').classList.add('active');
-    });
+    const gotoSigninFromPending = document.getElementById('goto-signin-from-pending');
+    if (gotoSigninFromPending) {
+        gotoSigninFromPending.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('verification-pending-screen').classList.remove('active');
+            document.getElementById('candidate-signin-screen').classList.add('active');
+        });
+    }
 
     // Header Back Button Handler
     document.getElementById('header-back-btn').addEventListener('click', function() {
@@ -1650,9 +1659,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // OCR Review Modal Event Handlers
-    document.getElementById('ocr-review-close').addEventListener('click', closeOCRReviewModal);
-    document.getElementById('ocr-cancel-review').addEventListener('click', closeOCRReviewModal);
-    document.getElementById('ocr-save-reviewed').addEventListener('click', saveOCRReviewedQuestions);
+    const ocrReviewClose = document.getElementById('ocr-review-close');
+    if (ocrReviewClose) ocrReviewClose.addEventListener('click', closeOCRReviewModal);
+
+    const ocrCancelReview = document.getElementById('ocr-cancel-review');
+    if (ocrCancelReview) ocrCancelReview.addEventListener('click', closeOCRReviewModal);
+
+    const ocrSaveReviewed = document.getElementById('ocr-save-reviewed');
+    if (ocrSaveReviewed) ocrSaveReviewed.addEventListener('click', saveOCRReviewedQuestions);
 
     // Mobile Navigation Handlers
     const mobileHomeLink = document.getElementById('mobile-home-link');
@@ -1697,12 +1711,15 @@ document.addEventListener('DOMContentLoaded', function() {
         updateHeaderNav('candidate-signup-screen');
     });
 
-    document.getElementById('back-to-hero-from-signup').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('candidate-signup-screen').classList.remove('active');
-        document.getElementById('hero-landing').classList.add('active');
-        updateHeaderNav('hero-landing');
-    });
+    const backToHeroFromSignup = document.getElementById('back-to-hero-from-signup');
+    if (backToHeroFromSignup) {
+        backToHeroFromSignup.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('candidate-signup-screen').classList.remove('active');
+            document.getElementById('hero-landing').classList.add('active');
+            updateHeaderNav('hero-landing');
+        });
+    }
 
     // Navigation: Hero Landing <-> Signin
     document.getElementById('signin-btn').addEventListener('click', function() {
@@ -1711,52 +1728,72 @@ document.addEventListener('DOMContentLoaded', function() {
         updateHeaderNav('candidate-signin-screen');
     });
 
-    document.getElementById('back-to-hero-from-signin').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('candidate-signin-screen').classList.remove('active');
-        document.getElementById('hero-landing').classList.add('active');
-        updateHeaderNav('hero-landing');
-    });
+    const backToHeroFromSignin = document.getElementById('back-to-hero-from-signin');
+    if (backToHeroFromSignin) {
+        backToHeroFromSignin.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('candidate-signin-screen').classList.remove('active');
+            document.getElementById('hero-landing').classList.add('active');
+            updateHeaderNav('hero-landing');
+        });
+    }
 
     // Navigation: Signup <-> Signin
-    document.getElementById('goto-signin-link').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('candidate-signup-screen').classList.remove('active');
-        document.getElementById('candidate-signin-screen').classList.add('active');
-        updateHeaderNav('candidate-signin-screen');
-    });
+    const gotoSigninLink = document.getElementById('goto-signin-link');
+    if (gotoSigninLink) {
+        gotoSigninLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('candidate-signup-screen').classList.remove('active');
+            document.getElementById('candidate-signin-screen').classList.add('active');
+            updateHeaderNav('candidate-signin-screen');
+        });
+    }
 
-    document.getElementById('goto-signup-link').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('candidate-signin-screen').classList.remove('active');
-        document.getElementById('candidate-signup-screen').classList.add('active');
-        updateHeaderNav('candidate-signup-screen');
-    });
+    const gotoSignupLink = document.getElementById('goto-signup-link');
+    if (gotoSignupLink) {
+        gotoSignupLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('candidate-signin-screen').classList.remove('active');
+            document.getElementById('candidate-signup-screen').classList.add('active');
+            updateHeaderNav('candidate-signup-screen');
+        });
+    }
 
     // Navigation: Signin <-> Forgot Password
-    document.getElementById('forgot-password-link').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('candidate-signin-screen').classList.remove('active');
-        document.getElementById('forgot-password-screen').classList.add('active');
-        updateHeaderNav('forgot-password-screen');
-        // Reset the form
-        document.getElementById('forgot-email').value = '';
-        document.getElementById('reset-result').style.display = 'none';
-    });
+    const forgotPasswordLink = document.getElementById('forgot-password-link');
+    if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('candidate-signin-screen').classList.remove('active');
+            document.getElementById('forgot-password-screen').classList.add('active');
+            updateHeaderNav('forgot-password-screen');
+            // Reset the form
+            const forgotEmail = document.getElementById('forgot-email');
+            if (forgotEmail) forgotEmail.value = '';
+            const resetResult = document.getElementById('reset-result');
+            if (resetResult) resetResult.style.display = 'none';
+        });
+    }
 
-    document.getElementById('back-to-signin-from-forgot').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('forgot-password-screen').classList.remove('active');
-        document.getElementById('candidate-signin-screen').classList.add('active');
-        updateHeaderNav('candidate-signin-screen');
-    });
+    const backToSigninFromForgot = document.getElementById('back-to-signin-from-forgot');
+    if (backToSigninFromForgot) {
+        backToSigninFromForgot.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('forgot-password-screen').classList.remove('active');
+            document.getElementById('candidate-signin-screen').classList.add('active');
+            updateHeaderNav('candidate-signin-screen');
+        });
+    }
 
-    document.getElementById('goto-signin-after-reset').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('forgot-password-screen').classList.remove('active');
-        document.getElementById('candidate-signin-screen').classList.add('active');
-        updateHeaderNav('candidate-signin-screen');
-    });
+    const gotoSigninAfterReset = document.getElementById('goto-signin-after-reset');
+    if (gotoSigninAfterReset) {
+        gotoSigninAfterReset.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('forgot-password-screen').classList.remove('active');
+            document.getElementById('candidate-signin-screen').classList.add('active');
+            updateHeaderNav('candidate-signin-screen');
+        });
+    }
 
     // Navigation: Hero Landing <-> Admin Login
     document.getElementById('admin-link').addEventListener('click', function(e) {
@@ -1765,11 +1802,14 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('admin-login-screen').classList.add('active');
     });
 
-    document.getElementById('back-to-hero-from-admin').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('admin-login-screen').classList.remove('active');
-        document.getElementById('hero-landing').classList.add('active');
-    });
+    const backToHeroFromAdmin = document.getElementById('back-to-hero-from-admin');
+    if (backToHeroFromAdmin) {
+        backToHeroFromAdmin.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('admin-login-screen').classList.remove('active');
+            document.getElementById('hero-landing').classList.add('active');
+        });
+    }
 
 // Candidate Signup
 document.getElementById('signup-submit-btn').addEventListener('click', async function() {
