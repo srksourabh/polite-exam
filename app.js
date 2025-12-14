@@ -753,6 +753,43 @@ function resumeExam(savedState, remainingSeconds) {
     }
 }
 
+// Update timer display function - used by both timer systems
+function updateTimerDisplay() {
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    // Update both old and new timer elements for compatibility
+    const timerDisplayOld = document.getElementById('timer-display');
+    const timerDisplayNew = document.getElementById('time-remaining');
+    const mobileTimer = document.getElementById('mobile-timer-text');
+
+    if (timerDisplayOld) timerDisplayOld.textContent = `⏱️ Time Remaining: ${timeStr}`;
+    if (timerDisplayNew) timerDisplayNew.textContent = timeStr;
+    if (mobileTimer) mobileTimer.textContent = timeStr;
+
+    // Add warning class when time is low
+    const timerBadge = document.getElementById('timer');
+    const mobileTimerBadge = document.getElementById('mobile-floating-timer');
+
+    const updateTimerStyles = (badge) => {
+        if (!badge) return;
+        if (timeRemaining <= 60) {
+            badge.classList.remove('badge-primary', 'badge-warning');
+            badge.classList.add('badge-error');
+        } else if (timeRemaining <= 300) {
+            badge.classList.remove('badge-primary', 'badge-error');
+            badge.classList.add('badge-warning');
+        } else {
+            badge.classList.remove('badge-warning', 'badge-error');
+            badge.classList.add('badge-primary');
+        }
+    };
+
+    updateTimerStyles(timerBadge);
+    updateTimerStyles(mobileTimerBadge);
+}
+
 // Start or restart the exam timer
 function startExamTimer() {
     if (examTimer) {
@@ -7441,42 +7478,6 @@ function startTimer() {
             autoSubmitExam();
         }
     }, 1000);
-}
-
-function updateTimerDisplay() {
-    const minutes = Math.floor(timeRemaining / 60);
-    const seconds = timeRemaining % 60;
-    const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-    // Update both old and new timer elements for compatibility
-    const timerDisplayOld = document.getElementById('timer-display');
-    const timerDisplayNew = document.getElementById('time-remaining');
-    const mobileTimer = document.getElementById('mobile-timer-text');
-
-    if (timerDisplayOld) timerDisplayOld.textContent = `⏱️ Time Remaining: ${timeStr}`;
-    if (timerDisplayNew) timerDisplayNew.textContent = timeStr;
-    if (mobileTimer) mobileTimer.textContent = timeStr;
-
-    // Add warning class when time is low
-    const timerBadge = document.getElementById('timer');
-    const mobileTimerBadge = document.getElementById('mobile-floating-timer');
-    
-    const updateTimerStyles = (badge) => {
-        if (!badge) return;
-        if (timeRemaining <= 60) {
-            badge.classList.remove('badge-primary', 'badge-warning');
-            badge.classList.add('badge-error');
-        } else if (timeRemaining <= 300) {
-            badge.classList.remove('badge-primary', 'badge-error');
-            badge.classList.add('badge-warning');
-        } else {
-            badge.classList.remove('badge-warning', 'badge-error');
-            badge.classList.add('badge-primary');
-        }
-    };
-    
-    updateTimerStyles(timerBadge);
-    updateTimerStyles(mobileTimerBadge);
 }
 
 function autoSubmitExam() {

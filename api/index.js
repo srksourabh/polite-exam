@@ -240,10 +240,20 @@ module.exports = async (req, res) => {
 
         // GET /api/questions - List all questions (with hierarchical grouping option)
         if (url.startsWith('/api/questions') && method === 'GET') {
+            console.log('🔍 GET /api/questions - Request received');
+            console.log('📋 Environment check:', {
+                hasToken: !!process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN,
+                hasBaseId: !!process.env.AIRTABLE_BASE_ID,
+                baseId: process.env.AIRTABLE_BASE_ID ? `${process.env.AIRTABLE_BASE_ID.substring(0, 8)}...` : 'NOT SET'
+            });
+
             const urlObj = new URL(req.url, `http://${req.headers.host}`);
             const hierarchical = urlObj.searchParams.get('hierarchical') === 'true';
-            
+
+            console.log(`📡 Fetching questions from Airtable table: ${QUESTIONS_TABLE}`);
             const records = await base(QUESTIONS_TABLE).select().all();
+            console.log(`✅ Retrieved ${records.length} records from Airtable`);
+
             const questions = records.map(record => ({
                 id: record.id,
                 ...record.fields
@@ -252,6 +262,7 @@ module.exports = async (req, res) => {
             if (hierarchical) {
                 // Return hierarchically organized (parents with children)
                 const organized = organizeHierarchically(questions);
+                console.log(`📦 Returning ${organized.length} organized questions (${questions.length} total)`);
                 return res.status(200).json({
                     success: true,
                     data: organized,
@@ -260,6 +271,7 @@ module.exports = async (req, res) => {
                 });
             } else {
                 // Return flat list
+                console.log(`📦 Returning ${questions.length} questions`);
                 return res.status(200).json({
                     success: true,
                     data: questions,
@@ -2050,10 +2062,18 @@ Generate a question that could appear in actual ${difficultyText === 'easy' ? 'R
         });
 
     } catch (error) {
-        console.error('API Error:', error);
+        console.error('❌ API Error:', error);
+        console.error('❌ Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+            url: req.url,
+            method: req.method
+        });
         return res.status(500).json({
             success: false,
-            error: error.message || 'Internal server error'
+            error: error.message || 'Internal server error',
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };
