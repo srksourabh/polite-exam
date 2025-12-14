@@ -94,12 +94,18 @@
     <script src="api-integration.js"></script>
 </head>
 <body>
+    <!-- Floating Admin Login Button (Always Visible) -->
+    <div class="fixed top-6 right-6 z-50">
+        <a href="#" id="admin-link" class="btn btn-warning btn-circle btn-lg shadow-2xl hover:scale-110 transition-transform" title="Admin Login">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+        </a>
+    </div>
+
     <div class="container">
         <header class="bg-gradient-to-r from-primary via-secondary to-accent text-white relative shadow-2xl">
-            <a href="#" id="admin-link" class="admin-link absolute top-4 right-4 text-warning hover:text-warning-content transition-colors font-semibold text-sm">
-                🔐 Admin Login
-            </a>
-            <div id="candidate-nav-buttons" class="candidate-nav-buttons absolute top-4 left-4 flex gap-2">
+            <div id="candidate-nav-buttons" class="candidate-nav-buttons absolute top-4 left-4 flex gap-2" style="display: none;">
                 <button id="header-back-btn" class="btn btn-ghost btn-sm text-white hover:bg-white/20">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
