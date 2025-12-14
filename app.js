@@ -13,7 +13,7 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 
 // App Version for cache invalidation on new deployments
 // Update this version when deploying significant changes to clear old sessions
-const APP_VERSION = '3.0.6';
+const APP_VERSION = '3.0.7';
 const APP_VERSION_KEY = 'polite_app_version';
 
 // =====================================================
@@ -7602,24 +7602,37 @@ function selectOptionNewUI(optionIndex) {
     // Check if clicking the same option again (toggle off)
     if (userAnswers[currentQuestionIndex] === optionIndex) {
         // Deselect - user wants to not answer this question
+        console.log('[DEBUG] Deselecting option', optionIndex);
         userAnswers[currentQuestionIndex] = undefined;
         options[optionIndex].classList.remove('selected', 'border-primary');
         options[optionIndex].classList.add('border-base-300');
+        // Force visual update with inline style
+        options[optionIndex].style.borderColor = '';
+        options[optionIndex].style.backgroundColor = '';
         radios[optionIndex].checked = false;
     } else {
         // Select new option
+        console.log('[DEBUG] Selecting option', optionIndex, 'Previous answer:', userAnswers[currentQuestionIndex]);
         userAnswers[currentQuestionIndex] = optionIndex;
         options.forEach((option, i) => {
             if (i === optionIndex) {
                 option.classList.remove('border-base-300');
                 option.classList.add('selected', 'border-primary');
+                // Force visual update with inline styles (CSS fallback)
+                option.style.borderColor = '#4F46E5';
+                option.style.backgroundColor = 'rgba(79, 70, 229, 0.1)';
                 radios[i].checked = true;
+                console.log('[DEBUG] Selected option', i, '- classes now:', option.className);
             } else {
                 option.classList.remove('selected', 'border-primary');
                 option.classList.add('border-base-300');
+                // Clear inline styles for unselected
+                option.style.borderColor = '';
+                option.style.backgroundColor = '';
                 radios[i].checked = false;
             }
         });
+        console.log('[DEBUG] Selection complete. userAnswers[', currentQuestionIndex, '] =', userAnswers[currentQuestionIndex]);
     }
 
     // Ensure all radio buttons are properly synced
