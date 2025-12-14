@@ -13,7 +13,7 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 
 // App Version for cache invalidation on new deployments
 // Update this version when deploying significant changes to clear old sessions
-const APP_VERSION = '3.0.1';
+const APP_VERSION = '3.0.2';
 const APP_VERSION_KEY = 'polite_app_version';
 
 // =====================================================
@@ -8118,6 +8118,10 @@ function loadQuestion() {
 
             // Add click handler to the new container
             newOptionsContainer.addEventListener('click', function(e) {
+                // Prevent radio default behavior
+                if (e.target.classList.contains('option-radio')) {
+                    e.preventDefault();
+                }
                 const option = e.target.closest('.option');
                 if (option) {
                     const optionIndex = parseInt(option.getAttribute('data-index'));
@@ -8528,3 +8532,6 @@ if ('serviceWorker' in navigator) {
         }
     });
 }
+
+
+
