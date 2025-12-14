@@ -116,19 +116,30 @@ let questionCounter = 1;
 // Load questions from database
 async function loadQuestions() {
     try {
+        console.log(`🔍 Loading questions from: ${API_URL}/questions`);
         const response = await fetch(`${API_URL}/questions`);
+        console.log(`📡 Response status: ${response.status} ${response.statusText}`);
+
         const data = await response.json();
+        console.log(`📦 Response data:`, data);
 
         if (data.success) {
             questions = data.data || data.questions || [];
             console.log(`✅ Loaded ${questions.length} questions from database`);
             return questions;
         } else {
-            throw new Error(data.error || 'Failed to load questions');
+            const errorMsg = data.error || 'Failed to load questions';
+            console.error(`❌ API returned error: ${errorMsg}`);
+            throw new Error(errorMsg);
         }
     } catch (error) {
         console.error('❌ Error loading questions:', error);
-        showNotification('❌ Failed to load questions from database', 'error');
+        console.error('❌ Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
+        showNotification(`❌ Failed to load questions: ${error.message}`, 'error');
         return [];
     }
 }
