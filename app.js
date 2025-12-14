@@ -13,7 +13,7 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 
 // App Version for cache invalidation on new deployments
 // Update this version when deploying significant changes to clear old sessions
-const APP_VERSION = '3.0.8';
+const APP_VERSION = '3.0.9';
 const APP_VERSION_KEY = 'polite_app_version';
 
 // =====================================================
@@ -593,10 +593,11 @@ function detectAndStructureHierarchicalQuestions(questions) {
 
 // ========== EXAM SESSION TRACKING FOR RESUME FUNCTIONALITY ==========
 const EXAM_STATE_KEY = 'polite_exam_in_progress';
+let examSubmitted = false; // Flag to prevent saving state after submission
 
 // Save current exam state to localStorage
 function saveExamState() {
-    if (!currentExam) return;
+    if (!currentExam || examSubmitted) return; // Don't save if exam was submitted
 
     const examState = {
         examCode: currentExam.code,
@@ -702,6 +703,9 @@ function checkAndResumeExam() {
 
 // Resume exam from saved state
 function resumeExam(savedState, remainingSeconds) {
+    // Reset submission flag for resumed exam
+    examSubmitted = false;
+
     // Restore exam state
     currentExam = {
         code: savedState.examCode,
@@ -6888,6 +6892,9 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
             return;
         }
 
+        // Reset submission flag for new exam
+        examSubmitted = false;
+
         // Prepare exam data
         currentExam = {
             code: exam['Exam Code'],  // Use actual exam code from database
@@ -7063,7 +7070,9 @@ document.getElementById('next-btn').addEventListener('click', function() {
 
 // Submit exam - handle both old and new button IDs
 document.getElementById('submit-btn')?.addEventListener('click', function() {
-    submitExam();
+    if (confirm('Are you sure you want to submit the exam? You cannot change your answers after submission.')) {
+        submitExam();
+    }
 });
 
 // New UI submit button
@@ -7356,10 +7365,14 @@ function autoSubmitExam() {
 }
 
 async function submitExam(isAutoSubmit = false) {
+    // Set flag immediately to prevent any further state saves
+    examSubmitted = true;
+
     clearInterval(examTimer);
 
     // Clear saved exam state since we're submitting
     clearExamState();
+    console.log('[SUBMIT] Exam submission started, state cleared');
 
     // Calculate score and prepare detailed answers
     let score = 0;
@@ -7562,6 +7575,11 @@ async function submitExam(isAutoSubmit = false) {
             notification.parentNode.removeChild(notification);
         }
     }, 3000);
+
+    // Final safety: clear exam state again and ensure flag is set
+    clearExamState();
+    examSubmitted = true;
+    console.log('[SUBMIT] Exam submission complete, state cleared, examSubmitted flag set');
 }
 
 // Helper function to calculate hierarchical question number
