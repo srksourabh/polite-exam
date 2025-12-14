@@ -33,6 +33,10 @@
                         warning: '#f39c12',
                         danger: '#e74c3c',
                         info: '#17a2b8',
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 3s linear infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }
                 }
             },
@@ -40,18 +44,33 @@
                 themes: [
                     {
                         polite: {
-                            'primary': '#2c3e50',
-                            'secondary': '#3498db',
-                            'accent': '#9b59b6',
-                            'neutral': '#34495e',
-                            'base-100': '#f5f6fa',
-                            'info': '#17a2b8',
-                            'success': '#27ae60',
-                            'warning': '#f39c12',
-                            'error': '#e74c3c',
+                            'primary': '#2563eb',          // Modern vibrant blue
+                            'primary-content': '#ffffff',
+                            'secondary': '#7c3aed',        // Purple
+                            'secondary-content': '#ffffff',
+                            'accent': '#f59e0b',           // Amber
+                            'accent-content': '#ffffff',
+                            'neutral': '#1f2937',          // Dark gray
+                            'neutral-content': '#ffffff',
+                            'base-100': '#ffffff',         // White background
+                            'base-200': '#f3f4f6',         // Light gray
+                            'base-300': '#e5e7eb',         // Medium gray
+                            'base-content': '#1f2937',     // Dark text
+                            'info': '#0ea5e9',             // Sky blue
+                            'info-content': '#ffffff',
+                            'success': '#10b981',          // Emerald green
+                            'success-content': '#ffffff',
+                            'warning': '#f59e0b',          // Amber
+                            'warning-content': '#ffffff',
+                            'error': '#ef4444',            // Red
+                            'error-content': '#ffffff',
                         }
                     }
-                ]
+                ],
+                darkTheme: false,
+                base: true,
+                styled: true,
+                utils: true,
             }
         }
     </script>
@@ -76,198 +95,367 @@
 </head>
 <body>
     <div class="container">
-        <header style="position: relative;">
-            <a href="#" id="admin-link" class="admin-link">Admin Login</a>
-            <div id="candidate-nav-buttons" class="candidate-nav-buttons">
-                <button id="header-back-btn" class="nav-btn">← Back</button>
-                <button id="header-logout-btn" class="nav-btn logout-btn">Logout</button>
+        <header class="bg-gradient-to-r from-primary via-secondary to-accent text-white relative shadow-2xl">
+            <a href="#" id="admin-link" class="admin-link absolute top-4 right-4 text-warning hover:text-warning-content transition-colors font-semibold text-sm">
+                🔐 Admin Login
+            </a>
+            <div id="candidate-nav-buttons" class="candidate-nav-buttons absolute top-4 left-4 flex gap-2">
+                <button id="header-back-btn" class="btn btn-ghost btn-sm text-white hover:bg-white/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back
+                </button>
+                <button id="header-logout-btn" class="btn btn-ghost btn-sm text-white hover:bg-error/20 hover:text-error-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                </button>
             </div>
-            <div class="logo">POLITE COACHING CENTRE</div>
-            <div class="subtitle">Complete Exam Preparation for Banking, SSC, Railways & Government Jobs</div>
+            <div class="text-center py-8 px-4">
+                <div class="logo text-5xl font-extrabold tracking-wide mb-3 drop-shadow-2xl animate-pulse-slow">
+                    🎓 POLITE COACHING CENTRE
+                </div>
+                <div class="subtitle text-lg opacity-95 font-medium">
+                    Complete Exam Preparation for Banking, SSC, Railways & Government Jobs
+                </div>
+            </div>
         </header>
 
         <div class="content">
             <!-- Hero Landing Page -->
             <div id="hero-landing" class="screen active">
-                <div class="hero-section">
-                    <h1 class="hero-title">🎓 Excel in Your Exams!</h1>
-                    <p class="hero-subtitle">Comprehensive preparation for Banking, SSC, Railways & Government Jobs</p>
-                    <button id="start-exam-hero-btn" class="hero-cta">Let's Go! Take an Exam</button>
-                    <div class="auth-buttons">
-                        <button id="signin-btn" class="auth-btn">Sign In</button>
-                        <button id="signup-btn" class="auth-btn">Create Account</button>
+                <div class="hero min-h-[600px] bg-gradient-to-br from-primary via-secondary to-accent rounded-2xl">
+                    <div class="hero-content text-center">
+                        <div class="max-w-2xl">
+                            <div class="text-7xl mb-6 animate-bounce">🎓</div>
+                            <h1 class="text-6xl font-bold text-white mb-6 drop-shadow-2xl">
+                                Excel in Your Exams!
+                            </h1>
+                            <p class="text-xl text-white/90 mb-8 leading-relaxed">
+                                Comprehensive preparation for Banking, SSC, Railways & Government Jobs
+                            </p>
+                            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                                <button id="start-exam-hero-btn" class="btn btn-lg btn-success text-white gap-2 shadow-2xl hover:scale-105 transition-transform">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    Let's Go! Take an Exam
+                                </button>
+                            </div>
+                            <div class="divider text-white/70 my-8">OR</div>
+                            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                                <button id="signin-btn" class="btn btn-outline btn-lg text-white border-white hover:bg-white hover:text-primary hover:border-white">
+                                    Sign In
+                                </button>
+                                <button id="signup-btn" class="btn btn-lg bg-white text-primary hover:bg-base-200 hover:text-primary border-0">
+                                    Create Account
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Candidate Signup Screen -->
             <div id="candidate-signup-screen" class="screen">
-                <a href="#" id="back-to-hero-from-signup" class="back-link">← Back</a>
-                <div class="auth-form">
-                    <h2 class="form-title">Create Your Account</h2>
-                    <div class="form-group">
-                        <label for="signup-name">Full Name *</label>
-                        <input type="text" id="signup-name" placeholder="Enter your full name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-email">Email Address *</label>
-                        <input type="email" id="signup-email" placeholder="your@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-mobile">Mobile Number (Optional)</label>
-                        <input type="tel" id="signup-mobile" placeholder="10-digit mobile number">
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-password">Password *</label>
-                        <input type="password" id="signup-password" placeholder="Create a strong password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-confirm-password">Confirm Password *</label>
-                        <input type="password" id="signup-confirm-password" placeholder="Re-enter your password" required>
-                    </div>
-                    <button id="signup-submit-btn" class="success-btn">Create Account</button>
-                    <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 15px;">
-                        A verification link will be sent to your email
-                    </p>
-                    <div class="form-link">
-                        Already have an account? <a id="goto-signin-link">Sign In</a>
+                <a href="#" id="back-to-hero-from-signup" class="btn btn-ghost btn-sm gap-2 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back
+                </a>
+                <div class="card bg-base-100 shadow-2xl max-w-2xl mx-auto">
+                    <div class="card-body">
+                        <h2 class="card-title text-3xl font-bold text-primary justify-center mb-6">Create Your Account</h2>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Full Name *</span>
+                            </label>
+                            <input type="text" id="signup-name" placeholder="Enter your full name" class="input input-bordered input-primary" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Email Address *</span>
+                            </label>
+                            <input type="email" id="signup-email" placeholder="your@email.com" class="input input-bordered input-primary" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Mobile Number (Optional)</span>
+                            </label>
+                            <input type="tel" id="signup-mobile" placeholder="10-digit mobile number" class="input input-bordered">
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Password *</span>
+                            </label>
+                            <input type="password" id="signup-password" placeholder="Create a strong password" class="input input-bordered input-primary" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Confirm Password *</span>
+                            </label>
+                            <input type="password" id="signup-confirm-password" placeholder="Re-enter your password" class="input input-bordered input-primary" required>
+                        </div>
+                        <div class="alert alert-info mt-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span>A verification link will be sent to your email</span>
+                        </div>
+                        <div class="form-control mt-6">
+                            <button id="signup-submit-btn" class="btn btn-success btn-lg text-white">Create Account</button>
+                        </div>
+                        <div class="divider">Already have an account?</div>
+                        <button id="goto-signin-link" class="btn btn-outline btn-primary">Sign In</button>
                     </div>
                 </div>
             </div>
 
             <!-- Email Verification Success Screen -->
             <div id="verification-success-screen" class="screen">
-                <div class="auth-form" style="text-align: center;">
-                    <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
-                    <h2 class="form-title" style="color: var(--success);">Email Verified!</h2>
-                    <p style="color: #666; margin-bottom: 25px;">
-                        Your email has been verified successfully. You can now login to your account.
-                    </p>
-                    <button id="goto-signin-after-verify" class="success-btn">Go to Sign In</button>
+                <div class="card bg-base-100 shadow-2xl max-w-xl mx-auto">
+                    <div class="card-body text-center">
+                        <div class="text-8xl mb-6">✅</div>
+                        <h2 class="card-title text-4xl font-bold text-success justify-center mb-4">Email Verified!</h2>
+                        <p class="text-base-content/70 text-lg mb-6">
+                            Your email has been verified successfully. You can now login to your account.
+                        </p>
+                        <button id="goto-signin-after-verify" class="btn btn-success btn-lg text-white">Go to Sign In</button>
+                    </div>
                 </div>
             </div>
 
             <!-- Verification Pending Screen -->
             <div id="verification-pending-screen" class="screen">
-                <div class="auth-form" style="text-align: center;">
-                    <div style="font-size: 4rem; margin-bottom: 20px;">📧</div>
-                    <h2 class="form-title">Check Your Email!</h2>
-                    <p style="color: #666; margin-bottom: 15px;">
-                        We've sent a verification link to:
-                    </p>
-                    <p style="font-weight: 600; color: var(--primary); margin-bottom: 25px;" id="pending-verification-email"></p>
-                    <p style="color: #666; margin-bottom: 25px;">
-                        Click the link in the email to verify your account. Once verified, you can login.
-                    </p>
-                    <button id="resend-verification-btn" class="success-btn" style="margin-bottom: 15px;">Resend Verification Email</button>
-                    <div class="form-link">
-                        <a id="goto-signin-from-pending">Already verified? Sign In</a>
+                <div class="card bg-base-100 shadow-2xl max-w-xl mx-auto">
+                    <div class="card-body text-center">
+                        <div class="text-8xl mb-6">📧</div>
+                        <h2 class="card-title text-3xl font-bold text-primary justify-center mb-4">Check Your Email!</h2>
+                        <p class="text-base-content/70 mb-2">
+                            We've sent a verification link to:
+                        </p>
+                        <p class="font-bold text-primary text-lg mb-6" id="pending-verification-email"></p>
+                        <div class="alert alert-info">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span>Click the link in the email to verify your account. Once verified, you can login.</span>
+                        </div>
+                        <button id="resend-verification-btn" class="btn btn-success btn-lg text-white mt-6">Resend Verification Email</button>
+                        <div class="divider">Already verified?</div>
+                        <button id="goto-signin-from-pending" class="btn btn-outline btn-primary">Sign In</button>
                     </div>
                 </div>
             </div>
 
             <!-- Candidate Login Screen -->
             <div id="candidate-signin-screen" class="screen">
-                <a href="#" id="back-to-hero-from-signin" class="back-link">← Back</a>
-                <div class="auth-form">
-                    <h2 class="form-title">Welcome Back!</h2>
-                    <div class="form-group">
-                        <label for="signin-email">Email Address *</label>
-                        <input type="email" id="signin-email" placeholder="your@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="signin-password">Password *</label>
-                        <input type="password" id="signin-password" placeholder="Enter your password" required>
-                    </div>
-                    <button id="signin-submit-btn">Sign In</button>
-                    <div class="form-link">
-                        <a id="forgot-password-link">Forgot Password?</a>
-                    </div>
-                    <div class="form-link">
-                        Don't have an account? <a id="goto-signup-link">Create Account</a>
+                <a href="#" id="back-to-hero-from-signin" class="btn btn-ghost btn-sm gap-2 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back
+                </a>
+                <div class="card bg-base-100 shadow-2xl max-w-xl mx-auto">
+                    <div class="card-body">
+                        <div class="text-center mb-6">
+                            <div class="text-6xl mb-4">👋</div>
+                            <h2 class="card-title text-3xl font-bold text-primary justify-center">Welcome Back!</h2>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Email Address *</span>
+                            </label>
+                            <input type="email" id="signin-email" placeholder="your@email.com" class="input input-bordered input-primary" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Password *</span>
+                            </label>
+                            <input type="password" id="signin-password" placeholder="Enter your password" class="input input-bordered input-primary" required>
+                            <label class="label">
+                                <a id="forgot-password-link" class="label-text-alt link link-hover link-primary">Forgot password?</a>
+                            </label>
+                        </div>
+                        <div class="form-control mt-6">
+                            <button id="signin-submit-btn" class="btn btn-primary btn-lg text-white">Sign In</button>
+                        </div>
+                        <div class="divider">Don't have an account?</div>
+                        <button id="goto-signup-link" class="btn btn-outline btn-secondary">Create Account</button>
                     </div>
                 </div>
             </div>
 
             <!-- Forgot Password Screen -->
             <div id="forgot-password-screen" class="screen">
-                <a href="#" id="back-to-signin-from-forgot" class="back-link">← Back to Sign In</a>
-                <div class="auth-form">
-                    <h2 class="form-title">Reset Your Password</h2>
-                    <p style="text-align: center; color: #666; margin-bottom: 25px;">
-                        Enter your email address and we'll generate a new temporary password for you.
-                    </p>
-                    <div class="form-group">
-                        <label for="forgot-email">Email Address *</label>
-                        <input type="email" id="forgot-email" placeholder="your@email.com" required>
-                    </div>
-                    <button id="reset-password-btn" class="success-btn">Reset Password</button>
-                    <div id="reset-result" style="display: none; margin-top: 20px; padding: 20px; background: #e8f5e9; border-radius: 10px; border-left: 4px solid #27ae60;">
-                        <p style="font-weight: 600; color: #27ae60; margin-bottom: 10px;">✅ Password Reset Successful!</p>
-                        <p style="color: #666; margin-bottom: 10px;">Your new temporary password is:</p>
-                        <div style="background: white; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 1.2rem; font-weight: 700; color: #2c3e50; text-align: center; letter-spacing: 2px;" id="new-temp-password"></div>
-                        <p style="color: #666; margin-top: 15px; font-size: 0.9rem;">
-                            Please save this password and use it to sign in. We recommend changing it after logging in.
-                        </p>
-                        <button id="goto-signin-after-reset" style="margin-top: 15px; background: var(--success);">Go to Sign In</button>
+                <a href="#" id="back-to-signin-from-forgot" class="btn btn-ghost btn-sm gap-2 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back to Sign In
+                </a>
+                <div class="card bg-base-100 shadow-2xl max-w-xl mx-auto">
+                    <div class="card-body">
+                        <div class="text-center mb-6">
+                            <div class="text-6xl mb-4">🔐</div>
+                            <h2 class="card-title text-3xl font-bold text-primary justify-center">Reset Your Password</h2>
+                            <p class="text-base-content/70 mt-4">
+                                Enter your email address and we'll generate a new temporary password for you.
+                            </p>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Email Address *</span>
+                            </label>
+                            <input type="email" id="forgot-email" placeholder="your@email.com" class="input input-bordered input-primary" required>
+                        </div>
+                        <div class="form-control mt-6">
+                            <button id="reset-password-btn" class="btn btn-success btn-lg text-white">Reset Password</button>
+                        </div>
+                        <div id="reset-result" class="alert alert-success mt-6" style="display: none;">
+                            <div class="flex flex-col gap-4 w-full">
+                                <div class="flex items-start gap-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <div class="flex-1">
+                                        <h3 class="font-bold">Password Reset Successful!</h3>
+                                        <div class="text-sm">Your new temporary password is:</div>
+                                    </div>
+                                </div>
+                                <div class="bg-base-100 p-4 rounded-lg">
+                                    <div class="font-mono text-2xl font-bold text-center tracking-wider" id="new-temp-password"></div>
+                                </div>
+                                <div class="text-sm opacity-80">
+                                    Please save this password and use it to sign in. We recommend changing it after logging in.
+                                </div>
+                                <button id="goto-signin-after-reset" class="btn btn-success text-white">Go to Sign In</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Candidate Dashboard -->
             <div id="candidate-dashboard" class="screen">
-                <div class="dashboard-header">
-                    <a href="#" id="candidate-logout-link" class="logout-link">Logout</a>
-                    <h2 class="dashboard-title">Welcome, <span id="dashboard-name"></span>!</h2>
+                <!-- Header with Logout -->
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-4xl font-bold text-primary mb-2">Welcome, <span id="dashboard-name"></span>! 👋</h2>
+                        <p class="text-base-content/70">Track your progress and continue your exam preparation</p>
+                    </div>
+                    <a href="#" id="candidate-logout-link" class="btn btn-error btn-outline gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Logout
+                    </a>
                 </div>
 
-                <!-- Profile Section -->
-                <div class="profile-section" style="background: white; border-radius: 15px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
-                    <div style="display: flex; align-items: center; gap: 25px; flex-wrap: wrap;">
-                        <!-- Profile Image -->
-                        <div class="profile-image-container" style="position: relative;">
-                            <div id="profile-image-display" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), var(--primary)); display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem; font-weight: bold; overflow: hidden;">
-                                <span id="profile-initials"></span>
+                <!-- Profile Card -->
+                <div class="card bg-gradient-to-br from-primary to-secondary text-white shadow-2xl mb-8">
+                    <div class="card-body">
+                        <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
+                            <!-- Profile Image -->
+                            <div class="relative">
+                                <div id="profile-image-display" class="avatar placeholder">
+                                    <div class="bg-white text-primary rounded-full w-24 h-24 ring ring-white ring-offset-base-100 ring-offset-2">
+                                        <span id="profile-initials" class="text-4xl font-bold"></span>
+                                    </div>
+                                </div>
+                                <label for="profile-image-input" class="absolute bottom-0 right-0 btn btn-success btn-circle btn-sm border-2 border-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </label>
+                                <input type="file" id="profile-image-input" accept="image/*" class="hidden">
                             </div>
-                            <label for="profile-image-input" style="position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 0.9rem; border: 2px solid white;">
-                                📷
-                            </label>
-                            <input type="file" id="profile-image-input" accept="image/*" style="display: none;">
-                        </div>
-                        <!-- Profile Info -->
-                        <div style="flex: 1; min-width: 200px;">
-                            <div style="font-size: 1.3rem; font-weight: 600; color: var(--primary); margin-bottom: 5px;" id="profile-name-display"></div>
-                            <div style="color: #666; margin-bottom: 3px;"><span style="font-weight: 500;">Email:</span> <span id="dashboard-email"></span></div>
-                            <div style="color: #666;"><span style="font-weight: 500;">Mobile:</span> <span id="dashboard-mobile"></span> <a href="#" id="edit-mobile-link" style="color: var(--secondary); font-size: 0.85rem; margin-left: 5px;">Edit</a></div>
-                        </div>
-                        <!-- Edit Profile Button -->
-                        <div>
-                            <button id="edit-profile-btn" style="background: var(--secondary); color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 500; cursor: pointer;">Edit Profile</button>
+                            <!-- Profile Info -->
+                            <div class="flex-1 text-center md:text-left">
+                                <h3 class="text-2xl font-bold mb-2" id="profile-name-display"></h3>
+                                <div class="space-y-1 opacity-90">
+                                    <div class="flex items-center justify-center md:justify-start gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        <span id="dashboard-email"></span>
+                                    </div>
+                                    <div class="flex items-center justify-center md:justify-start gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                        </svg>
+                                        <span id="dashboard-mobile"></span>
+                                        <a href="#" id="edit-mobile-link" class="link link-hover ml-2">Edit</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Edit Button -->
+                            <div>
+                                <button id="edit-profile-btn" class="btn btn-white text-primary gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Edit Profile
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="total-exams-given">0</div>
-                        <div class="stat-label">Exams Taken</div>
+                <!-- Stats Cards -->
+                <div class="stats stats-vertical lg:stats-horizontal shadow-xl w-full mb-8">
+                    <div class="stat bg-gradient-to-br from-info to-info-content text-white">
+                        <div class="stat-figure text-white/50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div class="stat-title text-white/80">Total Exams</div>
+                        <div class="stat-value" id="total-exams-given">0</div>
+                        <div class="stat-desc text-white/70">Completed assessments</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="average-score">0</div>
-                        <div class="stat-label">Average Score</div>
+
+                    <div class="stat bg-gradient-to-br from-success to-success-content text-white">
+                        <div class="stat-figure text-white/50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <div class="stat-title text-white/80">Average Score</div>
+                        <div class="stat-value" id="average-score">0</div>
+                        <div class="stat-desc text-white/70">Keep improving!</div>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px;">
-                    <button id="take-exam-dashboard-btn" class="success-btn" style="flex: 1; min-width: 150px;">Take a New Exam</button>
-                    <button id="change-password-btn" style="flex: 1; min-width: 150px; background: var(--accent);">Change Password</button>
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                    <button id="take-exam-dashboard-btn" class="btn btn-success btn-lg flex-1 text-white gap-2 hover:scale-105 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Take a New Exam
+                    </button>
+                    <button id="change-password-btn" class="btn btn-accent btn-lg flex-1 text-white gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        </svg>
+                        Change Password
+                    </button>
                 </div>
 
-                <h3 style="color: var(--primary); margin-bottom: 20px;">Your Exam History</h3>
-                <div id="exam-history-container">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📝</div>
-                        <p>No exams taken yet. Start your first exam!</p>
+                <!-- Exam History Section -->
+                <div class="card bg-base-100 shadow-xl">
+                    <div class="card-body">
+                        <h3 class="card-title text-2xl text-primary mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Your Exam History
+                        </h3>
+                        <div id="exam-history-container">
+                            <div class="text-center py-12">
+                                <div class="text-7xl mb-4">📝</div>
+                                <p class="text-base-content/70 text-lg">No exams taken yet. Start your first exam!</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -327,57 +515,134 @@
 
             <!-- Admin Login Screen -->
             <div id="admin-login-screen" class="screen">
-                <a href="#" id="back-to-hero-from-admin" class="back-link">← Back</a>
-                <div class="auth-form">
-                    <h2 class="form-title">Admin Access</h2>
-                    <div class="form-group">
-                        <label for="admin-username">Username</label>
-                        <input type="text" id="admin-username" placeholder="Enter admin username">
+                <a href="#" id="back-to-hero-from-admin" class="btn btn-ghost btn-sm gap-2 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back
+                </a>
+                <div class="card bg-base-100 shadow-2xl max-w-xl mx-auto border-2 border-warning">
+                    <div class="card-body">
+                        <div class="text-center mb-6">
+                            <div class="text-6xl mb-4">🔐</div>
+                            <h2 class="card-title text-3xl font-bold text-warning justify-center">Admin Access</h2>
+                            <p class="text-base-content/70 mt-2">Authorized personnel only</p>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Username</span>
+                            </label>
+                            <input type="text" id="admin-username" placeholder="Enter admin username" class="input input-bordered input-warning">
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Password</span>
+                            </label>
+                            <input type="password" id="admin-password" placeholder="Enter admin password" class="input input-bordered input-warning">
+                        </div>
+                        <p class="error text-error text-sm text-center mt-2" id="admin-login-error"></p>
+                        <div class="form-control mt-6">
+                            <button id="admin-login-btn" class="btn btn-warning btn-lg text-white gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                                Login to Admin Panel
+                            </button>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="admin-password">Password</label>
-                        <input type="password" id="admin-password" placeholder="Enter admin password">
-                    </div>
-                    <button id="admin-login-btn" class="admin-btn">Login to Admin Panel</button>
-                    <p class="error" id="admin-login-error"></p>
                 </div>
             </div>
 
             <!-- Admin Panel -->
             <div id="admin-panel" class="screen">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                    <h2 style="color: var(--primary);">Admin Dashboard</h2>
-                    <button style="width: auto; padding: 8px 15px; background: var(--danger);" id="logout-btn">Logout</button>
+                <!-- Header with Logout -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div>
+                        <h2 class="text-4xl font-bold text-warning mb-2">Admin Dashboard</h2>
+                        <p class="text-base-content/70">Manage your exam system efficiently</p>
+                    </div>
+                    <button id="logout-btn" class="btn btn-error gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Logout
+                    </button>
                 </div>
-                
-                <!-- System Status - Actual Information -->
-                <div class="system-status">
-                    <h3>📊 System Status</h3>
-                    <div class="status-grid">
-                        <div class="status-item" id="db-status-item">
-                            <div class="status-icon">☁️</div>
-                            <div class="status-title">Airtable Database</div>
-                            <div class="status-text" id="db-status-text">✅ Connected</div>
-                        </div>
-                        <div class="status-item" id="gemini-status-item">
-                            <div class="status-icon">🤖</div>
-                            <div class="status-title">Gemini AI</div>
-                            <div class="status-text" id="gemini-status-text">✅ Active</div>
-                        </div>
-                        <div class="status-item" id="ocr-status-item">
-                            <div class="status-icon">📸</div>
-                            <div class="status-title">OCR Service</div>
-                            <div class="status-text" id="ocr-status-text">✅ Ready</div>
+
+                <!-- System Status -->
+                <div class="card bg-gradient-to-br from-info to-info-content text-white shadow-xl mb-8">
+                    <div class="card-body">
+                        <h3 class="card-title text-2xl mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            System Status
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div id="db-status-item" class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                                <div class="flex items-center gap-3">
+                                    <div class="text-4xl">☁️</div>
+                                    <div class="flex-1">
+                                        <div class="font-semibold text-white/90">Airtable Database</div>
+                                        <div id="db-status-text" class="text-white font-bold">✅ Connected</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="gemini-status-item" class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                                <div class="flex items-center gap-3">
+                                    <div class="text-4xl">🤖</div>
+                                    <div class="flex-1">
+                                        <div class="font-semibold text-white/90">Gemini AI</div>
+                                        <div id="gemini-status-text" class="text-white font-bold">✅ Active</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="ocr-status-item" class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                                <div class="flex items-center gap-3">
+                                    <div class="text-4xl">📸</div>
+                                    <div class="flex-1">
+                                        <div class="font-semibold text-white/90">OCR Service</div>
+                                        <div id="ocr-status-text" class="text-white font-bold">✅ Ready</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 30px;">
-                    <button class="admin-btn" id="question-bank-btn">📚 Question Bank</button>
-                    <button class="admin-btn" id="create-exam-btn">✏️ Create New Exam</button>
-                    <button class="admin-btn" id="view-results-btn">📊 View Results</button>
-                    <button class="upload-btn" id="upload-btn">📸 Upload Question Paper</button>
-                    <button class="ai-btn" id="ai-btn">🤖 AI Question Generator</button>
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                    <button class="btn btn-lg btn-warning text-white gap-2 hover:scale-105 transition-transform" id="question-bank-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        Question Bank
+                    </button>
+                    <button class="btn btn-lg btn-warning text-white gap-2 hover:scale-105 transition-transform" id="create-exam-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Create New Exam
+                    </button>
+                    <button class="btn btn-lg btn-warning text-white gap-2 hover:scale-105 transition-transform" id="view-results-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        View Results
+                    </button>
+                    <button class="btn btn-lg btn-accent text-white gap-2 hover:scale-105 transition-transform" id="upload-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Upload Question Paper
+                    </button>
+                    <button class="btn btn-lg btn-secondary text-white gap-2 hover:scale-105 transition-transform sm:col-span-2 lg:col-span-2" id="ai-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        AI Question Generator
+                    </button>
                 </div>
 
 
@@ -1172,23 +1437,44 @@ Artificial Intelligence has revolutionized..."></textarea>
 
             <!-- Candidate Login Screen -->
             <div id="candidate-login-screen" class="screen">
-                <h2 style="text-align: center; margin-bottom: 25px; color: var(--primary);">Start Your Exam</h2>
-                <div class="form-group">
-                    <label for="exam-code-input">Select Exam</label>
-                    <select id="exam-code-input" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; background: white;">
-                        <option value="">-- Select an Active Exam --</option>
-                    </select>
+                <div class="card bg-base-100 shadow-2xl max-w-2xl mx-auto">
+                    <div class="card-body">
+                        <div class="text-center mb-6">
+                            <div class="text-7xl mb-4">📝</div>
+                            <h2 class="card-title text-3xl font-bold text-primary justify-center">Start Your Exam</h2>
+                            <p class="text-base-content/70 mt-2">Fill in your details to begin the assessment</p>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Select Exam</span>
+                            </label>
+                            <select id="exam-code-input" class="select select-bordered select-primary w-full">
+                                <option value="">-- Select an Active Exam --</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Your Full Name</span>
+                            </label>
+                            <input type="text" id="candidate-name" placeholder="As per your application" class="input input-bordered input-primary">
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Mobile Number *</span>
+                            </label>
+                            <input type="tel" id="candidate-mobile" placeholder="Enter your 10-digit mobile number" class="input input-bordered input-primary" required>
+                        </div>
+                        <p class="error text-error text-sm text-center mt-2" id="login-error"></p>
+                        <div class="form-control mt-6">
+                            <button id="start-exam-btn" class="btn btn-success btn-lg text-white gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Begin Exam
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="candidate-name">Your Full Name</label>
-                    <input type="text" id="candidate-name" placeholder="As per your application">
-                </div>
-                <div class="form-group">
-                    <label for="candidate-mobile">Mobile Number *</label>
-                    <input type="tel" id="candidate-mobile" placeholder="Enter your 10-digit mobile number" required>
-                </div>
-                <button id="start-exam-btn">Begin Exam</button>
-                <p class="error" id="login-error"></p>
             </div>
 
             <!-- Exam Screen -->
@@ -1245,25 +1531,67 @@ Artificial Intelligence has revolutionized..."></textarea>
 
             <!-- Result Screen -->
             <div id="result-screen" class="screen">
-                <div class="result-container">
-                    <h2>✅ Exam Completed!</h2>
-                    <p style="font-size: 1.2rem; margin: 15px 0; color: var(--dark);">Thank you for attempting Polite Coaching Centre test.</p>
+                <div class="card bg-base-100 shadow-2xl max-w-2xl mx-auto">
+                    <div class="card-body text-center">
+                        <div class="text-8xl mb-6">✅</div>
+                        <h2 class="card-title text-4xl font-bold text-success justify-center mb-4">Exam Completed!</h2>
+                        <p class="text-lg text-base-content/70 mb-6">
+                            Thank you for attempting Polite Coaching Centre test.
+                        </p>
 
-                    <div class="score-display" id="final-score">0.00</div>
-                    <p style="font-size: 1.1rem; color: var(--primary); margin-bottom: 25px;">Your Final Score</p>
+                        <!-- Score Display -->
+                        <div class="stats shadow-xl mb-6 bg-gradient-to-br from-success to-success-content text-white">
+                            <div class="stat">
+                                <div class="stat-title text-white/80">Your Final Score</div>
+                                <div class="stat-value text-6xl" id="final-score">0.00</div>
+                                <div class="stat-desc text-white/70">Out of 100</div>
+                            </div>
+                        </div>
 
-                    <div style="background: #e8f4fc; padding: 20px; border-radius: 12px; margin: 25px 0;">
-                        <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Exam Code:</strong> <span id="result-exam-code">REASONING_01</span></p>
-                        <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Name:</strong> <span id="result-name">Candidate Name</span></p>
-                        <p style="margin: 8px 0; font-size: 1.05rem;"><strong>Mobile:</strong> <span id="result-mobile">9876543210</span></p>
-                    </div>
+                        <!-- Exam Details -->
+                        <div class="bg-base-200 rounded-lg p-6 mb-6 text-left">
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <div>
+                                        <span class="font-semibold">Exam Code:</span>
+                                        <span class="ml-2" id="result-exam-code">REASONING_01</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    <div>
+                                        <span class="font-semibold">Name:</span>
+                                        <span class="ml-2" id="result-name">Candidate Name</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                    <div>
+                                        <span class="font-semibold">Mobile:</span>
+                                        <span class="ml-2" id="result-mobile">9876543210</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                    <p style="margin: 20px 0; font-weight: 500; line-height: 1.6;">
-                        Your score has been recorded successfully.
-                    </p>
+                        <div class="alert alert-success mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <span>Your score has been recorded successfully.</span>
+                        </div>
 
-                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                        <button class="primary-btn" id="result-logout-btn" style="background: var(--primary); color: white; padding: 15px 40px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1.1rem; transition: all 0.3s;">🚪 Log Out / Close</button>
+                        <button class="btn btn-primary btn-lg gap-2" id="result-logout-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Log Out / Close
+                        </button>
                     </div>
                 </div>
             </div>
