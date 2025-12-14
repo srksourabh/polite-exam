@@ -738,6 +738,36 @@ function resumeExam(savedState, remainingSeconds) {
     }
 }
 
+
+// Timer display update function (moved before startExamTimer to fix ReferenceError)
+function updateTimerDisplay() {
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    // Update both old and new timer elements for compatibility
+    const timerDisplayOld = document.getElementById('timer-display');
+    const timerDisplayNew = document.getElementById('time-remaining');
+
+    if (timerDisplayOld) timerDisplayOld.textContent = `?? Time Remaining: ${timeStr}`;
+    if (timerDisplayNew) timerDisplayNew.textContent = timeStr;
+
+    // Update floating mobile timer
+    const floatingTimer = document.getElementById('floating-timer-display');
+    if (floatingTimer) floatingTimer.textContent = timeStr;
+
+    // Add warning class when time is low
+    const timerBadge = document.getElementById('timer');
+    if (timerBadge) {
+        if (timeRemaining <= 60) {
+            timerBadge.classList.remove('badge-primary', 'badge-warning');
+            timerBadge.classList.add('badge-error');
+        } else if (timeRemaining <= 300) {
+            timerBadge.classList.remove('badge-primary', 'badge-error');
+            timerBadge.classList.add('badge-warning');
+        }
+    }
+}
 // Start or restart the exam timer
 function startExamTimer() {
     if (examTimer) {
