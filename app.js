@@ -13,7 +13,7 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 
 // App Version for cache invalidation on new deployments
 // Update this version when deploying significant changes to clear old sessions
-const APP_VERSION = '3.0.9';
+const APP_VERSION = '3.1.0';
 const APP_VERSION_KEY = 'polite_app_version';
 
 // =====================================================
@@ -8246,17 +8246,9 @@ function loadQuestion() {
         }
     }
 
-    // Show/hide floating submit button based on whether this is the last question
-    const floatingSubmitContainer = document.getElementById('floating-submit-container');
-    if (floatingSubmitContainer) {
-        if (isLastQuestion) {
-            floatingSubmitContainer.classList.remove('hidden');
-            document.getElementById('next-btn').style.display = 'none';
-        } else {
-            floatingSubmitContainer.classList.add('hidden');
-            document.getElementById('next-btn').style.display = 'block';
-        }
-    }
+    // Next button is always visible - submit via the upper Submit button
+    // (Floating submit button was removed for cleaner UI)
+    document.getElementById('next-btn').style.display = 'block';
 }
 
 // Make loadQuestion globally accessible (needed by resumeExam which is outside DOMContentLoaded)
