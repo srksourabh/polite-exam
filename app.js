@@ -13,7 +13,7 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 
 // App Version for cache invalidation on new deployments
 // Update this version when deploying significant changes to clear old sessions
-const APP_VERSION = '3.0.2';
+const APP_VERSION = '3.0.6';
 const APP_VERSION_KEY = 'polite_app_version';
 
 // =====================================================
@@ -7588,11 +7588,16 @@ function getHierarchicalQuestionNumber(questionIndex) {
 
 // Select option in the new UI
 function selectOptionNewUI(optionIndex) {
+    console.log('[DEBUG] selectOptionNewUI called with index:', optionIndex);
     const optionsContainer = document.getElementById('options-container');
-    if (!optionsContainer) return;
+    if (!optionsContainer) {
+        console.log('[DEBUG] ERROR: options-container not found!');
+        return;
+    }
 
     const options = optionsContainer.querySelectorAll('.option');
     const radios = optionsContainer.querySelectorAll('.option-radio');
+    console.log('[DEBUG] Found', options.length, 'options and', radios.length, 'radios');
 
     // Check if clicking the same option again (toggle off)
     if (userAnswers[currentQuestionIndex] === optionIndex) {
@@ -8120,12 +8125,17 @@ function loadQuestion() {
 
             // Add click handler to the new container (radio has pointer-events: none so clicks pass through)
             newOptionsContainer.addEventListener('click', function(e) {
+                console.log('[DEBUG] Options container clicked, target:', e.target.tagName, e.target.className);
                 const option = e.target.closest('.option');
                 if (option) {
                     const optionIndex = parseInt(option.getAttribute('data-index'));
+                    console.log('[DEBUG] Option found, index:', optionIndex);
                     selectOptionNewUI(optionIndex);
+                } else {
+                    console.log('[DEBUG] No .option element found from click target');
                 }
             });
+            console.log('[DEBUG] Click handler attached to options container');
 
             // Process LaTeX/math content in options
             processRichContentInContainer(newOptionsContainer);
