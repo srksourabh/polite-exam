@@ -967,6 +967,40 @@ function clearSession() {
     localStorage.removeItem('userData');
 }
 
+// Enhanced cache clearing function - clears all app data and caches
+async function clearAllCache() {
+    try {
+        // Clear localStorage completely
+        localStorage.clear();
+
+        // Clear sessionStorage completely
+        sessionStorage.clear();
+
+        // Clear service worker caches if available
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+                cacheNames.map(cacheName => caches.delete(cacheName))
+            );
+            console.log('All caches cleared:', cacheNames);
+        }
+
+        // Unregister service workers if any
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(
+                registrations.map(registration => registration.unregister())
+            );
+            console.log('Service workers unregistered:', registrations.length);
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error clearing cache:', error);
+        return false;
+    }
+}
+
 // Helper function to format date correctly (handles YYYY-MM-DD as local date)
 function formatDateForDisplay(dateInput) {
     if (!dateInput) return 'N/A';
@@ -5964,6 +5998,41 @@ document.getElementById('upload-btn').addEventListener('click', function() {
     document.getElementById('view-results-section').classList.add('hidden');
     document.getElementById('upload-section').classList.remove('hidden');
     document.getElementById('ai-generator-section').classList.add('hidden');
+});
+
+// Clear all cache button
+document.getElementById('clear-cache-btn').addEventListener('click', async function() {
+    if (confirm('⚠️ WARNING: This will clear ALL cached data including:\n\n• All browser cache\n• All localStorage data\n• All sessionStorage data\n• Service worker caches\n\nYou will be logged out and the page will reload.\n\nAre you sure you want to continue?')) {
+        try {
+            // Show loading notification
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('Clearing all caches...', 'info');
+            }
+
+            // Clear all caches
+            const success = await clearAllCache();
+
+            if (success) {
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('All caches cleared successfully! Reloading page...', 'success');
+                }
+
+                // Reload the page after a short delay
+                setTimeout(() => {
+                    window.location.reload(true); // Force reload from server
+                }, 1500);
+            } else {
+                if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                    window.PoliteCCAPI.showNotification('Failed to clear all caches. Please try again.', 'error');
+                }
+            }
+        } catch (error) {
+            console.error('Error clearing cache:', error);
+            if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
+                window.PoliteCCAPI.showNotification('Error clearing caches: ' + error.message, 'error');
+            }
+        }
+    }
 });
 
 // Capture photo with camera button
