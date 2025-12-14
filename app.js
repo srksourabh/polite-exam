@@ -13,7 +13,7 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 
 // App Version for cache invalidation on new deployments
 // Update this version when deploying significant changes to clear old sessions
-const APP_VERSION = '3.0.7';
+const APP_VERSION = '3.0.8';
 const APP_VERSION_KEY = 'polite_app_version';
 
 // =====================================================
@@ -7609,19 +7609,34 @@ function selectOptionNewUI(optionIndex) {
         // Force visual update with inline style
         options[optionIndex].style.borderColor = '';
         options[optionIndex].style.backgroundColor = '';
-        radios[optionIndex].checked = false;
+        // Uncheck radio with visual reset
+        const radio = radios[optionIndex];
+        radio.checked = false;
+        radio.removeAttribute('checked');
+        radio.style.removeProperty('--chkbg');
+        radio.style.removeProperty('background-color');
+        radio.style.removeProperty('border-color');
+        radio.style.removeProperty('box-shadow');
     } else {
         // Select new option
         console.log('[DEBUG] Selecting option', optionIndex, 'Previous answer:', userAnswers[currentQuestionIndex]);
         userAnswers[currentQuestionIndex] = optionIndex;
         options.forEach((option, i) => {
+            const radio = radios[i];
             if (i === optionIndex) {
                 option.classList.remove('border-base-300');
                 option.classList.add('selected', 'border-primary');
                 // Force visual update with inline styles (CSS fallback)
                 option.style.borderColor = '#4F46E5';
                 option.style.backgroundColor = 'rgba(79, 70, 229, 0.1)';
-                radios[i].checked = true;
+                // Set radio checked state
+                radio.checked = true;
+                radio.setAttribute('checked', 'checked');
+                // Force radio visual update (DaisyUI workaround)
+                radio.style.setProperty('--chkbg', '#4F46E5');
+                radio.style.setProperty('background-color', '#4F46E5', 'important');
+                radio.style.setProperty('border-color', '#4F46E5', 'important');
+                radio.style.setProperty('box-shadow', 'inset 0 0 0 4px #fff', 'important');
                 console.log('[DEBUG] Selected option', i, '- classes now:', option.className);
             } else {
                 option.classList.remove('selected', 'border-primary');
@@ -7629,15 +7644,36 @@ function selectOptionNewUI(optionIndex) {
                 // Clear inline styles for unselected
                 option.style.borderColor = '';
                 option.style.backgroundColor = '';
-                radios[i].checked = false;
+                // Uncheck radio
+                radio.checked = false;
+                radio.removeAttribute('checked');
+                // Clear radio visual styles
+                radio.style.removeProperty('--chkbg');
+                radio.style.removeProperty('background-color');
+                radio.style.removeProperty('border-color');
+                radio.style.removeProperty('box-shadow');
             }
         });
         console.log('[DEBUG] Selection complete. userAnswers[', currentQuestionIndex, '] =', userAnswers[currentQuestionIndex]);
     }
 
-    // Ensure all radio buttons are properly synced
+    // Ensure all radio buttons are properly synced with visual styles
     radios.forEach((radio, idx) => {
-        radio.checked = userAnswers[currentQuestionIndex] === idx;
+        const isChecked = userAnswers[currentQuestionIndex] === idx;
+        radio.checked = isChecked;
+        if (isChecked) {
+            radio.setAttribute('checked', 'checked');
+            radio.style.setProperty('--chkbg', '#4F46E5');
+            radio.style.setProperty('background-color', '#4F46E5', 'important');
+            radio.style.setProperty('border-color', '#4F46E5', 'important');
+            radio.style.setProperty('box-shadow', 'inset 0 0 0 4px #fff', 'important');
+        } else {
+            radio.removeAttribute('checked');
+            radio.style.removeProperty('--chkbg');
+            radio.style.removeProperty('background-color');
+            radio.style.removeProperty('border-color');
+            radio.style.removeProperty('box-shadow');
+        }
     });
 
     // Update question navigator
