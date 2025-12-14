@@ -13,7 +13,7 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 
 // App Version for cache invalidation on new deployments
 // Update this version when deploying significant changes to clear old sessions
-const APP_VERSION = '3.1.0';
+const APP_VERSION = '3.1.1';
 const APP_VERSION_KEY = 'polite_app_version';
 
 // =====================================================
@@ -7446,7 +7446,19 @@ async function submitExam(isAutoSubmit = false) {
         );
 
         if (duplicate) {
-            window.PoliteCCAPI.showNotification('⚠️ You have already submitted this exam!', 'error');
+            window.PoliteCCAPI.showNotification('⚠️ You have already given this exam!', 'error');
+            // Clear exam state and redirect to dashboard
+            clearExamState();
+            examSubmitted = true;
+            clearInterval(examTimer);
+            document.getElementById('exam-screen').classList.remove('active');
+            const session = getSession();
+            if (session && session.userType === 'candidate') {
+                showCandidateDashboard(session.userData);
+            } else {
+                document.getElementById('hero-landing').classList.add('active');
+                updateHeaderNav('hero-landing');
+            }
             return; // Prevent submission
         } else {
             // Ensure score has exactly 2 decimal places without rounding to integer
@@ -7505,81 +7517,36 @@ async function submitExam(isAutoSubmit = false) {
 
     const percentage = totalMarks > 0 ? ((displayScore / totalMarks) * 100).toFixed(1) : 0;
 
-    // Show result screen
-    document.getElementById('exam-screen').classList.remove('active');
-    document.getElementById('result-screen').classList.add('active');
-    updateHeaderNav('result-screen');
-
-    // Update all result screen elements
-    document.getElementById('final-score').textContent = displayScore.toFixed(2);
-    document.getElementById('result-exam-code').textContent = currentExam.code;
-    document.getElementById('result-name').textContent = candidateName;
-    document.getElementById('result-mobile').textContent = candidateMobile;
-
-    // Update new statistics elements
-    const resultTotalMarks = document.getElementById('result-total-marks');
-    const resultPercentage = document.getElementById('result-percentage');
-    const resultCorrect = document.getElementById('result-correct');
-    const resultWrong = document.getElementById('result-wrong');
-    const resultUnanswered = document.getElementById('result-unanswered');
-
-    if (resultTotalMarks) resultTotalMarks.textContent = totalMarks;
-    if (resultPercentage) resultPercentage.textContent = percentage + '%';
-    if (resultCorrect) resultCorrect.textContent = correctCount;
-    if (resultWrong) resultWrong.textContent = wrongCount;
-    if (resultUnanswered) resultUnanswered.textContent = unansweredCount;
-
-    // Render detailed results in the new UI
-    const detailedResultsContainer = document.getElementById('detailed-results');
-    if (detailedResultsContainer) {
-        let detailedHtml = '';
-        detailedAnswers.forEach((answer, index) => {
-            if (answer.isMainPassage) return; // Skip passages
-
-            const statusColor = answer.isCorrect ? 'success' : (answer.userAnswer !== 'Not Answered' ? 'error' : 'warning');
-            const statusIcon = answer.isCorrect ? '✅' : (answer.userAnswer !== 'Not Answered' ? '❌' : '⚪');
-            const statusText = answer.isCorrect ? 'Correct (+1)' : (answer.userAnswer !== 'Not Answered' ? 'Wrong (-0.25)' : 'Unanswered (0)');
-
-            detailedHtml += `
-                <div class="card bg-base-200 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-bold text-${statusColor}">${statusIcon} Question ${answer.hierarchicalNumber || (index + 1)}</h4>
-                            <span class="badge badge-${statusColor}">${statusText}</span>
-                        </div>
-                        <p class="text-sm mt-2">${answer.question ? answer.question.substring(0, 200) + (answer.question.length > 200 ? '...' : '') : ''}</p>
-                        <div class="grid grid-cols-2 gap-2 mt-2 text-sm">
-                            <div class="${answer.userAnswer === 'A' ? 'font-bold text-primary' : ''} ${answer.correctAnswer === 'A' ? 'text-success' : ''}">A: ${answer.optionA || ''}</div>
-                            <div class="${answer.userAnswer === 'B' ? 'font-bold text-primary' : ''} ${answer.correctAnswer === 'B' ? 'text-success' : ''}">B: ${answer.optionB || ''}</div>
-                            <div class="${answer.userAnswer === 'C' ? 'font-bold text-primary' : ''} ${answer.correctAnswer === 'C' ? 'text-success' : ''}">C: ${answer.optionC || ''}</div>
-                            <div class="${answer.userAnswer === 'D' ? 'font-bold text-primary' : ''} ${answer.correctAnswer === 'D' ? 'text-success' : ''}">D: ${answer.optionD || ''}</div>
-                        </div>
-                        <div class="flex gap-4 mt-2 text-sm">
-                            <span>Your Answer: <strong class="${answer.userAnswer !== 'Not Answered' ? 'text-primary' : 'text-warning'}">${answer.userAnswer}</strong></span>
-                            <span>Correct: <strong class="text-success">${answer.correctAnswer}</strong></span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        detailedResultsContainer.innerHTML = detailedHtml || '<p class="text-center text-base-content/60">No detailed results available</p>';
-    }
-
+    // Show success notification with score summary
     const notification = document.createElement('div');
     notification.className = 'notification success';
-    notification.innerHTML = `✅ Exam submitted! Final score: ${displayScore.toFixed(2)} (${correctCount} correct, ${wrongCount} wrong)`;
+    notification.innerHTML = `✅ Exam submitted successfully!<br>Score: ${displayScore.toFixed(2)}/${totalMarks} (${percentage}%)<br>Correct: ${correctCount} | Wrong: ${wrongCount} | Unanswered: ${unansweredCount}`;
+    notification.style.cssText = 'padding: 20px; font-size: 1.1rem; text-align: center; line-height: 1.6;';
     document.getElementById('notification-container').appendChild(notification);
 
+    // Hide exam screen and redirect to dashboard
+    document.getElementById('exam-screen').classList.remove('active');
+
+    // Redirect to candidate dashboard
+    const session = getSession();
+    if (session && session.userType === 'candidate') {
+        showCandidateDashboard(session.userData);
+    } else {
+        document.getElementById('hero-landing').classList.add('active');
+        updateHeaderNav('hero-landing');
+    }
+
+    // Remove notification after 5 seconds
     setTimeout(() => {
         if (notification.parentNode) {
             notification.parentNode.removeChild(notification);
         }
-    }, 3000);
+    }, 5000);
 
     // Final safety: clear exam state again and ensure flag is set
     clearExamState();
     examSubmitted = true;
-    console.log('[SUBMIT] Exam submission complete, state cleared, examSubmitted flag set');
+    console.log('[SUBMIT] Exam submission complete, redirected to dashboard');
 }
 
 // Helper function to calculate hierarchical question number
