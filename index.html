@@ -1317,12 +1317,45 @@ Artificial Intelligence has revolutionized..."></textarea>
 
                 <!-- AI Question Generator Section -->
                 <div id="ai-generator-section" class="hidden">
-                    <h3>🤖 AI Question Generator</h3>
-                    <p>Create high-quality MCQs in seconds with AI. Perfect for job aspirants!</p>
+                    <!-- Header Card -->
+                    <div class="card bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 text-white shadow-2xl mb-6">
+                        <div class="card-body py-6">
+                            <div class="flex items-center justify-between flex-wrap gap-4">
+                                <div>
+                                    <h3 class="text-3xl font-bold flex items-center gap-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                        </svg>
+                                        AI Question Generator
+                                    </h3>
+                                    <p class="text-white/90 mt-2">Create high-quality MCQs in seconds with AI - Perfect for job aspirants!</p>
+                                </div>
+                                <div class="stats shadow bg-white/20 backdrop-blur">
+                                    <div class="stat py-3 px-4">
+                                        <div class="stat-title text-white/80 text-xs">Powered by</div>
+                                        <div class="stat-value text-white text-lg">Gemini AI</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                    <div class="form-group" style="margin-top: 20px;">
-                        <label>Subject Category</label>
-                        <select id="ai-subject">
+                    <!-- Configuration Cards Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- Subject & Difficulty Card -->
+                        <div class="card bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 shadow-lg">
+                            <div class="card-body p-6">
+                                <h4 class="card-title text-blue-600 text-lg mb-4 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                    Subject & Difficulty
+                                </h4>
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text font-semibold text-blue-700">Subject Category</span>
+                                    </label>
+                                    <select id="ai-subject" class="select select-bordered select-sm border-blue-300 focus:border-blue-500">
                             <option value="Quantitative Aptitude">Quantitative Aptitude</option>
                             <option value="Reasoning Ability">Reasoning Ability</option>
                             <option value="English Language">English Language</option>
@@ -1348,94 +1381,184 @@ Artificial Intelligence has revolutionized..."></textarea>
                             <option value="Pedagogy">Pedagogy</option>
                             <option value="Others">Others</option>
                         </select>
+                                </div>
+                                <div class="form-control mt-4">
+                                    <label class="label">
+                                        <span class="label-text font-semibold text-blue-700">Difficulty Level</span>
+                                    </label>
+                                    <select id="ai-difficulty" class="select select-bordered select-sm border-blue-300 focus:border-blue-500">
+                                        <option value="easy">🟢 Easy (Railway Group D, SSC MTS)</option>
+                                        <option value="medium" selected>🟡 Medium (Bank Clerk, SSC CHSL)</option>
+                                        <option value="hard">🔴 Hard (Bank PO, SSC CGL)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Format & Options Card -->
+                        <div class="card bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 shadow-lg">
+                            <div class="card-body p-6">
+                                <h4 class="card-title text-amber-600 text-lg mb-4 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                    </svg>
+                                    Question Format
+                                </h4>
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text font-semibold text-amber-700">Format Type</span>
+                                    </label>
+                                    <select id="ai-question-format" class="select select-bordered select-sm border-amber-300 focus:border-amber-500">
+                                        <option value="standalone">📄 Standalone (Single Question)</option>
+                                        <option value="parent-child">📚 Parent-Child (Passage + Sub-Questions)</option>
+                                    </select>
+                                    <label class="label">
+                                        <span class="label-text-alt text-amber-600">💡 Parent-Child creates passages with multiple questions</span>
+                                    </label>
+                                </div>
+                                <div class="form-control mt-4" id="sub-questions-count-group" style="display: none;">
+                                    <label class="label">
+                                        <span class="label-text font-semibold text-amber-700">Number of Sub-Questions</span>
+                                    </label>
+                                    <div class="join w-full">
+                                        <select id="ai-sub-questions-count" class="select select-bordered select-sm border-amber-300 focus:border-amber-500 join-item w-full">
+                                            <option value="3" selected>3 Questions</option>
+                                            <option value="4">4 Questions</option>
+                                            <option value="5">5 Questions</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Difficulty Level</label>
-                        <select id="ai-difficulty">
-                            <option value="easy">Easy (Railway Group D, SSC MTS)</option>
-                            <option value="medium" selected>Medium (Bank Clerk, SSC CHSL)</option>
-                            <option value="hard">Hard (Bank PO, SSC CGL)</option>
-                        </select>
+                    <!-- Custom Prompt Card -->
+                    <div class="card bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 shadow-lg mb-6">
+                        <div class="card-body p-6">
+                            <h4 class="card-title text-green-600 text-lg mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Custom Instructions (Optional)
+                            </h4>
+                            <textarea id="ai-custom-prompt" rows="3" class="textarea textarea-bordered textarea-sm w-full border-green-300 focus:border-green-500" placeholder="Example: Generate questions for Railway Clerk exam on quantitative aptitude&#10;OR: Generate reading comprehension passage about Indian economy&#10;&#10;Leave empty to auto-generate based on subject and difficulty"></textarea>
+                            <div class="alert alert-info mt-3 py-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="text-xs">Add specific instructions like exam type (Railway, Banking, SSC), topic focus</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Question Format</label>
-                        <select id="ai-question-format">
-                            <option value="standalone">Standalone (Single Question)</option>
-                            <option value="parent-child">Parent-Child (Passage + Sub-Questions)</option>
-                        </select>
-                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">💡 Parent-Child format creates a passage/context with multiple related questions (like Reading Comprehension, Data Interpretation)</p>
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                        <button class="btn btn-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 flex-1 hover:scale-105 transition-transform shadow-xl" id="generate-ai-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                            </svg>
+                            Generate Question with AI
+                        </button>
                     </div>
-
-                    <div class="form-group" id="sub-questions-count-group" style="display: none;">
-                        <label>Number of Sub-Questions</label>
-                        <select id="ai-sub-questions-count">
-                            <option value="3" selected>3 Questions</option>
-                            <option value="4">4 Questions</option>
-                            <option value="5">5 Questions</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Custom Prompt (Optional)</label>
-                        <textarea id="ai-custom-prompt" rows="3" placeholder="Example: Generate questions for Railway Clerk exam on quantitative aptitude&#10;OR: Generate reading comprehension passage about Indian economy&#10;&#10;Leave empty to auto-generate based on subject and difficulty"></textarea>
-                        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">💡 Add specific instructions like exam type (Railway, Banking, SSC), topic focus</p>
-                    </div>
-
-                    <button class="ai-btn" id="generate-ai-btn">✨ Generate Question with AI</button>
-                    <div class="error" id="ai-error"></div>
+                    <div class="error text-error text-center font-semibold" id="ai-error"></div>
                     
                     <!-- Standalone Question Result -->
-                    <div id="ai-result-container" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #e0e0e0;">
-                        <h4 style="color: var(--primary); margin-bottom: 10px;">AI Generated Question</h4>
-                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                            <span class="question-tag" id="ai-display-subject">Subject</span>
-                            <span class="question-tag" id="ai-display-difficulty" style="background: #e3f2fd;">Difficulty</span>
-                        </div>
-                        <div id="ai-question-text" style="font-weight: 500; margin-bottom: 15px; font-size: 1.05rem;"></div>
-
-                        <div style="margin-left: 25px; margin-bottom: 15px;">
-                            <div>A) <span id="ai-option-a"></span></div>
-                            <div>B) <span id="ai-option-b"></span></div>
-                            <div>C) <span id="ai-option-c"></span></div>
-                            <div>D) <span id="ai-option-d"></span></div>
-                        </div>
-
-                        <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin: 15px 0;">
-                            <strong>Correct Answer:</strong> <span id="ai-correct-answer"></span><br>
-                            <strong>Explanation:</strong> <span id="ai-explanation"></span>
-                        </div>
-
-                        <div style="display: flex; gap: 15px; margin-top: 20px;">
-                            <button class="success-btn" style="flex: 1;" id="accept-ai-btn">Accept & Add to Bank</button>
-                            <button class="admin-btn" style="flex: 1;" id="regenerate-ai-btn">Generate New Question</button>
+                    <div id="ai-result-container" class="hidden">
+                        <div class="card bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-violet-300 shadow-2xl">
+                            <div class="card-body">
+                                <h4 class="card-title text-violet-600 flex items-center gap-2 mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    AI Generated Question
+                                </h4>
+                                <div class="flex gap-2 mb-4 flex-wrap">
+                                    <span class="badge badge-primary badge-lg" id="ai-display-subject">Subject</span>
+                                    <span class="badge badge-secondary badge-lg" id="ai-display-difficulty">Difficulty</span>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg shadow-inner mb-4">
+                                    <div id="ai-question-text" class="font-medium text-lg text-gray-800"></div>
+                                </div>
+                                <div class="space-y-2 mb-4 ml-4">
+                                    <div class="flex items-start gap-3"><span class="badge badge-sm">A</span><span id="ai-option-a" class="flex-1"></span></div>
+                                    <div class="flex items-start gap-3"><span class="badge badge-sm">B</span><span id="ai-option-b" class="flex-1"></span></div>
+                                    <div class="flex items-start gap-3"><span class="badge badge-sm">C</span><span id="ai-option-c" class="flex-1"></span></div>
+                                    <div class="flex items-start gap-3"><span class="badge badge-sm">D</span><span id="ai-option-d" class="flex-1"></span></div>
+                                </div>
+                                <div class="alert alert-success shadow-lg">
+                                    <div class="flex-col items-start w-full gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            <strong>Correct Answer:</strong> <span id="ai-correct-answer" class="font-bold"></span>
+                                        </div>
+                                        <div class="mt-2 w-full">
+                                            <strong>Explanation:</strong> <span id="ai-explanation"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3 mt-6">
+                                    <button class="btn btn-success btn-sm flex-1 gap-2" id="accept-ai-btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Accept & Add
+                                    </button>
+                                    <button class="btn btn-warning btn-sm flex-1 gap-2" id="regenerate-ai-btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Regenerate
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Parent-Child Question Result -->
-                    <div id="ai-parent-child-result" class="hidden" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; border: 2px solid #17a2b8;">
-                        <h4 style="color: #0c5460; margin-bottom: 10px;">AI Generated Passage-Based Questions</h4>
-                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                            <span class="question-tag" id="ai-pc-subject">Subject</span>
-                            <span class="question-tag" id="ai-pc-difficulty" style="background: #e3f2fd;">Difficulty</span>
-                            <span class="question-tag" style="background: #d1ecf1; color: #0c5460;">Parent-Child</span>
-                        </div>
+                    <div id="ai-parent-child-result" class="hidden">
+                        <div class="card bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-300 shadow-2xl">
+                            <div class="card-body">
+                                <h4 class="card-title text-cyan-600 flex items-center gap-2 mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    AI Generated Passage-Based Questions
+                                </h4>
+                                <div class="flex gap-2 mb-4 flex-wrap">
+                                    <span class="badge badge-info badge-lg" id="ai-pc-subject">Subject</span>
+                                    <span class="badge badge-secondary badge-lg" id="ai-pc-difficulty">Difficulty</span>
+                                    <span class="badge badge-accent badge-lg">📚 Parent-Child</span>
+                                </div>
 
-                        <!-- Main Passage -->
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
-                            <h5 style="margin: 0 0 10px 0; color: #0c5460;">Main Passage / Context:</h5>
-                            <div id="ai-pc-passage" style="line-height: 1.6; white-space: pre-wrap;"></div>
-                        </div>
+                                <!-- Main Passage -->
+                                <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border-l-4 border-cyan-500">
+                                    <h5 class="text-lg font-bold text-cyan-700 mb-3 flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                        </svg>
+                                        Main Passage / Context:
+                                    </h5>
+                                    <div id="ai-pc-passage" class="text-gray-700 leading-relaxed whitespace-pre-wrap"></div>
+                                </div>
 
-                        <!-- Sub Questions Container -->
-                        <div id="ai-pc-subquestions-container">
-                            <!-- Sub-questions will be rendered here by JavaScript -->
-                        </div>
+                                <!-- Sub Questions Container -->
+                                <div id="ai-pc-subquestions-container" class="space-y-4">
+                                    <!-- Sub-questions will be rendered here by JavaScript -->
+                                </div>
 
-                        <div style="display: flex; gap: 15px; margin-top: 20px;">
-                            <button class="success-btn" style="flex: 1;" id="accept-ai-pc-btn">Accept & Add All to Bank</button>
-                            <button class="admin-btn" style="flex: 1;" id="regenerate-ai-pc-btn">Generate New Set</button>
+                                <div class="flex gap-3 mt-6">
+                                    <button class="btn btn-success btn-sm flex-1 gap-2" id="accept-ai-pc-btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                        </svg>
+                                        Accept & Add All
+                                    </button>
+                                    <button class="btn btn-warning btn-sm flex-1 gap-2" id="regenerate-ai-pc-btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Generate New Set
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
