@@ -8103,7 +8103,7 @@ function loadQuestion() {
                 const isSelected = userAnswers[currentQuestionIndex] === idx;
                 return `
                     <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'selected border-primary' : 'border-base-300'}" data-index="${idx}">
-                        <input type="radio" name="answer" class="radio radio-primary option-radio" ${isSelected ? 'checked' : ''}>
+                        <input type="radio" name="answer" class="radio radio-primary option-radio" style="pointer-events: none;" ${isSelected ? 'checked' : ''}>
                         <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
                         <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>
                     </div>
