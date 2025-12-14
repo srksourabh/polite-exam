@@ -730,8 +730,10 @@ function resumeExam(savedState, remainingSeconds) {
     // Start timer
     startExamTimer();
 
-    // Load current question
-    loadQuestion();
+    // Load current question (use window.loadQuestion as it's defined inside DOMContentLoaded)
+    if (typeof window.loadQuestion === 'function') {
+        window.loadQuestion();
+    }
 
     if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
         window.PoliteCCAPI.showNotification('✅ Exam resumed successfully!', 'success');
@@ -8179,6 +8181,9 @@ function loadQuestion() {
         }
     }
 }
+
+// Make loadQuestion globally accessible (needed by resumeExam which is outside DOMContentLoaded)
+window.loadQuestion = loadQuestion;
 
     // Initialize Flatpickr for expiry date
     const tomorrow = new Date();
