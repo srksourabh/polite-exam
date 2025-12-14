@@ -102,6 +102,14 @@
         .timer-warning { color: #F59E0B; }
         .timer-danger { color: #EF4444; animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* Radio button click passthrough - clicks go to parent .option div */
+        .option-radio,
+        .option .radio,
+        .option input[type="radio"],
+        .child-option input[type="radio"] {
+            pointer-events: none !important;
+        }
     </style>
 
     <!-- Flatpickr CSS -->
@@ -1913,7 +1921,7 @@
     </script>
 
     <!-- Main Application Script -->
-    <script src="app.js?v=3.0.3"></script>
+    <script src="app.js?v=3.0.4"></script>
 </body>
 </html>
 
