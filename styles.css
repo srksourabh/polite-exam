@@ -241,13 +241,17 @@ button:disabled {
     font-weight: bold;
     flex-shrink: 0;
 }
-.option-radio {
+.option-radio,
+.option .radio,
+.option input[type="radio"],
+.child-option input[type="radio"] {
     width: 20px;
     height: 20px;
     margin-right: 12px;
     cursor: pointer;
     accent-color: var(--secondary);
     flex-shrink: 0;
+    pointer-events: none !important; /* Clicks pass through to parent .option div */
 }
 .option.selected .option-radio {
     accent-color: var(--secondary);

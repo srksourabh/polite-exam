@@ -8116,12 +8116,8 @@ function loadQuestion() {
                 radio.checked = userAnswers[currentQuestionIndex] === idx;
             });
 
-            // Add click handler to the new container
+            // Add click handler to the new container (radio has pointer-events: none so clicks pass through)
             newOptionsContainer.addEventListener('click', function(e) {
-                // Prevent radio default behavior
-                if (e.target.classList.contains('option-radio')) {
-                    e.preventDefault();
-                }
                 const option = e.target.closest('.option');
                 if (option) {
                     const optionIndex = parseInt(option.getAttribute('data-index'));
