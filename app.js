@@ -7883,7 +7883,7 @@ function loadQuestion() {
                                     const isSelected = childAnswer === idx;
                                     return `
                                         <div class="option child-option flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-100 ${isSelected ? 'border-primary bg-primary/10' : 'border-base-300'}" data-index="${idx}" data-child-index="${childIndex}">
-                                            <input type="radio" name="child-answer-${childIndex}" class="radio radio-primary option-radio child-radio" ${isSelected ? 'checked' : ''}>
+                                            <input type="radio" name="child-answer-${childIndex}" class="radio radio-primary option-radio child-radio" style="pointer-events: none;" ${isSelected ? 'checked' : ''}>
                                             <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
                                             <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>
                                         </div>
@@ -7986,22 +7986,22 @@ function loadQuestion() {
                     <div class="rich-content" style="font-size: 1rem; line-height: 1.6; margin-bottom: 12px; color: #333;">${childQuestionContent}</div>
                     <div class="options child-options" data-child-index="${childIndex}">
                         <div class="option child-option ${childAnswer === 0 ? 'selected' : ''}" data-index="0" data-child-index="${childIndex}">
-                            <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 0 ? 'checked' : ''}>
+                            <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" style="pointer-events: none;" ${childAnswer === 0 ? 'checked' : ''}>
                             <span class="option-letter">A</span>
                             <span class="rich-content">${optAContent}</span>
                         </div>
                         <div class="option child-option ${childAnswer === 1 ? 'selected' : ''}" data-index="1" data-child-index="${childIndex}">
-                            <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 1 ? 'checked' : ''}>
+                            <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" style="pointer-events: none;" ${childAnswer === 1 ? 'checked' : ''}>
                             <span class="option-letter">B</span>
                             <span class="rich-content">${optBContent}</span>
                         </div>
                         <div class="option child-option ${childAnswer === 2 ? 'selected' : ''}" data-index="2" data-child-index="${childIndex}">
-                            <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 2 ? 'checked' : ''}>
+                            <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" style="pointer-events: none;" ${childAnswer === 2 ? 'checked' : ''}>
                             <span class="option-letter">C</span>
                             <span class="rich-content">${optCContent}</span>
                         </div>
                         <div class="option child-option ${childAnswer === 3 ? 'selected' : ''}" data-index="3" data-child-index="${childIndex}">
-                            <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" ${childAnswer === 3 ? 'checked' : ''}>
+                            <input type="radio" name="child-answer-${childIndex}" class="option-radio child-radio" style="pointer-events: none;" ${childAnswer === 3 ? 'checked' : ''}>
                             <span class="option-letter">D</span>
                             <span class="rich-content">${optDContent}</span>
                         </div>
@@ -8103,7 +8103,7 @@ function loadQuestion() {
                 const isSelected = userAnswers[currentQuestionIndex] === idx;
                 return `
                     <div class="option flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-base-200 ${isSelected ? 'selected border-primary' : 'border-base-300'}" data-index="${idx}">
-                        <input type="radio" name="answer" class="radio radio-primary option-radio" ${isSelected ? 'checked' : ''}>
+                        <input type="radio" name="answer" class="radio radio-primary option-radio" style="pointer-events: none;" ${isSelected ? 'checked' : ''}>
                         <span class="font-bold text-primary option-letter">${optionLetters[idx]}</span>
                         <span class="flex-1 rich-content">${escapeHtmlForRichContent(opt)}</span>
                     </div>
