@@ -27,6 +27,7 @@ Track all fixes applied to the Polite Exam system.
 | F300 | root | - | Staging files: push_app.txt, push_index.txt (cleanup) | pending | None | git restore |
 | F301 | root | - | Orphan file: 'nul' (cleanup) | pending | None | None |
 | F302 | api/index.js | 1263-1287 | Email verification stubs (not functional) | pending | SMTP configuration | Restore from backup |
+| F102 | api/index.js | 970-977 | Candidate signup fails - 'Verified'/'Created At' fields don't exist | completed | None | Restore from backup |
 
 ## Rollback Commands
 
@@ -138,4 +139,20 @@ newOptionsContainer.addEventListener('click', function(e) {
 
 ---
 
-*Last Updated: 2026-01-07 (F100, F101 fixes applied)*
+### F102 - Candidate Signup Field Error Fix (2026-01-07)
+**File:** api/index.js
+**Lines:** 970-977
+**Priority:** P1 High (Critical bug blocking new user registration)
+
+**Problem:** Candidate signup was failing with a 500 error because the API was trying to write fields that don't exist in the Airtable Candidates table:
+- `'Verified': true`
+- `'Created At': new Date().toISOString()`
+
+**Fix:** Removed the non-existent fields from the signup create call. Only fields that exist in Airtable are now used:
+- `Name`, `Email`, `Mobile`, `Password`
+
+**Note:** Email verification is NOT implemented. All candidates are auto-verified on signup. F302 tracks the email verification stub.
+
+---
+
+*Last Updated: 2026-01-07 (F100, F101, F102 fixes applied)*
