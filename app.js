@@ -13,7 +13,7 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 
 // App Version for cache invalidation on new deployments
 // Update this version when deploying significant changes to clear old sessions
-const APP_VERSION = '3.1.1';
+const APP_VERSION = '3.2.0';
 const APP_VERSION_KEY = 'polite_app_version';
 
 // =====================================================
@@ -6987,15 +6987,24 @@ document.getElementById('start-exam-btn').addEventListener('click', async functi
 
 // Option selection - handle clicks on option div, radio button, or child elements
 // ONLY for standalone questions (NOT for child options in parent-child groups)
+// NOTE: This global handler should NOT fire for new UI options due to stopPropagation in container handler
 document.addEventListener('click', function(e) {
     // Find the parent option element
     const optionElement = e.target.closest('.option');
     if (optionElement && optionElement.closest('#exam-screen')) {
+        console.log('[DEBUG-GLOBAL] Global click handler fired for option');
         // Skip if this is a child option (handled separately in loadQuestion)
         if (optionElement.classList.contains('child-option')) {
+            console.log('[DEBUG-GLOBAL] Skipping child-option');
             return;
         }
+        // Skip if this is in the new options-container (should be handled by container handler)
+        if (optionElement.closest('#options-container')) {
+            console.log('[DEBUG-GLOBAL] Skipping - should be handled by container handler');
+            return; // Let the container handler deal with it
+        }
         const optionIndex = parseInt(optionElement.getAttribute('data-index'));
+        console.log('[DEBUG-GLOBAL] Calling selectOption for index:', optionIndex);
         selectOption(optionIndex);
     }
 });
