@@ -13,7 +13,7 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 
 // App Version for cache invalidation on new deployments
 // Update this version when deploying significant changes to clear old sessions
-const APP_VERSION = '3.2.1';
+const APP_VERSION = '3.3.0';
 const APP_VERSION_KEY = 'polite_app_version';
 
 // =====================================================
