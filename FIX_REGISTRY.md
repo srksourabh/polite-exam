@@ -26,7 +26,7 @@ Track all fixes applied to the Polite Exam system.
 | F203 | app.js | 1859 | Hardcoded API URL fallback should use api-integration.js | pending | api-integration.js | Restore from backup |
 | F300 | root | - | Staging files: push_app.txt, push_index.txt (cleanup) | pending | None | git restore |
 | F301 | root | - | Orphan file: 'nul' (cleanup) | pending | None | None |
-| F302 | api/index.js | 1401-1532 | Email verification with SendGrid | completed | SENDGRID_API_KEY env var | Restore from backup |
+| F302 | api/index.js | 1401-1532 | Email verification with Resend | completed | RESEND_API_KEY env var | Restore from backup |
 | F102 | api/index.js | 970-977 | Candidate signup fails - 'Verified'/'Created At' fields don't exist | completed | None | Restore from backup |
 
 ## Rollback Commands
@@ -155,28 +155,28 @@ newOptionsContainer.addEventListener('click', function(e) {
 
 ---
 
-### F302 - Email Verification with SendGrid (2026-01-07)
+### F302 - Email Verification with Resend (2026-01-07)
 **File:** api/index.js
 **Lines:** 1401-1532
 **Priority:** P3 Low (Feature enhancement)
 
 **Implementation:**
-- Installed `@sendgrid/mail` package
-- Added SendGrid configuration and email sending function
+- Installed `resend` package
+- Added Resend configuration and email sending function
 - Updated signup to send 6-digit verification code
 - Created `/api/auth/verify-email` endpoint
 - Updated `/api/auth/resend-verification` endpoint
-- Login now checks `Verified` field if SendGrid is configured
+- Login now checks `Verified` field if Resend is configured
 
 **Required Airtable Fields (Candidates table):**
 - `Verified` (Checkbox) - Whether email is verified
 - `Verification Code` (Single line text) - 6-digit code
 
 **Required Vercel Environment Variables:**
-- `SENDGRID_API_KEY` - SendGrid API key
-- `EMAIL_FROM` - Sender email address (optional, defaults to noreply@polite-exam.com)
+- `RESEND_API_KEY` - Resend API key
+- `EMAIL_FROM` - Sender email address (optional, defaults to onboarding@resend.dev)
 
-**Graceful Fallback:** If `SENDGRID_API_KEY` is not set, candidates are auto-verified.
+**Graceful Fallback:** If `RESEND_API_KEY` is not set, candidates are auto-verified.
 
 ---
 

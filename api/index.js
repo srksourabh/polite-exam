@@ -1,6 +1,6 @@
 const Airtable = require('airtable');
 const crypto = require('crypto');
-const sgMail = require('@sendgrid/mail');
+const { Resend } = require('resend');
 
 // =====================================================
 // AIRTABLE CONFIGURATION
@@ -37,18 +37,19 @@ function generateTempPassword() {
 }
 
 // =====================================================
-// SENDGRID EMAIL CONFIGURATION
+// RESEND EMAIL CONFIGURATION
 // =====================================================
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@polite-exam.com';
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const EMAIL_FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 const APP_URL = process.env.APP_URL || 'https://polite-exam.vercel.app';
 
-// Initialize SendGrid if API key is available
-if (SENDGRID_API_KEY) {
-    sgMail.setApiKey(SENDGRID_API_KEY);
-    console.log('✅ SendGrid initialized');
+// Initialize Resend if API key is available
+let resend = null;
+if (RESEND_API_KEY) {
+    resend = new Resend(RESEND_API_KEY);
+    console.log('✅ Resend initialized');
 } else {
-    console.warn('⚠️ SENDGRID_API_KEY not set - email verification disabled');
+    console.warn('⚠️ RESEND_API_KEY not set - email verification disabled');
 }
 
 // Generate a verification token (6-digit code for simplicity)
@@ -58,40 +59,41 @@ function generateVerificationCode() {
 
 // Send verification email
 async function sendVerificationEmail(email, name, verificationCode) {
-    if (!SENDGRID_API_KEY) {
-        console.warn('SendGrid not configured - skipping email');
+    if (!resend) {
+        console.warn('Resend not configured - skipping email');
         return false;
     }
 
-    const msg = {
-        to: email,
-        from: EMAIL_FROM,
-        subject: 'Verify your Polite Exam account',
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #4F46E5;">Welcome to Polite Exam!</h2>
-                <p>Hi ${name},</p>
-                <p>Thank you for signing up. Please verify your email address using the code below:</p>
-                <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
-                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #4F46E5;">${verificationCode}</span>
-                </div>
-                <p>This code will expire in 24 hours.</p>
-                <p>If you didn't create an account, please ignore this email.</p>
-                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-                <p style="color: #6b7280; font-size: 12px;">Polite Exam - Online Examination Platform</p>
-            </div>
-        `
-    };
-
     try {
-        await sgMail.send(msg);
-        console.log('✅ Verification email sent to:', email);
+        const { data, error } = await resend.emails.send({
+            from: EMAIL_FROM,
+            to: email,
+            subject: 'Verify your Polite Exam account',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #4F46E5;">Welcome to Polite Exam!</h2>
+                    <p>Hi ${name},</p>
+                    <p>Thank you for signing up. Please verify your email address using the code below:</p>
+                    <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                        <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #4F46E5;">${verificationCode}</span>
+                    </div>
+                    <p>This code will expire in 24 hours.</p>
+                    <p>If you didn't create an account, please ignore this email.</p>
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                    <p style="color: #6b7280; font-size: 12px;">Polite Exam - Online Examination Platform</p>
+                </div>
+            `
+        });
+
+        if (error) {
+            console.error('❌ Resend error:', error);
+            return false;
+        }
+
+        console.log('✅ Verification email sent to:', email, 'ID:', data?.id);
         return true;
     } catch (error) {
         console.error('❌ Error sending email:', error.message);
-        if (error.response) {
-            console.error('SendGrid error details:', error.response.body);
-        }
         return false;
     }
 }
@@ -1029,7 +1031,7 @@ module.exports = async (req, res) => {
 
                 // Generate verification code
                 const verificationCode = generateVerificationCode();
-                const requiresVerification = !!SENDGRID_API_KEY;
+                const requiresVerification = !!RESEND_API_KEY;
 
                 // Create new student record
                 // Include verification fields if email verification is enabled
@@ -1129,7 +1131,7 @@ module.exports = async (req, res) => {
                 }
 
                 // Check email verification status (only if SendGrid is configured)
-                if (SENDGRID_API_KEY && student.fields.Verified === false) {
+                if (RESEND_API_KEY && student.fields.Verified === false) {
                     return res.status(403).json({
                         success: false,
                         error: 'Please verify your email before logging in',
@@ -1409,7 +1411,7 @@ module.exports = async (req, res) => {
                 });
             }
 
-            if (!SENDGRID_API_KEY) {
+            if (!RESEND_API_KEY) {
                 return res.status(200).json({
                     success: true,
                     message: 'Email verification is not configured. You can login directly.'
