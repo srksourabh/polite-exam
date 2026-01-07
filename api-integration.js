@@ -18,10 +18,11 @@ const API_URL = (() => {
         return '/api';
     }
 
-    // Running on localhost WITH a port (local development server)
-    if ((hostname === 'localhost' || hostname === '127.0.0.1') && port && port !== '') {
-        console.log('🔧 Local dev server - using localhost:3000/api');
-        return 'http://localhost:3000/api';
+    // Local development - always use Vercel production API
+    // (Static servers like http-server don't have API routes)
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        console.log('🔧 Local dev - using Vercel production API');
+        return VERCEL_API_URL;
     }
 
     // Everything else (Capacitor app, file://, etc.) - use Vercel API
