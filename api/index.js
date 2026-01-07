@@ -57,16 +57,27 @@ function generateVerificationCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// Store last email error for debugging
+let lastEmailError = null;
+
 // Send verification email
 async function sendVerificationEmail(email, name, verificationCode) {
     if (!resend) {
         console.warn('Resend not configured - skipping email');
+        lastEmailError = 'Resend not configured';
         return false;
     }
 
     try {
+        // Use Resend's test sender for free tier (or verified domain sender)
+        const fromAddress = EMAIL_FROM.includes('@')
+            ? `Polite Exam <${EMAIL_FROM}>`
+            : 'Polite Exam <onboarding@resend.dev>';
+
+        console.log('📧 Sending email from:', fromAddress, 'to:', email);
+
         const { data, error } = await resend.emails.send({
-            from: EMAIL_FROM,
+            from: fromAddress,
             to: email,
             subject: 'Verify your Polite Exam account',
             html: `
@@ -86,16 +97,24 @@ async function sendVerificationEmail(email, name, verificationCode) {
         });
 
         if (error) {
-            console.error('❌ Resend error:', error);
+            console.error('❌ Resend error:', JSON.stringify(error));
+            lastEmailError = error.message || JSON.stringify(error);
             return false;
         }
 
         console.log('✅ Verification email sent to:', email, 'ID:', data?.id);
+        lastEmailError = null;
         return true;
     } catch (error) {
         console.error('❌ Error sending email:', error.message);
+        lastEmailError = error.message;
         return false;
     }
+}
+
+// Get last email error (for debugging)
+function getLastEmailError() {
+    return lastEmailError;
 }
 
 // =====================================================
@@ -1479,6 +1498,7 @@ module.exports = async (req, res) => {
                     return res.status(500).json({
                         success: false,
                         error: 'Failed to send email via Resend',
+                        details: getLastEmailError(),
                         hint: 'Check Resend API key and sender email configuration'
                     });
                 }
