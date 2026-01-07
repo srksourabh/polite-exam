@@ -566,7 +566,7 @@ module.exports = async (req, res) => {
                 examData.Questions = examData.questionIds;
             }
 
-            const validFields = ['Exam Code', 'Title', 'Duration (mins)', 'Expiry (IST)', 'Questions', 'Created At'];
+            const validFields = ['Exam Code', 'Title', 'Duration (mins)', 'Expiry (IST)', 'Questions'];
             const cleanedData = {};
 
             for (const key of Object.keys(examData)) {
@@ -574,9 +574,6 @@ module.exports = async (req, res) => {
                     cleanedData[key] = examData[key];
                 }
             }
-
-            // Auto-set Created At timestamp for new exams
-            cleanedData['Created At'] = new Date().toISOString();
 
             const record = await base(EXAMS_TABLE).create(cleanedData);
             return res.status(201).json({
