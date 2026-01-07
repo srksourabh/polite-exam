@@ -967,13 +967,13 @@ module.exports = async (req, res) => {
                 const hashedPassword = hashPassword(password);
 
                 // Create new student record
+                // Note: Only use fields that exist in the Airtable Candidates table
                 const record = await base(STUDENTS_TABLE).create({
                     'Name': name,
                     'Email': email,
                     'Mobile': mobile || '',
-                    'Password': hashedPassword,
-                    'Verified': true, // Auto-verify for simplicity (can add email verification later)
-                    'Created At': new Date().toISOString()
+                    'Password': hashedPassword
+                    // 'Verified' and 'Created At' removed - fields may not exist in Airtable
                 });
 
                 return res.status(201).json({
@@ -1030,14 +1030,8 @@ module.exports = async (req, res) => {
                     });
                 }
 
-                // Check if account is verified
-                if (student.fields.Verified === false) {
-                    return res.status(403).json({
-                        success: false,
-                        error: 'Please verify your email before logging in',
-                        requiresVerification: true
-                    });
-                }
+                // Note: Email verification not implemented - all accounts are auto-verified
+                // The 'Verified' field is not stored in Airtable
 
                 return res.status(200).json({
                     success: true,
