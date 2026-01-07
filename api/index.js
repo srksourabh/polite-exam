@@ -1552,6 +1552,62 @@ module.exports = async (req, res) => {
             }
         }
 
+        // DELETE /api/admin/cleanup-unverified - Delete unverified accounts (admin only)
+        if (url === '/api/admin/cleanup-unverified' && method === 'DELETE') {
+            const { adminPassword } = req.body;
+
+            // Simple admin password check
+            if (adminPassword !== 'politeadmin') {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Unauthorized'
+                });
+            }
+
+            try {
+                // Find all unverified accounts
+                const records = await base(STUDENTS_TABLE).select({
+                    filterByFormula: `{Verified} = FALSE()`
+                }).all();
+
+                if (records.length === 0) {
+                    return res.status(200).json({
+                        success: true,
+                        message: 'No unverified accounts found',
+                        deleted: 0
+                    });
+                }
+
+                // Delete each unverified account
+                const recordIds = records.map(r => r.id);
+
+                // Airtable allows max 10 records per delete call
+                const chunks = [];
+                for (let i = 0; i < recordIds.length; i += 10) {
+                    chunks.push(recordIds.slice(i, i + 10));
+                }
+
+                for (const chunk of chunks) {
+                    await base(STUDENTS_TABLE).destroy(chunk);
+                }
+
+                console.log(`✅ Deleted ${records.length} unverified accounts`);
+
+                return res.status(200).json({
+                    success: true,
+                    message: `Deleted ${records.length} unverified account(s)`,
+                    deleted: records.length,
+                    emails: records.map(r => r.fields.Email)
+                });
+            } catch (error) {
+                console.error('Cleanup error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: error.message || 'Failed to cleanup unverified accounts'
+                });
+            }
+        }
+
         // =====================================================
         // GEMINI AI ENDPOINTS
         // =====================================================
