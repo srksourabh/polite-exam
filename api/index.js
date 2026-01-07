@@ -1,5 +1,6 @@
 const Airtable = require('airtable');
 const crypto = require('crypto');
+const sgMail = require('@sendgrid/mail');
 
 // =====================================================
 // AIRTABLE CONFIGURATION
@@ -33,6 +34,66 @@ function generateToken() {
 function generateTempPassword() {
     // Generate a random 8-character alphanumeric password
     return crypto.randomBytes(4).toString('hex').toUpperCase();
+}
+
+// =====================================================
+// SENDGRID EMAIL CONFIGURATION
+// =====================================================
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@polite-exam.com';
+const APP_URL = process.env.APP_URL || 'https://polite-exam.vercel.app';
+
+// Initialize SendGrid if API key is available
+if (SENDGRID_API_KEY) {
+    sgMail.setApiKey(SENDGRID_API_KEY);
+    console.log('✅ SendGrid initialized');
+} else {
+    console.warn('⚠️ SENDGRID_API_KEY not set - email verification disabled');
+}
+
+// Generate a verification token (6-digit code for simplicity)
+function generateVerificationCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Send verification email
+async function sendVerificationEmail(email, name, verificationCode) {
+    if (!SENDGRID_API_KEY) {
+        console.warn('SendGrid not configured - skipping email');
+        return false;
+    }
+
+    const msg = {
+        to: email,
+        from: EMAIL_FROM,
+        subject: 'Verify your Polite Exam account',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #4F46E5;">Welcome to Polite Exam!</h2>
+                <p>Hi ${name},</p>
+                <p>Thank you for signing up. Please verify your email address using the code below:</p>
+                <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #4F46E5;">${verificationCode}</span>
+                </div>
+                <p>This code will expire in 24 hours.</p>
+                <p>If you didn't create an account, please ignore this email.</p>
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                <p style="color: #6b7280; font-size: 12px;">Polite Exam - Online Examination Platform</p>
+            </div>
+        `
+    };
+
+    try {
+        await sgMail.send(msg);
+        console.log('✅ Verification email sent to:', email);
+        return true;
+    } catch (error) {
+        console.error('❌ Error sending email:', error.message);
+        if (error.response) {
+            console.error('SendGrid error details:', error.response.body);
+        }
+        return false;
+    }
 }
 
 // =====================================================
@@ -966,15 +1027,48 @@ module.exports = async (req, res) => {
                 // Hash the password
                 const hashedPassword = hashPassword(password);
 
+                // Generate verification code
+                const verificationCode = generateVerificationCode();
+                const requiresVerification = !!SENDGRID_API_KEY;
+
                 // Create new student record
-                // Note: Only use fields that exist in the Airtable Candidates table
-                const record = await base(STUDENTS_TABLE).create({
+                // Include verification fields if email verification is enabled
+                const createFields = {
                     'Name': name,
                     'Email': email,
                     'Mobile': mobile || '',
                     'Password': hashedPassword
-                    // 'Verified' and 'Created At' removed - fields may not exist in Airtable
-                });
+                };
+
+                // Add verification fields if SendGrid is configured
+                if (requiresVerification) {
+                    createFields['Verified'] = false;
+                    createFields['Verification Code'] = verificationCode;
+                }
+
+                let record;
+                try {
+                    record = await base(STUDENTS_TABLE).create(createFields);
+                } catch (createError) {
+                    // If verification fields don't exist, try without them
+                    if (createError.message && createError.message.includes('Unknown field')) {
+                        console.warn('Verification fields not in Airtable, creating without them');
+                        record = await base(STUDENTS_TABLE).create({
+                            'Name': name,
+                            'Email': email,
+                            'Mobile': mobile || '',
+                            'Password': hashedPassword
+                        });
+                    } else {
+                        throw createError;
+                    }
+                }
+
+                // Send verification email if configured
+                let emailSent = false;
+                if (requiresVerification) {
+                    emailSent = await sendVerificationEmail(email, name, verificationCode);
+                }
 
                 return res.status(201).json({
                     success: true,
@@ -982,9 +1076,13 @@ module.exports = async (req, res) => {
                         id: record.id,
                         name: name,
                         email: email,
-                        mobile: mobile || ''
+                        mobile: mobile || '',
+                        requiresVerification: requiresVerification && emailSent,
+                        emailSent: emailSent
                     },
-                    message: 'Account created successfully'
+                    message: requiresVerification && emailSent
+                        ? 'Account created! Please check your email for verification code.'
+                        : 'Account created successfully'
                 });
             } catch (error) {
                 console.error('Signup error:', error);
@@ -1030,8 +1128,15 @@ module.exports = async (req, res) => {
                     });
                 }
 
-                // Note: Email verification not implemented - all accounts are auto-verified
-                // The 'Verified' field is not stored in Airtable
+                // Check email verification status (only if SendGrid is configured)
+                if (SENDGRID_API_KEY && student.fields.Verified === false) {
+                    return res.status(403).json({
+                        success: false,
+                        error: 'Please verify your email before logging in',
+                        requiresVerification: true,
+                        email: email
+                    });
+                }
 
                 return res.status(200).json({
                     success: true,
@@ -1293,7 +1398,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        // POST /api/auth/resend-verification - Resend verification email (stub)
+        // POST /api/auth/resend-verification - Resend verification email
         if (url === '/api/auth/resend-verification' && method === 'POST') {
             const { email } = req.body;
 
@@ -1304,20 +1409,126 @@ module.exports = async (req, res) => {
                 });
             }
 
-            // For now, just return success (email verification is auto-enabled)
-            return res.status(200).json({
-                success: true,
-                message: 'Verification email sent. Please check your inbox.'
-            });
+            if (!SENDGRID_API_KEY) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'Email verification is not configured. You can login directly.'
+                });
+            }
+
+            try {
+                // Find the user
+                const records = await base(STUDENTS_TABLE).select({
+                    filterByFormula: `{Email} = '${sanitizeForFormula(email)}'`
+                }).all();
+
+                if (records.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'No account found with this email'
+                    });
+                }
+
+                const student = records[0];
+
+                // Check if already verified
+                if (student.fields.Verified === true) {
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Email is already verified. You can login.'
+                    });
+                }
+
+                // Generate new verification code
+                const newCode = generateVerificationCode();
+
+                // Update the verification code in Airtable
+                await base(STUDENTS_TABLE).update(student.id, {
+                    'Verification Code': newCode
+                });
+
+                // Send verification email
+                const emailSent = await sendVerificationEmail(email, student.fields.Name, newCode);
+
+                if (emailSent) {
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Verification email sent. Please check your inbox.'
+                    });
+                } else {
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Failed to send verification email. Please try again.'
+                    });
+                }
+            } catch (error) {
+                console.error('Resend verification error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to resend verification email'
+                });
+            }
         }
 
-        // GET /api/auth/verify/:token - Verify email (stub)
-        if (url.startsWith('/api/auth/verify/') && method === 'GET') {
-            // For now, just return success (email verification is auto-enabled)
-            return res.status(200).json({
-                success: true,
-                message: 'Email verified successfully'
-            });
+        // POST /api/auth/verify-email - Verify email with code
+        if (url === '/api/auth/verify-email' && method === 'POST') {
+            const { email, code } = req.body;
+
+            if (!email || !code) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Email and verification code are required'
+                });
+            }
+
+            try {
+                // Find the user
+                const records = await base(STUDENTS_TABLE).select({
+                    filterByFormula: `{Email} = '${sanitizeForFormula(email)}'`
+                }).all();
+
+                if (records.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'No account found with this email'
+                    });
+                }
+
+                const student = records[0];
+
+                // Check if already verified
+                if (student.fields.Verified === true) {
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Email is already verified. You can login.'
+                    });
+                }
+
+                // Verify the code
+                if (student.fields['Verification Code'] !== code) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Invalid verification code'
+                    });
+                }
+
+                // Mark as verified
+                await base(STUDENTS_TABLE).update(student.id, {
+                    'Verified': true,
+                    'Verification Code': '' // Clear the code
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Email verified successfully! You can now login.'
+                });
+            } catch (error) {
+                console.error('Verify email error:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to verify email'
+                });
+            }
         }
 
         // =====================================================
