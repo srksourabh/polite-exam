@@ -13,7 +13,7 @@ let currentScreen = 'hero-landing'; // Track current screen for navigation
 
 // App Version for cache invalidation on new deployments
 // Update this version when deploying significant changes to clear old sessions
-const APP_VERSION = '3.2.0';
+const APP_VERSION = '3.2.1';
 const APP_VERSION_KEY = 'polite_app_version';
 
 // =====================================================
@@ -8176,10 +8176,24 @@ function loadQuestion() {
                 `;
             }).join('');
 
-            // Sync radio button checked state after rendering
+            // Sync radio button checked state after rendering with DaisyUI visual styles
             const radioInputs = newOptionsContainer.querySelectorAll('.option-radio');
+            const optionDivs = newOptionsContainer.querySelectorAll('.option');
             radioInputs.forEach((radio, idx) => {
-                radio.checked = userAnswers[currentQuestionIndex] === idx;
+                const isChecked = userAnswers[currentQuestionIndex] === idx;
+                radio.checked = isChecked;
+                const optionDiv = optionDivs[idx];
+                if (isChecked && optionDiv) {
+                    // Apply DaisyUI visual styles for checked state
+                    radio.setAttribute('checked', 'checked');
+                    radio.style.setProperty('--chkbg', '#4F46E5');
+                    radio.style.setProperty('background-color', '#4F46E5', 'important');
+                    radio.style.setProperty('border-color', '#4F46E5', 'important');
+                    radio.style.setProperty('box-shadow', 'inset 0 0 0 4px #fff', 'important');
+                    // Also style the option div
+                    optionDiv.style.borderColor = '#4F46E5';
+                    optionDiv.style.backgroundColor = 'rgba(79, 70, 229, 0.1)';
+                }
             });
 
             // Add click handler to the new container (radio has pointer-events: none so clicks pass through)
