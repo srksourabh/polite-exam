@@ -1061,11 +1061,9 @@ module.exports = async (req, res) => {
                     'Password': hashedPassword
                 };
 
-                // Add verification fields if SendGrid is configured
-                if (requiresVerification) {
-                    createFields['Verified'] = false;
-                    createFields['Verification Code'] = verificationCode;
-                }
+                // Auto-verify all users (email verification disabled)
+                // When domain is available, set Verified = false and send email
+                createFields['Verified'] = true;
 
                 let record;
                 try {
@@ -1085,12 +1083,7 @@ module.exports = async (req, res) => {
                     }
                 }
 
-                // Send verification email if configured
-                let emailSent = false;
-                if (requiresVerification) {
-                    emailSent = await sendVerificationEmail(email, name, verificationCode);
-                }
-
+                // Email verification disabled - users are auto-verified
                 return res.status(201).json({
                     success: true,
                     data: {
@@ -1098,12 +1091,9 @@ module.exports = async (req, res) => {
                         name: name,
                         email: email,
                         mobile: mobile || '',
-                        requiresVerification: requiresVerification && emailSent,
-                        emailSent: emailSent
+                        requiresVerification: false
                     },
-                    message: requiresVerification && emailSent
-                        ? 'Account created! Please check your email for verification code.'
-                        : 'Account created successfully'
+                    message: 'Account created successfully! You can now login.'
                 });
             } catch (error) {
                 console.error('Signup error:', error);
@@ -1149,15 +1139,16 @@ module.exports = async (req, res) => {
                     });
                 }
 
-                // Check email verification status (only if SendGrid is configured)
-                if (RESEND_API_KEY && student.fields.Verified === false) {
-                    return res.status(403).json({
-                        success: false,
-                        error: 'Please verify your email before logging in',
-                        requiresVerification: true,
-                        email: email
-                    });
-                }
+                // Email verification disabled - allow all users to login
+                // Uncomment below when email verification is re-enabled with a verified domain
+                // if (RESEND_API_KEY && student.fields.Verified === false) {
+                //     return res.status(403).json({
+                //         success: false,
+                //         error: 'Please verify your email before logging in',
+                //         requiresVerification: true,
+                //         email: email
+                //     });
+                // }
 
                 return res.status(200).json({
                     success: true,
