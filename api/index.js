@@ -1445,9 +1445,27 @@ module.exports = async (req, res) => {
                 const newCode = generateVerificationCode();
 
                 // Update the verification code in Airtable
-                await base(STUDENTS_TABLE).update(student.id, {
-                    'Verification Code': newCode
-                });
+                try {
+                    await base(STUDENTS_TABLE).update(student.id, {
+                        'Verification Code': newCode
+                    });
+                } catch (airtableError) {
+                    console.error('Airtable update error:', airtableError.message);
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Database error: ' + (airtableError.message || 'Failed to update verification code'),
+                        hint: 'Ensure "Verification Code" field exists in Airtable Candidates table'
+                    });
+                }
+
+                // Check if Resend is configured
+                if (!resend) {
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Email service not configured',
+                        hint: 'RESEND_API_KEY environment variable not set in Vercel'
+                    });
+                }
 
                 // Send verification email
                 const emailSent = await sendVerificationEmail(email, student.fields.Name, newCode);
@@ -1460,14 +1478,15 @@ module.exports = async (req, res) => {
                 } else {
                     return res.status(500).json({
                         success: false,
-                        error: 'Failed to send verification email. Please try again.'
+                        error: 'Failed to send email via Resend',
+                        hint: 'Check Resend API key and sender email configuration'
                     });
                 }
             } catch (error) {
                 console.error('Resend verification error:', error);
                 return res.status(500).json({
                     success: false,
-                    error: 'Failed to resend verification email'
+                    error: error.message || 'Failed to resend verification email'
                 });
             }
         }
