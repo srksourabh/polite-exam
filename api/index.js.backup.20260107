@@ -566,17 +566,14 @@ module.exports = async (req, res) => {
                 examData.Questions = examData.questionIds;
             }
 
-            const validFields = ['Exam Code', 'Title', 'Duration (mins)', 'Expiry (IST)', 'Questions', 'Created At'];
+            const validFields = ['Exam Code', 'Title', 'Duration (mins)', 'Expiry (IST)', 'Questions'];
             const cleanedData = {};
-
+            
             for (const key of Object.keys(examData)) {
                 if (validFields.includes(key)) {
                     cleanedData[key] = examData[key];
                 }
             }
-
-            // Auto-set Created At timestamp for new exams
-            cleanedData['Created At'] = new Date().toISOString();
 
             const record = await base(EXAMS_TABLE).create(cleanedData);
             return res.status(201).json({
@@ -782,71 +779,28 @@ module.exports = async (req, res) => {
         // AUTHENTICATION ENDPOINTS
         // =====================================================
 
-        // POST /api/auth/admin/login - Admin login (database-backed)
-        // Fix F202: Admin credentials stored in database instead of hardcoded
+        // POST /api/auth/admin/login - Admin login
         if (url === '/api/auth/admin/login' && method === 'POST') {
             const { username, password } = req.body;
 
-            if (!username || !password) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Username and password are required'
-                });
-            }
+            // Admin authentication - use environment variables or hardcoded default
+            const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+            const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'politeadmin';
 
-            try {
-                // Check for admin in Candidates table with Role='admin'
-                const adminRecords = await base(STUDENTS_TABLE).select({
-                    filterByFormula: `AND({Email} = '${sanitizeForFormula(username)}', {Role} = 'admin')`
-                }).all();
-
-                let admin = adminRecords[0];
-
-                // If no admin exists, create default admin account on first login
-                if (!admin) {
-                    // Check if this is the default admin trying to login
-                    if (username === 'admin' && password === 'politeadmin') {
-                        // Create default admin in database
-                        admin = await base(STUDENTS_TABLE).create({
-                            'Email': 'admin',
-                            'Name': 'Administrator',
-                            'Password': hashPassword('politeadmin'),
-                            'Role': 'admin',
-                            'Verified': true,
-                            'Created At': new Date().toISOString()
-                        });
-                        console.log('✅ Default admin account created in database');
-                    } else {
-                        return res.status(401).json({
-                            success: false,
-                            error: 'Invalid credentials'
-                        });
-                    }
-                } else {
-                    // Verify password against database
-                    if (!verifyPassword(password, admin.fields.Password)) {
-                        return res.status(401).json({
-                            success: false,
-                            error: 'Invalid credentials'
-                        });
-                    }
-                }
-
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
                 return res.status(200).json({
                     success: true,
                     data: {
                         role: 'admin',
-                        username: admin.fields.Email || username,
-                        name: admin.fields.Name || 'Administrator',
+                        username: username,
                         token: 'admin_' + Date.now()
                     },
                     message: 'Login successful'
                 });
-            } catch (error) {
-                console.error('Admin login error:', error);
-                return res.status(500).json({
+            } else {
+                return res.status(401).json({
                     success: false,
-                    error: 'Login failed. Please try again.'
+                    error: 'Invalid credentials'
                 });
             }
         }

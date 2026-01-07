@@ -4445,7 +4445,11 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
         });
 
         // Random selection button - ADD to existing selections (counts TOTAL questions including sub-questions)
-        document.getElementById('random-select-btn').addEventListener('click', function() {
+        // Fix F101: Prevent duplicate listener attachment (was causing 5 questions → 15)
+        const randomSelectBtn = document.getElementById('random-select-btn');
+        if (!randomSelectBtn.dataset.listenerAttached) {
+            randomSelectBtn.dataset.listenerAttached = 'true';
+            randomSelectBtn.addEventListener('click', function() {
             const randomCount = parseInt(document.getElementById('random-count').value);
 
             if (!randomCount || randomCount < 1) {
@@ -4502,10 +4506,15 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                 window.PoliteCCAPI.showNotification(`🎲 Added ${currentTotal} questions to selection (${selectedCheckboxes.length} items)!`, 'success');
             }
-        });
+            });
+        } // End Fix F101 guard
 
         // Reset selection button - clear all selections
-        document.getElementById('reset-selection-btn').addEventListener('click', function() {
+        // Fix F101: Prevent duplicate listener attachment
+        const resetSelectionBtn = document.getElementById('reset-selection-btn');
+        if (!resetSelectionBtn.dataset.listenerAttached) {
+            resetSelectionBtn.dataset.listenerAttached = 'true';
+            resetSelectionBtn.addEventListener('click', function() {
             const allCheckboxes = document.querySelectorAll('.question-checkbox');
             allCheckboxes.forEach(cb => {
                 cb.checked = false;
@@ -4518,7 +4527,8 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                 window.PoliteCCAPI.showNotification('🔄 All selections cleared!', 'info');
             }
-        });
+            });
+        } // End Fix F101 guard
 
         // Cart Modal Functions
         const cartModal = document.getElementById('cart-modal');
@@ -4680,46 +4690,69 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
             cartSelectedInfo.textContent = `${checkedCount} questions selected`;
         }
 
+        // Fix F101: Wrap all cart button listeners in guards to prevent duplicate attachment
         // Show cart modal
-        document.getElementById('show-cart-btn').addEventListener('click', function() {
-            renderCartStats();
-            renderCartQuestions();
-            cartModal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        });
+        const showCartBtn = document.getElementById('show-cart-btn');
+        if (!showCartBtn.dataset.listenerAttached) {
+            showCartBtn.dataset.listenerAttached = 'true';
+            showCartBtn.addEventListener('click', function() {
+                renderCartStats();
+                renderCartQuestions();
+                cartModal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            });
+        }
 
         // Close cart modal
-        document.getElementById('close-cart-modal-btn').addEventListener('click', function() {
-            cartModal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        });
-
-        // Close modal when clicking outside
-        cartModal.addEventListener('click', function(e) {
-            if (e.target === cartModal) {
+        const closeCartBtn = document.getElementById('close-cart-modal-btn');
+        if (!closeCartBtn.dataset.listenerAttached) {
+            closeCartBtn.dataset.listenerAttached = 'true';
+            closeCartBtn.addEventListener('click', function() {
                 cartModal.style.display = 'none';
                 document.body.style.overflow = 'auto';
-            }
-        });
+            });
+        }
+
+        // Close modal when clicking outside
+        if (!cartModal.dataset.listenerAttached) {
+            cartModal.dataset.listenerAttached = 'true';
+            cartModal.addEventListener('click', function(e) {
+                if (e.target === cartModal) {
+                    cartModal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }
+            });
+        }
 
         // Select all in cart
-        document.getElementById('cart-select-all-btn').addEventListener('click', function() {
-            document.querySelectorAll('.cart-item-checkbox').forEach(cb => {
-                cb.checked = true;
+        const cartSelectAllBtn = document.getElementById('cart-select-all-btn');
+        if (!cartSelectAllBtn.dataset.listenerAttached) {
+            cartSelectAllBtn.dataset.listenerAttached = 'true';
+            cartSelectAllBtn.addEventListener('click', function() {
+                document.querySelectorAll('.cart-item-checkbox').forEach(cb => {
+                    cb.checked = true;
+                });
+                updateCartSelectedInfo();
             });
-            updateCartSelectedInfo();
-        });
+        }
 
         // Deselect all in cart
-        document.getElementById('cart-deselect-all-btn').addEventListener('click', function() {
-            document.querySelectorAll('.cart-item-checkbox').forEach(cb => {
-                cb.checked = false;
+        const cartDeselectAllBtn = document.getElementById('cart-deselect-all-btn');
+        if (!cartDeselectAllBtn.dataset.listenerAttached) {
+            cartDeselectAllBtn.dataset.listenerAttached = 'true';
+            cartDeselectAllBtn.addEventListener('click', function() {
+                document.querySelectorAll('.cart-item-checkbox').forEach(cb => {
+                    cb.checked = false;
+                });
+                updateCartSelectedInfo();
             });
-            updateCartSelectedInfo();
-        });
+        }
 
         // Clear cart
-        document.getElementById('cart-clear-btn').addEventListener('click', function() {
+        const cartClearBtn = document.getElementById('cart-clear-btn');
+        if (!cartClearBtn.dataset.listenerAttached) {
+            cartClearBtn.dataset.listenerAttached = 'true';
+            cartClearBtn.addEventListener('click', function() {
             if (questionCart.size === 0) {
                 if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                     window.PoliteCCAPI.showNotification('Cart is already empty', 'info');
@@ -4739,10 +4772,14 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
                     window.PoliteCCAPI.showNotification('Cart cleared', 'success');
                 }
             }
-        });
+            });
+        }
 
         // Add selected cart items to exam
-        document.getElementById('add-cart-to-exam-btn').addEventListener('click', function() {
+        const addCartToExamBtn = document.getElementById('add-cart-to-exam-btn');
+        if (!addCartToExamBtn.dataset.listenerAttached) {
+            addCartToExamBtn.dataset.listenerAttached = 'true';
+            addCartToExamBtn.addEventListener('click', function() {
             const selectedKeys = [];
             document.querySelectorAll('.cart-item-checkbox:checked').forEach(cb => {
                 selectedKeys.push(cb.value);
@@ -4779,7 +4816,8 @@ document.getElementById('create-exam-btn').addEventListener('click', async funct
             if (window.PoliteCCAPI && window.PoliteCCAPI.showNotification) {
                 window.PoliteCCAPI.showNotification(`Added ${addedCount} questions to exam selection`, 'success');
             }
-        });
+            });
+        }
     }
 });
 
@@ -5045,12 +5083,14 @@ document.getElementById('view-results-btn').addEventListener('click', async func
             await Promise.all(resultsPromises);
         }
 
-        let examsHTML = '';
+        // Build table rows for list view
+        let tableRowsHTML = '';
         for (const exam of exams) {
             const examCode = exam['Exam Code'] || exam.examCode;
             const title = exam['Title'] || exam.title || 'Untitled';
             const expiryDate = exam['Expiry (IST)'] ? new Date(exam['Expiry (IST)']) : null;
-            const expiryStr = exam['Expiry (IST)'] ? formatDateForDisplay(exam['Expiry (IST)']) : 'No Expiry';
+            const expiryStr = exam['Expiry (IST)'] ? formatDateForDisplay(exam['Expiry (IST)']) : '-';
+            const createdStr = exam['Created At'] ? formatDateForDisplay(exam['Created At']) : '-';
 
             let isExpired = false;
             if (expiryDate) {
@@ -5059,82 +5099,58 @@ document.getElementById('view-results-btn').addEventListener('click', async func
             }
 
             const statusBadge = isExpired
-                ? '<span style="background: #e74c3c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">EXPIRED</span>'
-                : '<span style="background: #27ae60; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">ACTIVE</span>';
+                ? '<span class="badge badge-error badge-sm">EXPIRED</span>'
+                : '<span class="badge badge-success badge-sm">ACTIVE</span>';
 
-            // 'Questions' is the correct Airtable field name for linked records
-            const questionIds = exam['Questions'] || exam['Question IDs'] || exam['QuestionIDs'] || exam.questionIds || [];
-            // Calculate actual scorable questions count
-            // A scorable question has options (Option A) OR is a parent with subQuestions
-            let questionCount = 0;
-            const idsArray = Array.isArray(questionIds) ? questionIds : (typeof questionIds === 'string' && questionIds.trim() ? questionIds.split(',').filter(id => id.trim()) : []);
-            const countedIds = new Set(); // Track counted question IDs to avoid double counting
-
-            idsArray.forEach(qId => {
-                const q = questions.find(question => question.id === qId || question.ID === qId);
-                if (q) {
-                    // If this is a parent with subQuestions, count the subQuestions (they might not be linked separately)
-                    if (q.subQuestions && q.subQuestions.length > 0) {
-                        q.subQuestions.forEach(sq => {
-                            const sqId = sq.id || sq.ID;
-                            if (!countedIds.has(sqId)) {
-                                countedIds.add(sqId);
-                                questionCount += 1;
-                            }
-                        });
-                    } else if (q['Option A'] && q['Option A'].trim() !== '') {
-                        // Standalone or child question with options
-                        if (!countedIds.has(qId)) {
-                            countedIds.add(qId);
-                            questionCount += 1;
-                        }
-                    }
-                    // Parent passages without options and without loaded subQuestions are not counted
-                } else {
-                    // Question not found in local cache, count as 1 (assume it's scorable)
-                    if (!countedIds.has(qId)) {
-                        countedIds.add(qId);
-                        questionCount += 1;
-                    }
-                }
-            });
-            const duration = exam['Duration (mins)'] || exam['Duration'] || exam.duration || 60;
             const candidateCount = examResultCounts[examCode] || 0;
 
-            examsHTML += `
-                <div class="exam-result-card" data-exam-code="${examCode}">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                        <div style="font-weight: 700; font-size: 1.1rem; color: var(--secondary);">${examCode}</div>
-                        ${statusBadge}
-                    </div>
-                    <div style="font-size: 1rem; color: #333; margin-bottom: 15px; font-weight: 500;">${title}</div>
-                    <div style="display: flex; justify-content: center; margin-bottom: 12px;">
-                        <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px 25px; border-radius: 10px; text-align: center; min-width: 100px;">
-                            <div style="font-size: 1.8rem; font-weight: 700;">${candidateCount}</div>
-                            <div style="font-size: 0.8rem; opacity: 0.9;">Candidates</div>
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; color: #666;">
-                        <div><strong>Expiry:</strong> ${expiryStr}</div>
-                        <div><strong>Duration:</strong> ${duration} min</div>
-                        <div><strong>Questions:</strong> ${questionCount}</div>
-                        <div style="color: var(--primary); font-weight: 600;">Click to view results →</div>
-                    </div>
-                </div>
+            tableRowsHTML += `
+                <tr class="exam-result-row hover cursor-pointer" data-exam-code="${examCode}">
+                    <td class="font-bold text-primary">${examCode}</td>
+                    <td>${title}</td>
+                    <td class="text-center">${statusBadge}</td>
+                    <td class="text-center">${createdStr}</td>
+                    <td class="text-center">${expiryStr}</td>
+                    <td class="text-center">
+                        <span class="badge badge-primary badge-lg font-bold">${candidateCount}</span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline btn-primary">View Results</button>
+                    </td>
+                </tr>
             `;
         }
 
-        // Wrap in a grid container for proper display
-        examsContainer.innerHTML = `<div id="exams-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">${examsHTML}</div>`;
+        // Create table structure for list view
+        examsContainer.innerHTML = `
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full" id="exams-table-container">
+                    <thead>
+                        <tr class="bg-base-200">
+                            <th>Exam Code</th>
+                            <th>Title</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Started</th>
+                            <th class="text-center">Ended</th>
+                            <th class="text-center">Candidates</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRowsHTML}
+                    </tbody>
+                </table>
+            </div>
+        `;
 
-        // Use event delegation for more reliable click handling
-        const gridContainer = document.getElementById('exams-grid-container');
-        if (gridContainer) {
-            gridContainer.addEventListener('click', function(e) {
-                const card = e.target.closest('.exam-result-card');
-                if (card) {
-                    const examCode = card.getAttribute('data-exam-code');
-                    console.log('📊 Exam card clicked:', examCode);
+        // Use event delegation for table row click handling
+        const tableContainer = document.getElementById('exams-table-container');
+        if (tableContainer) {
+            tableContainer.addEventListener('click', function(e) {
+                const row = e.target.closest('.exam-result-row');
+                if (row) {
+                    const examCode = row.getAttribute('data-exam-code');
+                    console.log('📊 Exam row clicked:', examCode);
                     showExamCandidates(examCode);
                 }
             });
@@ -8158,7 +8174,9 @@ function loadQuestion() {
             });
 
             // Add click handler to the new container (radio has pointer-events: none so clicks pass through)
+            // Fix: stopPropagation prevents global document handler from firing and toggling off the selection
             newOptionsContainer.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent double-handler conflict (global handler would toggle off)
                 console.log('[DEBUG] Options container clicked, target:', e.target.tagName, e.target.className);
                 const option = e.target.closest('.option');
                 if (option) {
